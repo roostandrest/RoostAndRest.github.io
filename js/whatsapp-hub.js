@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════
 // 📱 WHATSAPP AUTOMATION & COMMUNICATION HUB v2
-// THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+// ROOST AND REST STAYS
 // Supports: Free Headless Gateway (Baileys), Groups (@g.us),
 // Master ON/OFF Switch & Live Automated Dispatches
 // ═══════════════════════════════════════════════════════════
@@ -37,14 +37,14 @@
       'VIL-104': '120363427551867491@g.us', // The Green House -> UHHS Owners Group
       'VIL-106': '120363427551867491@g.us', // Green forest View -> UHHS Owners Group
       'VIL-107': '120363427551867491@g.us', // The Velvet House -> UHHS Owners Group
-      'LUL-101': '120363427551867491@g.us', // The Luxe Haven (1BHK) -> UHHS Owners Group (Firoz & Shahenshah)
+      'LUL-101': '120363427551867491@g.us', // The Luxe Haven (1BHK) -> UHHS Owners Group (Anwar & Shahenshah)
       'LUL-402': '120363427551867491@g.us', // Celebrity Garden -> UHHS Owners Group
       'VIL-103': '120363427551867491@g.us', // The Pink House -> UHHS Owners Group
       'VIL-104': '120363427551867491@g.us', // The Green House -> UHHS Owners Group
       'VIL-105': '120363427551867491@g.us', // The Yellow House -> UHHS Owners Group
-      'VIL-106': '120363427551867491@g.us', // Green Forest View -> UHHS Owners Group (Firoz & Shahenshah)
-      'VIL-107': '120363427551867491@g.us', // The Velvet House -> UHHS Owners Group (Firoz & Shahenshah)
-      'VIL-108': '120363427551867491@g.us', // Pink Paradise Villa -> UHHS Owners Group (Firoz & Shahenshah)
+      'VIL-106': '120363427551867491@g.us', // Green Forest View -> UHHS Owners Group (Anwar & Shahenshah)
+      'VIL-107': '120363427551867491@g.us', // The Velvet House -> UHHS Owners Group (Anwar & Shahenshah)
+      'VIL-108': '120363427551867491@g.us', // Pink Paradise Villa -> UHHS Owners Group (Anwar & Shahenshah)
       'VIL-101': '120363412244446528@g.us', // Gomti Grand Villa -> Afzal & Hazi Group
       'VIL-102': '120363412244446528@g.us', // Royal White House -> Afzal & Hazi Group
       'GOM-102': '120363427249232463@g.us', // Black Beauty -> Alam Sahab
@@ -69,8 +69,8 @@
       'The Green House': '120363427551867491@g.us',
       'The Pink House': '120363427551867491@g.us',
       'Yellow House': '120363427551867491@g.us',
-      'Firoz& Shahenshah': '120363427551867491@g.us',
-      'Firoz & Shahenshah': '120363427551867491@g.us',
+      'Anwar& Shahenshah': '120363427551867491@g.us',
+      'Anwar & Shahenshah': '120363427551867491@g.us',
       'UHHS — Sabir Bhai': '120363430510952329@g.us',
       'Sabir Bhai': '120363430510952329@g.us',
       'UHHS — Afzal & Hazi Group': '120363412244446528@g.us',
@@ -219,13 +219,13 @@
       template_name: 'guest_confirmation',
       display_name: '🎉 New Booking Confirmation (Guest)',
       auto_send: true,
-      body_text: 'Hi {{1}}, welcome to Unique Haven Homes Stay! 🎉\n\nYour booking is confirmed:\n📍 Property: {{2}}\n📅 Check-in: {{3}}\n📅 Check-out: {{4}}\n\nWe\'ll send arrival details 1 hour before your check-in with WiFi and key info.\n\nFor any query: 9450055554 / 8299600709'
+      body_text: 'Hi {{1}}, welcome to Roost And Rest Stays Stay! 🎉\n\nYour booking is confirmed:\n📍 Property: {{2}}\n📅 Check-in: {{3}}\n📅 Check-out: {{4}}\n\nWe\'ll send arrival details 1 hour before your check-in with WiFi and key info.\n\nFor any query: 9807486555'
     },
     {
       template_name: 'booking_group_alert',
       display_name: '🚨 New Booking Alert (Booking Group)',
       auto_send: true,
-      body_text: '🛎️ *NEW BOOKING CONFIRMED!*\n━━━━━━━━━━━━━━━━━━\n🏠 *Property:* {{1}}\n👤 *Guest:* {{2}}\n📅 *Check-in:* {{3}}\n📅 *Check-out:* {{4}} ({{5}} Nights)\n🏷️ *Source:* {{6}}\n💰 *Amount:* {{7}}\n━━━━━━━━━━━━━━━━━━\n_The Unique Haven Homes CRM_'
+      body_text: '🛎️ *NEW BOOKING CONFIRMED!*\n━━━━━━━━━━━━━━━━━━\n🏠 *Property:* {{1}}\n👤 *Guest:* {{2}}\n📅 *Check-in:* {{3}}\n📅 *Check-out:* {{4}} ({{5}} Nights)\n🏷️ *Source:* {{6}}\n💰 *Amount:* {{7}}\n━━━━━━━━━━━━━━━━━━\n_Roost And Rest Stays CRM_'
     },
     {
       template_name: 'housekeeping_checkout',
@@ -237,25 +237,25 @@
       template_name: 'investor_report',
       display_name: '📊 Monthly Statement (Investor Group)',
       auto_send: true,
-      body_text: '📊 *MONTHLY INVESTOR STATEMENT — {{1}}*\n━━━━━━━━━━━━━━━━━━\n👤 *Investor:* {{2}}\n🏠 *Property:* {{3}}\n💵 *Gross Revenue:* ₹{{4}}\n📉 *Expenses & Ops:* -₹{{5}}\n━━━━━━━━━━━━━━━━━━\n💰 *NET PAYOUT:* ₹{{6}}\n━━━━━━━━━━━━━━━━━━\n_Generated via TUHH CRM_'
+      body_text: '📊 *MONTHLY INVESTOR STATEMENT — {{1}}*\n━━━━━━━━━━━━━━━━━━\n👤 *Investor:* {{2}}\n🏠 *Property:* {{3}}\n💵 *Gross Revenue:* ₹{{4}}\n📉 *Expenses & Ops:* -₹{{5}}\n━━━━━━━━━━━━━━━━━━\n💰 *NET PAYOUT:* ₹{{6}}\n━━━━━━━━━━━━━━━━━━\n_Generated via Roost And Rest CRM_'
     },
     {
       template_name: 'new_booking_investor',
       display_name: '💼 Investor Booking Update (Short & Private)',
       auto_send: true,
-      body_text: 'Booking Update\n\nProperty: {{1}}\nBooking: {{2}}\nCheck-in: {{3}}\nCheck-out: {{4}}\nNights: {{5}}\nAmount: ₹{{6}}\n\nThe Unique Haven Homes Property Management'
+      body_text: 'Booking Update\n\nProperty: {{1}}\nBooking: {{2}}\nCheck-in: {{3}}\nCheck-out: {{4}}\nNights: {{5}}\nAmount: ₹{{6}}\n\nRoost And Rest Stays Property Management'
     },
     {
       template_name: 'arrival_details',
       display_name: '🔑 Arrival Details & WiFi Pass',
       auto_send: true,
-      body_text: 'Dear {{1}},\nWelcome to *{{2}}* ({{3}})!\nYour check-in is ready.\n\n📍 Location: https://maps.google.com\n🔑 WiFi Password: {{4}}\n🔐 Door Code / Keys: {{5}}\n\nFor any query: 9450055554 / 8299600709\n_The Unique Haven Homes_'
+      body_text: 'Dear {{1}},\nWelcome to *{{2}}* ({{3}})!\nYour check-in is ready.\n\n📍 Location: https://maps.google.com\n🔑 WiFi Password: {{4}}\n🔐 Door Code / Keys: {{5}}\n\nFor any query: 9807486555\n_Roost And Rest Stays_'
     },
     {
       template_name: 'checkout_reminder',
       display_name: '👋 10:00 AM Checkout Reminder (Guest)',
       auto_send: true,
-      body_text: 'Good morning {{1}},\nHope you had a wonderful stay at *{{2}}*!\n\nThis is a gentle reminder that checkout is today at *11:00 AM*.\n\nFor any query: 9450055554 / 8299600709\nThank you for choosing The Unique Haven Homes!'
+      body_text: 'Good morning {{1}},\nHope you had a wonderful stay at *{{2}}*!\n\nThis is a gentle reminder that checkout is today at *11:00 AM*.\n\nFor any query: 9807486555\nThank you for choosing Roost And Rest Stays!'
     }
   ];
 
@@ -599,7 +599,7 @@
       }
     }
 
-    // Special fallback for Yellow House / Villas / 1BHK Luxe Haven (Firoz & Shahenshah -> UHHS Owners Group)
+    // Special fallback for Yellow House / Villas / 1BHK Luxe Haven (Anwar & Shahenshah -> UHHS Owners Group)
     if (!target && (roomId === 'VIL-105' || roomId === 'LUL-101' || roomId === 'LUL-402' || propDisplay.toLowerCase().includes('yellow') || propDisplay.toLowerCase().includes('luxe haven') || propDisplay.toLowerCase().includes('pink paradise') || propDisplay.toLowerCase().includes('velvet') || propDisplay.toLowerCase().includes('green forest') || roomId.startsWith('VIL-'))) {
       target = '120363427551867491@g.us';
     }
@@ -651,7 +651,7 @@ Check-out: ${coDate}, ${coTime}
 Nights: ${nights}
 Amount: ₹${tot.toLocaleString('en-IN')}
 
-The Unique Haven Homes Property Management`;
+Roost And Rest Stays Property Management`;
 
     return await dispatchWhatsAppMessage({
       to: target,
@@ -702,10 +702,10 @@ The Unique Haven Homes Property Management`;
         catch(e) { return dt; }
       };
       text =
-        `🎉 *BOOKING CONFIRMED — THE UNIQUE HAVEN HOMES*\n` +
+        `🎉 *BOOKING CONFIRMED — ROOST AND REST STAYS*\n` +
         `━━━━━━━━━━━━━━━━━━\n` +
         `Dear *${guest}*,\n` +
-        `Thank you for choosing The Unique Haven Homes! Your stay is confirmed.\n\n` +
+        `Thank you for choosing Roost And Rest Stays! Your stay is confirmed.\n\n` +
         `🏠 *Property:* ${roomName}\n` +
         `📅 *Check-in:* ${fmtD(b.check_in)} (From 02:00 PM)\n` +
         `📅 *Check-out:* ${fmtD(b.check_out)} (By 11:00 AM)\n` +
@@ -713,11 +713,11 @@ The Unique Haven Homes Property Management`;
         `👤 *Manager:* Praveen Singh (9194109911)\n\n` +
         `*Contact*\n` +
         `If you need anything, message me anytime or call directly\n` +
-        `📞Mr Shahansha 9450055554\n` +
-        `📞Mr Firoz khan 8299600709\n` +
+        `📞Mr Shahansha 9807486555\n` +
+        `📞Mr Anwar khan 9807486555\n` +
         `Happy to help whenever you need.\n` +
         `━━━━━━━━━━━━━━━━━━\n` +
-        `_The Unique Haven Homes Luxury Stays_`;
+        `_Roost And Rest Stays Luxury Stays_`;
     }
 
     return await dispatchWhatsAppMessage({
@@ -791,7 +791,7 @@ The Unique Haven Homes Property Management`;
       `━━━━━━━━━━━━━━━━━━\n` +
       `💰 *NET PAYOUT:* ₹${Number(netPayout || 0).toLocaleString('en-IN')}\n` +
       `━━━━━━━━━━━━━━━━━━\n` +
-      `_Generated via The Unique Haven Homes CRM_`;
+      `_Generated via Roost And Rest Stays CRM_`;
 
     return await dispatchWhatsAppMessage({
       to: target,
@@ -2152,7 +2152,7 @@ The Unique Haven Homes Property Management`;
           recipient_type: 'individual',
           to: cleanPhone,
           type: 'text',
-          text: { preview_url: true, body: '👋 *Test Message from The Unique Haven Homes!*\n\nYour official Meta WhatsApp Cloud API is successfully configured and active! 🚀\n\n100% Free & Ban-Proof cloud connectivity.' }
+          text: { preview_url: true, body: '👋 *Test Message from Roost And Rest Stays!*\n\nYour official Meta WhatsApp Cloud API is successfully configured and active! 🚀\n\n100% Free & Ban-Proof cloud connectivity.' }
         })
       });
       const data = await res.json();
@@ -3145,7 +3145,7 @@ ${items}
 💰 Total Revenue: ₹${propTotal.toLocaleString('en-IN')}
 ━━━━━━━━━━━━━━━━━━━━━━
 
-The Unique Haven Homes Property Management`;
+Roost And Rest Stays Property Management`;
     };
 
     window._toggleMsgPreview = function(idx) {

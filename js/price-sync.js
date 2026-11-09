@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   THE UNIQUE HAVEN HOMES — LIVE PRICE SYNC
+   ROOST AND REST STAYS — LIVE PRICE SYNC
    Fetches current rates from Supabase → property_rates table
    and patches all price displays on the page in real-time.
    

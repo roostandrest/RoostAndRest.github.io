@@ -1,6 +1,6 @@
 /**
  * Property Showcase Admin CMS (Airbnb-Style Manager)
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 (function(window) {

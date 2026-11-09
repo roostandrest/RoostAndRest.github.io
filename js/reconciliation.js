@@ -1,7 +1,7 @@
 /**
  * Airbnb Reconciliation Module
  * Compare Airbnb CSV vs App bookings
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 async function renderAirbnbSync() {
@@ -423,7 +423,7 @@ async function quickAddMissing(index) {
     payment_mode: 'Airbnb Payout',
     payment_date: m.startDateNorm || m.startDate,
     notes: 'Airbnb Auto Sync',
-    received_by: "Firoz",
+    received_by: "Anwar",
     handover_status: "handed_over"
   });
 

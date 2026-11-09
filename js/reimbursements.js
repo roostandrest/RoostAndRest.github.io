@@ -798,8 +798,8 @@ window.showReimbReport = async function() {
       </div>
 
       <div style="margin:16px 0;padding-top:10px;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b;">
-        <div style="font-weight:700;letter-spacing:0.5px;color:#1e293b;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
-        <div style="font-size:10px;color:#64748b;margin-top:2px;">uniquehavenhomesstay.com</div>
+        <div style="font-weight:700;letter-spacing:0.5px;color:#1e293b;">ROOST AND REST STAYS</div>
+        <div style="font-size:10px;color:#64748b;margin-top:2px;">roostandrest.github.io</div>
         <div style="font-weight:700;color:#0f172a;margin-top:4px;">⚡ Developed by Praveen Singh</div>
       </div>
 

@@ -32,7 +32,7 @@ window.logCleanerTurnaround = function(roomId, cleanerEmpId, cleanerName, dateSt
 
 /**
  * Properties & Flats Module
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 // ============ PROPERTIES (ROOMS) ============
@@ -1291,7 +1291,7 @@ function renderKanbanCard(f, can, today) {
   const propTitle = propLabel(f.rooms) || f.room_id;
   const unit = f.rooms?.unit_no ? `Unit ${f.rooms.unit_no}` : '';
   const ctName = f.rooms?.checkin_manager || 'Unassigned';
-  const ctPhone = f.rooms?.caretaker_phone || '9450055554';
+  const ctPhone = f.rooms?.caretaker_phone || '9807486555';
   const waMsg = encodeURIComponent(`🧹 Housekeeping alert for ${propTitle} (${unit}): Status is ${f.cleaning_status || 'Dirty'}. Please check room.`);
   const waLink = `https://wa.me/91${ctPhone.replace(/[^0-9]/g, '').slice(-10)}?text=${waMsg}`;
 

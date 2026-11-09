@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// ❓ THE UNIQUE HAVEN HOMES (TUHH) — HELP CENTER & OPERATING GUIDE
+// ❓ ROOST AND REST STAYS (TUHH) — HELP CENTER & OPERATING GUIDE
 // Complete Step-by-Step Software Manual, Workflows & Keyboard Shortcuts
 // ═══════════════════════════════════════════════════════════
 
@@ -46,9 +46,9 @@
         <div class="tuhh-help-hero">
           <div class="tuhh-help-hero-badge">
             <span class="tuhh-pulse-dot"></span>
-            <span>The Unique Haven Homes · Executive Operating Manual (19 Properties)</span>
+            <span>Roost And Rest Stays · Executive Operating Manual (19 Properties)</span>
           </div>
-          <h1 class="tuhh-help-hero-title">TUHH CRM Help Center & Operating Guide</h1>
+          <h1 class="tuhh-help-hero-title">Roost And Rest CRM Help Center & Operating Guide</h1>
           <p class="tuhh-help-hero-sub">
             Complete Step-by-Step Software Manual, zero-fee payment automation, financial intelligence & high-speed keyboard shortcuts.
           </p>
@@ -554,7 +554,7 @@
               <div class="tuhh-faq-item">
                 <h4><i class="ti ti-help"></i> Data Offline / Slow Internet Par Save Hota Hai?</h4>
                 <p>
-                  Haan! TUHH CRM Progressive Web App (PWA) hai. Form save karte hi data local encrypted storage me store hota hai aur internet aate hi Supabase cloud se real-time synchronize ho jata hai.
+                  Haan! Roost And Rest CRM Progressive Web App (PWA) hai. Form save karte hi data local encrypted storage me store hota hai aur internet aate hi Supabase cloud se real-time synchronize ho jata hai.
                 </p>
               </div>
 

@@ -1899,7 +1899,7 @@ window.printVendorLaundryReport = async function(vendorName, monthYear) {
 
   // WhatsApp summary text
   const waText = encodeURIComponent(
-    `*The Unique Haven Homes — Laundry Vendor Statement*\n` +
+    `*Roost And Rest Stays — Laundry Vendor Statement*\n` +
     `Vendor: ${vendorTitle}\n` +
     `Period: ${monthName}\n` +
     `Total Orders: ${(records||[]).length}\n` +
@@ -1992,7 +1992,7 @@ window.printVendorLaundryReport = async function(vendorName, monthYear) {
     <!-- Header -->
     <div class="doc-head">
       <div class="doc-brand">
-        <h1>THE UNIQUE HAVEN HOMES</h1>
+        <h1>ROOST AND REST STAYS</h1>
         <p>Luxury Serviced Apartments & Villas &bull; Gomti Nagar & Shaheed Path, Lucknow</p>
         <p style="font-size:11px;color:#94a3b8;">CIN: U55101UP2026PTC244637 | Caretaker & Laundry Management</p>
       </div>
@@ -2124,12 +2124,12 @@ window.printVendorLaundryReport = async function(vendorName, monthYear) {
       </div>
       <div class="sign-box">
         Authorized Signatory<br>
-        <strong>The Unique Haven Homes Pvt Ltd</strong>
+        <strong>ROOST AND REST STAYS</strong>
       </div>
     </div>
 
     <div style="text-align:center;font-size:10px;color:#94a3b8;margin-top:24px;">
-      This is an official computer-generated statement issued by The Unique Haven Homes Operations & Accounting.
+      This is an official computer-generated statement issued by Roost And Rest Stays Operations & Accounting.
     </div>
   </div>
 

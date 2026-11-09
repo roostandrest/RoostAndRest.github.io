@@ -128,7 +128,7 @@ window.ICAL_SYNC = {
     const lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//The Unique Haven Homes//TUHH Multi-Channel Master 2.0//EN',
+      'PRODID:-//Roost And Rest Stays//TUHH Multi-Channel Master 2.0//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
       `X-WR-CALNAME:TUHH Master ${roomId}`

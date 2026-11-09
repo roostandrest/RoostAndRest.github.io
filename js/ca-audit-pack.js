@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED (UHHS)
+ * ROOST AND REST STAYS (UHHS)
  * 💼 AIRBNB PAYOUTS, SECTION 194-O TDS & CA TAX AUDIT SUITE
  * =====================================================================
  * In-built Enterprise Tax & Payout reconciliation system for:
@@ -18,8 +18,8 @@ window.CA_AUDIT_PACK = (function() {
 
   // Company Profile
   const CO = {
-    name:       'THE UNIQUE HAVEN HOMES PRIVATE LIMITED',
-    tradeName:  'The Unique Haven Homes Homestays',
+    name:       'ROOST AND REST STAYS',
+    tradeName:  'Roost And Rest Stays Homestays',
     gstin:      '09ABECT9843K1Z7',
     pan:        'ABECT9843K',
     cin:        'U55101UP2026PTC244637',
@@ -229,7 +229,7 @@ window.CA_AUDIT_PACK = (function() {
       totalBookings: reservations.length,
       totalNights: reservations.reduce((s, r) => s + r.nights, 0),
       totalPayoutRows: payouts.length,
-      bankAccount: 'THE UNIQUE HAVEN HOMES PRIVATE LIMITED, Current 0550 (INR)',
+      bankAccount: 'ROOST AND REST STAYS, Current 0550 (INR)',
       pan: CO.pan,
       gstin: CO.gstin,
       tdsSection: CO.tdsSection
@@ -274,7 +274,7 @@ window.CA_AUDIT_PACK = (function() {
     const s = dataset.summary;
     const monthly = aggregateMonthly(dataset.reservations, dataset.payouts).slice(0, 6);
     
-    let msg = `*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*\n`;
+    let msg = `*ROOST AND REST STAYS*\n`;
     msg += `*AIRBNB PAYOUTS & SECTION 194-O TDS AUDIT REPORT*\n`;
     msg += `━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `🏢 *Company:* ${CO.name}\n`;
@@ -293,7 +293,7 @@ window.CA_AUDIT_PACK = (function() {
     });
     msg += `━━━━━━━━━━━━━━━━━━━━\n`;
     msg += `📌 *Note for CA:* Please cross-verify Form 26AS / AIS against the above Section 194-O TDS of ₹${s.totalTds.toLocaleString('en-IN', {maximumFractionDigits:2})} deposited by Airbnb Payments India Pvt Ltd.\n`;
-    msg += `_Generated via TUHH CRM Executive Portal_`;
+    msg += `_Generated via Roost And Rest CRM Executive Portal_`;
 
     navigator.clipboard.writeText(msg).then(() => {
       if (window.fsn) fsn.success('Copied for WhatsApp', 'CA Tax Brief copied to clipboard!');
@@ -353,7 +353,7 @@ window.CA_AUDIT_PACK = (function() {
 
             <div style="background:#F8FAFC;border:1px solid #CBD5E1;border-radius:12px;padding:16px;text-align:center;">
               <a href="${bookmarkletCode}" onclick="alert('Drag this button to your Bookmarks Bar, then click it on your Airbnb Earnings tab!');return false;" style="display:inline-block;background:#0F172A;color:#fff;padding:10px 20px;border-radius:999px;font-weight:800;text-decoration:none;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);cursor:grab;">
-                📌 Drag to Bookmarks: Sync to TUHH CRM
+                📌 Drag to Bookmarks: Sync to Roost And Rest CRM
               </a>
               <div style="font-size:11.5px;color:#64748B;margin-top:8px;">Drag to bookmarks bar, open Airbnb Paid page, and click the bookmark to pull latest data.</div>
             </div>

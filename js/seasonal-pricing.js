@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   THE UNIQUE HAVEN HOMES — SEASONAL & DYNAMIC PRICING ENGINE
+   ROOST AND REST STAYS — SEASONAL & DYNAMIC PRICING ENGINE
    Synchronizes real-time seasonal multipliers (+10% Oct, +15% Nov)
    between Website (book.html, property-engine.js, price-sync.js)
    and CRM (rate-manager.html, smart-bookings.js, Supabase tables).

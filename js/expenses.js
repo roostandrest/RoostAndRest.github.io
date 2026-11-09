@@ -1,6 +1,6 @@
 /**
  * Expenses & P&L Module
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 // ============ MAIN EXPENSES VIEW ============
@@ -53,7 +53,7 @@ async function renderExpenses() {
   (emps || []).forEach(e => { if (e.emp_id) empMap[e.emp_id] = e; });
   window._allEmployeesList = emps || [];
 
-  // Helper normalizer for payment source (OD vs Company/Firoz)
+  // Helper normalizer for payment source (OD vs Company/Anwar)
   function normSource(raw) {
     if (!raw) return 'COMPANY';
     const s = String(raw).trim().toUpperCase();
@@ -341,7 +341,7 @@ async function renderExpenses() {
           <span style="font-size:13px;font-weight:800;color:#059669;">₹${totalOdExp.toLocaleString('en-IN')}</span>
         </div>
         <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('COMPANY')" title="Click to filter by Cash/Company">
-          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏢 Company / Firoz</span>
+          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏢 Company / Anwar</span>
           <span style="font-size:13px;font-weight:800;color:#D97706;">₹${totalCompanyExp.toLocaleString('en-IN')}</span>
         </div>
         <div style="background:#FAF5FF;padding:8px 12px;border-radius:8px;border:1px solid #F3E8FF;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesByChannel('advance')" title="Click to filter by Staff Advances">
@@ -531,7 +531,7 @@ function applyExpenseFilters() {
                   <td style="font-size:12px;font-weight:600;white-space:nowrap;">${escapeHtml(item.staffName || '-')}</td>
                   <td>
                     <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:${item.paidBy === 'ROOST-BANK' ? '#E0F2FE' : '#FEF3C7'};color:${item.paidBy === 'ROOST-BANK' ? '#0369A1' : '#92400E'};white-space:nowrap;">
-                      ${item.paidBy === 'ROOST-BANK' ? '🏦 Roost-Bank' : '🏢 COMPANY (Firoz)'}
+                      ${item.paidBy === 'ROOST-BANK' ? '🏦 Roost-Bank' : '🏢 COMPANY (Anwar)'}
                     </span>
                   </td>
                   <td style="font-weight:800;color:#DC2626;font-size:13.5px;white-space:nowrap;">
@@ -879,7 +879,7 @@ window.exportExpensesCSV = function() {
   }
 
   const mName = window._currentExpenseMonth || 'All';
-  let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - EXPENSES & P&L REGISTER\n`;
+  let csv = `ROOST AND REST STAYS - EXPENSES & P&L REGISTER\n`;
   csv += `Period,${mName}\n`;
   csv += `Exported On,${new Date().toLocaleString('en-IN')}\n`;
   csv += `Total Expenses Count,${exps.length}\n`;
@@ -902,7 +902,7 @@ window.exportExpensesCSV = function() {
   });
 
   csv += `\n"Total",,,"${totalAmt}",,,,\n`;
-  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.github.io"\n`;
 
   const fileName = `TUHH_Expenses_${String(mName).replace(/[\s\/-]/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`;
   window.exportCSV(csv, fileName);
@@ -956,8 +956,8 @@ window.printExpensesReport = function() {
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:22px;">🏡</span>
             <div>
-              <h1 style="margin:0;font-size:17px;font-weight:900;color:#0F172A;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</h1>
-              <div style="font-size:11px;color:#64748B;font-weight:600;margin-top:2px;">CIN: U55101UP2024PTC202863 · Expenses &amp; Cost Disbursement Ledger</div>
+              <h1 style="margin:0;font-size:17px;font-weight:900;color:#0F172A;">ROOST AND REST STAYS</h1>
+              <div style="font-size:11px;color:#64748B;font-weight:600;margin-top:2px;">Expenses &amp; Cost Disbursement Ledger</div>
             </div>
           </div>
           <div style="margin-top:6px;display:inline-block;background:#F0FDFA;border:1px solid #99F6E4;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800;color:#0F766E;">
@@ -1012,7 +1012,7 @@ window.printExpensesReport = function() {
       </div>
 
       <div style="margin-top:14px;padding-top:8px;border-top:1px solid #E2E8F0;font-size:10px;color:#94A3B8;text-align:center;">
-        THE UNIQUE HAVEN HOMES PRIVATE LIMITED · CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com
+        ROOST AND REST STAYS · roostandrest.github.io
       </div>
     </div>
   `;
@@ -1038,7 +1038,7 @@ window.shareExpensesWhatsApp = function(monthStr = null) {
     byCat[c] = (byCat[c] || 0) + (e.amount || 0);
   });
 
-  let msg = `*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*\n`;
+  let msg = `*ROOST AND REST STAYS*\n`;
   msg += `*📊 Monthly Expenses & Cost Summary*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `📅 *Period:* ${mName}\n`;
@@ -1056,7 +1056,7 @@ window.shareExpensesWhatsApp = function(monthStr = null) {
 
   msg += `━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `_Hospitality Operations Financial Summary_\n`;
-  msg += `🌐 uniquehavenhomesstay.com`;
+  msg += `🌐 roostandrest.github.io`;
 
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 };
@@ -1316,7 +1316,7 @@ window.handleReceiptScan = async function(event) {
 
     if (apiKey && apiKey.length > 15) {
       try {
-        const promptText = `You are an expert expense parser for The Unique Haven Homes homestays (Lucknow). Analyze this bill/receipt photo (could be handwritten, Hindi, English, cash memo, grocery kirana, plumbing, hardware, repairs, electricity, laundry).
+        const promptText = `You are an expert expense parser for Roost And Rest Stays homestays (Lucknow). Analyze this bill/receipt photo (could be handwritten, Hindi, English, cash memo, grocery kirana, plumbing, hardware, repairs, electricity, laundry).
 Extract the following information and output ONLY valid JSON without markdown codeblocks:
 {
   "vendor": "Name of shop, store or person (e.g. Sharma Kirana, Gupta Hardware, Plumber Rohit)",
@@ -2903,7 +2903,7 @@ window.onExpPayModeChange = async function() {
   dropdown.innerHTML = html;
   
   if (mode === 'UPI' || mode === 'Bank') {
-    if (finalH.includes('Firoz')) dropdown.value = 'Firoz';
+    if (finalH.includes('Anwar')) dropdown.value = 'Anwar';
   }
   
   dropdown.onchange = function() {

@@ -5,12 +5,12 @@
 
 // ═══ HARDCODED: Business Owners (Escalation) ═══
 const OWNERS = [
-  { name: 'Mr. Shahanshah', phone: '9450055554' },
-  { name: 'Mr. Firoz Khan', phone: '8299600709' }
+  { name: 'Mr. Shahanshah', phone: '9807486555' },
+  { name: 'Mr. Anwar Ahmad', phone: '9807486555' }
 ];
 
-const BRAND_URL = 'https://uniquehavenhomesstay.com';
-const BRAND_NAME = 'The Unique Haven Homes';
+const BRAND_URL = 'https://roostandrest.github.io';
+const BRAND_NAME = 'Roost And Rest Stays';
 
 // ═══ Get property URL from nickname ═══
 window.getPropertyURL = function(nickname) {
@@ -225,8 +225,8 @@ async function buildMessageData(bkId) {
     owners: OWNERS,
     investors,
     websiteURL: config.website_url || BRAND_URL,
-    companyReviewPortal: `https://uniquehavenhomesstay.com/review.html?b=${encodeURIComponent(bkId)}&guest=${encodeURIComponent(bk.guest_name || 'Guest')}&prop=${encodeURIComponent(room.nickname || room.property_name || roomId)}`,
-    googleReview: (config.google_review_url && !config.google_review_url.includes('YOUR_GOOGLE_ID')) ? config.google_review_url : (appGoogleReview || `https://uniquehavenhomesstay.com/review.html?b=${encodeURIComponent(bkId)}&guest=${encodeURIComponent(bk.guest_name || 'Guest')}&prop=${encodeURIComponent(room.nickname || room.property_name || roomId)}`),
+    companyReviewPortal: `https://roostandrest.github.io/review.html?b=${encodeURIComponent(bkId)}&guest=${encodeURIComponent(bk.guest_name || 'Guest')}&prop=${encodeURIComponent(room.nickname || room.property_name || roomId)}`,
+    googleReview: (config.google_review_url && !config.google_review_url.includes('YOUR_GOOGLE_ID')) ? config.google_review_url : (appGoogleReview || `https://roostandrest.github.io/review.html?b=${encodeURIComponent(bkId)}&guest=${encodeURIComponent(bk.guest_name || 'Guest')}&prop=${encodeURIComponent(room.nickname || room.property_name || roomId)}`),
     airbnbReview: config.airbnb_host_url || appAirbnbReview || '',
     airbnbReviewLink: bk.airbnb_confirmation_code
       ? `https://www.airbnb.com/reviews/write?reservationId=${bk.airbnb_confirmation_code}`
@@ -253,7 +253,7 @@ function tplConfirmation(d) {
   const floorStr = d.floor ? ` (${d.floor} floor)` : '';
   const lockStr = d.lockType ? ` (${d.lockType} Lock)` : '';
 
-  return `🏨 *THE UNIQUE HAVEN HOMES*
+  return `🏨 *ROOST AND REST STAYS*
 Namaste *${d.guestName}* ji 🙏
 Thank you for booking with us!
 
@@ -281,10 +281,10 @@ We want to keep the neighbourhood peaceful for everyone.
 
 *Contact*
 If you need anything, message me anytime or call directly
-📞Mr Shahansha 9450055554
-📞Mr Firoz khan 8299600709
+📞Mr Shahansha 9807486555
+📞Mr Anwar khan 9807486555
 Happy to help whenever you need.
-🌐 ${d.websiteURL || 'https://uniquehavenhomesstay.com'}`;
+🌐 ${d.websiteURL || 'https://roostandrest.github.io'}`;
 }
 
 // Alias for backwards compatibility
@@ -300,11 +300,11 @@ function tplBookingReceipt(d) {
   const paid = Number(d.paid || 0);
   const due = Math.max(0, total - paid);
 
-  return `🏨 *THE UNIQUE HAVEN HOMES*
+  return `🏨 *ROOST AND REST STAYS*
 *BOOKING CONFIRMATION & ADVANCE RECEIPT*
 Namaste *${d.guestName}* ji 🙏
 
-Thank you for choosing *The Unique Haven Homes*. Your direct reservation has been confirmed:
+Thank you for choosing *Roost And Rest Stays*. Your direct reservation has been confirmed:
 
 📋 *Booking ID:* ${d.bk?.booking_id || '-'}
 🏠 *Property:* ${d.propertyName} (${d.flat}${floorStr})
@@ -324,22 +324,22 @@ Thank you for choosing *The Unique Haven Homes*. Your direct reservation has bee
 👤 *Property Manager:* ${d.manager.name} (${d.manager.phone})
 
 👑 *Company Owners:*
-• Mr. Shahanshah: 9450055554
-• Mr. Firoz Khan: 8299600709
+• Mr. Shahanshah: 9807486555
+• Mr. Anwar Ahmad: 9807486555
 
 📋 *Key Check-in Instructions:*
 • Original Govt ID (Aadhaar/Passport/DL) mandatory for all guests.
 • Standard Check-in: 02:00 PM | Check-out: 11:00 AM.
 • Quiet hours post 11:00 PM.
 
-🌐 ${d.websiteURL || 'https://uniquehavenhomesstay.com'}`;
+🌐 ${d.websiteURL || 'https://roostandrest.github.io'}`;
 }
 
 // ═══ 2. REMINDER (Day Before Check-in) ═══
 function tplReminder(d) {
   const mapStr = d.mapLink ? `\n📍 *Map:* ${d.mapLink}` : '';
 
-  return `🏨 *THE UNIQUE HAVEN HOMES*
+  return `🏨 *ROOST AND REST STAYS*
 Hi *${d.guestName}*, your stay at *${d.propertyName}* starts tomorrow (${fmtDate(d.checkIn)} at ${d.checkInTime}).
 
 📍 *Address:* ${d.address}${mapStr}
@@ -355,7 +355,7 @@ Full Wi-Fi & access details will be sent 1 hour before check-in.`;
 function tplArrival(d) {
   const mapStr = d.mapLink ? `\n📍 *Map:* ${d.mapLink}` : '';
 
-  return `🏨 *THE UNIQUE HAVEN HOMES*
+  return `🏨 *ROOST AND REST STAYS*
 Hi *${d.guestName}*, your stay is ready!
 
 🏠 *${d.propertyName}* (${d.flat})${mapStr}
@@ -370,7 +370,7 @@ Safe journey & see you soon!`;
 
 // ═══ 4. ID REQUEST (Manual) ═══
 function tplIdRequest(d) {
-  return `🏨 *THE UNIQUE HAVEN HOMES*
+  return `🏨 *ROOST AND REST STAYS*
 Hi *${d.guestName}*,
 
 As per Govt hotel regulations, kindly share photo of Govt ID (Aadhar / DL / Passport) for all staying guests here on WhatsApp.
@@ -381,7 +381,7 @@ Thank you! 🙏`;
 
 // ═══ 5. CHECKOUT REMINDER ═══
 function tplCheckout(d) {
-  return `🏨 *THE UNIQUE HAVEN HOMES*
+  return `🏨 *ROOST AND REST STAYS*
 Hi *${d.guestName}*, reminder that checkout is today at *${d.checkOutTime}* from *${d.propertyName}*.
 
 • Hand over keys to Caretaker:
@@ -389,8 +389,8 @@ ${d.caretakerBlock}
 • Please check all personal belongings
 
 *Assistance / Queries:*
-📞 Mr. Shahanshah: 9450055554
-📞 Mr. Firoz Khan: 8299600709
+📞 Mr. Shahanshah: 9807486555
+📞 Mr. Anwar Ahmad: 9807486555
 
 Need an extension? Reply here to check availability.
 Thank you for staying with us! 🙏`;
@@ -398,10 +398,10 @@ Thank you for staying with us! 🙏`;
 
 // ═══ 6a. GOOGLE REVIEW REQUEST ═══
 function tplGoogleReview(d) {
-  const reviewLink = d.googleReview || d.companyReviewPortal || 'https://uniquehavenhomesstay.com/review.html';
+  const reviewLink = d.googleReview || d.companyReviewPortal || 'https://roostandrest.github.io/review.html';
   return `Hi *${d.guestName}*,
 
-Thank you for choosing *The Unique Haven Homes* for your stay at *${d.propertyName}*! 🙏
+Thank you for choosing *Roost And Rest Stays* for your stay at *${d.propertyName}*! 🙏
 
 We hope you had a pleasant, comfortable, and memorable experience with us.
 
@@ -417,8 +417,8 @@ Book directly with us to get guaranteed ${d.discount}% discount vs Airbnb & Book
 Save our contact — we'd love to host you again!
 
 Warm regards,
-*Team The Unique Haven Homes Private Limited*
-📞 9450055554 / 8299600709
+*Team Roost And Rest Stays*
+📞 9807486555
 📍 Reg. Off: P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow`;
 }
 

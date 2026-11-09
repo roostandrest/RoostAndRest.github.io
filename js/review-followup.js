@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════
- *  THE UNIQUE HAVEN HOMES — Airbnb Review & Call Follow-up Radar
+ *  ROOST AND REST STAYS — Airbnb Review & Call Follow-up Radar
  *  Real-Time 14-Day Post-Checkout Review Tracking & Call Logs Engine
  * ═══════════════════════════════════════════════════════════════════
  */
@@ -248,9 +248,9 @@
     const reviewLink = window.getAirbnbReviewLink(roomId);
     const cleanPhone = String(phone).replace(/[^\d]/g, '');
     const intlPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
-    const pName = propName || 'The Unique Haven Homes';
+    const pName = propName || 'Roost And Rest Stays';
 
-    const msg = `Namaste ${guestName || 'Guest'} ji! 🙏✨\n\nThank you for choosing *${pName}* (The Unique Haven Homes) for your recent stay! We hope you and your companions had a truly memorable and 5-star experience. 🌸\n\nAgar aapko hamari hospitality aur service pasand aayi, to kripya 1 minute nikal kar Airbnb par apna *5-Star Review* zaroor share karein. Aapka review hamari poori hosting team ke liye bohot anmol hai! ⭐⭐⭐⭐⭐\n\n👉 *Click here to leave your review:* \n${reviewLink}\n\nLooking forward to hosting you again soon!\nWarm Regards,\n*The Unique Haven Homes Private Limited*\n📞 Support: +91 9194109911`;
+    const msg = `Namaste ${guestName || 'Guest'} ji! 🙏✨\n\nThank you for choosing *${pName}* (Roost And Rest Stays) for your recent stay! We hope you and your companions had a truly memorable and 5-star experience. 🌸\n\nAgar aapko hamari hospitality aur service pasand aayi, to kripya 1 minute nikal kar Airbnb par apna *5-Star Review* zaroor share karein. Aapka review hamari poori hosting team ke liye bohot anmol hai! ⭐⭐⭐⭐⭐\n\n👉 *Click here to leave your review:* \n${reviewLink}\n\nLooking forward to hosting you again soon!\nWarm Regards,\n*Roost And Rest Stays*\n📞 Support: +91 9194109911`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=${intlPhone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, '_blank');
@@ -802,7 +802,7 @@
 
         <div style="background:#F0FDF4;border:1px solid #BBF7D0;padding:12px 14px;border-radius:10px;margin-bottom:16px;font-size:13px;color:#166534;line-height:1.6;">
           <strong>⚡ 24/7 Gmail Auto-Sync is Active:</strong><br>
-          Airbnb aapke Gmail (<code>theuniquehavenhomes@gmail.com</code>) par <em>"[Guest Name] wrote you a review"</em> email bhejta hai. Hamara Google Apps Script background me chal kar guest ko CRM me match karta hai aur yahan <strong>⭐ Review Received</strong> auto-mark kar deta hai!
+          Airbnb aapke Gmail (<code>theroostandrestlucknow@gmail.com</code>) par <em>"[Guest Name] wrote you a review"</em> email bhejta hai. Hamara Google Apps Script background me chal kar guest ko CRM me match karta hai aur yahan <strong>⭐ Review Received</strong> auto-mark kar deta hai!
         </div>
 
         <div style="border:1px solid #E2E8F0;border-radius:12px;padding:14px;margin-bottom:16px;background:#F8FAFC;">

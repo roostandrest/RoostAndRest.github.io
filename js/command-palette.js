@@ -1,6 +1,6 @@
 /* ══════════════════════════════════════════════════════════════════
    🔍 GLOBAL SPOTLIGHT COMMAND PALETTE (Cmd+K) & 🎙️ AI VOICE-TO-BOOKING
-   Unique Haven Homes Property Management System
+   Roost And Rest Stays Property Management System
    ══════════════════════════════════════════════════════════════════ */
 
 (function initCommandAndVoice() {
@@ -540,7 +540,7 @@
       group: 'Fast Actions',
       icon: '❓',
       title: 'Help Center & Operating Guide (CRM Manual)',
-      sub: 'Step-by-step Hindi & English guide on how to use TUHH CRM & fast keys',
+      sub: 'Step-by-step Hindi & English guide on how to use Roost And Rest CRM & fast keys',
       keywords: ['help', 'guide', 'manual', 'kaise use kare', 'instructions', 'operating manual', 'workflow', 'cheatsheet', '?'],
       action: () => (window.navigate ? window.navigate('help') : (window.renderHelpAndGuide && window.renderHelpAndGuide()))
     },

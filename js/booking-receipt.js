@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * THE UNIQUE HAVEN HOMES (UHHS) — BOOKING RECEIPT & ADVANCE VOUCHER ENGINE
+ * ROOST AND REST STAYS (UHHS) — BOOKING RECEIPT & ADVANCE VOUCHER ENGINE
  * Non-GST Guest Confirmation Receipt, Advance Payment Voucher & Quotation
  * =====================================================================
  */
@@ -10,8 +10,8 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
 
   // Company Master Data
   const CO = {
-    name:       'THE UNIQUE HAVEN HOMES PRIVATE LIMITED',
-    tradeName:  'The Unique Haven Homes Homestays',
+    name:       'ROOST AND REST STAYS',
+    tradeName:  'Roost And Rest Stays Homestays',
     cin:        'U55101UP2026PTC244637',
     pan:        'ABECT9843K',
     address:    'P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, Uttar Pradesh – 226016',
@@ -21,10 +21,10 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
     managerName: 'Praveen Singh',
     owners: [
       { name: 'Mr. Shahanshah', phone: '+91 94500 55554' },
-      { name: 'Mr. Firoz Khan', phone: '+91 82996 00709' }
+      { name: 'Mr. Anwar Ahmad', phone: '+91 82996 00709' }
     ],
-    email:      'theuniquehavenhomes@gmail.com',
-    web:        'uniquehavenhomesstay.com'
+    email:      'theroostandrestlucknow@gmail.com',
+    web:        'roostandrest.github.io'
   };
 
   function getSignatureStampSrc() {
@@ -365,7 +365,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
             <img src="${logoSrc}" alt="UHH Logo" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#FAF8F5;border:1px solid #E2E8F0;padding:2px;flex-shrink:0;" />
             <div>
               <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#B45309;margin-bottom:1px;">
-                The Unique Haven Homes Homestays
+                Roost And Rest Stays Homestays
               </div>
               <div style="font-size:14px;font-weight:900;color:#0F172A;line-height:1.15;">
                 ${CO.name}
@@ -685,11 +685,11 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
       ).join('\n');
     }
 
-    return `🏨 *THE UNIQUE HAVEN HOMES*
+    return `🏨 *ROOST AND REST STAYS*
 *BOOKING CONFIRMATION & ADVANCE RECEIPT*
 Namaste *${booking.guest_name || 'Guest'}* ji 🙏
 
-Thank you for choosing *The Unique Haven Homes*. Your direct reservation has been confirmed:
+Thank you for choosing *Roost And Rest Stays*. Your direct reservation has been confirmed:
 
 📋 *Booking ID:* ${booking.booking_id}
 🏠 *Property:* ${propName}${unitNo}
@@ -710,7 +710,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
 
 👑 *Company Owners / Directors:*
 • Mr. Shahanshah: +91 94500 55554
-• Mr. Firoz Khan: +91 82996 00709
+• Mr. Anwar Ahmad: +91 82996 00709
 
 📋 *Key Check-in Instructions:*
 • Valid Govt ID (Aadhaar / DL / Passport) mandatory for all guests.
@@ -731,7 +731,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
       .replace(/^[_\-]+|[_\-]+$/g, '');
   }
 
-  // Helper: PDF / Document title as requested: UHHS Receipt — Guest — Room (Date)
+  // Helper: PDF / Document title as requested: Roost Receipt — Guest — Room (Date)
   function getReceiptDocTitle(booking) {
     const guest = (booking?.guest_name || 'Guest').trim();
     const room = (booking?.rooms?.nickname || booking?.rooms?.unit_no || booking?.room_id || '').trim();
@@ -746,7 +746,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     }
     const roomPart = room ? ` — ${room}` : '';
     const dateStr = datePart ? ` (${datePart})` : '';
-    return `TUHH Receipt — ${guest}${roomPart}${dateStr}`;
+    return `Roost Receipt — ${guest}${roomPart}${dateStr}`;
   }
 
   function getReceiptFilename(booking) {
@@ -754,7 +754,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     const room = sanitizeFilename(booking?.rooms?.nickname || booking?.rooms?.unit_no || booking?.room_id || '');
     const checkIn = sanitizeFilename(booking?.check_in || '');
     const bId = sanitizeFilename(booking?.booking_id || 'Booking');
-    const parts = ['TUHH_Receipt', guest];
+    const parts = ['Roost_Receipt', guest];
     if (room) parts.push(room);
     if (checkIn) parts.push(checkIn);
     parts.push(bId);
@@ -769,7 +769,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
       return;
     }
 
-    const title = customTitle || 'TUHH Receipt — The Unique Haven Homes';
+    const title = customTitle || 'Roost Receipt — Roost And Rest Stays';
     const origDocTitle = document.title;
     try { document.title = title; } catch(e) {}
 
@@ -1108,7 +1108,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
   function sendReceiptWhatsApp(phone, message) {
     const cleanP = phone ? String(phone).replace(/\D/g, '') : '';
     const fullPhone = cleanP.length === 10 ? '91' + cleanP : cleanP;
-    const msg = message || 'Namaste! Please find your booking receipt details from The Unique Haven Homes.';
+    const msg = message || 'Namaste! Please find your booking receipt details from Roost And Rest Stays.';
     const waUrl = fullPhone 
       ? `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`
       : `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -1287,7 +1287,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
           <div style="display:flex;align-items:center;gap:12px;">
             <img src="${logoSrc}" alt="Logo" style="width:46px;height:46px;object-fit:contain;border-radius:10px;background:#FAF8F5;border:1.5px solid #CBD5E1;padding:2px;" />
             <div>
-              <div style="font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:#B45309;">The Unique Haven Homes</div>
+              <div style="font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:#B45309;">Roost And Rest Stays</div>
               <div style="font-size:15px;font-weight:900;color:#0F172A;line-height:1.2;">${CO.name}</div>
               <div style="font-size:11px;color:#475569;margin-top:2px;font-weight:600;">📞 ${CO.phone} · Lucknow, UP</div>
             </div>
@@ -1429,11 +1429,11 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
           <div>
             👑 <strong>Director / Owner:</strong> Shahanshah<br>
-            📞 <a href="tel:+919450055554" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 94500 55554</a>
+            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 94500 55554</a>
           </div>
           <div>
-            👑 <strong>Director / Owner:</strong> Firoz Khan<br>
-            📞 <a href="tel:+918299600709" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
+            👑 <strong>Director / Owner:</strong> Anwar Ahmad<br>
+            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
           </div>
         </div>
 
@@ -1852,7 +1852,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
           await navigator.share({
             files: [file],
             title: 'Payment Receipt',
-            text: 'Payment Slip from The Unique Haven Homes'
+            text: 'Payment Slip from Roost And Rest Stays'
           });
         } catch(e) {}
       };
@@ -2094,7 +2094,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
             <img src="${logoSrc}" alt="UHH Logo" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#FAF8F5;border:1px solid #E2E8F0;padding:2px;flex-shrink:0;" />
             <div>
               <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#B45309;margin-bottom:1px;">
-                The Unique Haven Homes Homestays
+                Roost And Rest Stays Homestays
               </div>
               <div style="font-size:14px;font-weight:900;color:#0F172A;line-height:1.15;">
                 ${CO.name}
@@ -2396,11 +2396,11 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
 
     const groupNotes = data.customNotes || Array.from(new Set((bookings || []).map(b => cleanNotes(b.notes)).filter(Boolean))).join(' · ');
 
-    return `🏨 *THE UNIQUE HAVEN HOMES*
+    return `🏨 *ROOST AND REST STAYS*
 *CONSOLIDATED MULTI-PROPERTY BOOKING CONFIRMATION & ADVANCE RECEIPT*
 Namaste *${guestName || 'Guest'}* ji 🙏
 
-Thank you for choosing *The Unique Haven Homes*. Your multi-property reservation for *${bookings.length} homestays* has been confirmed:
+Thank you for choosing *Roost And Rest Stays*. Your multi-property reservation for *${bookings.length} homestays* has been confirmed:
 
 📋 *Group Reference:* ${stayGroupId}
 👥 *Total Guests:* ${totalGuests} Person(s)
@@ -2420,7 +2420,7 @@ ${propertiesList}
 
 👑 *Company Owners / Directors:*
 • Mr. Shahanshah: +91 94500 55554
-• Mr. Firoz Khan: +91 82996 00709
+• Mr. Anwar Ahmad: +91 82996 00709
 
 📋 *Key Check-in Instructions:*
 • Original Govt ID (Aadhaar / DL / Passport) mandatory for all adult guests.

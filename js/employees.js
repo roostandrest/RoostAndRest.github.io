@@ -49,7 +49,7 @@ async function checkStorageUsage() {
 /**
  * Employees Module
  * Employees, Tasks, Attendance, Salary, Advance
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 // ============ EMPLOYEE SUB-NAVIGATION ============
@@ -374,7 +374,7 @@ function renderEmployeeCardsView(emps, isO, roomMap) {
                   <a href="tel:${escapeHtml(e.phone)}" class="btn-sm" style="flex:1;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--card-sub-bg,#F1F5F9);color:var(--text);border:1px solid var(--border,#CBD5E1);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;">
                     📞 Call
                   </a>
-                  <a href="https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Hello ${e.name}, from The Unique Haven Homes:`)}" target="_blank" class="btn-sm" style="flex:1;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#25D366;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+                  <a href="https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Hello ${e.name}, from Roost And Rest Stays:`)}" target="_blank" class="btn-sm" style="flex:1;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#25D366;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
                     💬 WhatsApp
                   </a>
                 ` : `
@@ -497,7 +497,7 @@ function renderEmployeeTableView(emps, isO, roomMap) {
                     ${cleanPhone ? `
                       <div style="display:flex;align-items:center;gap:6px;">
                         <span>${escapeHtml(e.phone)}</span>
-                        <a href="https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Hello ${e.name}, from The Unique Haven Homes:`)}" target="_blank" style="text-decoration:none;font-size:14px;" title="Chat on WhatsApp">💬</a>
+                        <a href="https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Hello ${e.name}, from Roost And Rest Stays:`)}" target="_blank" style="text-decoration:none;font-size:14px;" title="Chat on WhatsApp">💬</a>
                         <a href="tel:${escapeHtml(e.phone)}" style="text-decoration:none;font-size:14px;" title="Call">📞</a>
                       </div>
                     ` : '<span style="color:var(--muted);">-</span>'}
@@ -2063,7 +2063,7 @@ window.shareTaskWhatsApp = function(taskId) {
   const cleanPhone = (emp.phone || '').replace(/[^0-9]/g, '');
 
   const msg =
-`🔔 *Task Assigned — The Unique Haven Homes*
+`🔔 *Task Assigned — Roost And Rest Stays*
 ━━━━━━━━━━━━━━━━━━
 👤 *Staff Member:* ${empName}
 🏨 *Property:* ${propName}
@@ -2829,8 +2829,8 @@ window.exportAdvancesCSV = async function(targetEmpId = null) {
   const totalRepaid = advs.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
   const totalBal = totalGiven - totalRepaid;
 
-  let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - STAFF ADVANCES & REPAYMENTS REGISTER\n`;
-  csv += `CIN: U55101UP2024PTC202863 · Corporate Office: Lucknow, UP\n`;
+  let csv = `ROOST AND REST STAYS - STAFF ADVANCES & REPAYMENTS REGISTER\n`;
+  csv += `Corporate Office: Lucknow, UP\n`;
   csv += `Employee / Scope,"${empName} (${empSub})"\n`;
   csv += `Period / Date Filter,"${periodStr}"\n`;
   csv += `Exported On,"${new Date().toLocaleString('en-IN')}"\n`;
@@ -2860,7 +2860,7 @@ window.exportAdvancesCSV = async function(targetEmpId = null) {
   });
 
   csv += `\n"Total",,,,"${totalGiven}","${totalRepaid}",,"${totalBal}",,,,,\n`;
-  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.github.io"\n`;
 
   const cleanEmpSlug = String(empName).replace(/[^a-zA-Z0-9]/g, '_');
   const today = new Date().toISOString().slice(0, 10);
@@ -2916,7 +2916,7 @@ window.shareAdvancesWhatsApp = async function(targetEmpId = null) {
   const totalRepaid = advs.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
   const totalBal = totalGiven - totalRepaid;
 
-  let msg = `*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*\n`;
+  let msg = `*ROOST AND REST STAYS*\n`;
   msg += `*📄 Staff Salary Advance & Repayment Slip*\n`;
   msg += `━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `👤 *Employee:* ${empName}\n`;
@@ -2942,7 +2942,7 @@ window.shareAdvancesWhatsApp = async function(targetEmpId = null) {
 
   msg += `━━━━━━━━━━━━━━━━━━━━\n`;
   msg += `_Official computer-generated payroll record._\n`;
-  msg += `🌐 uniquehavenhomesstay.com`;
+  msg += `🌐 roostandrest.github.io`;
 
   const phone = empMeta?.phone ? String(empMeta.phone).replace(/\D/g, '') : '';
   const fullPhone = phone.length === 10 ? '91' + phone : phone;
@@ -3040,8 +3040,8 @@ window.printAdvancesReport = async function(targetEmpId = null) {
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:22px;">🏡</span>
             <div>
-              <h1 style="margin:0;font-size:17px;font-weight:900;letter-spacing:-0.2px;color:#0F172A;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</h1>
-              <div style="font-size:10.5px;color:#64748B;font-weight:600;margin-top:2px;">CIN: U55101UP2024PTC202863 · HRMS &amp; Staff Payroll Portal</div>
+              <h1 style="margin:0;font-size:17px;font-weight:900;letter-spacing:-0.2px;color:#0F172A;">ROOST AND REST STAYS</h1>
+              <div style="font-size:10.5px;color:#64748B;font-weight:600;margin-top:2px;">HRMS &amp; Staff Payroll Portal</div>
             </div>
           </div>
           <div style="margin-top:6px;display:inline-block;background:#F0FDFA;border:1px solid #99F6E4;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800;color:#0F766E;letter-spacing:0.4px;">
@@ -3153,7 +3153,7 @@ window.printAdvancesReport = async function(targetEmpId = null) {
 
       <!-- FOOTER NOTE -->
       <div style="margin-top:12px;border-top:1px solid #E2E8F0;padding-top:6px;font-size:9.5px;color:#94A3B8;text-align:center;">
-        THE UNIQUE HAVEN HOMES PRIVATE LIMITED · CIN: U55101UP2024PTC202863 · This is a computer generated payroll advance document · uniquehavenhomesstay.com
+        ROOST AND REST STAYS · This is a computer generated payroll advance document · roostandrest.github.io
       </div>
     </div>
   `;

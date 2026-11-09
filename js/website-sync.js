@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════
-   THE UNIQUE HAVEN HOMES — WEBSITE SYNC
+   ROOST AND REST STAYS — WEBSITE SYNC
    1. Leaflet Map: All 17 property pins in Gomti Nagar
    2. Live Availability: Supabase bookings → card badges
    ══════════════════════════════════════════════════════════════ */

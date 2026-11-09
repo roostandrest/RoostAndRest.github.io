@@ -1,13 +1,13 @@
 /**
  * 💵 Company Advances Module
- * Manager (Praveen) takes advance from owners (Firoz/Shahenshah)
+ * Manager (Praveen) takes advance from owners (Anwar/Shahenshah)
  * Links expenses to advances, tracks reconciliation
  */
 
 // Advance can come from:
 // 1. Company (TUHH PVT LTD - business fund)
 // 2-4. Personal (owner/manager's own money)
-const CA_OWNERS = ['🏢 Company (TUHH PVT LTD)', 'Firoz', 'Shahenshah', 'Praveen'];
+const CA_OWNERS = ['🏢 Company (TUHH PVT LTD)', 'Anwar', 'Shahenshah', 'Praveen'];
 
 window.renderCompanyAdvances = async function() {
   if (!['owner', 'admin', 'developer', 'manager'].includes(SESSION.role)) {

@@ -1,6 +1,6 @@
 /**
  * Investors Module
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 // ============ MANAGE INVESTORS ============
@@ -843,7 +843,7 @@ async function renderInvestorReport(investorId, roomId, month) {
     return `
       <div class="inv-page-footer">
         <div style="font-size:9px;color:#64748B;">
-          <strong style="color:#0F172A;">The Unique Haven Homes</strong> &bull; ${escapeHtml(room?.nickname || room?.property_name || roomId)} &bull; ${monthYear.toUpperCase()}
+          <strong style="color:#0F172A;">Roost And Rest Stays</strong> &bull; ${escapeHtml(room?.nickname || room?.property_name || roomId)} &bull; ${monthYear.toUpperCase()}
         </div>
         <div style="font-size:9.5px;font-weight:700;color:#0F172A;">
           Page ${pageNo} of ${totalPages}
@@ -901,7 +901,7 @@ async function renderInvestorReport(investorId, roomId, month) {
             <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;">
               <img src='assets/logo.svg' onerror="this.src='assets/logo.svg'" alt="TUHH Logo" style="width:42px;height:42px;border-radius:8px;background:#fff;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
               <div style="text-align:left;">
-                <div style="font-size:15px;letter-spacing:1px;font-weight:900;color:#FFFFFF;text-transform:uppercase;line-height:1.2;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+                <div style="font-size:15px;letter-spacing:1px;font-weight:900;color:#FFFFFF;text-transform:uppercase;line-height:1.2;">ROOST AND REST STAYS</div>
                 <div style="font-size:9px;color:#94A3B8;letter-spacing:0.8px;font-weight:600;margin-top:2px;">
                   CIN: U55101UP2026PTC244637 · Regd. with Dept. of Tourism, Govt. of UP & ROC Kanpur
                 </div>
@@ -937,7 +937,7 @@ async function renderInvestorReport(investorId, roomId, month) {
               <span>📋</span> 1. Executive Performance Summary
             </div>
             <p style="font-size:10.5px;line-height:1.45;text-align:justify;margin:6px 0 0 0;color:#334155;">
-              This audited monthly statement certifies the operational and financial performance of <strong>${room?.nickname || room?.property_name}</strong> for <strong>${monthYear}</strong> under the professional hospitality management of <strong>The Unique Haven Homes Private Limited</strong>. All bookings across Online Travel Agencies (Airbnb) and Direct Offline Concierge reservations have been reconciled and night-prorated.
+              This audited monthly statement certifies the operational and financial performance of <strong>${room?.nickname || room?.property_name}</strong> for <strong>${monthYear}</strong> under the professional hospitality management of <strong>Roost And Rest Stays</strong>. All bookings across Online Travel Agencies (Airbnb) and Direct Offline Concierge reservations have been reconciled and night-prorated.
             </p>
             <p style="font-size:10.5px;line-height:1.45;text-align:justify;margin:4px 0 0 0;color:#334155;">
               Operational disbursements including electricity, high-speed Wi-Fi, property caretaking, laundry, supplies, and facility maintenance have been deducted. The Net Operating Profit has been apportioned according to the governing <strong>${INVESTOR_POOL_PCT}% Investor Pool &amp; ${COMPANY_PCT}% Operator Share</strong> contractual agreement.
@@ -1005,7 +1005,7 @@ async function renderInvestorReport(investorId, roomId, month) {
               </thead>
               <tbody>
                 <tr>
-                  <td style="padding:5px 8px;border:1px solid #E2E8F0;font-weight:600;">The Unique Haven Homes Pvt. Ltd. (Operator)</td>
+                  <td style="padding:5px 8px;border:1px solid #E2E8F0;font-weight:600;">Roost And Rest Stays Pvt. Ltd. (Operator)</td>
                   <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;">${COMPANY_PCT}%</td>
                   <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:right;font-weight:700;">₹${companyAmount.toLocaleString('en-IN')}</td>
                   <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;color:#059669;font-weight:700;">Verified</td>
@@ -1189,14 +1189,14 @@ async function renderInvestorReport(investorId, roomId, month) {
                 <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Nisha Khan</div>
                 <div style="font-weight:800;font-size:11px;color:#0F172A;">NISHA KHAN</div>
                 <div style="font-size:9px;color:#475569;">Accounts &amp; Audit Controller</div>
-                <div style="font-size:8px;color:#64748B;">The Unique Haven Homes Pvt. Ltd.</div>
+                <div style="font-size:8px;color:#64748B;">Roost And Rest Stays Pvt. Ltd.</div>
               </div>
 
               <!-- Official Corporate Seal Stamp -->
               <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
                 <div style="width:105px;height:105px;border:2px dashed #0F172A;border-radius:50%;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#FFFFFF;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
                   <div style="font-size:7.5px;font-weight:900;color:#0F172A;text-transform:uppercase;letter-spacing:0.5px;text-align:center;line-height:1.1;">
-                    ★ THE UNIQUE HAVEN HOMES ★
+                    ★ ROOST AND REST STAYS ★
                   </div>
                   <div style="font-size:6.5px;color:#64748B;margin:2px 0;">PVT. LTD. · LUCKNOW</div>
                   <div style="font-size:7px;font-weight:800;color:#059669;background:#ECFDF5;padding:1px 4px;border-radius:3px;margin:1px 0;">
@@ -1211,10 +1211,10 @@ async function renderInvestorReport(investorId, roomId, month) {
                 <div style="font-size:9px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">
                   Approved for Disbursement:
                 </div>
-                <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Firoz Khan</div>
-                <div style="font-weight:800;font-size:11px;color:#0F172A;">FIROZ KHAN</div>
+                <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Anwar Ahmad</div>
+                <div style="font-weight:800;font-size:11px;color:#0F172A;">ANWAR AHMAD</div>
                 <div style="font-size:9px;color:#475569;">Director &amp; Asset Operations</div>
-                <div style="font-size:8px;color:#64748B;">The Unique Haven Homes Pvt. Ltd.</div>
+                <div style="font-size:8px;color:#64748B;">Roost And Rest Stays Pvt. Ltd.</div>
               </div>
             </div>
           </div>
@@ -1222,7 +1222,7 @@ async function renderInvestorReport(investorId, roomId, month) {
           <!-- Section 3.5: Corporate Legal Footer -->
           <div class="inv-keep-together" style="background:#0F172A;color:#94A3B8;padding:10px 12px;border-radius:6px;text-align:center;font-size:9px;line-height:1.45;">
             <div style="font-size:10.5px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">
-              THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+              ROOST AND REST STAYS
             </div>
             <div style="color:#CBD5E1;font-weight:600;">
               CIN: U55101UP2026PTC244637 · Registered with Dept. of Tourism, Govt. of Uttar Pradesh &amp; ROC Kanpur
@@ -1231,7 +1231,7 @@ async function renderInvestorReport(investorId, roomId, month) {
               Regd. Office: P NO 39 &amp; 40 RADHIKAPURI, INDIRA NAGAR TAKROHI, Lucknow, Uttar Pradesh - 226016
             </div>
             <div style="color:#94A3B8;font-size:8.5px;margin-top:2px;">
-              Official Portal: <span style="color:#FDE047;">uniquehavenhomesstay.com</span> · Direct Phone / WhatsApp: <span style="color:#FFFFFF;">+91 9450055554</span>
+              Official Portal: <span style="color:#FDE047;">roostandrest.github.io</span> · Direct Phone / WhatsApp: <span style="color:#FFFFFF;">+91 9807486555</span>
             </div>
             <div style="color:#64748B;font-size:8px;margin-top:3px;border-top:1px solid #1E293B;padding-top:3px;">
               ⚡ System Architecture &amp; Core Automation Developed by Praveen Singh
@@ -1652,7 +1652,7 @@ window.whatsappInvestorReport = async function(investorId, roomId, monthYear) {
         '   Rs.' + (b.total_amount || 0).toLocaleString('en-IN') + NL + NL;
     });
 
-    const msg = '*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*' + NL +
+    const msg = '*ROOST AND REST STAYS*' + NL +
       '*Investor Report — ' + monthName + '*' + NL + NL +
       '👤 Investor: *' + inv.name + '*' + NL +
       '🏠 Property: *' + roomName + '*' + NL + NL +
@@ -1671,11 +1671,11 @@ window.whatsappInvestorReport = async function(investorId, roomId, monthYear) {
       (bks.length > 0 ? '*📅 BOOKINGS:*' + NL + bkList : '_No bookings this month_' + NL + NL) +
       '━━━━━━━━━━━━━━━━━━━━' + NL +
       '📞 Contact:' + NL +
-      'Mr. Shahanshah - 9450055554' + NL +
-      'Mr. Firoz Khan - 8299600709' + NL +
+      'Mr. Shahanshah - 9807486555' + NL +
+      'Mr. Anwar Ahmad - 9807486555' + NL +
       '━━━━━━━━━━━━━━━━━━━━' + NL +
-      'THE UNIQUE HAVEN HOMES PRIVATE LIMITED' + NL +
-      'uniquehavenhomesstay.com' + NL +
+      'ROOST AND REST STAYS' + NL +
+      'roostandrest.github.io' + NL +
       '⚡ Developed by Praveen Singh';
 
     const phone = (inv.phone || '').replace(/[^0-9]/g, '');
@@ -2010,7 +2010,7 @@ window.shareInvestorReportWA = async function(investorId, roomId, selMonth) {
 
     const NL = String.fromCharCode(10);
     const message = 
-      '🏨 *THE UNIQUE HAVEN HOMES PRIVATE LIMITED*' + NL +
+      '🏨 *ROOST AND REST STAYS*' + NL +
       'Official Investor Statement · ' + monthYear + NL +
       '━━━━━━━━━━━━━━━━━━━━━' + NL +
       '👤 *Investor:* ' + (inv.name || 'Valued Partner') + NL +
@@ -2020,8 +2020,8 @@ window.shareInvestorReportWA = async function(investorId, roomId, selMonth) {
       'PDF statement available via CRM portal.' + NL + NL +
       '━━━━━━━━━━━━━━━━━━━━━' + NL +
       'Verified by: Nisha Khan (Accounts Controller)' + NL +
-      'Approved by: Firoz Khan (Director & Asset Operations)' + NL +
-      '📞 +91 9450055554 · 🌐 uniquehavenhomesstay.com';
+      'Approved by: Anwar Ahmad (Director & Asset Operations)' + NL +
+      '📞 +91 9807486555 · 🌐 roostandrest.github.io';
 
     if (finalPhone) {
       window.open('https://wa.me/' + finalPhone + '?text=' + encodeURIComponent(message), '_blank');
@@ -2184,7 +2184,7 @@ async function renderFriendsReport(investorId, roomId, month) {
           <div><strong style="color:#fff;">Report Date:</strong> ${today}</div>
         </div>
         <div style="font-size:11px;color:#64748B;margin-top:6px;">
-          🌐 uniquehavenhomesstay.com &bull; Hospitality Management System
+          🌐 roostandrest.github.io &bull; Hospitality Management System
         </div>
       </div>
     </div>
@@ -2369,7 +2369,7 @@ async function _originalQuickWhatsAppInvestor(investorId) {
     // Professional WhatsApp message
     const NL = String.fromCharCode(10);
     const message = 
-      '🏨 *THE UNIQUE HAVEN HOMES PRIVATE LIMITED*' + NL + NL +
+      '🏨 *ROOST AND REST STAYS*' + NL + NL +
       'Namaste ' + inv.name + ' ji 🙏' + NL + NL +
       'Umeed hai aap kushal honge.' + NL + NL +
       '📅 *' + monthName + '* ki monthly report attached hai (PDF).' + NL + NL +
@@ -2382,9 +2382,9 @@ async function _originalQuickWhatsAppInvestor(investorId) {
       '───────────────' + NL +
       '*Regards,*' + NL +
       'Team TUHH' + NL +
-      '📞 Mr. Shahanshah: 9450055554' + NL +
-      '📞 Mr. Firoz Khan: 8299600709' + NL +
-      '🌐 uniquehavenhomesstay.com';
+      '📞 Mr. Shahanshah: 9807486555' + NL +
+      '📞 Mr. Anwar Ahmad: 9807486555' + NL +
+      '🌐 roostandrest.github.io';
     
     const url = 'https://wa.me/' + finalPhone + '?text=' + encodeURIComponent(message);
     window.open(url, '_blank');
@@ -2540,11 +2540,11 @@ window.sendPlainEmail = async function(investorId) {
       '───────────────────────\n' +
       'Warm regards,\n\n' +
       'Team TUHH\n' +
-      'THE UNIQUE HAVEN HOMES PRIVATE LIMITED\n' +
+      'ROOST AND REST STAYS\n' +
       'CIN: U55101UP2026PTC244637\n' +
-      '📞 +91 9450055554\n' +
-      '📞 +91 9450055554 (WhatsApp)\n' +
-      '🌐 uniquehavenhomesstay.com\n' +
+      '📞 +91 9807486555\n' +
+      '📞 +91 9807486555 (WhatsApp)\n' +
+      '🌐 roostandrest.github.io\n' +
       '───────────────────────';
     
     const url = 'mailto:' + email + 

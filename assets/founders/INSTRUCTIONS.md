@@ -1,10 +1,10 @@
 # 📸 FOUNDER & LEADERSHIP PHOTO INSTRUCTIONS
 
-THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ROOST AND REST STAYS
 
 To update the photos of the Founders and Team on the website:
 
-1. **Mr. Firoz Khan** (Co-Founder & Owner)
+1. **Mr. Anwar Ahmad** (Co-Founder & Owner)
    - File Path: `assets/founders/firoz-khan.jpg`
    - Recommended Size: 800x800px (1:1 Square) or portrait JPG/PNG
 

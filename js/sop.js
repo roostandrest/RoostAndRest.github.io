@@ -1,6 +1,6 @@
 /**
  * SOP Module — Quick Action Guide (v2 Compact)
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 const SOP_SECTIONS = [

@@ -392,7 +392,7 @@
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
 
-    const title = cfg.title || 'The Unique Haven Homes';
+    const title = cfg.title || 'Roost And Rest Stays';
     const body = (cfg.message || '') + (cfg.sub ? ` • ${cfg.sub}` : '');
     const tag = 'uhhs-' + (cfg.entityId || Date.now());
 

@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * THE UNIQUE HAVEN HOMES (UHHS) — SMART BOOKING SYSTEM (Next-Gen)
+ * ROOST AND REST STAYS (UHHS) — SMART BOOKING SYSTEM (Next-Gen)
  * Developer: Praveen Singh
  * Zero-Error, Fast, Mobile-First Booking Engine & Command Center
  * =====================================================================
@@ -2242,7 +2242,7 @@ window.toggleClassicBookingView = function() {
 window.sendWhatsAppToGuest = function(phone, name, bookingId) {
   const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
   const target = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
-  const msg = encodeURIComponent(`Hi ${name || 'Guest'}, greetings from The Unique Haven Homes (TUHH Lucknow)! We are pleased to host you. Please let us know if you need any assistance with your stay.`);
+  const msg = encodeURIComponent(`Hi ${name || 'Guest'}, greetings from Roost And Rest Stays (TUHH Lucknow)! We are pleased to host you. Please let us know if you need any assistance with your stay.`);
   window.open(`https://wa.me/${target}?text=${msg}`, '_blank');
 };
 
@@ -3143,7 +3143,7 @@ window.loadSmartReceivers = async function() {
     sel.innerHTML = `
       <option value="">-- Select Team Member --</option>
       <option value="Shahenshah">👑 Shahenshah (Owner)</option>
-      <option value="Firoz">👑 Firoz (Owner)</option>
+      <option value="Anwar">👑 Anwar (Owner)</option>
       <option value="Manager">👔 Manager</option>
       <option value="Caretaker">🧹 Caretaker</option>
     `;
@@ -3725,7 +3725,7 @@ window.saveMultiSmartBooking = async function() {
     if (totalAdvance > 0) {
       const bksToProcess = (createdBookings && createdBookings.length > 0) ? createdBookings : roomInserts;
       const payDate = ci || new Date().toISOString().slice(0, 10);
-      const handoverStatus = (advMode === 'Cash' && !['Firoz', 'Shahenshah'].includes(advReceivedBy)) ? 'in_hand' : 'handed_over';
+      const handoverStatus = (advMode === 'Cash' && !['Anwar', 'Shahenshah'].includes(advReceivedBy)) ? 'in_hand' : 'handed_over';
       const meta = typeof approvalMeta === 'function' ? approvalMeta() : {};
 
       for (const cbk of bksToProcess) {
@@ -3883,7 +3883,7 @@ window.openGuestPassModal = function(bookingId, phone, guestName) {
   const origin = window.location.origin;
   const passUrl = `${origin}/guest.html?id=${encodeURIComponent(bookingId)}`;
   const cleanPhone = String(phone || '').replace(/[^0-9]/g, '').slice(-10);
-  const waMsg = encodeURIComponent(`Namaste ${guestName || 'Guest'}! 🙏\n\nHere is your Digital Stay Pass for Unique Haven Homes:\n👉 ${passUrl}\n\n• High-Speed WiFi credentials\n• Live Google Maps navigation\n• 1-Tap Housekeeping concierge\n• Digital Aadhaar / ID check-in\n\nLooking forward to hosting you!`);
+  const waMsg = encodeURIComponent(`Namaste ${guestName || 'Guest'}! 🙏\n\nHere is your Digital Stay Pass for Roost And Rest Stays:\n👉 ${passUrl}\n\n• High-Speed WiFi credentials\n• Live Google Maps navigation\n• 1-Tap Housekeeping concierge\n• Digital Aadhaar / ID check-in\n\nLooking forward to hosting you!`);
   const waLink = cleanPhone ? `https://wa.me/91${cleanPhone}?text=${waMsg}` : '';
 
   let overlay = document.getElementById('guestPassModalOverlay');

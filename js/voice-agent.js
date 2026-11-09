@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════
-   UNIQUE HAVEN HOMES — AI Voice Concierge "Nisha"
+   ROOST AND REST HOMES — AI Voice Concierge "Nisha"
    Powered by ElevenLabs Conversational AI
    
    Features:
@@ -14,7 +14,7 @@
   'use strict';
 
   const AGENT_ID   = 'agent_7401m3qdd9edenhr91tej83z3t7y';
-  const ADMIN_WA   = '919450055554'; // Mr. Shahanshah - WhatsApp number (no +)
+  const ADMIN_WA   = '919807486555'; // Mr. Shahanshah - WhatsApp number (no +)
 
   // ── Fallback rates (used if Supabase is unreachable) ──────────────
   const FALLBACK_RATES = [
@@ -90,7 +90,7 @@
       `  • ${r.property_name} (ID: ${r.room_id}) — ₹${Number(r.base_price).toLocaleString('en-IN')}/night | Max ${r.max_guests} guests`
     ).join('\n');
 
-    return `You are Nisha, the warm and professional AI voice concierge for "Unique Haven Homes" — Lucknow's finest luxury homestay brand.
+    return `You are Nisha, the warm and professional AI voice concierge for "Roost And Rest Stays" — Lucknow's finest luxury homestay brand.
 
 Today's Date: ${today}
 
@@ -135,7 +135,7 @@ LULLANPUR:
 - Direct Discount: Booking directly with us saves 15% to 20% compared to Airbnb/MakeMyTrip.
 - Group & Events: Grand Villas like Royal White House (up to 18 guests) and Gomti Grand Villa are perfect for weddings, birthdays, and family get-togethers.
 - Key Landmarks: 5 mins to Lulu Mall & Phoenix Palassio, 5 mins to Medanta Hospital, 7 mins to Ekana Stadium, 20 mins to CCS International Airport.
-- Direct WhatsApp & Calling: +91 94500 55554 (Mr. Shahanshah - Host & Co-Founder), +91 82996 00709 (Firoz Khan), +91 91941 09911 (Praveen Singh)
+- Direct WhatsApp & Calling: +91 94500 55554 (Mr. Shahanshah - Host & Co-Founder), +91 82996 00709 (Anwar Ahmad), +91 91941 09911 (Praveen Singh)
 
 ═══ LEAD CAPTURE — CRITICAL INSTRUCTIONS ═══
 When a guest: asks about any specific property, inquires about availability, mentions dates, or asks how to book — you MUST:
@@ -159,7 +159,7 @@ DO NOT end the call without attempting to collect contact info if the guest show
 ═══ FOR CUSTOM REQUESTS ═══
 - For instant dates lock or special corporate discount rates, guide them warmly to WhatsApp +91 94500 55554.
 
-Remember: Your goal is to make guests fall in love with Unique Haven Homes and get their contact info so our team can close the booking. Be genuine, be warm, be helpful!`;
+Remember: Your goal is to make guests fall in love with Roost And Rest Stays and get their contact info so our team can close the booking. Be genuine, be warm, be helpful!`;
   }
 
   // ── 3. SAVE LEAD TO SUPABASE ───────────────────────────────────────
@@ -197,7 +197,7 @@ Remember: Your goal is to make guests fall in love with Unique Haven Homes and g
 
     const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
     const adminMsg = encodeURIComponent(
-      `🔔 *New Lead — Unique Haven Homes*\n\n` +
+      `🔔 *New Lead — Roost And Rest Stays*\n\n` +
       `👤 *Name:* ${name || 'Unknown'}\n` +
       `📱 *Phone:* ${phone || 'N/A'}\n` +
       `🏠 *Interested in:* ${interested_property || 'General inquiry'}\n` +
@@ -208,10 +208,10 @@ Remember: Your goal is to make guests fall in love with Unique Haven Homes and g
 
     const guestMsg = encodeURIComponent(
       `Namaste ${name || ''}! 🙏\n\n` +
-      `Thank you for your interest in *Unique Haven Homes* Lucknow.\n\n` +
+      `Thank you for your interest in *Roost And Rest Stays* Lucknow.\n\n` +
       `You enquired about: *${interested_property || 'our properties'}*\n\n` +
       `Our team will share more details and check availability for you shortly.\n\n` +
-      `— Team Unique Haven Homes\n📍 Lucknow, UP`
+      `— Team Roost And Rest Stays\n📍 Lucknow, UP`
     );
 
     const notif = document.createElement('div');
@@ -451,7 +451,7 @@ Remember: Your goal is to make guests fall in love with Unique Haven Homes and g
     // Pre-fetch live rates
     await getRates();
 
-    const welcomeMsg = 'Namaste ji! Main Nisha hoon, The Unique Haven Homes Lucknow ki AI concierge. Lucknow me luxury 3BHK flat ya grand private villa booking ke baare me pooch sakte hain. Main aapki kya madad kar sakti hoon?';
+    const welcomeMsg = 'Namaste ji! Main Nisha hoon, Roost And Rest Stays Lucknow ki AI concierge. Lucknow me luxury 3BHK flat ya grand private villa booking ke baare me pooch sakte hain. Main aapki kya madad kar sakti hoon?';
 
     appendTranscript('agent', welcomeMsg);
     await speakAndListen(welcomeMsg);

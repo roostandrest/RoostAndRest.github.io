@@ -1,6 +1,6 @@
 /**
  * Universal Claims Manager (v8 MASTER FIXED)
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 function getClaimsDefaultFromDate() {
@@ -102,7 +102,7 @@ window.renderClaims = async function() {
             <strong style="font-size:16px;color:#15803D;">Roost Bank Account (Online Balance)</strong>
           </div>
           <div style="font-size:12px;color:#64748B;margin-top:2px;">
-            Money received online from Firoz &amp; spent via Roost-Bank (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
+            Money received online from Anwar &amp; spent via Roost-Bank (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
@@ -174,7 +174,7 @@ window.renderClaims = async function() {
               </span>
             </div>
             <div style="font-size:12px;color:#64748B;" id="today-proof-timestamp">
-              Automated Daily Closing Proof · The Unique Haven Homes
+              Automated Daily Closing Proof · Roost And Rest Stays
             </div>
           </div>
         </div>
@@ -260,7 +260,7 @@ window.renderClaims = async function() {
           🛡️ <strong>Owner Assurance:</strong> Automatically compiled from Roost-Bank bank receipts and verified vendor claims. Zero manual adjustments.
         </div>
         <div style="color:#92400E;font-weight:600;">
-          The Unique Haven Homes Private Limited
+          Roost And Rest Stays
         </div>
       </div>
     </div>
@@ -1685,7 +1685,7 @@ window.exportUhhsLedgerPDF = function(fDate, tDate, totalInflow, totalOutflow, n
 
       ${typeof window.getOfficialReportFooterHTML === 'function' ? window.getOfficialReportFooterHTML() : `
         <div style="margin-top:24px;padding-top:12px;border-top:1px solid #cbd5e1;text-align:center;font-size:11px;color:#64748b;">
-          <strong>THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong> &bull; uniquehavenhomesstay.com<br>
+          <strong>ROOST AND REST STAYS</strong> &bull; roostandrest.github.io<br>
           ⚡ Developed by Praveen Singh
         </div>
       `}
@@ -1949,7 +1949,7 @@ window.printClaimReportStatement = function() {
       </table>
       ${window.getOfficialReportFooterHTML ? window.getOfficialReportFooterHTML() : `
         <div style="margin-top:24px;padding-top:10px;border-top:1px solid #cbd5e1;text-align:center;font-size:10px;color:#64748b;">
-          <strong>THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong> &bull; uniquehavenhomesstay.com
+          <strong>ROOST AND REST STAYS</strong> &bull; roostandrest.github.io
         </div>
       `}
       <script>window.onload = function() { setTimeout(function(){ window.print(); }, 400); };</script>
@@ -1995,7 +1995,7 @@ window.copyClaimWhatsAppText = function() {
 
   const pendingAmt = Math.max(0, totalAmt - claimedAmt);
 
-  const text = `⚖️ *UNIVERSAL CLAIM STATEMENT (${payerLabel})*\n📅 Period: *${fDate}* → *${tDate}*\n📦 Total Items: *${items.length}*\n\n*ITEMIZED BREAKDOWN:*\n${listText}\n━━━━━━━━━━━━━━━━━━\n💰 *Total Expenses:* ₹${totalAmt.toLocaleString('en-IN')}\n✅ *Claimed / Settled:* ₹${claimedAmt.toLocaleString('en-IN')}\n👥 *Staff Advances:* ₹${advancesAmt.toLocaleString('en-IN')}\n💵 *NET PENDING TO SETTLE: ₹${pendingAmt.toLocaleString('en-IN')}*\n━━━━━━━━━━━━━━━━━━\n_The Unique Haven Homes CRM_`;
+  const text = `⚖️ *UNIVERSAL CLAIM STATEMENT (${payerLabel})*\n📅 Period: *${fDate}* → *${tDate}*\n📦 Total Items: *${items.length}*\n\n*ITEMIZED BREAKDOWN:*\n${listText}\n━━━━━━━━━━━━━━━━━━\n💰 *Total Expenses:* ₹${totalAmt.toLocaleString('en-IN')}\n✅ *Claimed / Settled:* ₹${claimedAmt.toLocaleString('en-IN')}\n👥 *Staff Advances:* ₹${advancesAmt.toLocaleString('en-IN')}\n💵 *NET PENDING TO SETTLE: ₹${pendingAmt.toLocaleString('en-IN')}*\n━━━━━━━━━━━━━━━━━━\n_Roost And Rest Stays CRM_`;
 
   navigator.clipboard.writeText(text).then(() => {
     if (window.fsn?.success) fsn.success('Copied', '📱 WhatsApp Claim Summary copied to clipboard!');
@@ -2169,7 +2169,7 @@ window.exportCompanyLedgerPDF = async function(fDate, tDate) {
     ) +
     '</tbody></table></div>' +
     '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #DDD6FE;text-align:center;font-size:11px;color:#64748b;">' +
-    '<strong>THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong> · uniquehavenhomesstay.com<br>⚡ Developed by Praveen Singh</div>' +
+    '<strong>ROOST AND REST STAYS</strong> · roostandrest.github.io<br>⚡ Developed by Praveen Singh</div>' +
     '<script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>' +
     '</body></html>';
   window.printDocumentHTML(html, title);
@@ -2256,7 +2256,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
             🏛️
           </div>
           <div>
-            <div style="font-size:15px;font-weight:900;color:#0f172a;letter-spacing:0.2px;">THE UNIQUE HAVEN HOMES</div>
+            <div style="font-size:15px;font-weight:900;color:#0f172a;letter-spacing:0.2px;">ROOST AND REST STAYS</div>
             <div style="font-size:11px;font-weight:700;color:#0284c7;text-transform:uppercase;">
               ${isRange ? 'Roost Bank Period Financial Statement' : 'Roost Bank Official Daily Statement'}
             </div>
@@ -2302,7 +2302,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
               ${isRange ? inStr : totalInflowStr}
             </div>
             <div style="font-size:10px;color:#166534;margin-top:2px;">
-              ${isRange ? `${inCnt} deposits in period` : 'Received from Firoz'}
+              ${isRange ? `${inCnt} deposits in period` : 'Received from Anwar'}
             </div>
           </div>
           <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:12px 14px;">
@@ -2366,7 +2366,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
           Zero manual adjustments · 100% Audit trail.
         </div>
         <div style="text-align:right;">
-          <strong style="color:#0284c7;">The Unique Haven Homes Pvt Ltd</strong><br>
+          <strong style="color:#0284c7;">ROOST AND REST STAYS</strong><br>
           <span style="color:#94a3b8;font-size:9.5px;">TUHH Financial Engine</span>
         </div>
       </div>
@@ -2441,7 +2441,7 @@ window.shareTodayBalanceWhatsApp = function() {
   const totalOut = document.getElementById('claims-od-outflow')?.innerText || ('₹' + (state.totalOutflow || 232460.46).toLocaleString('en-IN'));
 
   const text = isRange ? [
-    '🏦 *THE UNIQUE HAVEN HOMES PVT LTD*',
+    '🏦 *ROOST AND REST STAYS*',
     '📊 *Roost-Bank PERIOD FINANCIAL STATEMENT*',
     `📅 *Statement Period:* ${dateRangeFmt}`,
     `🕒 *Refreshed:* ${timeStr}`,
@@ -2454,14 +2454,14 @@ window.shareTodayBalanceWhatsApp = function() {
     `⚖️ *Net Period Delta:* *${netVal}*`,
     '────────────────────────────',
     '📈 *ALL-TIME LEDGER (Post-Checkpoint 17-Sep Onwards):*',
-    `• Total Inflow: ${totalIn} (from Firoz)`,
+    `• Total Inflow: ${totalIn} (from Anwar)`,
     `• Total Outflow: ${totalOut} (claims & spends)`,
     `• Running OD Balance: ${closeBal}`,
     '────────────────────────────',
     '_🛡️ Owner Assurance: Automatically compiled from verified Roost-Bank bank receipts & claims._',
     '_Generated by TUHH Financial Engine_'
   ].filter(Boolean).join('\n') : [
-    '🏦 *THE UNIQUE HAVEN HOMES PVT LTD*',
+    '🏦 *ROOST AND REST STAYS*',
     '📊 *DAILY Roost-Bank CLOSING & BALANCE STATEMENT*',
     `📅 *Statement Day:* ${state.dateFmt} | ${timeStr}`,
     '────────────────────────────',
@@ -2469,7 +2469,7 @@ window.shareTodayBalanceWhatsApp = function() {
     '🛡️ *Status:* Verified & Reconciled (Zero Discrepancy)',
     '────────────────────────────',
     '📈 *ALL-TIME LEDGER (Post-Checkpoint 17-Sep):*',
-    `📥 *Total Deposited (Inflow):* ${totalIn} (from Firoz)`,
+    `📥 *Total Deposited (Inflow):* ${totalIn} (from Anwar)`,
     `📤 *Total Utilized (Outflow):* ${totalOut} (claims & spends)`,
     `⚖️ *Net Balance:* ${closeBal}`,
     '────────────────────────────',

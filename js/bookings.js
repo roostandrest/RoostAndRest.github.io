@@ -1,6 +1,6 @@
 /**
  * Bookings Module
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 // ═══ APPROVAL WORKFLOW HELPERS ═══
@@ -130,7 +130,7 @@ window.rejectBooking = async function(bkId) {
   if (window.closeBookingDrawer) closeBookingDrawer();
 };
 
-// ─── FOUNDER SPECIAL DISCOUNT MODAL (Mr. Firoz Khan & Mr. Shahanshah) ───
+// ─── FOUNDER SPECIAL DISCOUNT MODAL (Mr. Anwar Ahmad & Mr. Shahanshah) ───
 window.openFounderDiscountModal = async function(bkId) {
   if (!isTrustedUser()) { fsn.error('Denied', 'Only founders/owners can apply special discounts'); return; }
   
@@ -162,7 +162,7 @@ window.openFounderDiscountModal = async function(bkId) {
           <div style="font-size:24px;">👑</div>
           <div>
             <div style="font-size:16px;font-weight:800;letter-spacing:-0.02em;">Founder Special Discount</div>
-            <div style="font-size:11.5px;opacity:0.9;">Mr. Firoz Khan &amp; Mr. Shahanshah Exclusive Host Authority</div>
+            <div style="font-size:11.5px;opacity:0.9;">Mr. Anwar Ahmad &amp; Mr. Shahanshah Exclusive Host Authority</div>
           </div>
         </div>
         <button onclick="document.getElementById('founderDiscountModalOverlay').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;font-weight:700;">✕</button>
@@ -188,8 +188,8 @@ window.openFounderDiscountModal = async function(bkId) {
           <label style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">Discount Granted By:</label>
           <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;">
             <button type="button" class="fd-auth-btn" data-auth="Mr. Shahanshah" onclick="window.selectFdAuth(this)" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#334155;cursor:pointer;">Shahanshah</button>
-            <button type="button" class="fd-auth-btn" data-auth="Mr. Firoz Khan" onclick="window.selectFdAuth(this)" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#334155;cursor:pointer;">Firoz Khan</button>
-            <button type="button" class="fd-auth-btn active" data-auth="Founders Shahanshah &amp; Firoz" onclick="window.selectFdAuth(this)" style="background:#e0e7ff;border:1.5px solid #6366f1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#4338ca;cursor:pointer;">Both Founders</button>
+            <button type="button" class="fd-auth-btn" data-auth="Mr. Anwar Ahmad" onclick="window.selectFdAuth(this)" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#334155;cursor:pointer;">Anwar Ahmad</button>
+            <button type="button" class="fd-auth-btn active" data-auth="Founders Shahanshah &amp; Anwar" onclick="window.selectFdAuth(this)" style="background:#e0e7ff;border:1.5px solid #6366f1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#4338ca;cursor:pointer;">Both Founders</button>
           </div>
         </div>
 
@@ -237,7 +237,7 @@ window.openFounderDiscountModal = async function(bkId) {
         <!-- Founder Notes -->
         <div>
           <label style="display:block;font-size:11.5px;font-weight:700;color:#64748b;margin-bottom:4px;">Booking Note / Special Privilege Reason</label>
-          <input type="text" id="fdNote" value="Special Founder Discount approved by Shahanshah &amp; Firoz Khan" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;box-sizing:border-box;" />
+          <input type="text" id="fdNote" value="Special Founder Discount approved by Shahanshah &amp; Anwar Ahmad" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;box-sizing:border-box;" />
         </div>
 
       </div>
@@ -262,7 +262,7 @@ window.openFounderDiscountModal = async function(bkId) {
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   window._fdOrigTotal = origTotal;
-  window._fdSelectedAuth = 'Founders Shahanshah & Firoz';
+  window._fdSelectedAuth = 'Founders Shahanshah & Anwar';
   window.recalcFd();
 };
 
@@ -277,7 +277,7 @@ window.selectFdAuth = function(btn) {
   btn.style.background = '#e0e7ff';
   btn.style.borderColor = '#6366f1';
   btn.style.color = '#4338ca';
-  window._fdSelectedAuth = btn.getAttribute('data-auth') || 'Founders Shahanshah & Firoz';
+  window._fdSelectedAuth = btn.getAttribute('data-auth') || 'Founders Shahanshah & Anwar';
   const noteEl = document.getElementById('fdNote');
   if (noteEl) {
     noteEl.value = `Special Founder Discount approved by ${window._fdSelectedAuth}`;
@@ -322,7 +322,7 @@ window.submitFounderDiscount = async function(bkId, origTotal, andApprove) {
   if (!isTrustedUser()) { fsn.error('Denied', 'Only owner/developer can modify discount'); return; }
   const discountAmt = window._fdCalculatedDiscount !== undefined ? window._fdCalculatedDiscount : 0;
   const finalTotal = window._fdCalculatedFinal !== undefined ? window._fdCalculatedFinal : origTotal;
-  const auth = window._fdSelectedAuth || 'Founders Shahanshah & Firoz';
+  const auth = window._fdSelectedAuth || 'Founders Shahanshah & Anwar';
   const customNote = document.getElementById('fdNote')?.value?.trim() || `Special Founder Discount approved by ${auth}`;
 
   const updatePayload = {
@@ -1047,9 +1047,9 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
             </div>
             <div style="flex:1;min-width:230px;">
               <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:6px;font-size:12px;margin-bottom:10px;">
-                <div><span style="color:#64748B;font-size:11px;">Beneficiary:</span> <strong style="color:#0F172A;">Mr. Firoz Khan</strong></div>
+                <div><span style="color:#64748B;font-size:11px;">Beneficiary:</span> <strong style="color:#0F172A;">Mr. Anwar Ahmad</strong></div>
                 <div><span style="color:#64748B;font-size:11px;">Official UPI ID:</span> <strong style="color:#4338CA;font-family:monospace;font-size:12.5px;">9807486555@upi</strong></div>
-                <div><span style="color:#64748B;font-size:11px;">PhonePe / Mobile:</span> <strong style="color:#0F172A;">8299600709</strong></div>
+                <div><span style="color:#64748B;font-size:11px;">PhonePe / Mobile:</span> <strong style="color:#0F172A;">9807486555</strong></div>
                 <div><span style="color:#64748B;font-size:11px;">Auto-coded Due:</span> <strong style="color:#DC2626;">₹${totalDue.toLocaleString('en-IN')}</strong></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -1354,7 +1354,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
       txt += `${i + 1}. ${formatDateDisplay(b.check_in)} -> ${formatDateDisplay(b.check_out)} (${propLabel(b.rooms) || b.room_id}) | Billed: Rs.${(b.total_amount || 0).toLocaleString('en-IN')} | Paid: Rs.${pd.toLocaleString('en-IN')} | Due: Rs.${d.toLocaleString('en-IN')}\n`;
     });
     txt += `\nNet Balance Due: Rs.${totDue.toLocaleString('en-IN')}\n`;
-    txt += `UPI: 9807486555@upi (Mr. Firoz Khan) | Contact: 8299600709\n`;
+    txt += `UPI: 9807486555@upi (Mr. Anwar Ahmad) | Contact: 9807486555\n`;
 
     navigator.clipboard.writeText(txt).then(() => {
       fsn.success('Copied', 'Guest statement copied to clipboard!');
@@ -1410,7 +1410,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
       const notes = (p.notes || '-').replace(/"/g, '""');
       csv += `"${p.payment_date || '-'}","${p.amount || 0}","${p.payment_mode || '-'}","${roomName}","${notes}"\n`;
     });
-    csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · roostandrest.com"\n`;
+    csv += `\n"ROOST AND REST STAYS"\n"roostandrest.com"\n`;
 
     const cleanName = String(resolvedGuestName || 'Guest').replace(/[^a-zA-Z0-9_-]/g, '_');
     window.exportCSV(csv, `Guest_Statement_${cleanName}_${new Date().toISOString().slice(0, 10)}.csv`);
@@ -1585,9 +1585,9 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
           <div style="display:flex;align-items:center;gap:14px;">
             <img src="assets/logo.svg" alt="TUHH Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='assets/logo.svg';" />
             <div>
-              <div style="font-size:18px;font-weight:900;letter-spacing:0.5px;color:#FFFFFF;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+              <div style="font-size:18px;font-weight:900;letter-spacing:0.5px;color:#FFFFFF;">ROOST AND REST STAYS</div>
               <div style="font-size:12.5px;font-weight:700;color:#FCD34D;margin-top:2px;letter-spacing:0.3px;">OFFICIAL GUEST STATEMENT OF ACCOUNT & LEDGER (अतिथि खाता विवरण)</div>
-              <div style="font-size:9.5px;color:#94A3B8;margin-top:3px;">Govt. Registered Homestay (Dept. of Tourism, UP) · CIN: U55101UP2024PTC202863 · Lucknow, Uttar Pradesh</div>
+              <div style="font-size:9.5px;color:#94A3B8;margin-top:3px;">Govt. Registered Homestay (Dept. of Tourism, UP) · Lucknow, Uttar Pradesh</div>
             </div>
           </div>
           <div style="text-align:right;font-size:10px;color:#94A3B8;line-height:1.45;flex-shrink:0;">
@@ -1762,7 +1762,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
             <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:6px;font-size:11px;">
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Beneficiary / Receiver</div>
-                <div style="font-size:12px;font-weight:800;color:#0F172A;margin-top:1px;">Mr. Firoz Khan</div>
+                <div style="font-size:12px;font-weight:800;color:#0F172A;margin-top:1px;">Mr. Anwar Ahmad</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Official UPI ID</div>
@@ -1794,8 +1794,8 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
 
       <!-- Legal Footer & Digital Seal -->
       <div style="margin-top:20px;text-align:center;font-size:10px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:10px;page-break-inside:avoid;">
-        <div style="font-weight:700;color:#0F172A;font-size:11px;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
-        <div>CIN: U55101UP2024PTC202863 · Govt. Registered Homestay · Computer-Generated Official Ledger</div>
+        <div style="font-weight:700;color:#0F172A;font-size:11px;">ROOST AND REST STAYS</div>
+        <div>Govt. Registered Homestay · Computer-Generated Official Ledger</div>
         <div style="margin-top:3px;color:#94A3B8;">Developed by Praveen Singh · Authenticated CRM Statement Record</div>
       </div>
 
@@ -1903,7 +1903,7 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     ? `⚠️ *TOTAL BALANCE DUE: ₹${totalDue.toLocaleString('en-IN')}*${NL}Kindly clear the outstanding dues at your earliest convenience.${NL}`
     : `✅ *Account Status: Fully Settled - Thank You!*${NL}`;
 
-  const msg = `*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*${NL}` +
+  const msg = `*ROOST AND REST STAYS*${NL}` +
     `*GUEST STATEMENT / KHATA (खाता विवरण)*${NL}` +
     `━━━━━━━━━━━━━━━━━━━━━━━━━━${NL}` +
     `👤 *Guest:* ${guestName}${NL}` +
@@ -1925,12 +1925,12 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     dueLine + `${NL}` +
     `*Payment Account (UPI):*${NL}` +
     `• UPI ID: 9807486555@upi${NL}` +
-    `• Receiver: Mr. Firoz Khan (PhonePe / GPay: 8299600709)${NL}` +
+    `• Receiver: Mr. Anwar Ahmad (PhonePe / GPay: 9807486555)${NL}` +
     (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR${NL}` : '') +
     `${NL}` +
     `*Helpline:*${NL}` +
-    `• Mr. Firoz Khan: 8299600709${NL}${NL}` +
-    `THE UNIQUE HAVEN HOMES PRIVATE LIMITED\nDeveloped by Praveen Singh`;
+    `• Mr. Anwar Ahmad: 9807486555${NL}${NL}` +
+    `ROOST AND REST STAYS\nDeveloped by Praveen Singh`;
 
   const shareModal = document.createElement('div');
   shareModal.className = 'modal-overlay';
@@ -4277,7 +4277,7 @@ async function saveBooking() {
 
     const advMode = document.getElementById('advMode').value;
     const receivedBy = (window.getAdvReceivedBy && window.getAdvReceivedBy()) || null;
-    const handoverStatus = (advMode === 'Cash' && !['Firoz','Shahenshah'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
+    const handoverStatus = (advMode === 'Cash' && !['Anwar','Shahenshah'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
     
     // ✅ VALIDATION: If advance > 0, must select who received
     if (adv > 0 && !receivedBy) {
@@ -6092,7 +6092,7 @@ async function loadReceiveByHolders() {
     owners.unshift('ROOST-BANK');
   }
   if (!owners.some(o => (o || '').toLowerCase() === 'firoz')) {
-    owners.unshift('Firoz');
+    owners.unshift('Anwar');
   }
 
   window._receiveHoldersCache = {
@@ -6184,7 +6184,7 @@ window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, c
       }
     }
   } else if (mode === 'UPI' || mode === 'Bank') {
-    if (finalHolders.includes('Firoz')) selectEl.value = 'Firoz';
+    if (finalHolders.includes('Anwar')) selectEl.value = 'Anwar';
     else if (finalHolders.length > 0) selectEl.value = finalHolders[0];
     if (customEl) customEl.style.display = 'none';
   } else if (customEl) {
@@ -6222,14 +6222,14 @@ window.onPayModeChange = async function() {
   if (!receivedByEl) return;
   let curr = typeof getReceiverValue === 'function' ? getReceiverValue('payReceivedBy', 'payReceivedByCustom') : receivedByEl.value;
   if (mode === 'UPI') {
-    // When UPI is selected, auto-default to Firoz
+    // When UPI is selected, auto-default to Anwar
     if (!curr || curr === 'Cash' || curr === 'Shahenshah' || curr === 'Praveen') {
-      curr = 'Firoz';
+      curr = 'Anwar';
     }
   }
   await window.populateReceivedByDropdown(receivedByEl, mode, curr, custom);
   if (mode === 'UPI' && (!receivedByEl.value || receivedByEl.value === '')) {
-    receivedByEl.value = 'Firoz';
+    receivedByEl.value = 'Anwar';
   }
 };
 
@@ -6358,8 +6358,8 @@ async function savePaymentModal(bkId) {
   }
 
   const mode = document.getElementById('payMode')?.value;
-  if (mode === "Airbnb Payout") receivedBy = "Firoz";
-  if (!receivedBy || receivedBy.trim() === "") receivedBy = "Firoz";
+  if (mode === "Airbnb Payout") receivedBy = "Anwar";
+  if (!receivedBy || receivedBy.trim() === "") receivedBy = "Anwar";
   const payDate = document.getElementById('payDate')?.value;
   const userNotes = document.getElementById('payNotes')?.value?.trim() || null;
 
@@ -6527,7 +6527,7 @@ async function savePaymentModal(bkId) {
       booking_id: bkId, amount: paymentForCurrent,
       payment_mode: mode,
       received_by: receivedBy,
-      handover_status: (mode === "Cash" && !["Firoz","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+      handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
       payment_date: payDate,
       paid_at: new Date().toISOString(),
       notes: userNotes,
@@ -6583,7 +6583,7 @@ async function savePaymentModal(bkId) {
         payment_mode: mode,
         payment_date: payDate,
         paid_at: new Date().toISOString(),
-        received_by: receivedBy || "Firoz", handover_status: (mode === "Cash" && !["Firoz","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+        received_by: receivedBy || "Anwar", handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
         notes: (userNotes ? userNotes + ' | ' : '') + `Auto-adjusted from booking ${bkId}`,
         created_by: SESSION.userId,
         ...approvalMeta()
@@ -6610,7 +6610,7 @@ async function savePaymentModal(bkId) {
       payment_date: payDate,
       paid_at: new Date().toISOString(),
       notes: (userNotes ? userNotes + ' | ' : '') + 'Advance / extra payment',
-      received_by: receivedBy || "Firoz", handover_status: (mode === "Cash" && !["Firoz","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+      received_by: receivedBy || "Anwar", handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
       created_by: SESSION.userId,
       ...approvalMeta()
     };
@@ -6726,7 +6726,7 @@ async function saveEditPayment(payId, bkId) {
     return;
   }
   
-  const handoverStatus = (mode === 'Cash' && !['Firoz','Shahenshah'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
+  const handoverStatus = (mode === 'Cash' && !['Anwar','Shahenshah'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
   
   const payPatch = {
     amount: amount,
@@ -6985,7 +6985,7 @@ async function exportBookingsCSV() {
   const prop = SESSION.bookingPropFilter || '';
   const search = SESSION.bookingSearch || '';
 
-  let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - BOOKINGS REPORT\n`;
+  let csv = `ROOST AND REST STAYS - BOOKINGS REPORT\n`;
   csv += `Generated On,"${dateStr} ${now.toLocaleTimeString('en-IN')}"\n`;
   if (prop) csv += `Property Filter,"${prop}"\n`;
   if (period) csv += `Period Filter,"${period}"\n`;
@@ -7026,7 +7026,7 @@ async function exportBookingsCSV() {
   });
 
   csv += `\nTotal (${count} Bookings),,,,,,"Totals:",${totalAmount},${totalPaid},${totalDue}\n`;
-  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · roostandrest.com"\n`;
+  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.com"\n`;
 
   const fileName = `Bookings_Report_${prop ? String(prop).replace(/[\/\\:*?"<>|]/g, '-') + '_' : ''}${todayIso}.csv`;
   if (typeof window.exportCSV === 'function') {
@@ -8189,7 +8189,7 @@ async function autoFixOverflowPayments(silent = false) {
         payment_mode: 'Adjustment',
         payment_date: new Date().toISOString().slice(0, 10),
         notes: 'Overflow auto-adjusted → ' + a.toBk + ' (' + a.toRoom + ')',
-        received_by: "Firoz", handover_status: "handed_over",
+        received_by: "Anwar", handover_status: "handed_over",
         created_by: SESSION.userId,
         verification_status: 'verified'
       });
@@ -8201,7 +8201,7 @@ async function autoFixOverflowPayments(silent = false) {
         payment_mode: 'Adjustment',
         payment_date: new Date().toISOString().slice(0, 10),
         notes: 'Overflow received from ' + a.fromBk + ' (' + a.fromRoom + ')',
-        received_by: "Firoz", handover_status: "handed_over",
+        received_by: "Anwar", handover_status: "handed_over",
         created_by: SESSION.userId,
         verification_status: 'verified'
       });
@@ -8291,7 +8291,7 @@ window.onAdvanceModeChange = async function() {
   } else {
     // UPI/Bank/Airbnb: only company accounts (final)
     if (!finalHolders.some(o => (o || '').toLowerCase() === 'firoz')) {
-      finalHolders.unshift('Firoz');
+      finalHolders.unshift('Anwar');
     }
     if (finalHolders.length) {
       html += '<optgroup label="🏢 Company Accounts">';
@@ -8305,15 +8305,15 @@ window.onAdvanceModeChange = async function() {
   
   // Auto-select for online modes
   if (mode === 'UPI') {
-    // UPI hamesha Firoz ke account me
-    dropdown.value = 'Firoz';
+    // UPI hamesha Anwar ke account me
+    dropdown.value = 'Anwar';
     if (!dropdown.value && finalHolders.length > 0) {
       dropdown.value = finalHolders[0];
     }
   } else if (mode === 'Bank' || mode === 'Airbnb Payout') {
-    // Bank/Airbnb → company account (Firoz default)
-    if (finalHolders.includes('Firoz')) {
-      dropdown.value = 'Firoz';
+    // Bank/Airbnb → company account (Anwar default)
+    if (finalHolders.includes('Anwar')) {
+      dropdown.value = 'Anwar';
     } else if (finalHolders.length === 1) {
       dropdown.value = finalHolders[0];
     }
@@ -8452,16 +8452,16 @@ window.onAdvanceModeChange = async function() {
   
   // Auto-select for online modes
   if (mode === 'UPI') {
-    // UPI hamesha Firoz ke account me
-    if (finalHolders.includes('Firoz')) {
-      dropdown.value = 'Firoz';
+    // UPI hamesha Anwar ke account me
+    if (finalHolders.includes('Anwar')) {
+      dropdown.value = 'Anwar';
     } else if (finalHolders.length > 0) {
       dropdown.value = finalHolders[0];
     }
   } else if (mode === 'Bank' || mode === 'Airbnb Payout') {
-    // Bank/Airbnb → company account (Firoz default)
-    if (finalHolders.includes('Firoz')) {
-      dropdown.value = 'Firoz';
+    // Bank/Airbnb → company account (Anwar default)
+    if (finalHolders.includes('Anwar')) {
+      dropdown.value = 'Anwar';
     } else if (finalHolders.length === 1) {
       dropdown.value = finalHolders[0];
     }
@@ -8600,16 +8600,16 @@ window.onAdvanceModeChange = async function() {
   
   // Auto-select for online modes
   if (mode === 'UPI') {
-    // UPI hamesha Firoz ke account me
-    if (finalHolders.includes('Firoz')) {
-      dropdown.value = 'Firoz';
+    // UPI hamesha Anwar ke account me
+    if (finalHolders.includes('Anwar')) {
+      dropdown.value = 'Anwar';
     } else if (finalHolders.length > 0) {
       dropdown.value = finalHolders[0];
     }
   } else if (mode === 'Bank' || mode === 'Airbnb Payout') {
-    // Bank/Airbnb → company account (Firoz default)
-    if (finalHolders.includes('Firoz')) {
-      dropdown.value = 'Firoz';
+    // Bank/Airbnb → company account (Anwar default)
+    if (finalHolders.includes('Anwar')) {
+      dropdown.value = 'Anwar';
     } else if (finalHolders.length === 1) {
       dropdown.value = finalHolders[0];
     }
@@ -8734,9 +8734,9 @@ window.onEditPayModeChange = async function() {
   html += '<option value="__custom__">➕ Custom Name...</option>';
   dropdown.innerHTML = html;
   
-  // Auto-select Firoz for online modes
+  // Auto-select Anwar for online modes
   if (mode === 'UPI' || mode === 'Bank' || mode === 'Airbnb Payout') {
-    if (finalH.includes('Firoz')) dropdown.value = 'Firoz';
+    if (finalH.includes('Anwar')) dropdown.value = 'Anwar';
     else if (finalH.length === 1) dropdown.value = finalH[0];
   }
   
@@ -9077,7 +9077,7 @@ window.toggleSecurityDepositBox = function() {
     loadReceiveByHolders().then(data => {
       const el = document.getElementById('secReceivedBy');
       if (!el) return;
-      const curr = el.value || 'Firoz';
+      const curr = el.value || 'Anwar';
       const allHolders = [...(data.owners || []), ...(data.manager || []), ...(data.employees || [])];
       el.innerHTML = '<option value="">-- Select Receiver --</option>' +
         allHolders.map(h => `<option value="${escapeHtml(h)}" ${h === curr ? 'selected' : ''}>${escapeHtml(h)}</option>`).join('');
@@ -9540,10 +9540,10 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
   const PAYEES = {
     firoz: {
       id: 'firoz',
-      name: 'Mr. Firoz Khan',
+      name: 'Mr. Anwar Ahmad',
       upiId: '9807486555@upi',
       phone: '+91 82996 00709',
-      label: 'Mr. Firoz Khan (Default)'
+      label: 'Mr. Anwar Ahmad (Default)'
     },
     praveen: {
       id: 'praveen',
@@ -9635,12 +9635,12 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
           </div>
         </div>
 
-        <!-- 3. Receiving Account (Default: Firoz Khan) -->
+        <!-- 3. Receiving Account (Default: Anwar Ahmad) -->
         <div>
-          <label style="display:block;font-size:10.5px;font-weight:700;color:#64748B;margin-bottom:3px;">Receiving Account (Default: Firoz Khan)</label>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:#64748B;margin-bottom:3px;">Receiving Account (Default: Anwar Ahmad)</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <button type="button" id="cpqrPayeeFiroz" style="padding:6px 8px;border-radius:8px;border:2px solid #4F46E5;background:#EEF2FF;cursor:pointer;text-align:left;box-shadow:0 2px 6px rgba(79,70,229,0.15);transition:all 0.2s;">
-              <div style="font-size:11px;font-weight:800;color:#312E81;">👑 Firoz (Default)</div>
+            <button type="button" id="cpqrPayeeAnwar" style="padding:6px 8px;border-radius:8px;border:2px solid #4F46E5;background:#EEF2FF;cursor:pointer;text-align:left;box-shadow:0 2px 6px rgba(79,70,229,0.15);transition:all 0.2s;">
+              <div style="font-size:11px;font-weight:800;color:#312E81;">👑 Anwar (Default)</div>
               <div style="font-size:9.5px;color:#4338CA;font-family:monospace;margin-top:1px;font-weight:700;">9807486555@upi</div>
             </button>
             <button type="button" id="cpqrPayeePraveen" style="padding:6px 8px;border-radius:8px;border:1.5px solid #CBD5E1;background:#FFFFFF;cursor:pointer;text-align:left;transition:all 0.2s;">
@@ -9667,7 +9667,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
           
           <!-- Card Header Banner -->
           <div style="background:linear-gradient(135deg, #0F172A 0%, #1E1B4B 60%, #4338CA 100%);color:#FFFFFF;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
-            <div style="font-size:9.5px;font-weight:800;letter-spacing:0.5px;color:#FCD34D;">THE UNIQUE HAVEN HOMES</div>
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:0.5px;color:#FCD34D;">ROOST AND REST STAYS</div>
             <div style="display:flex;gap:3px;">
               <span style="background:#5F259F;color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:3px;">PhonePe</span>
               <span style="background:#1A73E8;color:#fff;font-size:8px;font-weight:800;padding:1px 4px;border-radius:3px;">GPay</span>
@@ -9702,7 +9702,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span style="color:#64748B;font-weight:600;">👤 Payee (UPI):</span>
-              <span id="cpqrCardPayee" style="font-weight:700;color:#0F172A;">Mr. Firoz Khan (9807486555@upi)</span>
+              <span id="cpqrCardPayee" style="font-weight:700;color:#0F172A;">Mr. Anwar Ahmad (9807486555@upi)</span>
             </div>
           </div>
         </div>
@@ -9756,7 +9756,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
   const sendWaBtn = overlay.querySelector('#cpqrSendWaBtn');
   const downloadBtn = overlay.querySelector('#cpqrDownloadBtn');
   const copyBtn = overlay.querySelector('#cpqrCopyBtn');
-  const payeeFirozBtn = overlay.querySelector('#cpqrPayeeFiroz');
+  const payeeAnwarBtn = overlay.querySelector('#cpqrPayeeAnwar');
   const payeePraveenBtn = overlay.querySelector('#cpqrPayeePraveen');
   const copyPublicLinkBtn = overlay.querySelector('#cpqrCopyPublicLinkBtn');
 
@@ -9767,12 +9767,12 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
   function setPayee(key) {
     currentPayee = key;
     if (key === 'firoz') {
-      payeeFirozBtn.style.border = '2px solid #4F46E5';
-      payeeFirozBtn.style.background = '#EEF2FF';
-      payeeFirozBtn.style.boxShadow = '0 2px 8px rgba(79,70,229,0.15)';
-      payeeFirozBtn.children[0].style.color = '#312E81';
-      payeeFirozBtn.children[1].style.color = '#4338CA';
-      payeeFirozBtn.children[1].style.fontWeight = '700';
+      payeeAnwarBtn.style.border = '2px solid #4F46E5';
+      payeeAnwarBtn.style.background = '#EEF2FF';
+      payeeAnwarBtn.style.boxShadow = '0 2px 8px rgba(79,70,229,0.15)';
+      payeeAnwarBtn.children[0].style.color = '#312E81';
+      payeeAnwarBtn.children[1].style.color = '#4338CA';
+      payeeAnwarBtn.children[1].style.fontWeight = '700';
 
       payeePraveenBtn.style.border = '1.5px solid #CBD5E1';
       payeePraveenBtn.style.background = '#FFFFFF';
@@ -9788,17 +9788,17 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
       payeePraveenBtn.children[1].style.color = '#4338CA';
       payeePraveenBtn.children[1].style.fontWeight = '700';
 
-      payeeFirozBtn.style.border = '1.5px solid #CBD5E1';
-      payeeFirozBtn.style.background = '#FFFFFF';
-      payeeFirozBtn.style.boxShadow = 'none';
-      payeeFirozBtn.children[0].style.color = '#0F172A';
-      payeeFirozBtn.children[1].style.color = '#64748B';
-      payeeFirozBtn.children[1].style.fontWeight = 'normal';
+      payeeAnwarBtn.style.border = '1.5px solid #CBD5E1';
+      payeeAnwarBtn.style.background = '#FFFFFF';
+      payeeAnwarBtn.style.boxShadow = 'none';
+      payeeAnwarBtn.children[0].style.color = '#0F172A';
+      payeeAnwarBtn.children[1].style.color = '#64748B';
+      payeeAnwarBtn.children[1].style.fontWeight = 'normal';
     }
     updateLivePreview();
   }
 
-  payeeFirozBtn.addEventListener('click', () => setPayee('firoz'));
+  payeeAnwarBtn.addEventListener('click', () => setPayee('firoz'));
   payeePraveenBtn.addEventListener('click', () => setPayee('praveen'));
 
   if (copyPublicLinkBtn) {
@@ -9904,7 +9904,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     ctx.textAlign = 'center';
     ctx.fillStyle = '#FFFFFF';
     ctx.font = 'bold 26px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
-    ctx.fillText('THE UNIQUE HAVEN HOMES', 400, 62);
+    ctx.fillText('ROOST AND REST STAYS', 400, 62);
 
     ctx.fillStyle = '#FCD34D';
     ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';

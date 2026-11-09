@@ -1,6 +1,6 @@
 /**
  * Daily Report Generator - UPGRADED
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 async function renderDailyReport(selectedDate) {
@@ -87,7 +87,7 @@ async function renderDailyReport(selectedDate) {
     dates.push(d.toISOString().slice(0, 10));
   }
 
-  const brand = cfg?.company_name || window.COMPANY_LEGAL_NAME || 'THE UNIQUE HAVEN HOMES PRIVATE LIMITED';
+  const brand = cfg?.company_name || window.COMPANY_LEGAL_NAME || 'ROOST AND REST STAYS';
   const dateFormatted = new Date(repDate).toLocaleDateString('en-IN', { 
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
   });
@@ -409,7 +409,7 @@ async function renderDailyReport(selectedDate) {
       <div style="background:#0F172A;color:#94A3B8;padding:22px 24px;margin:24px -32px -32px -32px;border-radius:0 0 12px 12px;text-align:center;border-top:1px solid #1E293B;">
         <div style="font-size:11px;letter-spacing:1.8px;color:#E2E8F0;font-weight:800;margin-bottom:4px;text-transform:uppercase;">${brand.toUpperCase()}</div>
         <div style="font-size:11.5px;color:#94A3B8;">CIN: U55101UP2026PTC244637 &bull; GSTIN: 09ABECT9843K1Z7 &bull; Lucknow, Uttar Pradesh</div>
-        <div style="font-size:11px;color:#64748B;margin-top:4px;">Report Generated: ${new Date().toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'})} &bull; 🌐 uniquehavenhomesstay.com</div>
+        <div style="font-size:11px;color:#64748B;margin-top:4px;">Report Generated: ${new Date().toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'})} &bull; 🌐 roostandrest.github.io</div>
         <div style="font-size:11px;font-weight:600;margin-top:6px;color:#94A3B8;">⚡ Hospitality Operations Management System</div>
       </div>
     </div>
@@ -462,7 +462,7 @@ async function exportDailyReportCSV(date) {
   const checkouts = (allBks || []).filter(b => b.check_out === repDate && !b.is_cancelled);
   const staying = (allBks || []).filter(b => b.check_in <= repDate && b.check_out >= repDate && !b.is_cancelled);
 
-  let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - DAILY OPERATIONS REPORT\n`;
+  let csv = `ROOST AND REST STAYS - DAILY OPERATIONS REPORT\n`;
   csv += `Date,${repDate}\n`;
   csv += `Generated On,${new Date().toLocaleString('en-IN')}\n\n`;
 
@@ -490,7 +490,7 @@ async function exportDailyReportCSV(date) {
     csv += `"${p.payment_date || ''}",${p.amount || 0},"${p.payment_mode || ''}","${p.booking_id || ''}","${(p.notes || '').replace(/"/g, '""')}"\n`;
   });
 
-  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.github.io"\n`;
 
   window.exportCSV(csv, `TUHH_Daily_Report_${repDate}.csv`);
 }
@@ -556,8 +556,8 @@ async function whatsappDailyReport(date) {
   }
 
   msg += '━━━━━━━━━━━━━━━━━' + NL;
-  msg += '_THE UNIQUE HAVEN HOMES PRIVATE LIMITED_' + NL;
-  msg += '🌐 uniquehavenhomesstay.com' + NL;
+  msg += '_ROOST AND REST STAYS_' + NL;
+  msg += '🌐 roostandrest.github.io' + NL;
   msg += '⚡ Developed by Praveen Singh';
 
   const modal = document.createElement('div');
@@ -774,7 +774,7 @@ function generateBlossomStatusText(includeTags, vacantLabel, includeVillas, useR
 
   const lines = [];
   if (includeTags) {
-    lines.push('@Arman Commander @Abraham Khan (Raja) @Mr. Firoz khan @Mr. Shahanshah Khan ');
+    lines.push('@Arman Commander @Abraham Khan (Raja) @Mr. Anwar khan @Mr. Shahanshah Khan ');
   }
   lines.push('📋 UPDATED BOOKING STATUS\n');
 

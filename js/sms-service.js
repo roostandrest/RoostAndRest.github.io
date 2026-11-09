@@ -1,6 +1,6 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * 📲 THE UNIQUE HAVEN HOMES — SMS & OTP AUTHENTICATION ENGINE
+ * 📲 ROOST AND REST STAYS — SMS & OTP AUTHENTICATION ENGINE
  * ═══════════════════════════════════════════════════════════════════════════
  * Integrates with:
  *   1. OpenSMS Android Gateway (self-hosted local or cloud webhook)
@@ -17,8 +17,8 @@
     // OpenSMS Gateway URL (e.g. http://192.168.1.50:8080 or https://gateway.yourdomain.com)
     gatewayUrl: localStorage.getItem('tuhh_opensms_url') || window.OPENSMS_GATEWAY_URL || '',
     gatewayApiKey: localStorage.getItem('tuhh_opensms_key') || window.OPENSMS_API_KEY || '',
-    hostWaNumber: '919450055554', // Mr. Shahanshah & Mr. Firoz Khan
-    companyName: 'The Unique Haven Homes'
+    hostWaNumber: '919807486555', // Mr. Shahanshah & Mr. Anwar Ahmad
+    companyName: 'Roost And Rest Stays'
   };
 
   const OTP_EXPIRY_SECONDS = 300; // 5 minutes
@@ -217,9 +217,9 @@
       const bId = booking.booking_id || '';
       const pName = booking.property_name || 'Luxury Stay';
       const ci = booking.check_in || '';
-      const portalUrl = `https://uniquehavenhomesstay.com/guest.html?b=${encodeURIComponent(bId)}`;
+      const portalUrl = `https://roostandrest.github.io/guest.html?b=${encodeURIComponent(bId)}`;
 
-      const text = `Dear ${guestName}, your reservation #${bId} for ${pName} (${ci}) is confirmed! Access your Digital Stay Pass, WiFi & Tax Receipt here: ${portalUrl} - The Unique Haven Homes`;
+      const text = `Dear ${guestName}, your reservation #${bId} for ${pName} (${ci}) is confirmed! Access your Digital Stay Pass, WiFi & Tax Receipt here: ${portalUrl} - Roost And Rest Stays`;
 
       if (SMS_CONFIG.gatewayUrl) {
         try {
@@ -377,7 +377,7 @@
           }
           const waBtn = document.getElementById('tuhhOtpWaBtn');
           if (waBtn) {
-            waBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(`Your The Unique Haven Homes verification code is: ${res.otp}`)}`;
+            waBtn.href = `https://wa.me/${phone}?text=${encodeURIComponent(`Your Roost And Rest Stays verification code is: ${res.otp}`)}`;
           }
         } catch (err) {
           console.error(err);

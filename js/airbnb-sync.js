@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════
 // 🔄 AIRBNB CSV SYNC & RECONCILIATION — Professional Edition
-// THE UNIQUE HAVEN HOMES PRIVATE LIMITED (TUHH)
+// ROOST AND REST STAYS (TUHH)
 // ═══════════════════════════════════════════════════════════
 
 (function() {
@@ -663,7 +663,7 @@
                 amount: r.you_earn,
                 payment_mode: 'Online-Airbnb',
                 payment_date: r.check_out || r.check_in,
-                received_by: 'Firoz',
+                received_by: 'Anwar',
                 received_by_type: 'employee',
                 handover_status: 'handed_over',
                 verification_status: 'verified',
@@ -1075,7 +1075,7 @@
           amount: r.you_earn,
           payment_mode: 'Online-Airbnb',
           payment_date: r.check_out || r.check_in,
-          received_by: 'Firoz',
+          received_by: 'Anwar',
           received_by_type: 'employee',
           handover_status: 'handed_over',
           verification_status: 'verified',
@@ -1149,7 +1149,7 @@
             amount: r.you_earn,
             payment_mode: 'Online-Airbnb',
             payment_date: r.check_out || r.check_in,
-            received_by: 'Firoz',
+            received_by: 'Anwar',
             received_by_type: 'employee',
             handover_status: 'handed_over',
             verification_status: 'verified',
@@ -1236,7 +1236,7 @@
                 amount: r.you_earn,
                 payment_mode: 'Online-Airbnb',
                 payment_date: r.check_out || r.check_in,
-                received_by: 'Firoz',
+                received_by: 'Anwar',
                 received_by_type: 'employee',
                 handover_status: 'handed_over',
                 verification_status: 'verified',
@@ -1382,7 +1382,7 @@
               amount: r.you_earn,
               payment_mode: 'Online-Airbnb',
               payment_date: r.check_out || r.check_in,
-              received_by: 'Firoz',
+              received_by: 'Anwar',
               received_by_type: 'employee',
               handover_status: 'handed_over',
               verification_status: 'verified',

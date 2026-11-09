@@ -227,11 +227,11 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
                         db_id: ca.id,
                         source_table: 'company_advances',
                         transaction_date: ca.advance_date,
-                        description: ca.purpose || `Funds added by ${ca.given_by || 'Firoz'} via UPI`,
+                        description: ca.purpose || `Funds added by ${ca.given_by || 'Anwar'} via UPI`,
                         amount: parseFloat(ca.amount_given || 0),
                         transaction_type: 'INFLOW',
                         payment_mode: 'UPI',
-                        received_from: ca.given_by || 'Firoz',
+                        received_from: ca.given_by || 'Anwar',
                         reference_note: ca.notes || null,
                         created_at: ca.created_at
                     });
@@ -460,7 +460,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             source_table: d.source_table || 'company_advances',
             date: d.transaction_date,
             type: 'DEPOSIT',
-            desc: d.description || `Funds added by ${d.received_from || 'Firoz'} via ${d.payment_mode || 'UPI'}`,
+            desc: d.description || `Funds added by ${d.received_from || 'Anwar'} via ${d.payment_mode || 'UPI'}`,
             amount: parseFloat(d.amount || 0),
             isDep: true,
             isSecurityDeposit: !!d.isSecurityDeposit
@@ -930,7 +930,7 @@ window.cbDepositToODModal = function(defaultSender = 'Aniket', defaultAmount = '
             </div>
             
             <div style="background:#ecfdf5;padding:10px 12px;border-radius:10px;font-size:12.5px;color:#065f46;margin-bottom:14px;border:1px solid #a7f3d0;line-height:1.4;">
-                Deposit cash or UPI funds (e.g. from Aniket, Firoz, or Owner) into Overdraft Account to settle balance.
+                Deposit cash or UPI funds (e.g. from Aniket, Anwar, or Owner) into Overdraft Account to settle balance.
             </div>
 
             <div class="form-group" style="margin-bottom:12px;">
@@ -962,7 +962,7 @@ window.cbDepositToODModal = function(defaultSender = 'Aniket', defaultAmount = '
                 <label style="font-weight:700;font-size:13px;display:block;margin-bottom:5px;color:#1e293b;">Sender / Deposited By *</label>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:7px;">
                     <button type="button" onclick="document.getElementById('odDepFrom').value='Aniket'" style="padding:4px 10px;background:#eff6ff;border:1px solid #93c5fd;border-radius:14px;font-size:12px;font-weight:700;cursor:pointer;color:#1d4ed8;">👤 Aniket</button>
-                    <button type="button" onclick="document.getElementById('odDepFrom').value='Firoz'" style="padding:4px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;color:#334155;">👤 Firoz</button>
+                    <button type="button" onclick="document.getElementById('odDepFrom').value='Anwar'" style="padding:4px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;color:#334155;">👤 Anwar</button>
                     <button type="button" onclick="document.getElementById('odDepFrom').value='Shahenshah'" style="padding:4px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;color:#334155;">👤 Shahenshah</button>
                     <button type="button" onclick="document.getElementById('odDepFrom').value='Yash'" style="padding:4px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;color:#334155;">👤 Yash</button>
                     <button type="button" onclick="document.getElementById('odDepFrom').value='Owner'" style="padding:4px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;color:#334155;">👤 Owner</button>
@@ -1092,7 +1092,7 @@ window.cbReturnFromODModal = function() {
             </div>
 
             <div style="background:#fef2f2;padding:10px 12px;border-radius:10px;font-size:12.5px;color:#991b1b;margin-bottom:14px;border:1px solid #fecaca;line-height:1.4;">
-                Record funds returned from Roost-Bank back to Company or Firoz. This reduces your Roost-Bank balance.
+                Record funds returned from Roost-Bank back to Company or Anwar. This reduces your Roost-Bank balance.
             </div>
 
             <div class="form-group" style="margin-bottom:12px;">
@@ -1117,7 +1117,7 @@ window.cbReturnFromODModal = function() {
             <div class="form-group" style="margin-bottom:12px;">
                 <label style="font-weight:700;font-size:13px;display:block;margin-bottom:5px;color:#1e293b;">Returned To *</label>
                 <select id="odRetTo" style="width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;background:#fff;">
-                    <option value="FIROZ">👤 Firoz Ahmad</option>
+                    <option value="FIROZ">👤 Anwar Ahmad</option>
                     <option value="COMPANY">🏢 Company Bank Account</option>
                 </select>
             </div>
@@ -1187,7 +1187,7 @@ window.cbSaveODReturn = async function() {
                 try {
                     await client.from('cash_handovers').insert([{
                         from_person: 'ROOST-BANK',
-                        to_person: target === 'FIROZ' ? 'Firoz' : 'Company',
+                        to_person: target === 'FIROZ' ? 'Anwar' : 'Company',
                         amount: amount,
                         handover_date: date,
                         notes: `Cash return from ROOST-BANK | ${note || ''}`,
@@ -1325,7 +1325,7 @@ window.cbEditODDeposit = async function(id) {
                         transaction_date: data.advance_date,
                         amount: data.amount_given,
                         payment_mode: 'UPI',
-                        received_from: data.given_by || 'Firoz',
+                        received_from: data.given_by || 'Anwar',
                         reference_note: data.notes || '',
                         description: data.purpose
                     };

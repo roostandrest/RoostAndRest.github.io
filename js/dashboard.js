@@ -59,7 +59,7 @@ function computeAttention(checkinsToday, checkoutsToday) {
 
 /**
  * Dashboard Module
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 // ═══════════════════════════════════════════════════════════
@@ -175,7 +175,7 @@ window.getAirbnbGuestNarrative = function (b, feedType) {
 };
 
 window.getAirbnbPropertySubtitle = function (b) {
-  if (!b) return 'The Unique Haven Homes';
+  if (!b) return 'Roost And Rest Stays';
   const roomId = (b.room_id || '').trim();
   const base = (window.ShowcaseData && (
     (typeof window.ShowcaseData.getProperty === 'function' && (
@@ -191,7 +191,7 @@ window.getAirbnbPropertySubtitle = function (b) {
   if (base.name && base.area_name) {
     return `${base.name} / ${base.area_name}`;
   }
-  return b.rooms?.property_name || base.name || (typeof propLabel === 'function' ? propLabel(b.rooms) : '') || b.room_id || 'The Unique Haven Homes';
+  return b.rooms?.property_name || base.name || (typeof propLabel === 'function' ? propLabel(b.rooms) : '') || b.room_id || 'Roost And Rest Stays';
 };
 
 window.renderAirbnbOverlappingMedia = function (b) {
@@ -3175,8 +3175,8 @@ function buildIdPendingMessage(daysBack) {
     msg += window.getOfficialReportFooterText();
   } else {
     msg += '━━━━━━━━━━━━━━━━━' + NL;
-    msg += '_THE UNIQUE HAVEN HOMES PRIVATE LIMITED_' + NL;
-    msg += 'uniquehavenhomesstay.com' + NL;
+    msg += '_ROOST AND REST STAYS_' + NL;
+    msg += 'roostandrest.github.io' + NL;
     msg += '*Developed by Praveen Singh*';
   }
   return msg;

@@ -1,6 +1,6 @@
 /**
  * ===================================
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED — Core Module
+ * ROOST AND REST STAYS — Core Module
  * Developer: Praveen Singh
  * ===================================
  */
@@ -1475,7 +1475,7 @@ function renderShell(content, activePage = 'dashboard') {
   const showSettings = isAdmin;
 
   // ═══════════════════════════════════════════════════════════
-  // 🏛️ UHHS CRM POWER HUBS CONFIGURATION (Hub & Tab Architecture)
+  // 🏛️ Roost And Rest CRM POWER HUBS CONFIGURATION (Hub & Tab Architecture)
   // ═══════════════════════════════════════════════════════════
   const UHHS_HUBS = [
     {
@@ -1641,7 +1641,7 @@ function renderShell(content, activePage = 'dashboard') {
 
   // Minimal, uncluttered left drawer list as requested by user
   if (isPureOwner) {
-    // 👑 OWNER ROLE (Firoz, Shanshah) — Full business access, restricted admin pages
+    // 👑 OWNER ROLE (Anwar, Shanshah) — Full business access, restricted admin pages
     // Hidden: User Management, Laundry, HRMS & Tasks, WhatsApp Hub, Help & Guide
     nav = [
       ['dashboard', 'Today · Operations'],
@@ -1730,7 +1730,7 @@ function renderShell(content, activePage = 'dashboard') {
   // Custom badge overrides (per user)
   const CUSTOM_BADGES = {
     'c6343844-a307-4668-9b16-1947a0c0f8fa': 'Manager',      // praveensinghaws@gmail.com
-    'e3717cbd-da9a-495e-a940-2995021e8ca2': 'Developer',    // admin@uniquehavenhomesstay.com
+    'e3717cbd-da9a-495e-a940-2995021e8ca2': 'Developer',    // admin@roostandrest.github.io
   };
   const displayBadge = CUSTOM_BADGES[SESSION.userId] || roleLabel;
 
@@ -3921,7 +3921,7 @@ async function renderSettings() {
 
   // Auto-sanitize rogue/incorrect legacy values across BOTH settings array (Tab 4 table) AND setMap (Tab 2 form)
   settings.forEach(s => {
-    if (s.key === 'brand_name' && (!s.value || s.value.toUpperCase().includes('UNIQUE HAVEN'))) {
+    if (s.key === 'brand_name' && (!s.value || s.value.toUpperCase().includes('ROOST AND REST'))) {
       s.value = 'ROOST AND REST';
       sb.from('app_settings').update({ value: 'ROOST AND REST', updated_at: new Date().toISOString() }).eq('key', 'brand_name').then();
     }
@@ -4091,7 +4091,7 @@ async function renderSettings() {
             <a href="review.html" target="_blank" class="btn-sm" style="background:#F59E0B;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:700;">
               ⭐ Open Public Review Portal
             </a>
-            <button type="button" class="btn-sm outline" onclick="navigator.clipboard.writeText('https://uniquehavenhomesstay.com/review.html');if(window.fsn)fsn.success('Copied!','Review portal link copied');">
+            <button type="button" class="btn-sm outline" onclick="navigator.clipboard.writeText('https://roostandrest.github.io/review.html');if(window.fsn)fsn.success('Copied!','Review portal link copied');">
               📋 Copy Review Link
             </button>
             <a href="https://business.google.com/create" target="_blank" class="btn-sm outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
@@ -4243,7 +4243,7 @@ window.saveBrandSettingsGroup = async function() {
     if (!el) continue;
     let value = el.value.trim();
     if (key === 'brand_name' && (!value || value.toUpperCase().includes('HOME STAY'))) {
-      value = 'The Unique Haven Homes';
+      value = 'Roost And Rest Stays';
       el.value = value;
     }
     if (key === 'registered_office_map_link' && !value) {
@@ -4298,7 +4298,7 @@ window.clearAppCacheAndReload = function() {
 async function saveSetting(key) {
   let value = document.getElementById(`set_${key}`)?.value?.trim() || '';
   if (key === 'brand_name' && (!value || value.toUpperCase().includes('HOME STAY') || value.trim().toLowerCase() === 'the unique haven')) {
-    value = 'The Unique Haven Homes';
+    value = 'Roost And Rest Stays';
     const el = document.getElementById(`set_${key}`);
     if (el) el.value = value;
   }
@@ -5425,17 +5425,17 @@ async function loadCashHolders(forceRefresh = false) {
  * @param {object} opts - { filterType: 'final'|'manager'|'receiver'|null (all), allowCustom: true, addNew: true }
  * @returns {string} - HTML string
  */
-// Master Universal 3-Option Payment Source Dropdown (Company, Roost-Bank, Firoz)
+// Master Universal 3-Option Payment Source Dropdown (Company, Roost-Bank, Anwar)
 window.renderCashHolderDropdown = async function(elementId, selectedVal) {
   const s = String(selectedVal || 'COMPANY').toUpperCase();
   const isOD = s.includes('OD') || s.includes('UHHS') || s.includes('TUHH');
-  const isFiroz = s.includes('FIROZ');
+  const isAnwar = s.includes('FIROZ');
   
   return `
     <select id="${elementId}" name="${elementId}" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; padding: 10px; border-radius: 8px; width: 100%; background: #ffffff; color: #0f172a;">
-      <option value="COMPANY" ${(!isOD && !isFiroz) ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
+      <option value="COMPANY" ${(!isOD && !isAnwar) ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
       <option value="ROOST-BANK" ${isOD ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-      <option value="FIROZ" ${isFiroz ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+      <option value="FIROZ" ${isAnwar ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
     </select>
   `;
 };
@@ -5762,7 +5762,7 @@ window.downloadExportFile = async function(content, fileName, mimeType = 'text/c
         await navigator.share({
           files: [file],
           title: fileName,
-          text: `TUHH CRM Export: ${fileName}`
+          text: `Roost And Rest CRM Export: ${fileName}`
         });
         if (window.fsn) fsn.success('Export Ready', `Opened share options for ${fileName}`);
         return true;
@@ -6061,7 +6061,7 @@ window.printDocumentHTML = function(htmlContent, title = 'Document', options = {
             <button onclick="window.print()" style="padding:9px 20px;background:#10B981;color:#fff;border:none;border-radius:7px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">🖨️ Print / Save as PDF</button>
             <button onclick="window.close()" style="padding:9px 18px;background:#EF4444;color:#fff;border:none;border-radius:7px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">✕ Close Window</button>
           </div>
-          <span style="font-size:12.5px;color:#94A3B8;font-weight:700;">THE UNIQUE HAVEN HOMES PVT. LTD.</span>
+          <span style="font-size:12.5px;color:#94A3B8;font-weight:700;">ROOST AND REST STAYS PVT. LTD.</span>
         </div>
         ${cleanHtml}
         <!-- Floating Close Button at bottom right for long scrolled pages -->

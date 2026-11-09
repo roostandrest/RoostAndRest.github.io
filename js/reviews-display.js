@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   UNIQUE HAVEN HOMES — Reviews Display
+   ROOST AND REST HOMES — Reviews Display
    Fetches polished Airbnb reviews from Supabase and renders them
    with stunning animated cards on the website.
    ══════════════════════════════════════════════════════════════════ */
@@ -69,7 +69,7 @@
     {
       room_id: 'VIL-103', slug: 'the-pink-house', property_name: 'The Pink House',
       airbnb_id: '1660144941916327663', reviewer_name: 'Simran K.', reviewer_from: 'Chandigarh', rating: 5,
-      review_text: 'The Pink House is an absolute dream! We were a group of 8 and everyone had their own comfortable space. The decor is Instagram-worthy at every corner. Very clean and well equipped. Thank you Unique Haven Homes!',
+      review_text: 'The Pink House is an absolute dream! We were a group of 8 and everyone had their own comfortable space. The decor is Instagram-worthy at every corner. Very clean and well equipped. Thank you Roost And Rest Stays!',
       review_date_str: 'August 2026', is_featured: true
     },
     {

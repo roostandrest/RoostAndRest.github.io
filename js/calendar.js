@@ -1,6 +1,6 @@
 /**
  * Calendar Module — Classic Airbnb-Style Month Grid
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 async function renderReports() {
@@ -373,7 +373,7 @@ async function renderReports() {
           <div class="hh-cal-toolbar-right">
             <!-- View Mode Switcher -->
             <div class="hh-cal-toggle-group">
-              <button type="button" class="hh-cal-toggle-btn active" onclick="setCalViewMode('timeline')" title="TUHH Multi-Property Gantt Timeline">
+              <button type="button" class="hh-cal-toggle-btn active" onclick="setCalViewMode('timeline')" title="Roost Multi-Property Gantt Timeline">
                 <i class="ti ti-layout-kanban"></i> <span>Unified Timeline</span>
               </button>
               <button type="button" class="hh-cal-toggle-btn" onclick="setCalViewMode('grid')" title="Classic Month Grid View">
@@ -657,7 +657,7 @@ async function renderReports() {
       <!-- Row 2: View Switcher & Property Filter (Duplicate New Booking button removed) -->
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
         <div class="hh-cal-toggle-group" style="margin:0;">
-          <button type="button" class="hh-cal-toggle-btn" onclick="setCalViewMode('timeline')" title="TUHH Multi-Property Gantt Timeline">
+          <button type="button" class="hh-cal-toggle-btn" onclick="setCalViewMode('timeline')" title="Roost Multi-Property Gantt Timeline">
             <i class="ti ti-layout-kanban"></i> <span>Unified Timeline</span>
           </button>
           <button type="button" class="hh-cal-toggle-btn active" onclick="setCalViewMode('grid')" title="Classic Month Grid View">
@@ -2231,7 +2231,7 @@ function downloadFYData() {
   d.bookings.forEach(g => {
     csv += `${g.booking_id},${g.guest_name},${g.room_id},${g.check_in},${d.paidMap[g.booking_id] || 0}\n`;
   });
-  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n"Developed by Praveen Singh"\n`;
+  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.github.io"\n"Developed by Praveen Singh"\n`;
   window.exportCSV(csv, `Financial_${d.label}.csv`);
 }
 

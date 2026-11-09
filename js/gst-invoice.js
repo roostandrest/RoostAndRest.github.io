@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * THE UNIQUE HAVEN HOMES (UHHS) — GST INVOICE & BILLING ENGINE
+ * ROOST AND REST STAYS (UHHS) — GST INVOICE & BILLING ENGINE
  * Integrated into Bookings & Guest Ledger with CA Return Management
  * =====================================================================
  */
@@ -10,8 +10,8 @@ window.GST_ENGINE = (function() {
 
   // 1. COMPANY MASTER CONFIG
   const CO = {
-    name:       'THE UNIQUE HAVEN HOMES PRIVATE LIMITED',
-    tradeName:  'The Unique Haven Homes Homestays',
+    name:       'ROOST AND REST STAYS',
+    tradeName:  'Roost And Rest Stays Homestays',
     gstin:      '09AAMCT8448C1ZX',
     pan:        'AAMCT8448C',
     cin:        'U55101UP2026PTC244637',
@@ -21,8 +21,8 @@ window.GST_ENGINE = (function() {
     stateCode:  '09',
     phone:      '+91 94500 55554 / +91 82996 00709',
     managerPhone: '+91 9194109911',
-    email:      'theuniquehavenhomes@gmail.com',
-    web:        'uniquehavenhomesstay.com'
+    email:      'theroostandrestlucknow@gmail.com',
+    web:        'roostandrest.github.io'
   };
 
   // Signature & Stamp Source Helper
@@ -534,7 +534,7 @@ window.GST_ENGINE = (function() {
             <tr><td style="color:#444;padding:1px 0;">IFSC Code:</td><td style="font-weight:800;color:#000;font-family:monospace;letter-spacing:0.5px;">SBIN0018189</td></tr>
             <tr><td style="color:#444;padding:1px 0;">Account No:</td><td style="font-weight:800;color:#000;font-family:monospace;letter-spacing:0.5px;">20292764916</td></tr>
             <tr><td style="color:#444;padding:1px 0;">Bank:</td><td style="font-weight:700;color:#000;">State Bank of India, Takrohi, Lucknow</td></tr>
-            <tr><td style="color:#444;padding:1px 0;">UPI / PhonePe:</td><td style="font-weight:700;color:#000;">8299600709</td></tr>
+            <tr><td style="color:#444;padding:1px 0;">UPI / PhonePe:</td><td style="font-weight:700;color:#000;">9807486555</td></tr>
           </table>
         </div>
 
@@ -583,7 +583,7 @@ window.GST_ENGINE = (function() {
     const phone = (inv.guest_phone || '').replace(/\D/g, '');
     const cleanPhone = phone.length === 10 ? '91' + phone : phone;
 
-    const text = `*THE UNIQUE HAVEN HOMES PVT. LTD.*%0A` +
+    const text = `*ROOST AND REST STAYS PVT. LTD.*%0A` +
       `🧾 *${isGST ? 'TAX INVOICE' : 'BOOKING RECEIPT'}*%0A` +
       `──────────────────────────%0A` +
       `*Invoice No:* ${encodeURIComponent(inv.invoice_no)}%0A` +
@@ -598,7 +598,7 @@ window.GST_ENGINE = (function() {
       `*Status:* ✅ FULLY PAID%0A` +
       `──────────────────────────%0A` +
       (isGST ? `*GSTIN:* ${CO.gstin}%0A*SAC:* ${CO.sac}%0A` : '') +
-      `Thank you for choosing The Unique Haven Homes! 🙏`;
+      `Thank you for choosing Roost And Rest Stays! 🙏`;
 
     const url = cleanPhone
       ? `https://wa.me/${cleanPhone}?text=${text}`
@@ -836,7 +836,7 @@ window.GST_ENGINE = (function() {
     const totalCGST = list.reduce((s, x) => s + Number(x.cgst || 0), 0);
     const totalSGST = list.reduce((s, x) => s + Number(x.sgst || 0), 0);
 
-    const text = `📊 *THE UNIQUE HAVEN HOMES PVT LTD — GST SUMMARY FOR CA*
+    const text = `📊 *ROOST AND REST STAYS — GST SUMMARY FOR CA*
 GSTIN: ${CO.gstin}
 SAC Code: ${CO.sac} (Short-stay accommodation)
 
@@ -1432,7 +1432,7 @@ Generated automatically via TUHH Management Portal.`;
       const cleanPhone = (state.guest_phone || '').replace(/\D/g, '');
       const fullPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
 
-      const shortMsg = `🧾 *THE UNIQUE HAVEN HOMES PVT. LTD.*
+      const shortMsg = `🧾 *ROOST AND REST STAYS PVT. LTD.*
 ${isGST ? '*OFFICIAL GST TAX INVOICE*' : '*ACCOMMODATION INVOICE (WITHOUT GST)*'}
 Namaste *${state.guest_name || 'Guest'}* ji 🙏
 
@@ -1446,7 +1446,7 @@ ${isGST ? `📊 *Taxable Base:* ₹${Number(calc.base).toLocaleString('en-IN')} 
 ` : `📋 *Billing Mode:* Direct Accommodation (Without GST / 0% Tax)
 `}✅ *Payment Status:* FULLY PAID
 
-✨ *The Unique Haven Homes Property Management*`;
+✨ *Roost And Rest Stays Property Management*`;
 
       const waUrl = fullPhone 
         ? `https://wa.me/${fullPhone}?text=${encodeURIComponent(shortMsg)}`

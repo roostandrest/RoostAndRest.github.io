@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * THE UNIQUE HAVEN HOMES (UHHS) — EXPRESS FRONT-DESK POS TERMINAL
+ * ROOST AND REST STAYS (UHHS) — EXPRESS FRONT-DESK POS TERMINAL
  * Inspired by Enterprise Salon & Hotel Front-Desk Systems (Video Architecture)
  * Walk-In Bookings, Split Payments, Security Deposits & Instant Invoicing
  * =====================================================================
@@ -506,7 +506,7 @@ window.executePOSCheckIn = async function(sendWhatsApp = false) {
       const rooms = window._globalRoomsList || [];
       const room = rooms.find(r => r.room_id === roomId);
       const waMsg = encodeURIComponent(
-        `*THE UNIQUE HAVEN HOMES — BOOKING RECEIPT*\n\n` +
+        `*ROOST AND REST STAYS — BOOKING RECEIPT*\n\n` +
         `Dear ${guestName},\n` +
         `Welcome to *${room?.nickname || 'Our Villa'}*!\n` +
         `📅 Dates: ${window._posState.checkIn} to ${window._posState.checkOut}\n` +

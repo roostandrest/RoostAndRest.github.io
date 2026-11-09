@@ -182,9 +182,9 @@ self.addEventListener('push', event => {
     }
   }
 
-  const title = data.title || 'The Unique Haven Homes';
+  const title = data.title || 'Roost And Rest Stays';
   const options = {
-    body: data.body || data.message || 'New update from TUHH CRM',
+    body: data.body || data.message || 'New update from Roost And Rest CRM',
     icon: data.icon || '/assets/icon-192.png',
     badge: '/assets/logo.png',
     tag: data.tag || ('tuhh-notif-' + Date.now()),
@@ -232,7 +232,7 @@ self.addEventListener('notificationclick', event => {
 self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SHOW_NATIVE_NOTIF') {
     const n = event.data.payload || {};
-    self.registration.showNotification(n.title || 'The Unique Haven Homes', {
+    self.registration.showNotification(n.title || 'Roost And Rest Stays', {
       body: n.body || n.message || '',
       icon: n.icon || '/assets/icon-192.png',
       badge: '/assets/logo.png',

@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════
-   UNIQUE HAVEN HOMES — "NISHA" AI ENGINE (NEXT-GEN)
+   ROOST AND REST HOMES — "NISHA" AI ENGINE (NEXT-GEN)
    Standalone, 100% Free 24/7 AI Voice & Text Concierge
    Dual-Core Brain: Instant Lucknow Homestays Knowledge Base + Google Gemini AI
 
@@ -18,8 +18,8 @@
   'use strict';
 
   // Default Host Contacts
-  const HOST_SHAHANSHAH = '919450055554'; // Co-founder & Host
-  const HOST_FIROZ      = '918299600709'; // Superhost & Co-founder
+  const HOST_SHAHANSHAH = '919807486555'; // Co-founder & Host
+  const HOST_FIROZ      = '919807486555'; // Superhost & Co-founder
   // Storage Keys
   const GEMINI_KEY_STORAGE = 'uhh_gemini_api_key';
   const SARVAM_KEY_STORAGE = 'uhh_sarvam_api_key';
@@ -411,7 +411,7 @@
             `💰 **Direct Rate:** **${p.price}** (Airbnb se 15% discount)\n\n` +
             `${p.desc}\n\n` +
             `📸 **Photos & Walkthrough:**\n` +
-            `👉 https://uniquehavenhomesstay.com/${p.link}\n\n` +
+            `👉 https://roostandrest.github.io/${p.link}\n\n` +
             `Aap kis date ke liye book karna chahte hain? Main availability check kar sakti hoon!`;
         }
       }
@@ -420,17 +420,17 @@
         const dayLabel = isKal ? 'Kal' : (/(parso|परसों)/i.test(q) ? 'Parso' : 'Aaj');
         return `Haanji bilkul! 🙏 ${dayLabel} ke liye Gomti Nagar (Vikalp & Vishesh Khand) me hamare luxury fully furnished 3BHK flats available hain (jise aap 2BHK ya 3BHK dono requirements ke liye book kar sakte hain):\n\n` +
           `1️⃣ **Black Beauty** (3BHK Luxury Flat, Gomti Nagar) — ₹3,499/night\n` +
-          `   👉 https://uniquehavenhomesstay.com/black-beauty.html\n\n` +
+          `   👉 https://roostandrest.github.io/black-beauty.html\n\n` +
           `2️⃣ **The Dark Blue** (3BHK Flat, Gomti Nagar) — ₹3,499/night\n` +
-          `   👉 https://uniquehavenhomesstay.com/the-dark-blue.html\n\n` +
+          `   👉 https://roostandrest.github.io/the-dark-blue.html\n\n` +
           `3️⃣ **RedRose Palace** (3BHK Flat, Vikalp Khand) — ₹3,499/night\n` +
-          `   👉 https://uniquehavenhomesstay.com/redrose-palace.html\n\n` +
+          `   👉 https://roostandrest.github.io/redrose-palace.html\n\n` +
           `4️⃣ **Starlight Blue PentHouse** (4BHK Penthouse, Gomti Nagar) — ₹6,000/night\n` +
-          `   👉 https://uniquehavenhomesstay.com/starlight-blue-penthouse.html\n\n` +
+          `   👉 https://roostandrest.github.io/starlight-blue-penthouse.html\n\n` +
           `✨ *Amenities:* 3 AC Bedrooms, Modular Kitchen with Gas & RO, 200 Mbps Wi-Fi, Lift & Covered Parking.\n` +
           `🔒 100% Couple-Friendly, Private & Safe!\n\n` +
           `🌐 **Direct Booking Link (15% Commission Discount):**\n` +
-          `https://uniquehavenhomesstay.com/properties.html\n\n` +
+          `https://roostandrest.github.io/properties.html\n\n` +
           `Agar aap dates lock karna chahte hain toh apna naam reply kar dijiye ya link se direct book kar lijiye!`;
       }
 
@@ -520,7 +520,7 @@
       if (/(contact|phone|call|number|firoz|shahanshah|host|owner|फोन|नंबर|कॉल|बात|मालिक|संपर्क)/i.test(q)) {
         return `Aap hamare hosts se directly phone ya WhatsApp par baat kar sakte hain:\n\n` +
           `👑 **Mr. Shahanshah (Founder & Host):** +91 94500 55554\n` +
-          `⭐ **Mr. Firoz Khan (Superhost):** +91 82996 00709\n\n` +
+          `⭐ **Mr. Anwar Ahmad (Superhost):** +91 82996 00709\n\n` +
           `Dono numbers par 24/7 call aur WhatsApp active hai!`;
       }
 
@@ -531,11 +531,11 @@
 
       // 10. Greetings
       if (/^(hi|hello|hey|namaste|pranam|good morning|good evening|kaise ho|नमस्ते|हेलो|हाय|प्रणाम|कैसी हो|सुप्रभात)/i.test(q)) {
-        return `Namaste ji! 🙏 Main Nisha hoon — The Unique Haven Homes Lucknow ki AI Concierge. Lucknow me best 3BHK flat ya luxury villa booking ke baare me aap mujhse kuch bhi pooch sakte hain! Aaj main aapki kya madad kar sakti hoon?`;
+        return `Namaste ji! 🙏 Main Nisha hoon — Roost And Rest Stays Lucknow ki AI Concierge. Lucknow me best 3BHK flat ya luxury villa booking ke baare me aap mujhse kuch bhi pooch sakte hain! Aaj main aapki kya madad kar sakti hoon?`;
       }
 
       // Default warm fallback
-      return `Namaste ji! The Unique Haven Homes me aapka swagat hai. Lucknow Gomti Nagar me hamare luxury 3BHK flats ₹3,500/night se start hote hain aur grand private villas ₹8,000 se ₹12,000 me available hain. Aap apni dates aur group size bataiye, ya apna WhatsApp number share karein taaki hum best option bhej sakein!`;
+      return `Namaste ji! Roost And Rest Stays me aapka swagat hai. Lucknow Gomti Nagar me hamare luxury 3BHK flats ₹3,500/night se start hote hain aur grand private villas ₹8,000 se ₹12,000 me available hain. Aap apni dates aur group size bataiye, ya apna WhatsApp number share karein taaki hum best option bhej sakein!`;
     }
 
     // ── 4. Build System Prompt for Gemini ──
@@ -548,7 +548,7 @@
         `- ${p.property_name} (${p.bhk}) | Up to ${p.max_guests} guests | Direct Rate: ₹${p.base_price.toLocaleString('en-IN')}/night | Area: ${p.area}`
       ).join('\n');
 
-      return `You are "Nisha" (निशा), the warm, charming, and highly professional AI Concierge & Reservation Manager for "The Unique Haven Homes Private Limited" (TUHH) — Lucknow's premier luxury homestay and serviced villa brand.
+      return `You are "Nisha" (निशा), the warm, charming, and highly professional AI Concierge & Reservation Manager for "Roost And Rest Stays" (TUHH) — Lucknow's premier luxury homestay and serviced villa brand.
 Today's Date: ${today}.
 Location: Lucknow, Uttar Pradesh, India.
 
@@ -569,7 +569,7 @@ KEY POLICIES & AMENITIES:
 - Free dedicated parking and elevator access in apartment buildings
 - Distances: 5 mins to Lulu Mall & Medanta, 7 mins to Ekana Cricket Stadium, 20 mins to Airport (via Shaheed Path)
 - Caretakers on-ground: Arman (+91 8467080284) for Gomti Nagar flats, Aniket (+91 9214246820) for Vishesh Khand villas, Sarvan (+91 8858034382) for Golf City/Lulu stays
-- Founder & Host Contacts: Mr. Shahanshah (+91 94500 55554) & Mr. Firoz Khan (+91 82996 00709)
+- Founder & Host Contacts: Mr. Shahanshah (+91 94500 55554) & Mr. Anwar Ahmad (+91 82996 00709)
 - Property Manager: Praveen Singh (+91 9194109911)
 
 LEAD CAPTURE:
@@ -961,7 +961,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           .replace(/\bAC\b/g, 'A C')
           .replace(/\bGST\b/g, 'G S T')
           .replace(/\bSAC\b/g, 'S A C')
-          .replace(/\bTUHH\b/g, 'The Unique Haven Homes')
+          .replace(/\bTUHH\b/g, 'Roost And Rest Stays')
           .replace(/\bID\b/g, 'I D')
           .replace(/\bGovt\b/gi, 'Government')
           .replace(/\bpvt\b/gi, 'private')
@@ -1173,7 +1173,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           .replace(/\bAC\b/g, 'A C')
           .replace(/\bGST\b/g, 'G S T')
           .replace(/\bSAC\b/g, 'S A C')
-          .replace(/\bTUHH\b/g, 'The Unique Haven Homes')
+          .replace(/\bTUHH\b/g, 'Roost And Rest Stays')
           .replace(/\bID\b/g, 'I D')
           .replace(/\bGovt\b/gi, 'Government')
           .replace(/\p{Extended_Pictographic}/gu, '')

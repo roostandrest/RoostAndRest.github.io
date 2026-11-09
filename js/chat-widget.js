@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   UNIQUE HAVEN HOMES — Smart Chat Widget (Nisha AI Text Chat)
+   ROOST AND REST HOMES — Smart Chat Widget (Nisha AI Text Chat)
 
    Features:
    ✅ Smart FAQ with live Supabase rates
@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  const ADMIN_WA   = '919450055554'; // Mr. Shahanshah (+91 94500 55554)
+  const ADMIN_WA   = '919807486555'; // Mr. Shahanshah (+91 94500 55554)
   const CHAT_KEY   = 'uhh_chat_history';
   const LEAD_KEY   = 'uhh_chat_lead';
 
@@ -556,7 +556,7 @@
 
       const propText = _leadData.property ? ` for ${_leadData.property}` : '';
       const datesText = _leadData.dates ? ` (${_leadData.dates})` : '';
-      const waMsg = encodeURIComponent(`Namaste Shahanshah ji! I'm ${guestName} (${phoneClean}). I want to book a stay${propText}${datesText} at Unique Haven Homes. Please share confirmation.`);
+      const waMsg = encodeURIComponent(`Namaste Shahanshah ji! I'm ${guestName} (${phoneClean}). I want to book a stay${propText}${datesText} at Roost And Rest Stays. Please share confirmation.`);
       return {
         text: `✅ **Bahut shukriya ${guestName} ji!** 🙏\n\nHamaare host **Mr. Shahanshah (+91 94500 55554)** aapko WhatsApp number **${phoneClean}** par abhi live details aur confirmation voucher bhej rahe hain.\n\nAap chahein to turant WhatsApp par bhi connect kar sakte hain:`,
         actions: [{ label: '📲 Message Shahanshah on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=${waMsg}` }],
@@ -568,7 +568,7 @@
     if (parsed.name) {
       _leadData.name = parsed.name;
       return {
-        text: `Namaste **${parsed.name} ji**! 🙏 Unique Haven Homes me aapka swaagat hai.\n\nAap aane ki **Dates** aur **Kitne Log** hain bata dijiye, ya property select karein:`,
+        text: `Namaste **${parsed.name} ji**! 🙏 Roost And Rest Stays me aapka swaagat hai.\n\nAap aane ki **Dates** aur **Kitne Log** hain bata dijiye, ya property select karein:`,
         quickReplies: ['Gomti Grand Villa ₹8k', 'Royal White House ₹12k', '3BHK Flat ₹4.5k', 'Advance policy']
       };
     }
@@ -705,7 +705,7 @@
               `  🌴 **Celebrity Garden (₹10,000)** — Up to 10 Guests, expansive lawn\n\n` +
               `• **Music Rules:** Indoor music/bluetooth speakers anytime. Raat **10:00 PM** ke baad outdoor high-bass DJ strictly prohibited hai taaki colony norms follow hon.\n` +
               `• Event setup ya catering coordination ke liye booking ke samay inform karein.`,
-        actions: [{ label: '📲 Coordinate Event on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to plan an event/wedding stay at Unique Haven Homes.` }],
+        actions: [{ label: '📲 Coordinate Event on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to plan an event/wedding stay at Roost And Rest Stays.` }],
         quickReplies: ['Royal White House', 'Gomti Grand Villa', 'Direct Call Host']
       };
     }
@@ -772,7 +772,7 @@
     if (/gst|invoice|bill|tax invoice|company|corporate|reimbursement|receipt/i.test(msg)) {
       return {
         text: `📄 **Official GST Tax Invoice:**\n\n` +
-              `• Hum **The Unique Haven Homes Pvt Ltd** ke official registered GSTIN ke saath GST Tax Invoice provide karte hain.\n` +
+              `• Hum **ROOST AND REST STAYS** ke official registered GSTIN ke saath GST Tax Invoice provide karte hain.\n` +
               `• Corporate expense claims, IT reimbursement aur business travel ke liye 100% compliant bill WhatsApp / Email par check-out ke time generate ho jata hai.\n` +
               `• Booking karte samay bas aapka Company Name aur GST number share karein.`,
         quickReplies: ['Advance payment method', '3BHK Flat ₹4,500', 'Book karna hai 📅']
@@ -826,7 +826,7 @@
               `• **Medanta Medical Stays:** Special subsidized packages for patient families.\n` +
               `• **Direct Booking Bonus:** 15% less than Airbnb rates.\n\n` +
               `Best custom quote ke liye seedha host Mr. Shahanshah ji se baat karein!`,
-        actions: [{ label: '📲 Claim Best Discount on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Hi Shahanshah ji! I need a special discount for stay at Unique Haven Homes.` }],
+        actions: [{ label: '📲 Claim Best Discount on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Hi Shahanshah ji! I need a special discount for stay at Roost And Rest Stays.` }],
         quickReplies: ['Book karna hai 📅', 'Flats ke rates', 'Villas ke rates']
       };
     }
@@ -834,7 +834,7 @@
     // 24. LOCATIONS, LANDMARKS & DISTANCES (LULU, EKANA, MEDANTA, AIRPORT)
     if (/location|address|kahan|where|distance|door|airport|station|charbagh|lulu|ekana|medanta|palassio|summit/i.test(msg)) {
       return {
-        text: `📍 **Unique Haven Homes Locations in Lucknow:**\n\n` +
+        text: `📍 **Roost And Rest Stays Locations in Lucknow:**\n\n` +
               `1️⃣ **Near Lulu Mall & Shaheed Path (Villas & Luxury Stays):**\n` +
               `   • 5 mins to Lulu Mall & Phoenix Palassio\n` +
               `   • 7 mins to Ekana International Cricket Stadium\n` +
@@ -854,16 +854,16 @@
     // 25. HOSTS, FOUNDERS & CONTACT DETAILS
     if (/host|owner|firoz|shahanshah|praveen|contact|phone|number|call|baat karni/i.test(msg)) {
       return {
-        text: `📞 **Unique Haven Homes — Founder & Host Contacts:**\n\n` +
+        text: `📞 **Roost And Rest Stays — Founder & Host Contacts:**\n\n` +
               `• 👑 **Mr. Shahanshah (Co-Founder & Host):**\n` +
               `  📱 **+91 94500 55554** (Direct Calls & WhatsApp)\n\n` +
-              `• ⭐ **Mr. Firoz Khan (Superhost & Co-Founder):**\n` +
+              `• ⭐ **Mr. Anwar Ahmad (Superhost & Co-Founder):**\n` +
               `  📱 **+91 82996 00709**\n\n` +
               `• 🛡️ **Praveen Singh (Operations & Support):**\n` +
               `  📱 **+91 91941 09911**\n\n` +
-              `🏢 **Company:** THE UNIQUE HAVEN HOMES PRIVATE LIMITED\n` +
+              `🏢 **Company:** ROOST AND REST STAYS\n` +
               `📍 **Office:** Radhikapuri, Indira Nagar, Lucknow`,
-        actions: [{ label: '📲 Call / WhatsApp Shahanshah (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to inquire about Unique Haven Homes booking.` }],
+        actions: [{ label: '📲 Call / WhatsApp Shahanshah (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to inquire about Roost And Rest Stays booking.` }],
         quickReplies: ['Rates list dikhao 💰', 'Gomti Grand Villa ₹8,000', 'Book now 📅']
       };
     }
@@ -954,7 +954,7 @@
               `  🏡 **Gomti Grand Villa** — Luxury standalone villa with landscaped green lawn\n` +
               `  ✨ **Starlight Blue PentHouse** — Night skyline view open terrace\n\n` +
               `• Commercial shoot permission, camera crew equipment aur day slots ke special packages ke liye host se WhatsApp par coordinate karein.`,
-        actions: [{ label: '📲 Coordinate Shoot on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to inquire about a pre-wedding/photoshoot at Unique Haven Homes.` }],
+        actions: [{ label: '📲 Coordinate Shoot on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to inquire about a pre-wedding/photoshoot at Roost And Rest Stays.` }],
         quickReplies: ['The Pink House ₹9k', 'Royal White House ₹12k', 'Rates list 💰']
       };
     }
@@ -967,7 +967,7 @@
               `• **Airport Distance:** CCS International Airport (Amausi) se sirf **20–25 minutes** Shaheed Path elevated expressway ke zariye.\n` +
               `• **Railway Stations:** Charbagh Station & Gomti Nagar Terminal se 15–20 minutes.\n` +
               `• **Private Cab On Request:** Agar aapko dedicated luxury sedan/SUV pickup ya drop chahiye, to hum verified driver arrange karwa dete hain.`,
-        actions: [{ label: '📲 Request Cab / Travel Help', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I need taxi/pickup assistance for my stay at Unique Haven Homes.` }],
+        actions: [{ label: '📲 Request Cab / Travel Help', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I need taxi/pickup assistance for my stay at Roost And Rest Stays.` }],
         quickReplies: ['Lulu Mall distance? 📍', 'Check-in time? 🕐', 'Book karna hai 📅']
       };
     }
@@ -1064,7 +1064,7 @@
     // 29. WEBSITE & SOFTWARE / HOW THE PLATFORM WORKS
     if (/software|crm|system|website|platform|tech|sync|app/i.test(msg)) {
       return {
-        text: `💻 **Unique Haven Homes Platform & Software:**\n\n` +
+        text: `💻 **Roost And Rest Stays Platform & Software:**\n\n` +
               `• **Direct Booking Engine:** Hum live rates aur instant booking enable karte hain without 3rd-party commission.\n` +
               `• **Real-Time Database:** Property availability aur dynamic rates Supabase database se direct connected hain.\n` +
               `• **Instant WhatsApp Dispatch:** Booking confirm hote hi guest ko WhatsApp invoice, gate pass aur host location pin auto-deliver hota hai.\n` +
@@ -1107,14 +1107,14 @@
     if (/book|booking|reserve|how to book|kaise book|stay karna|chahiye/i.test(msg)) {
       _step = 'booking_flow';
       return {
-        text: `📅 **Booking Concierge — Unique Haven Homes**\n\n` +
+        text: `📅 **Booking Concierge — Roost And Rest Stays**\n\n` +
               `Hum 3 simple steps me direct booking confirm karte hain:\n` +
               `1️⃣ **Property choose karein** (Grand Villa, Penthouse ya 3BHK Flat)\n` +
               `2️⃣ **Dates & Guests confirm karein**\n` +
               `3️⃣ **30% advance token** se instant WhatsApp booking voucher & gate pass receive karein!\n\n` +
               `👉 **Neeche diye options me se select karein**, ya\n` +
               `👉 **Seedha type karein** (Jaise: *"10 Oct ko 4 log Gomti Grand Villa"*):`,
-        actions: [{ label: '📲 Direct WhatsApp Host (Mr. Shahanshah)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to book a stay at Unique Haven Homes. Please share available options.` }],
+        actions: [{ label: '📲 Direct WhatsApp Host (Mr. Shahanshah)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to book a stay at Roost And Rest Stays. Please share available options.` }],
         quickReplies: [
           '🏡 Gomti Grand Villa (₹8k)',
           '👑 Royal White House (₹12k)',
@@ -1177,7 +1177,7 @@
     // 32. GREETINGS
     if (/^(hi|hello|hii|hey|helo|namaste|namaskar|pranam|good morning|good evening|kya haal)\b/i.test(msg) || raw.length < 3) {
       return {
-        text: `Namaste! 🙏 Main **Nisha** hoon, **Unique Haven Homes, Lucknow** ki verified AI concierge.\n\n` +
+        text: `Namaste! 🙏 Main **Nisha** hoon, **Roost And Rest Stays, Lucknow** ki verified AI concierge.\n\n` +
               `Main aapki turant sahayata kar sakti hoon:\n` +
               `• 🏡 **Gomti Grand Villa (₹8,000)** & Royal White House (₹12,000)\n` +
               `• 🏢 **3BHK Luxury Flats (₹4,500/night)** in Gomti Nagar\n` +
@@ -1195,7 +1195,7 @@
         if (smartReply && smartReply.trim()) {
           return {
             text: smartReply,
-            actions: [{ label: '📲 WhatsApp Host (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent('Namaste! I want to confirm booking with Unique Haven Homes.')}` }],
+            actions: [{ label: '📲 WhatsApp Host (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent('Namaste! I want to confirm booking with Roost And Rest Stays.')}` }],
             quickReplies: ['Book karna hai 📅', 'Rates list 💰', 'Gomti Grand Villa ₹8k']
           };
         }
@@ -1204,13 +1204,13 @@
 
     // 34. STANDARD VERIFIED FALLBACK
     return {
-      text: `Ji bilkul! Unique Haven Homes me hum luxury stays, 100% privacy aur verified 4.9★ hospitality provide karte hain.\n\n` +
+      text: `Ji bilkul! Roost And Rest Stays me hum luxury stays, 100% privacy aur verified 4.9★ hospitality provide karte hain.\n\n` +
             `Aap mujhse pooch sakte hain:\n` +
             `• **Property Rates & Availability** (Gomti Grand Villa ₹8,000, 3BHK Flats ₹4,500)\n` +
             `• **Check-in (12 PM) / Check-out (11 AM)**\n` +
             `• **Kitchen, WiFi, Parking, Food & Couples Safety Policy**\n\n` +
             `Ya aap seedha host se WhatsApp par baat kar sakte hain:`,
-      actions: [{ label: '📲 Chat with Host on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I have a question about Unique Haven Homes.` }],
+      actions: [{ label: '📲 Chat with Host on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I have a question about Roost And Rest Stays.` }],
       quickReplies: ['Gomti Grand Villa ₹8,000', 'Rates list dikhao 💰', 'Couple friendly? ❤️', 'Book now 📅']
     };
   }
@@ -1952,7 +1952,7 @@
     const wrap = document.createElement('div');
     wrap.id = 'uhh-chat-btn-wrap';
     wrap.innerHTML = `
-      <button id="uhh-chat-btn" class="uhh-chat-unified-btn" aria-label="Chat with Nisha AI — The Unique Haven Homes">
+      <button id="uhh-chat-btn" class="uhh-chat-unified-btn" aria-label="Chat with Nisha AI — Roost And Rest Stays">
         <span class="uhh-chat-btn-sparkle">✨</span>
         <span class="uhh-chat-btn-title">Nisha AI Concierge</span>
         <span class="uhh-chat-btn-pill">💬 Ask</span>
@@ -2004,13 +2004,13 @@
             <span>Nisha — AI Concierge</span>
             <svg class="uhh-wa-verified-badge" width="15" height="15" viewBox="0 0 24 24" fill="#00A884"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
           </div>
-          <div class="uhh-chat-header-status" id="uhh-chat-header-status">The Unique Haven Homes · Online</div>
+          <div class="uhh-chat-header-status" id="uhh-chat-header-status">Roost And Rest Stays · Online</div>
         </div>
         <div class="uhh-chat-header-actions">
-          <a href="tel:+919450055554" class="uhh-header-icon-btn" title="Call Host (+91 94500 55554)" aria-label="Call">
+          <a href="tel:+919807486555" class="uhh-header-icon-btn" title="Call Host (+91 94500 55554)" aria-label="Call">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           </a>
-          <a href="https://wa.me/919450055554?text=Namaste!%20I%20am%20looking%20for%20stay%20at%20Unique%20Haven%20Homes." target="_blank" rel="noopener" class="uhh-header-icon-btn" title="Direct WhatsApp" aria-label="WhatsApp">
+          <a href="https://wa.me/919807486555?text=Namaste!%20I%20am%20looking%20for%20stay%20at%20Unique%20Haven%20Homes." target="_blank" rel="noopener" class="uhh-header-icon-btn" title="Direct WhatsApp" aria-label="WhatsApp">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/></svg>
           </a>
           <button id="uhh-chat-voice-toggle" class="uhh-chat-voice-toggle ${_autoVoice ? 'active' : 'muted'}" title="Toggle Voice" aria-label="Toggle Voice">
@@ -2121,7 +2121,7 @@
           if (headerStatus) { headerStatus.textContent = 'typing…'; headerStatus.classList.add('typing'); }
           updateVoiceStatus('processing', 'Nisha soch rahi hain…');
         } else if (state === 'idle') {
-          if (headerStatus) { headerStatus.textContent = 'The Unique Haven Homes · Online'; headerStatus.classList.remove('typing'); }
+          if (headerStatus) { headerStatus.textContent = 'Roost And Rest Stays · Online'; headerStatus.classList.remove('typing'); }
           updateVoiceStatus('idle');
         }
       };
@@ -2145,7 +2145,7 @@
     // Send greeting after short delay
     setTimeout(() => {
       addBotMessage({
-        text: 'Namaste! 🙏 Main **Nisha** hoon, aapki 24/7 AI Concierge at **The Unique Haven Homes**.\n\nLucknow mein luxury homestays, private pool villas, live availability ya **15% direct discount** ke liye batayein — kaise madad karoon?',
+        text: 'Namaste! 🙏 Main **Nisha** hoon, aapki 24/7 AI Concierge at **Roost And Rest Stays**.\n\nLucknow mein luxury homestays, private pool villas, live availability ya **15% direct discount** ke liye batayein — kaise madad karoon?',
         quickReplies: [
           '💰 Rates & Pricing',
           '🏢 3BHK Luxury Flats',
@@ -2200,7 +2200,7 @@
     setTimeout(() => {
       typing.remove();
       if (headerStatus) {
-        headerStatus.textContent = 'The Unique Haven Homes · Online';
+        headerStatus.textContent = 'Roost And Rest Stays · Online';
         headerStatus.classList.remove('typing');
       }
 

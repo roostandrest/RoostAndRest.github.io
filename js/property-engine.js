@@ -1,5 +1,5 @@
 /**
- * Property Luxe Engine — The Unique Haven Homes
+ * Property Luxe Engine — Roost And Rest Stays
  * Powers dynamic 5-star property presentations, 5-photo mosaic,
  * Agoda/Taj search bar, Airbnb calendar blockout sync, and instant UPI QR booking.
  */
@@ -746,7 +746,7 @@
       const waBtn = document.getElementById('luxe-btn-wa-direct');
       if (waBtn) {
         const waText = `Namaste! I want to book ${p.name} directly from ${this.checkIn} to ${this.checkOut} (${this.nights} Nights, ${this.guests} Guests).\nTariff: ₹${base}/night + ${gstRate}% GST = Total: ₹${totalRent.toLocaleString('en-IN')}.\nPlease confirm availability and share check-in pass.`;
-        waBtn.href = `https://wa.me/919450055554?text=${encodeURIComponent(waText)}`;
+        waBtn.href = `https://wa.me/919807486555?text=${encodeURIComponent(waText)}`;
       }
     }
 
@@ -1082,7 +1082,7 @@
 
     renderMetaHeader() {
       const p = this.prop;
-      document.title = `${p.name} | Luxury Homestay in ${p.area_name || 'Gomti Nagar, Lucknow'} | The Unique Haven Homes`;
+      document.title = `${p.name} | Luxury Homestay in ${p.area_name || 'Gomti Nagar, Lucknow'} | Roost And Rest Stays`;
 
       const titleEl = document.getElementById('luxe-title');
       if (titleEl) titleEl.textContent = p.name;
@@ -1260,7 +1260,7 @@
       const p = this.prop;
       const titleEl = document.getElementById('luxe-spec-title');
       if (titleEl) {
-        titleEl.textContent = `${p.type || 'Luxury Homestay'} · Superhosts & Owners: Shahanshah & Firoz · Manager: Praveen Singh`;
+        titleEl.textContent = `${p.type || 'Luxury Homestay'} · Superhosts & Owners: Shahanshah & Anwar · Manager: Praveen Singh`;
       }
 
       const pillsEl = document.getElementById('luxe-spec-pills');
@@ -1419,7 +1419,7 @@
             <p style="margin:0 0 20px; font-size:14px; color:rgba(255,255,255,0.75); max-width:440px;">
               Want a detailed video walkthrough before you book? We will share an instant 60-second video tour directly with you.
             </p>
-            <a href="https://wa.me/919450055554?text=${waMsg}" target="_blank" class="luxe-btn-wa" style="font-size:14px; padding:12px 24px;">
+            <a href="https://wa.me/919807486555?text=${waMsg}" target="_blank" class="luxe-btn-wa" style="font-size:14px; padding:12px 24px;">
               ${ICONS.whatsapp} Get Video on WhatsApp
             </a>
           </div>
@@ -1774,14 +1774,14 @@
             📋 Book Now
           </a>
 
-          <!-- Secondary WhatsApp Inquiry link (Mr. Shahanshah 9450055554) -->
-          <a id="luxe-btn-wa-direct" class="luxe-btn-book-primary" style="background:#25d366; margin-top:8px;" href="https://wa.me/919450055554?text=${encodeURIComponent(`Namaste! I have an inquiry about booking ${p.name} from ${this.checkIn} to ${this.checkOut}. Please share details.`)}" target="_blank">
+          <!-- Secondary WhatsApp Inquiry link (Mr. Shahanshah 9807486555) -->
+          <a id="luxe-btn-wa-direct" class="luxe-btn-book-primary" style="background:#25d366; margin-top:8px;" href="https://wa.me/919807486555?text=${encodeURIComponent(`Namaste! I have an inquiry about booking ${p.name} from ${this.checkIn} to ${this.checkOut}. Please share details.`)}" target="_blank">
             ${ICONS.whatsapp} Have Questions? WhatsApp Us
           </a>
 
           <!-- Secondary CTAs -->
           <div class="luxe-card-sub-actions" style="margin-top:14px;">
-            <a class="luxe-btn-card-sub" href="tel:+919450055554">
+            <a class="luxe-btn-card-sub" href="tel:+919807486555">
               📞 Call Host (Shahanshah)
             </a>
             <button type="button" id="luxe-btn-airbnb-link" class="luxe-btn-card-sub" onclick="window.luxeEngine.openAirbnbModal()">
@@ -1911,7 +1911,7 @@
       const sgstAmount = this.sgstAmount || (gstAmount - cgstAmount);
       const amount = this.totalPayable || (baseTotal + gstAmount);
 
-      const upiId = '8299600709@ybl';
+      const upiId = '9807486555@ybl';
       const upiAltId = 'firozkhan85429189871@axl';
       const upiString = `upi://pay?pa=${upiId}&pn=The%20Unique%20Haven%20Homes&am=${amount}&cu=INR&tn=Booking%20${encodeURIComponent(p.name)}%20${this.nights}N`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=1&data=${encodeURIComponent(upiString)}`;
@@ -2096,7 +2096,7 @@
               </div>
               <div class="bank-row">
                 <span class="bank-label">Beneficiary Name</span>
-                <span class="bank-val">Firoz Ahmad</span>
+                <span class="bank-val">Anwar Ahmad</span>
               </div>
               <div class="bank-row">
                 <span class="bank-label">Account Number</span>
@@ -2123,8 +2123,8 @@
               <div class="bank-row">
                 <span class="bank-label">PhonePe / UPI Linked</span>
                 <span class="bank-val">
-                  <span>8299600709</span>
-                  <button type="button" class="bank-copy-btn" onclick="window.luxeEngine.copyText('8299600709', 'PhonePe Number')">Copy</button>
+                  <span>9807486555</span>
+                  <button type="button" class="bank-copy-btn" onclick="window.luxeEngine.copyText('9807486555', 'PhonePe Number')">Copy</button>
                 </span>
               </div>
             </div>
@@ -2147,7 +2147,7 @@
           </div>
 
           <div style="text-align:center; font-size:11px; color:#94a3b8; margin-top:12px;">
-            🔒 100% Verified Stay with THE UNIQUE HAVEN HOMES PRIVATE LIMITED (CIN: U55101UP2026PTC244637)
+            🔒 100% Verified Stay with ROOST AND REST STAYS (CIN: U55101UP2026PTC244637)
           </div>
         </div>
       `;
@@ -2278,7 +2278,7 @@
           key: keyId,
           amount: Math.round(amount * 100),
           currency: 'INR',
-          name: 'The Unique Haven Homes',
+          name: 'Roost And Rest Stays',
           description: `${p.name} (${this.nights} Nights)`,
           image: 'assets/logo.svg',
           prefill: {
@@ -2340,7 +2340,7 @@
         ...data,
         paymentMode,
         utr,
-        receivedBy: 'Firoz Ahmad'
+        receivedBy: 'Anwar Ahmad'
       });
     }
 
@@ -2397,7 +2397,7 @@
             amount: amount,
             payment_date: new Date().toISOString().slice(0, 10),
             payment_mode: paymentMode,
-            received_by: receivedBy || 'Firoz Ahmad',
+            received_by: receivedBy || 'Anwar Ahmad',
             notes: `Website Booking (${bookingId}) - ${utr}.${isB2B ? ' GSTIN: ' + companyGstin : ''}`,
             verification_status: paymentMode.includes('Razorpay') ? 'verified' : 'pending'
           });
@@ -2413,8 +2413,8 @@
       });
       this.renderInteractiveCalendar();
 
-      // 4. Pre-fill WhatsApp message for Host Mr. Shahanshah (9450055554)
-      const waReceipt = `🏨 *THE UNIQUE HAVEN HOMES*
+      // 4. Pre-fill WhatsApp message for Host Mr. Shahanshah (9807486555)
+      const waReceipt = `🏨 *ROOST AND REST STAYS*
 *DIRECT WEBSITE BOOKING CONFIRMATION*
 ───────────────────────
 🏠 *Property:* ${p.name} (${p.id})
@@ -2437,7 +2437,7 @@ ${isB2B ? `\n🏢 *CORPORATE GST INVOICE REQUIRED:*
 ───────────────────────
 _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
 
-      const waUrl = `https://wa.me/919450055554?text=${encodeURIComponent(waReceipt)}`;
+      const waUrl = `https://wa.me/919807486555?text=${encodeURIComponent(waReceipt)}`;
 
       // Save this booking to local booking history so it always shows in Guest Profile
       const myBookingItem = {
@@ -2520,7 +2520,7 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
           <!-- Corporate Letterhead -->
           <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #0f172a; padding-bottom:12px; margin-bottom:16px;">
             <div>
-              <div style="font-size:16px; font-weight:800; color:#0f172a; letter-spacing:0.5px;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+              <div style="font-size:16px; font-weight:800; color:#0f172a; letter-spacing:0.5px;">ROOST AND REST STAYS</div>
               <div style="font-size:11px; color:#64748b; margin-top:2px;">
                 CIN: U55101UP2026PTC244637 · ROC Kanpur<br>
                 Reg. Off: P NO 39 &amp; 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, UP 226016<br>
@@ -2588,7 +2588,7 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
 
           <div style="font-size:11.5px; color:#64748b; margin-bottom:18px; line-height:1.5;">
             📍 <strong>Property Location:</strong> <a href="${details.mapLink}" target="_blank" style="color:#0284c7; text-decoration:underline;">Open Pinpoint on Google Maps ↗</a><br>
-            👑 <strong>Superhosts &amp; Owners:</strong> Firoz Khan (+91 82996 00709) &amp; Shahanshah (+91 94500 55554)<br>
+            👑 <strong>Superhosts &amp; Owners:</strong> Anwar Ahmad (+91 82996 00709) &amp; Shahanshah (+91 94500 55554)<br>
             👤 <strong>Manager:</strong> Praveen Singh (+91 91941 09911) · Office: 10:00 AM – 09:00 PM
           </div>
 
@@ -3373,7 +3373,7 @@ Direct Booking & Photo Album: ${shareUrl}`;
                   name: crmB.guest_name,
                   phone: crmB.phone,
                   email: this.guestProfile.email,
-                  propertyName: crmB.property_name || 'The Unique Haven Homes Stay',
+                  propertyName: crmB.property_name || 'Roost And Rest Stays Stay',
                   roomId: crmB.room_id,
                   mapLink: 'https://maps.google.com/?q=Gomti+Nagar+Lucknow',
                   checkIn: crmB.check_in,
@@ -3546,7 +3546,7 @@ Direct Booking & Photo Album: ${shareUrl}`;
                   </h3>
                   <div class="airbnb-profile-subtext">
                     <span>📱 +91 ${p.phone || '94109911'}</span>
-                    <span>✉️ ${p.email || 'guest@uniquehavenhomesstay.com'}</span>
+                    <span>✉️ ${p.email || 'guest@roostandrest.github.io'}</span>
                     <span>📅 Joined 2026</span>
                   </div>
                   <div class="airbnb-profile-badges-row">
@@ -3680,7 +3680,7 @@ Direct Booking & Photo Album: ${shareUrl}`;
                     <button type="button" class="airbnb-btn-action-sm" onclick="window.luxeEngine.resendBookingTaxEmail('${b.bookingId}')">
                       📧 Email GST Tax Bill
                     </button>
-                    <a class="airbnb-btn-action-sm whatsapp" href="${b.waUrl || `https://wa.me/919450055554?text=Namaste!%20My%20Booking%20Ref%20is%20${b.bookingId}`}" target="_blank">
+                    <a class="airbnb-btn-action-sm whatsapp" href="${b.waUrl || `https://wa.me/919807486555?text=Namaste!%20My%20Booking%20Ref%20is%20${b.bookingId}`}" target="_blank">
                       📱 Host WhatsApp Pass
                     </a>
                     <a class="airbnb-btn-action-sm" href="${b.mapLink || 'https://maps.google.com/?q=Gomti+Nagar+Lucknow'}" target="_blank">
@@ -4388,11 +4388,11 @@ Direct Booking & Photo Album: ${shareUrl}`;
 
       const recipient = details.email || (this.guestProfile && this.guestProfile.email) || '';
       const subject = `Official GST Tax Invoice & Confirmation - Ref: ${details.bookingId} - ${details.propertyName}`;
-      const body = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+      const body = `ROOST AND REST STAYS
 CIN: U55101UP2026PTC244637 · ROC Kanpur
 Registered Office: P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, UP 226016 - India
 GST SAC Code: 996311 (Short-Stay Accommodation Services)
-Hosts & Helpline: +91 9450055554 (Shahanshah) / +91 8299600709 (Firoz)
+Hosts & Helpline: +91 9807486555 (Shahanshah) / +91 9807486555 (Anwar)
 
 ==================================================
 OFFICIAL GST TAX INVOICE & BOOKING PASS
@@ -4427,10 +4427,10 @@ KEY STAY GUIDELINES:
 • 100% AC in all rooms & 24/7 power backup.
 • Non-smoking indoors. Quiet hours after 11:00 PM.
 
-Thank you for choosing The Unique Haven Homes.
+Thank you for choosing Roost And Rest Stays.
 Warm Regards,
-The Unique Haven Homes Private Limited
-https://uniquehavenhomesstay.com`;
+Roost And Rest Stays
+https://roostandrest.github.io`;
 
       const mailtoUrl = `mailto:${encodeURIComponent(recipient)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       window.open(mailtoUrl, '_blank');

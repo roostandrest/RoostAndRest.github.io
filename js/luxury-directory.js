@@ -1,5 +1,5 @@
 /**
- * THE UNIQUE HAVEN HOMES — LUXURY DIRECTORY CONTROLLER
+ * ROOST AND REST STAYS — LUXURY DIRECTORY CONTROLLER
  * Features:
  * 1. In-Card Interactive Photo Carousel (arrows + indicators)
  * 2. Full-Screen Luxury Photo Lightbox with Categories & Thumbnails
@@ -707,7 +707,7 @@
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile && navigator.share) {
       navigator.share({
-        title: `${name} — Unique Haven Homes Lucknow`,
+        title: `${name} — Roost And Rest Stays Lucknow`,
         text: shareText,
         url: propUrl
       }).catch(() => {

@@ -1,6 +1,6 @@
 /**
  * Vesper Hero Showcase Controller — All 17 Luxe Properties
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 (function() {
@@ -237,7 +237,7 @@
       name: 'The Unique',
       type: '3BHK Luxury Flat · Gomti Nagar',
       headline: 'Our signature original boutique home.',
-      desc: 'The pioneer flat of The Unique Haven Homes, impeccably maintained with 4.9+ rating.',
+      desc: 'The pioneer flat of Roost And Rest Stays, impeccably maintained with 4.9+ rating.',
       specs: ['👥 Sleeps 10', '⭐ 4.9+ Top Rated', '🛏️ 3 King Beds', '❄️ 100% AC', '✨ Save 15% Direct'],
       price: '₹6,300 / night',
       spaces: [
@@ -771,7 +771,7 @@
 
   // ── 5. TYPEWRITER EFFECT (Company Branding & 17 Stays) ──
   const TYPEWRITER_PHRASES = [
-    "The Unique Haven Homes · 17 Curated Stays in Lucknow.",
+    "Roost And Rest Stays · 17 Curated Stays in Lucknow.",
     "Presidential Villas, Skyline Penthouses & 3BHK Suites.",
     "Save 15% booking direct with verified Superhosts.",
     "Royal White House · Flagship presidential residence."
@@ -1135,8 +1135,8 @@
 
       if (waBtn && title) {
         const dateNote = ci && co ? ` from ${ci} to ${co} for ${g} guests` : '';
-        const msg = `Namaste! I would like to book ${title} in Lucknow${dateNote} directly with The Unique Haven Homes (Direct Guest Rate).`;
-        waBtn.href = `https://wa.me/919450055554?text=${encodeURIComponent(msg)}`;
+        const msg = `Namaste! I would like to book ${title} in Lucknow${dateNote} directly with Roost And Rest Stays (Direct Guest Rate).`;
+        waBtn.href = `https://wa.me/919807486555?text=${encodeURIComponent(msg)}`;
       }
     });
   }

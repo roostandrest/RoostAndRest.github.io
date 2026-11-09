@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 // 📥 AIRBNB LISTING & FOOTAGE (PHOTOS) IMPORTER
 // 1-Click Import: High-Res Photos, Title, Description, Specs & Amenities
-// THE UNIQUE HAVEN HOMES PRIVATE LIMITED (TUHH)
+// ROOST AND REST STAYS (TUHH)
 // ═══════════════════════════════════════════════════════════
 
 window.AIRBNB_IMPORTER = {
@@ -368,7 +368,7 @@ window.AIRBNB_IMPORTER = {
         <!-- Quick Action Toolbar -->
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin:16px 0 12px; background:#EFF6FF; padding:12px 16px; border-radius:10px; border:1px solid #BFDBFE;">
           <div style="font-size:13px; font-weight:800; color:#1E40AF;">
-            ⚡ Apply to TUHH System:
+            ⚡ Apply to Roost And Rest System:
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button onclick="window.AIRBNB_IMPORTER.savePhotosToShowcase()" 
