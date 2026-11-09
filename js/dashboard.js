@@ -545,12 +545,12 @@ async function renderDashboard() {
       const stroke = color || (isPos ? '#10B981' : '#EF4444');
       const fill = isPos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
       if (isPos) {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline">
+        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
         <path d="M0 24 Q 25 18, 50 12 T 100 4" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
         <path d="M0 24 Q 25 18, 50 12 T 100 4 L 100 28 L 0 28 Z" fill="${fill}"/>
       </svg>`;
       } else {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline">
+        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
         <path d="M0 8 Q 25 14, 50 18 T 100 24" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
         <path d="M0 8 Q 25 14, 50 18 T 100 24 L 100 28 L 0 28 Z" fill="${fill}"/>
       </svg>`;
@@ -2005,12 +2005,12 @@ window.renderExecutiveDashboard = async function () {
       const stroke = color || (isPos ? '#10B981' : '#EF4444');
       const fill = isPos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
       if (isPos) {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline">
+        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
           <path d="M0 24 Q 25 18, 50 12 T 100 4" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M0 24 Q 25 18, 50 12 T 100 4 L 100 28 L 0 28 Z" fill="${fill}"/>
         </svg>`;
       } else {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline">
+        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
           <path d="M0 8 Q 25 14, 50 18 T 100 24" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M0 8 Q 25 14, 50 18 T 100 24 L 100 28 L 0 28 Z" fill="${fill}"/>
         </svg>`;

@@ -1345,27 +1345,18 @@ function renderLogin() {
           </div>
 
           <!-- Sign In Button -->
-          <button id="loginBtn" class="uhh-signin-btn" style="background:linear-gradient(135deg, #2C241E 0%, #4A3E35 100%);box-shadow:0 4px 16px rgba(44,36,30,0.35);" onclick="loginWithEmail()">
+          <button id="loginBtn" class="uhh-signin-btn" style="background:linear-gradient(135deg, #2C241E 0%, #4A3E35 100%);box-shadow:0 4px 16px rgba(44,36,30,0.35);margin-top:6px;" onclick="loginWithEmail()">
             ✦ &nbsp;Sign In to CRM
           </button>
 
-          <div style="margin-top:12px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
-            <button type="button" onclick="quickFillAnwar()" style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-              <span>🔑</span> Auto-fill Anwar (Admin)
-            </button>
-            <button type="button" onclick="quickFillAdmin()" style="background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-              <span>🔑</span> Auto-fill Admin
-            </button>
-          </div>
-
-          <div id="loginErr" style="margin-top:10px;font-size:13px;color:#EF4444;font-weight:600;"></div>
+          <div id="loginErr" style="margin-top:12px;font-size:13px;color:#EF4444;font-weight:600;min-height:18px;"></div>
 
           <!-- Footer -->
           <div class="uhh-footer">
-            <strong style="color:#0F172A;font-size:10px;">ROOST AND REST STAYS</strong><br>
+            <strong style="color:#0F172A;font-size:10.5px;letter-spacing:0.5px;">ROOST AND REST STAYS</strong><br>
             <span style="color:#64748B;font-size:9.5px;">Boutique Homestays &bull; Lucknow, Uttar Pradesh</span>
             &nbsp;&bull;&nbsp;
-            <span style="color:#B45309;font-size:9.5px;font-weight:700;">Build ${APP_VERSION}</span>
+            <span style="color:#B45309;font-size:9.5px;font-weight:700;">Enterprise Portal</span>
           </div>
 
         </div>
