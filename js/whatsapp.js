@@ -10,7 +10,8 @@ const OWNERS = [
 ];
 
 const BRAND_URL = 'https://roostandrest.github.io';
-const BRAND_NAME = 'Roost And Rest Stays';
+// Use global BRAND_NAME from config.js or fallback
+window.BRAND_NAME = window.BRAND_NAME || 'ROOST AND REST';
 
 // ═══ Get property URL from nickname ═══
 window.getPropertyURL = function(nickname) {

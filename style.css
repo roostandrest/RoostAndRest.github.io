@@ -160,12 +160,12 @@ html, body, #app {
   position: relative;
 }
 
-/* ─── SIDEBAR (Retired from Desktop, Only Off-Canvas Drawer on Mobile) ─── */
+/* ─── SIDEBAR (Off-Canvas Luxury Drawer on Mobile & Desktop Toggle) ─── */
 .sidebar {
   display: none;
   width: 280px;
-  background: #ffffff;
-  color: #111827;
+  background: #2C241E !important;
+  color: #FFFFFF !important;
   position: fixed;
   top: 0;
   left: 0;
@@ -173,8 +173,8 @@ html, body, #app {
   height: 100vh;
   flex-direction: column;
   z-index: 99999;
-  border-right: 1px solid #f3f4f6;
-  box-shadow: 4px 0 24px rgba(0,0,0,0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 4px 0 28px rgba(0,0,0,0.35) !important;
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -427,31 +427,45 @@ html, body, #app {
 }
 
 .sidebar-nav a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  margin-bottom: 2px;
-  color: rgba(255, 255, 255, 0.7);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.15s ease;
-  white-space: nowrap;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  margin: 3px 8px !important;
+  color: #E2E8F0 !important;
+  text-decoration: none !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+}
+
+.sidebar-nav a .nav-icon {
+  font-size: 1.15rem !important;
+  color: #F59E0B !important;
+  flex-shrink: 0 !important;
 }
 
 .sidebar-nav a:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  transform: translateX(2px);
+  background: rgba(255, 255, 255, 0.09) !important;
+  color: #FFFFFF !important;
+  transform: translateX(2px) !important;
+}
+
+.sidebar-nav a:hover .nav-icon {
+  color: #FCD34D !important;
 }
 
 .sidebar-nav a.active {
-  background: var(--primary);
-  color: #fff;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+  background: linear-gradient(135deg, #B45309 0%, #78350F 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.45) !important;
+}
+
+.sidebar-nav a.active .nav-icon {
+  color: #FFFFFF !important;
 }
 
 .sidebar-nav a.filter-hidden,
@@ -465,11 +479,11 @@ html, body, #app {
 /* Sidebar Footer */
 .sidebar-footer {
   padding: 12px 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   gap: 8px;
   flex-shrink: 0;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.25);
 }
 
 .sidebar-action-btn {
@@ -479,28 +493,40 @@ html, body, #app {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.07);
+  color: #F8FAFC;
   transition: all 0.15s;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-family: inherit;
+}
+
+.sidebar-action-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
 }
 
 .sidebar-action-btn.pref-btn {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.07);
+  color: #F8FAFC;
 }
 .sidebar-action-btn.pref-btn:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
 }
 
 .sidebar-action-btn.logout-btn {
-  background: #F8FAFC;
-  color: #64748B;
-  border-color: #E2E8F0;
+  background: rgba(239, 68, 68, 0.18);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.35);
 }
 .sidebar-action-btn.logout-btn:hover {
-  background: #F1F5F9;
-  color: #fff;
+  background: #DC2626;
+  color: #FFFFFF;
 }
 
 /* ─── MAIN WRAPPER: FULL-WIDTH AIRY CANVAS (HOMEYHUTS STYLE) ─── */

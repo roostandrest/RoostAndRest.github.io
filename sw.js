@@ -1,60 +1,61 @@
-const CACHE_NAME = 'tuhh-live-v445';
-const RUNTIME_CACHE = 'tuhh-runtime-v445';
+const CACHE_NAME = 'roost-live-v530';
+const RUNTIME_CACHE = 'roost-runtime-v530';
 
 const CORE_ASSETS = [
-  '/admin.html',
-  '/pay.html',
-  '/review.html',
-  '/guest.html',
-  '/book.html',
-  '/book.css',
-  '/book.js',
-  '/calendar.html',
-  '/blossom-skyline.html',
-  '/style.css',
-  '/css/homeyindia-crm-theme.css',
-  '/config.js',
-  '/manifest.json',
-  '/assets/logo.png',
-  '/assets/tuhh-office-board-contact.jpg',
-  '/assets/signature-stamp.svg',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
-  '/js/core.js',
-  '/js/user-audit.js',
-  '/js/airbnb-audit-data.js',
-  '/js/dashboard.js',
-  '/js/calendar.js',
-  '/js/bookings.js',
-  '/js/smart-bookings.js',
-  '/js/html2canvas.min.js',
-  '/js/booking-receipt.js',
-  '/js/gst-invoice.js',
-  '/js/ca-audit-pack.js',
-  '/js/properties.js',
-  '/js/employees.js',
-  '/js/expenses.js',
-  '/js/store.js',
-  '/js/maintenance.js',
-  '/js/investors.js',
-  '/js/sop.js',
-  '/js/whatsapp.js',
-  '/js/whatsapp-hub.js',
-  '/js/reconciliation.js',
-  '/js/notifications.js',
-  '/js/claims.js',
-  '/js/uhhs-od-manager.js',
-  '/js/company-advances.js',
-  '/js/analytics.js',
-  '/js/showcase-data.js',
-  '/js/command-palette.js',
-  '/js/help-guide.js'
+  './',
+  './index.html',
+  './admin.html',
+  './style.css',
+  './config.js',
+  './manifest.json',
+  './assets/logo.svg',
+  './assets/logo.png',
+  './assets/icon-192.png',
+  './assets/icon-512.png',
+  './assets/signature-stamp.svg',
+  './js/core.js',
+  './js/user-audit.js',
+  './js/airbnb-audit-data.js',
+  './js/dashboard.js',
+  './js/calendar.js',
+  './js/bookings.js',
+  './js/smart-bookings.js',
+  './js/html2canvas.min.js',
+  './js/booking-receipt.js',
+  './js/gst-invoice.js',
+  './js/ca-audit-pack.js',
+  './js/properties.js',
+  './js/employees.js',
+  './js/expenses.js',
+  './js/store.js',
+  './js/maintenance.js',
+  './js/investors.js',
+  './js/sop.js',
+  './js/whatsapp.js',
+  './js/whatsapp-hub.js',
+  './js/reconciliation.js',
+  './js/notifications.js',
+  './js/claims.js',
+  './js/uhhs-od-manager.js',
+  './js/company-advances.js',
+  './js/analytics.js',
+  './js/showcase-data.js',
+  './js/command-palette.js',
+  './js/help-guide.js'
 ];
 
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(CORE_ASSETS).catch(() => {}))
+    caches.open(CACHE_NAME).then(async cache => {
+      for (const asset of CORE_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (e) {
+          // Silent fallback - ignore precache missing individual assets
+        }
+      }
+    })
   );
 });
 
@@ -178,7 +179,7 @@ self.addEventListener('push', event => {
     try {
       data = event.data.json();
     } catch(e) {
-      data = { title: 'TUHH Alert', body: event.data.text() };
+      data = { title: 'Roost & Rest Alert', body: event.data.text() };
     }
   }
 
@@ -187,12 +188,12 @@ self.addEventListener('push', event => {
     body: data.body || data.message || 'New update from Roost And Rest CRM',
     icon: data.icon || '/assets/icon-192.png',
     badge: '/assets/logo.png',
-    tag: data.tag || ('tuhh-notif-' + Date.now()),
+    tag: data.tag || ('roost-notif-' + Date.now()),
     data: data,
     vibrate: [100, 50, 100],
     requireInteraction: true,
     actions: [
-      { action: 'open', title: 'Open TUHH' },
+      { action: 'open', title: 'Open CRM' },
       { action: 'dismiss', title: 'Dismiss' }
     ]
   };
