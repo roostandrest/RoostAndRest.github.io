@@ -424,4 +424,59 @@ ON CONFLICT (user_id) DO UPDATE SET
   role = EXCLUDED.role,
   is_approved = true;
 
-SELECT '✅ Roost And Rest Schema Created & 18 Properties Seeded Successfully!' AS status;
+-- ═══════════════════════════════════════════════════════════════════
+-- 19. CREATE DEFAULT ADMIN USER IN AUTH (admin@roostandrest.com / Admin@Roost2026)
+-- ═══════════════════════════════════════════════════════════════════
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+DO $$
+DECLARE
+  v_user_id UUID := 'a1111111-2222-3333-4444-555555555555'::UUID;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'admin@roostandrest.com') THEN
+    INSERT INTO auth.users (
+      instance_id,
+      id,
+      aud,
+      role,
+      email,
+      encrypted_password,
+      email_confirmed_at,
+      raw_app_meta_data,
+      raw_user_meta_data,
+      created_at,
+      updated_at,
+      confirmation_token
+    ) VALUES (
+      '00000000-0000-0000-0000-000000000000',
+      v_user_id,
+      'authenticated',
+      'authenticated',
+      'admin@roostandrest.com',
+      crypt('Admin@Roost2026', gen_salt('bf')),
+      NOW(),
+      '{"provider":"email","providers":["email"]}',
+      '{"full_name":"Admin","name":"Admin"}',
+      NOW(),
+      NOW(),
+      ''
+    );
+  ELSE
+    SELECT id INTO v_user_id FROM auth.users WHERE email = 'admin@roostandrest.com';
+    UPDATE auth.users 
+    SET encrypted_password = crypt('Admin@Roost2026', gen_salt('bf')),
+        email_confirmed_at = NOW()
+    WHERE id = v_user_id;
+  END IF;
+
+  -- Ensure profile exists and is approved as Admin
+  INSERT INTO public.profiles (user_id, display_name, role, is_approved)
+  VALUES (v_user_id::TEXT, 'Admin', 'admin', true)
+  ON CONFLICT (user_id) DO UPDATE SET
+    display_name = 'Admin',
+    role = 'admin',
+    is_approved = true;
+END $$;
+
+SELECT '✅ Roost And Rest Schema Created, 18 Properties & Admin User Configured!' AS status;
+

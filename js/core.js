@@ -1299,22 +1299,22 @@ function renderLogin() {
       <div class="uhh-card">
         <div class="uhh-card-inner">
 
-          <!-- Logo with fresh Sky-Blue Theme & Cache Buster -->
-          <div class="uhh-logo-ring">
+          <!-- Logo with warm luxury styling -->
+          <div class="uhh-logo-ring" style="background:linear-gradient(135deg, #2C241E 0%, #4A3E35 100%);box-shadow:0 8px 24px rgba(44,36,30,0.25);">
             <div class="uhh-logo-inner">
-              <img src="assets/logo-emblem.png?v=393" alt="The Unique Haven Homes Logo" />
+              <img src="assets/logo.svg" alt="Roost And Rest Logo" style="width:100%;height:100%;object-fit:cover;" />
             </div>
           </div>
 
           <!-- Brand -->
-          <div class="uhh-brand-name">The Unique Haven Homes</div>
-          <div class="uhh-brand-sub">Hospitality Management &amp; Booking CRM</div>
+          <div class="uhh-brand-name">Roost And Rest</div>
+          <div class="uhh-brand-sub">Boutique Stays &bull; Enterprise CRM</div>
 
           <!-- Status badge -->
           <div style="margin-bottom:20px;">
-            <span class="uhh-badge-divider">
-              <span style="width:6px;height:6px;background:#16A34A;border-radius:50%;display:inline-block;box-shadow:0 0 6px rgba(22,163,74,0.4);"></span>
-              SECURE STAFF PORTAL
+            <span class="uhh-badge-divider" style="background:#FDF8F3;border-color:#F0E6DC;color:#854D0E;">
+              <span style="width:6px;height:6px;background:#B45309;border-radius:50%;display:inline-block;box-shadow:0 0 6px rgba(180,83,9,0.4);"></span>
+              SECURE MANAGEMENT PORTAL
             </span>
           </div>
 
@@ -1334,7 +1334,7 @@ function renderLogin() {
           <!-- Email -->
           <div class="uhh-field">
             <label class="uhh-label">Email Address</label>
-            <input id="email" type="email" class="uhh-input" placeholder="admin@uniquehavenhomesstay.com" autocomplete="email" />
+            <input id="email" type="email" class="uhh-input" placeholder="admin@roostandrest.com" autocomplete="email" />
           </div>
 
           <!-- Password -->
@@ -1345,18 +1345,24 @@ function renderLogin() {
           </div>
 
           <!-- Sign In Button -->
-          <button id="loginBtn" class="uhh-signin-btn" onclick="loginWithEmail()">
+          <button id="loginBtn" class="uhh-signin-btn" style="background:linear-gradient(135deg, #2C241E 0%, #4A3E35 100%);box-shadow:0 4px 16px rgba(44,36,30,0.35);" onclick="loginWithEmail()">
             ✦ &nbsp;Sign In to CRM
           </button>
+
+          <div style="margin-top:12px;text-align:center;">
+            <button type="button" onclick="quickFillAdmin()" style="background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+              <span>🔑</span> Auto-fill Admin Login
+            </button>
+          </div>
 
           <div id="loginErr" style="margin-top:10px;font-size:13px;color:#EF4444;font-weight:600;"></div>
 
           <!-- Footer -->
           <div class="uhh-footer">
-            <strong style="color:#0F172A;font-size:10px;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong><br>
-            <span style="color:#64748B;font-size:9.5px;">CIN: U55101UP2026PTC244637</span>
+            <strong style="color:#0F172A;font-size:10px;">ROOST AND REST STAYS</strong><br>
+            <span style="color:#64748B;font-size:9.5px;">Boutique Homestays &bull; Lucknow, Uttar Pradesh</span>
             &nbsp;&bull;&nbsp;
-            <span style="color:#0284C7;font-size:9.5px;font-weight:700;">Build ${APP_VERSION}</span>
+            <span style="color:#B45309;font-size:9.5px;font-weight:700;">Build ${APP_VERSION}</span>
           </div>
 
         </div>
@@ -1366,16 +1372,24 @@ function renderLogin() {
 }
 
 async function loginWithGoogle() {
+  const redirectUrl = window.location.origin + window.location.pathname;
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: 'https://uniquehavenhomesstay.com/admin.html'
+      redirectTo: redirectUrl
     }
   });
   if (error) {
     document.getElementById('loginErr').innerHTML = `<div class="error">${error.message}</div>`;
   }
 }
+
+window.quickFillAdmin = function() {
+  const em = document.getElementById('email');
+  const pw = document.getElementById('password');
+  if (em) em.value = 'admin@roostandrest.com';
+  if (pw) pw.value = 'Admin@Roost2026';
+};
 
 async function loginWithEmail() {
   const btn = document.getElementById("loginBtn");
@@ -1389,7 +1403,7 @@ async function loginWithEmail() {
   if (error) {
     document.getElementById("loginErr").innerHTML = `<div class="error">${error.message}</div>`;
     btn.disabled = false;
-    btn.textContent = 'Login with Email';
+    btn.textContent = '✦  Sign In to CRM';
     return;
   }
   await loadProfile(data.user.id);
@@ -1763,13 +1777,13 @@ function renderShell(content, activePage = 'dashboard') {
     'property-setup': { title: 'Property Setup', sub: 'Configure rooms, units & pricing', icon: '🏗️' },
     'whatsapp-hub': { title: 'WhatsApp Communications', sub: 'Guest templates & automated messaging', icon: '📱' },
     sop: { title: 'SOP Operational Guide', sub: 'Standard operating procedures for staff', icon: '📘' },
-    menu: { title: 'Account & Operations', sub: 'The Unique Haven Homes Pvt. Ltd.', icon: '☰' },
+    menu: { title: 'Account & Operations', sub: 'Roost And Rest Stays', icon: '☰' },
     'user-mgmt': { title: 'User Management', sub: 'System users, roles & permissions', icon: '👤' },
     help: { title: 'Help & Operating Guide', sub: 'Interactive software manual, daily workflows & fast shortcut keys', icon: '❓' },
     settings: { title: 'System Settings', sub: 'Global configuration & preferences', icon: '⚙️' },
   };
 
-  const pageMeta = PAGE_TITLES[activePage] || { title: activePage, sub: 'The Unique Haven Homes CRM', icon: '📋' };
+  const pageMeta = PAGE_TITLES[activePage] || { title: activePage, sub: 'Roost And Rest CRM', icon: '📋' };
 
   // Find which Hub the activePage belongs to
   const currentHub = (UHHS_HUBS || []).find(h => h.pages.includes(activePage));
@@ -1808,10 +1822,10 @@ function renderShell(content, activePage = 'dashboard') {
 
   const footerHtml = (activePage === 'bookings' || activePage === 'reports' || activePage === 'calendar' || activePage === 'expenses' || activePage === 'laundry' || activePage === 'maintenance' || activePage === 'airbnb-sync' || activePage === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin' || activePage === 'employees' || activePage === 'attendance' || activePage === 'tasks' || activePage === 'employee-ledger' || activePage === 'att-summary' || (typeof content === 'string' && (content.includes('Developed by Praveen Singh') || content.includes('report-doc') || content.includes('report-official-footer')))) ? '' : `
     <footer class="app-official-system-footer">
-      <div class="footer-legal">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+      <div class="footer-legal">ROOST AND REST STAYS</div>
       <div class="footer-meta">
-        <span>CIN: U55101UP2026PTC244637</span> &bull; 
-        <a href="https://uniquehavenhomesstay.com" target="_blank" rel="noopener">uniquehavenhomesstay.com</a>
+        <span>Boutique Homestays &bull; Lucknow</span> &bull; 
+        <span>roostandrestlucknow@gmail.com</span>
       </div>
       <div class="footer-credit">⚡ Developed by <strong>Praveen Singh</strong></div>
     </footer>`;
@@ -1910,13 +1924,13 @@ function renderShell(content, activePage = 'dashboard') {
       <!-- ─── SIDEBAR ─── -->
       <aside class="sidebar" id="sidebarEl">
         <div class="sidebar-top">
-          <div class="sidebar-brand" onclick="navigate('dashboard')" title="THE UNIQUE HAVEN HOMES PRIVATE LIMITED">
+          <div class="sidebar-brand" onclick="navigate('dashboard')" title="ROOST AND REST STAYS">
             <div class="brand-logo-wrap">
-              <img src="assets/logo-emblem.png?v=393" alt="THE UNIQUE HAVEN HOMES" class="brand-logo" />
+              <img src="assets/logo.svg" alt="ROOST AND REST" class="brand-logo" />
             </div>
             <div class="brand-text">
-              <span class="brand-name">THE UNIQUE HAVEN HOMES</span>
-              <span class="brand-sub">PVT. LTD. · CRM</span>
+              <span class="brand-name">ROOST AND REST</span>
+              <span class="brand-sub">STAYS &bull; CRM</span>
             </div>
           </div>
           <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close Sidebar"><i class="ti ti-chevron-left"></i></button>
@@ -1968,10 +1982,10 @@ function renderShell(content, activePage = 'dashboard') {
           <div class="topbar-left">
             <button type="button" class="sidebar-toggle-btn" id="hamburgerBtn" aria-label="Toggle Navigation" title="Toggle Navigation"><i class="ti ti-menu-2"></i></button>
             <div class="topbar-brand-group" onclick="navigate('dashboard')" style="display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0;">
-              <img src="assets/logo-emblem.png?v=393" alt="TUHH" style="width:34px;height:34px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.1);flex-shrink:0;" />
+              <img src="assets/logo.svg" alt="Roost & Rest" style="width:34px;height:34px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.1);flex-shrink:0;" />
               <div class="topbar-brand-titles" style="display:flex;flex-direction:column;">
-                <span class="topbar-brand-main" style="font-weight:900;font-size:13px;color:#222222;letter-spacing:0.2px;white-space:nowrap;line-height:1.2;">UNIQUE HAVEN</span>
-                <span class="topbar-brand-sub" style="font-size:9px;color:var(--primary);font-weight:800;letter-spacing:0.5px;white-space:nowrap;">HOMES OPS</span>
+                <span class="topbar-brand-main" style="font-weight:900;font-size:13px;color:#222222;letter-spacing:0.2px;white-space:nowrap;line-height:1.2;">ROOST &amp; REST</span>
+                <span class="topbar-brand-sub" style="font-size:9px;color:var(--primary);font-weight:800;letter-spacing:0.5px;white-space:nowrap;">STAYS CRM</span>
               </div>
             </div>
             <!-- Search Menu in Topbar Left on Desktop (Matching YBT CRM) -->
@@ -3906,19 +3920,15 @@ async function renderSettings() {
 
   // Auto-sanitize rogue/incorrect legacy values across BOTH settings array (Tab 4 table) AND setMap (Tab 2 form)
   settings.forEach(s => {
-    if (s.key === 'brand_name' && (!s.value || s.value.toUpperCase().includes('HOME STAY') || s.value.trim().toLowerCase() === 'the unique haven')) {
-      s.value = 'The Unique Haven Homes';
-      sb.from('app_settings').update({ value: 'The Unique Haven Homes', updated_at: new Date().toISOString() }).eq('key', 'brand_name').then();
+    if (s.key === 'brand_name' && (!s.value || s.value.toUpperCase().includes('UNIQUE HAVEN'))) {
+      s.value = 'ROOST AND REST';
+      sb.from('app_settings').update({ value: 'ROOST AND REST', updated_at: new Date().toISOString() }).eq('key', 'brand_name').then();
     }
-    if (s.key === 'website_url' && (!s.value || s.value.includes('theuniquehaven.com'))) {
-      s.value = 'https://uniquehavenhomesstay.com';
-      sb.from('app_settings').update({ value: 'https://uniquehavenhomesstay.com', updated_at: new Date().toISOString() }).eq('key', 'website_url').then();
+    if (s.key === 'website_url' && (!s.value || s.value.includes('uniquehaven'))) {
+      s.value = 'https://roostandrest.github.io';
+      sb.from('app_settings').update({ value: 'https://roostandrest.github.io', updated_at: new Date().toISOString() }).eq('key', 'website_url').then();
     }
-    if (s.key === 'google_review_link' && s.value && s.value.includes('YOUR_GOOGLE_ID')) {
-      s.value = '';
-      sb.from('app_settings').update({ value: '', updated_at: new Date().toISOString() }).eq('key', 'google_review_link').then();
-    }
-    if (s.key === 'checkin_time' && (s.value === '2:00 PM' || !s.value)) {
+    if (s.key === 'checkin_time' && !s.value) {
       s.value = '1:00 PM';
       sb.from('app_settings').update({ value: '1:00 PM', updated_at: new Date().toISOString() }).eq('key', 'checkin_time').then();
     }
@@ -3926,32 +3936,16 @@ async function renderSettings() {
       s.value = '11:00 AM';
       sb.from('app_settings').update({ value: '11:00 AM', updated_at: new Date().toISOString() }).eq('key', 'checkout_time').then();
     }
-    if (s.key === 'registered_office_map_link' && (!s.value || s.value.includes('Radhikapuri') || !s.value.includes('26.897965'))) {
-      s.value = 'https://www.google.com/maps?q=26.897965,81.010463';
-      sb.from('app_settings').update({ value: 'https://www.google.com/maps?q=26.897965,81.010463', updated_at: new Date().toISOString() }).eq('key', 'registered_office_map_link').then();
-    }
     setMap[s.key] = s.value;
   });
 
-  if (!settings.find(s => s.key === 'manager_phone')) {
-    const entry = { key: 'manager_phone', value: '9194109911', description: 'Manager (Mr. Praveen Singh)' };
-    settings.push(entry);
-    sb.from('app_settings').upsert({ ...entry, updated_at: new Date().toISOString() }, { onConflict: 'key' }).then();
-  }
-  if (!settings.find(s => s.key === 'registered_office_map_link')) {
-    const entry = { key: 'registered_office_map_link', value: 'https://www.google.com/maps?q=26.897965,81.010463', description: 'Registered Office Exact Google Maps Pin' };
-    settings.push(entry);
-    sb.from('app_settings').upsert({ ...entry, updated_at: new Date().toISOString() }, { onConflict: 'key' }).then();
-  }
-
-  if (!setMap['brand_name']) setMap['brand_name'] = 'The Unique Haven Homes';
-  if (!setMap['website_url']) setMap['website_url'] = 'https://uniquehavenhomesstay.com';
-  if (!setMap['owner_phone_1']) setMap['owner_phone_1'] = '9450055554';
-  if (!setMap['owner_phone_2']) setMap['owner_phone_2'] = '8299600709';
-  if (!setMap['manager_phone']) setMap['manager_phone'] = '9194109911';
+  if (!setMap['brand_name']) setMap['brand_name'] = 'ROOST AND REST';
+  if (!setMap['website_url']) setMap['website_url'] = 'https://roostandrest.github.io';
+  if (!setMap['owner_phone_1']) setMap['owner_phone_1'] = '9807486555';
+  if (!setMap['owner_phone_2']) setMap['owner_phone_2'] = '9807486555';
+  if (!setMap['manager_phone']) setMap['manager_phone'] = '9807486555';
   if (!setMap['checkin_time']) setMap['checkin_time'] = '1:00 PM';
   if (!setMap['checkout_time']) setMap['checkout_time'] = '11:00 AM';
-  if (!setMap['registered_office_map_link']) setMap['registered_office_map_link'] = 'https://www.google.com/maps?q=26.897965,81.010463';
 
   const activeTab = window._settingsActiveTab || 'themes';
   const currentTheme = window.themeManager?.get() || 'light';
@@ -4040,34 +4034,34 @@ async function renderSettings() {
         <div class="form-grid">
           <div class="form-group">
             <label>Brand Name</label>
-            <input type="text" id="brand_brand_name" value="${(setMap['brand_name'] || 'The Unique Haven Homes').replace(/"/g, '&quot;')}" placeholder="e.g. The Unique Haven Homes" />
+            <input type="text" id="brand_brand_name" value="${(setMap['brand_name'] || 'ROOST AND REST').replace(/"/g, '&quot;')}" placeholder="e.g. ROOST AND REST" />
             <small style="color:var(--muted);">Official brand name used in vouchers, receipts &amp; WhatsApp</small>
           </div>
           <div class="form-group">
             <label>Website URL</label>
-            <input type="text" id="brand_website_url" value="${(setMap['website_url'] || 'https://uniquehavenhomesstay.com').replace(/"/g, '&quot;')}" placeholder="https://uniquehavenhomesstay.com" />
-            <small style="color:var(--muted);">Public live website address included in messages</small>
+            <input type="text" id="brand_website_url" value="${(setMap['website_url'] || 'https://roostandrest.github.io').replace(/"/g, '&quot;')}" placeholder="https://roostandrest.github.io" />
+            <small style="color:var(--muted);">CRM application address</small>
           </div>
         </div>
 
         <div class="form-grid" style="margin-top:10px;">
           <div class="form-group">
-            <label>Co-Founder &amp; Owner Phone (Mr. Shahanshah)</label>
-            <input type="text" id="brand_owner_phone_1" value="${(setMap['owner_phone_1'] || '9450055554').replace(/"/g, '&quot;')}" placeholder="9450055554" />
+            <label>Owner &amp; Director Phone (Mr. Anwar Ahmad)</label>
+            <input type="text" id="brand_owner_phone_1" value="${(setMap['owner_phone_1'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
             <small style="color:var(--muted);">Director escalation &amp; primary owner contact</small>
           </div>
           <div class="form-group">
-            <label>Co-Founder &amp; Owner Phone (Mr. Firoz Khan)</label>
-            <input type="text" id="brand_owner_phone_2" value="${(setMap['owner_phone_2'] || '8299600709').replace(/"/g, '&quot;')}" placeholder="8299600709" />
-            <small style="color:var(--muted);">Director escalation &amp; secondary owner contact</small>
+            <label>Manager Phone</label>
+            <input type="text" id="brand_owner_phone_2" value="${(setMap['owner_phone_2'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
+            <small style="color:var(--muted);">Operational and escalation contact</small>
           </div>
         </div>
 
         <div class="form-grid" style="margin-top:10px;">
           <div class="form-group">
-            <label>Manager Phone (Praveen Singh)</label>
-            <input type="text" id="brand_manager_phone" value="${(setMap['manager_phone'] || '9194109911').replace(/"/g, '&quot;')}" placeholder="9194109911" />
-            <small style="color:var(--muted);">24/7 on-ground guest assistance, caretaking supervisor &amp; bookings</small>
+            <label>Developer &amp; Technical Support (Praveen Singh)</label>
+            <input type="text" id="brand_manager_phone" value="${(setMap['manager_phone'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
+            <small style="color:var(--muted);">Master system administrator &amp; developer support</small>
           </div>
           <div class="form-group">
             <label>Default Check-in / Check-out Times</label>
@@ -4083,14 +4077,14 @@ async function renderSettings() {
         <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
             <div style="font-weight:800;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;">
-              <span>🏛️</span> Registered Corporate Profile (Govt. of India)
+              <span>🏛️</span> Brand &amp; Operating Profile
             </div>
-            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#10B981;color:#fff;">Verified ROC</span>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#10B981;color:#fff;">Active</span>
           </div>
-          <div style="font-size:12px;color:var(--text);font-weight:700;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+          <div style="font-size:12px;color:var(--text);font-weight:700;">ROOST AND REST STAYS</div>
           <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4;">
-            <strong>CIN:</strong> U55101UP2026PTC244637 &bull; <strong>ROC:</strong> Kanpur<br>
-            <strong>Registered Office:</strong> P NO 39 &amp; 40 RADHIKAPURI, INDIRA NAGAR TAKROHI, Lucknow, UP - 226016
+            <strong>Email:</strong> roostandrestlucknow@gmail.com &bull; <strong>Phone:</strong> +91 9807486555<br>
+            <strong>Location:</strong> Lucknow, Uttar Pradesh, India
           </div>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
             <a href="review.html" target="_blank" class="btn-sm" style="background:#F59E0B;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:700;">

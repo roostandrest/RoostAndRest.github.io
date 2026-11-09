@@ -33,3 +33,4 @@ if (typeof window !== 'undefined') {
   window.DEVELOPER_EMAIL = DEVELOPER_EMAIL;
   window.RAZORPAY_KEY_ID = RAZORPAY_KEY_ID;
 }
+
