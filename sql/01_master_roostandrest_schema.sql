@@ -104,7 +104,8 @@ CREATE TABLE IF NOT EXISTS public.rooms (
 ALTER TABLE public.rooms ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all rooms read" ON public.rooms;
 CREATE POLICY "Allow all rooms read" ON public.rooms FOR SELECT USING (true);
-DROP POLICY IF EXISTS "Allow auth rooms manage" ON public.rooms FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow auth rooms manage" ON public.rooms;
+CREATE POLICY "Allow auth rooms manage" ON public.rooms FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 4. FLATS & HOUSEKEEPING STATUS
@@ -121,7 +122,8 @@ CREATE TABLE IF NOT EXISTS public.flats_status (
 );
 
 ALTER TABLE public.flats_status ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all flats_status" ON public.flats_status FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all flats_status" ON public.flats_status;
+CREATE POLICY "Allow all flats_status" ON public.flats_status FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 5. GUEST REGISTER (BOOKINGS MASTER TABLE)
@@ -162,7 +164,8 @@ CREATE INDEX IF NOT EXISTS idx_guest_reg_room ON public.guest_register(room_id);
 CREATE INDEX IF NOT EXISTS idx_guest_reg_dates ON public.guest_register(check_in, check_out);
 
 ALTER TABLE public.guest_register ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all guest_register" ON public.guest_register FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all guest_register" ON public.guest_register;
+CREATE POLICY "Allow all guest_register" ON public.guest_register FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 6. PAYMENT HISTORY
@@ -181,7 +184,8 @@ CREATE TABLE IF NOT EXISTS public.payment_history (
 );
 
 ALTER TABLE public.payment_history ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all payment_history" ON public.payment_history FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all payment_history" ON public.payment_history;
+CREATE POLICY "Allow all payment_history" ON public.payment_history FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 7. EXPENSES & OUTFLOWS
@@ -203,7 +207,8 @@ CREATE TABLE IF NOT EXISTS public.expenses (
 );
 
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all expenses" ON public.expenses FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all expenses" ON public.expenses;
+CREATE POLICY "Allow all expenses" ON public.expenses FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 8. HRMS EMPLOYEES
@@ -226,7 +231,8 @@ CREATE TABLE IF NOT EXISTS public.employees (
 );
 
 ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all employees" ON public.employees FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all employees" ON public.employees;
+CREATE POLICY "Allow all employees" ON public.employees FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 9. ATTENDANCE LOG
@@ -246,7 +252,8 @@ CREATE TABLE IF NOT EXISTS public.attendance_log (
 );
 
 ALTER TABLE public.attendance_log ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all attendance_log" ON public.attendance_log FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all attendance_log" ON public.attendance_log;
+CREATE POLICY "Allow all attendance_log" ON public.attendance_log FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 10. EMPLOYEE TASKS & HOUSEKEEPING
@@ -268,7 +275,8 @@ CREATE TABLE IF NOT EXISTS public.employee_tasks (
 );
 
 ALTER TABLE public.employee_tasks ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all employee_tasks" ON public.employee_tasks FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all employee_tasks" ON public.employee_tasks;
+CREATE POLICY "Allow all employee_tasks" ON public.employee_tasks FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 11. COMPANY ADVANCES & STAFF LEDGER
@@ -287,7 +295,8 @@ CREATE TABLE IF NOT EXISTS public.company_advances (
 );
 
 ALTER TABLE public.company_advances ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all company_advances" ON public.company_advances FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all company_advances" ON public.company_advances;
+CREATE POLICY "Allow all company_advances" ON public.company_advances FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 12. CENTRAL APP SETTINGS (REAL-TIME SYNC ENGINE)
@@ -300,7 +309,8 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
 );
 
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all app_settings" ON public.app_settings FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all app_settings" ON public.app_settings;
+CREATE POLICY "Allow all app_settings" ON public.app_settings FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 13. USER ACTIVITY & AUDIT LOGS
@@ -320,7 +330,8 @@ CREATE TABLE IF NOT EXISTS public.user_activity_logs (
 );
 
 ALTER TABLE public.user_activity_logs ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all user_activity_logs" ON public.user_activity_logs FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all user_activity_logs" ON public.user_activity_logs;
+CREATE POLICY "Allow all user_activity_logs" ON public.user_activity_logs FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 14. MAINTENANCE LOG
@@ -339,7 +350,8 @@ CREATE TABLE IF NOT EXISTS public.maintenance_log (
 );
 
 ALTER TABLE public.maintenance_log ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all maintenance_log" ON public.maintenance_log FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all maintenance_log" ON public.maintenance_log;
+CREATE POLICY "Allow all maintenance_log" ON public.maintenance_log FOR ALL USING (true);
 
 -- ─────────────────────────────────────────────────────────────────
 -- 15. LAUNDRY RECORDS
@@ -358,7 +370,8 @@ CREATE TABLE IF NOT EXISTS public.laundry_records (
 );
 
 ALTER TABLE public.laundry_records ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow all laundry_records" ON public.laundry_records FOR ALL USING (true);
+DROP POLICY IF EXISTS "Allow all laundry_records" ON public.laundry_records;
+CREATE POLICY "Allow all laundry_records" ON public.laundry_records FOR ALL USING (true);
 
 -- ═══════════════════════════════════════════════════════════════════
 -- 16. SEED ALL 18 ROOST AND REST PROPERTIES
