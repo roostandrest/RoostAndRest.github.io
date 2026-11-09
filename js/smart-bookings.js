@@ -249,7 +249,7 @@ async function renderSmartManageBookings(forceRefresh = false) {
     window._sbkState.cachedRooms.length > 0;
 
   if (!hasCachedData) {
-    renderShell(`<div class="loading" style="padding:40px;text-align:center;"><div class="spinner"></div><div style="margin-top:10px;font-weight:600;color:var(--muted);">Loading TUHH Bookings Command Center...</div></div>`, 'bookings');
+    renderShell(`<div class="loading" style="padding:40px;text-align:center;"><div class="spinner"></div><div style="margin-top:10px;font-weight:600;color:var(--muted);">Loading Roost & Rest Bookings Command Center...</div></div>`, 'bookings');
 
     // Preload helpers
     if (typeof preloadUserNames === 'function') await preloadUserNames();
@@ -750,28 +750,24 @@ function getGuestAvatarInfo(guestName) {
 }
 
 const ROOM_COVER_FALLBACKS = {
-  'GOM-201': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1655969170448425308/original/3a24b7e0-b326-4061-8762-5b19ca4aa009.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-302': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1679190202218939181/original/2b71df14-f53a-42d4-88e7-44dc6c9542fe.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-102': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1676840617430941243/original/6c857410-b98a-40a2-aa55-e408ec21360d.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-101': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1654261872286835345/original/40c49740-4cb6-411a-85d7-e075ebf91fc1.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-202': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1660898784168880630/original/ee9f92dc-201b-4171-888e-aee6e6bb2552.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-301': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1679155811558485419/original/40cf20ea-d2f1-4dfd-b0fc-40ff15f8c85c.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-401': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1723434530455939148/original/9157436b-67ee-45a0-9753-4876ec438965.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-402': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1814548211970648885/original/58465c71-9bc8-49a9-8ab9-51c98f663392.png?im_w=720&width=720&quality=70&auto=webp',
-  'Flat 402': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1814548211970648885/original/58465c71-9bc8-49a9-8ab9-51c98f663392.png?im_w=720&width=720&quality=70&auto=webp',
-  'FLAT402': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1814548211970648885/original/58465c71-9bc8-49a9-8ab9-51c98f663392.png?im_w=720&width=720&quality=70&auto=webp',
-  'FLAT 402': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1814548211970648885/original/58465c71-9bc8-49a9-8ab9-51c98f663392.png?im_w=720&width=720&quality=70&auto=webp',
-  '402': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1814548211970648885/original/58465c71-9bc8-49a9-8ab9-51c98f663392.png?im_w=720&width=720&quality=70&auto=webp',
-  'GOM-501': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1718385679817913833/original/d69e46a7-d86b-4e60-84a2-e64e528b18ec.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-105': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1592729918855637425/original/f9826cd1-b559-468f-bc68-754a745af7a2.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-104': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1593461780265937810/original/71a2e9b0-96f3-4d40-beec-df0df57e1c16.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-103': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1592729438969718728/original/6ea4b638-31ea-42f0-911e-ec2136e053f3.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-101': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1721732716374002179/original/d2a3330d-85fa-44a6-9818-bc1c271ea048.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-102': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1718315215180636687/original/3aa9bf2b-8a20-4389-a292-b88d3ca34015.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'LUL-402': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1606514664948608757/original/ce8c48a7-e74f-4d0d-bc01-9f939e6a9f02.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-107': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1727830063287100080/original/8cf7a521-5a21-419b-ab00-e79ecb059db6.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-106': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1739254108962193708/original/b3c7cf4c-5f6d-495d-b2a1-1c3905cbb206.jpeg?im_w=720&width=720&quality=70&auto=webp',
-  'VIL-108': 'https://a0.muscache.com/im/pictures/hosting/Hosting-1756799939825259445/original/606da0ba-d28f-4aa7-920d-e2518e3881df.jpeg?im_w=720&width=720&quality=70&auto=webp'
+  "RST-101": "https://a0.muscache.com/im/pictures/hosting/Hosting-1513689704038700506/original/9b405a54-f22b-4de7-a965-05d3ff1e0767.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-102": "https://a0.muscache.com/im/pictures/hosting/Hosting-1432351238708631534/original/275e9ae8-50a2-4895-9bb3-abce94f0d920.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-103": "https://a0.muscache.com/im/pictures/hosting/Hosting-1403663140808704064/original/dd177a7d-833a-40c2-95b9-b5aa3f39ac97.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-104": "https://a0.muscache.com/im/pictures/hosting/Hosting-1728065461825716832/original/829b15d0-1a86-4123-8769-ee1b960953cd.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-105": "https://a0.muscache.com/im/pictures/hosting/Hosting-1472836855538423252/original/44cd3e32-8c59-40c6-b389-3bf8da3acc84.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-106": "https://a0.muscache.com/im/pictures/hosting/Hosting-1754920271857081441/original/d8b0694b-88ac-487b-9316-7b4f370d2126.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-107": "https://a0.muscache.com/im/pictures/hosting/Hosting-1546149723330595826/original/198c4447-ad8e-4dca-8f26-af3f552e7874.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-108": "https://a0.muscache.com/im/pictures/hosting/Hosting-1765272258371576617/original/5887cb69-b96f-4816-b4c4-844756337556.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-109": "https://a0.muscache.com/im/pictures/hosting/Hosting-1778104021407872339/original/32963758-29bc-4d07-9c3f-112e7940785f.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-110": "https://a0.muscache.com/im/pictures/hosting/Hosting-1381275814432030373/original/69034a2c-d262-4579-b710-c7995e31acfe.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-111": "https://a0.muscache.com/im/pictures/hosting/Hosting-1673624571406248647/original/b0bfbd82-fc94-4229-94a8-118b7d80db77.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-112": "https://a0.muscache.com/im/pictures/hosting/Hosting-1756974059274081131/original/9c4d07d0-50c6-46fb-b70a-b8007d1e0910.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-113": "https://a0.muscache.com/im/pictures/hosting/Hosting-1759943752045444261/original/35df2128-4c72-418b-8c0b-e6da033a9921.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-114": "https://a0.muscache.com/im/pictures/hosting/Hosting-1758780588353629399/original/822ce740-7146-4bd3-aae4-ef5e9756e2bb.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-115": "https://a0.muscache.com/im/pictures/hosting/Hosting-1754941277309610915/original/dc389cd9-7fdc-4ca1-aff8-eccc1bb8d9a4.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-116": "https://a0.muscache.com/im/pictures/hosting/Hosting-1311579015127768002/original/194e0123-70f8-4d6f-a511-cd10ab4ab4b9.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-117": "https://a0.muscache.com/im/pictures/hosting/Hosting-1700681506593234895/original/6500a33c-c7c9-4bd6-8ea8-84f9c09e9014.jpeg?im_w=720&amp;width=720&amp;quality=70&amp;auto=webp",
+  "RST-118": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
 };
 
 function getPropertyCoverThumb(b) {

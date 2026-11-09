@@ -960,8 +960,8 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
     }, 0);
 
     const modalUpiQrString = totalDue > 0
-      ? `upi://pay?pa=8299600709@ybl&pn=Firoz%20Khan%20TUHH&am=${totalDue}&cu=INR&tn=${encodeURIComponent('TUHH Stay Statement ' + (resolvedGuestName || 'Guest'))}`
-      : `upi://pay?pa=8299600709@ybl&pn=Firoz%20Khan%20TUHH&cu=INR&tn=${encodeURIComponent('The Unique Haven Homes')}`;
+      ? `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR&tn=${encodeURIComponent('Roost And Rest Stay Statement ' + (resolvedGuestName || 'Guest'))}`
+      : `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&cu=INR&tn=${encodeURIComponent('Roost And Rest')}`;
     const modalQrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=2&color=0F172A&bgcolor=FFFFFF&data=${encodeURIComponent(modalUpiQrString)}`;
 
     // Filter Banner Text
@@ -1048,12 +1048,12 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
             <div style="flex:1;min-width:230px;">
               <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:6px;font-size:12px;margin-bottom:10px;">
                 <div><span style="color:#64748B;font-size:11px;">Beneficiary:</span> <strong style="color:#0F172A;">Mr. Firoz Khan</strong></div>
-                <div><span style="color:#64748B;font-size:11px;">Official UPI ID:</span> <strong style="color:#4338CA;font-family:monospace;font-size:12.5px;">8299600709@ybl</strong></div>
+                <div><span style="color:#64748B;font-size:11px;">Official UPI ID:</span> <strong style="color:#4338CA;font-family:monospace;font-size:12.5px;">9807486555@upi</strong></div>
                 <div><span style="color:#64748B;font-size:11px;">PhonePe / Mobile:</span> <strong style="color:#0F172A;">8299600709</strong></div>
                 <div><span style="color:#64748B;font-size:11px;">Auto-coded Due:</span> <strong style="color:#DC2626;">₹${totalDue.toLocaleString('en-IN')}</strong></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <button type="button" class="btn-sm" style="background:#4338CA;color:#FFFFFF;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="navigator.clipboard.writeText('8299600709@ybl'); if (window.fsn?.success) { fsn.success('Copied', 'UPI ID 8299600709@ybl copied!'); } else { alert('Copied 8299600709@ybl'); }">
+                <button type="button" class="btn-sm" style="background:#4338CA;color:#FFFFFF;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="navigator.clipboard.writeText('9807486555@upi'); if (window.fsn?.success) { fsn.success('Copied', 'UPI ID 9807486555@upi copied!'); } else { alert('Copied 9807486555@upi'); }">
                   📋 Copy UPI ID
                 </button>
                 <a href="${modalUpiQrString}" style="background:linear-gradient(135deg, #059669, #10B981);color:#FFFFFF;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(5,150,105,0.25);">
@@ -1343,7 +1343,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
     const totDue = Math.max(0, totAmt - totPd);
     const periodStr = (currentFrom && currentTo) ? `${formatDateDisplay(currentFrom)} to ${formatDateDisplay(currentTo)}` : 'All Time';
 
-    let txt = `THE UNIQUE HAVEN HOMES - GUEST STATEMENT\n`;
+    let txt = `ROOST AND REST - GUEST STATEMENT\n`;
     txt += `Guest: ${resolvedGuestName} | Phone: ${displayPhone || '-'}\n`;
     txt += `Period: ${periodStr}\n`;
     txt += `Stays: ${curBookings.length} | Billed: Rs.${totAmt.toLocaleString('en-IN')} | Paid: Rs.${totPd.toLocaleString('en-IN')} | Due: Rs.${totDue.toLocaleString('en-IN')}\n\n`;
@@ -1354,7 +1354,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
       txt += `${i + 1}. ${formatDateDisplay(b.check_in)} -> ${formatDateDisplay(b.check_out)} (${propLabel(b.rooms) || b.room_id}) | Billed: Rs.${(b.total_amount || 0).toLocaleString('en-IN')} | Paid: Rs.${pd.toLocaleString('en-IN')} | Due: Rs.${d.toLocaleString('en-IN')}\n`;
     });
     txt += `\nNet Balance Due: Rs.${totDue.toLocaleString('en-IN')}\n`;
-    txt += `UPI: 8299600709@ybl (Mr. Firoz Khan) | Contact: 8299600709\n`;
+    txt += `UPI: 9807486555@upi (Mr. Firoz Khan) | Contact: 8299600709\n`;
 
     navigator.clipboard.writeText(txt).then(() => {
       fsn.success('Copied', 'Guest statement copied to clipboard!');
@@ -1381,7 +1381,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
     const totDue = Math.max(0, totAmt - totPd);
     const periodStr = (currentFrom && currentTo) ? `${currentFrom} to ${currentTo}` : 'All Time';
 
-    let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - GUEST STATEMENT\n`;
+    let csv = `ROOST AND REST STAYS - GUEST STATEMENT\n`;
     csv += `Guest Name,"${(resolvedGuestName || '').replace(/"/g, '""')}"\n`;
     csv += `Phone,"${(displayPhone || '').replace(/"/g, '""')}"\n`;
     csv += `Period,"${periodStr}"\n`;
@@ -1410,7 +1410,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
       const notes = (p.notes || '-').replace(/"/g, '""');
       csv += `"${p.payment_date || '-'}","${p.amount || 0}","${p.payment_mode || '-'}","${roomName}","${notes}"\n`;
     });
-    csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+    csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · roostandrest.com"\n`;
 
     const cleanName = String(resolvedGuestName || 'Guest').replace(/[^a-zA-Z0-9_-]/g, '_');
     window.exportCSV(csv, `Guest_Statement_${cleanName}_${new Date().toISOString().slice(0, 10)}.csv`);
@@ -1481,7 +1481,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
 
 
   const cleanGuestName = String(guestName || 'Guest').trim().replace(/[\/\\:*?"<>|]/g, '-').replace(/\s+/g, '_');
-  const pdfTitle = `TUHH_Statement_${cleanGuestName}_${new Date().toISOString().slice(0, 10)}`;
+  const pdfTitle = `Roost_Statement_${cleanGuestName}_${new Date().toISOString().slice(0, 10)}`;
 
   // Filter actual external payment receipts (exclude internal reallocation bookkeeping pairs)
   const actualReceipts = (payments || []).filter(p => p.amount > 0 && p.payment_mode !== 'Adjustment');
@@ -1549,8 +1549,8 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
   });
 
   const upiQrString = totalDue > 0
-    ? `upi://pay?pa=8299600709@ybl&pn=Firoz%20Khan%20TUHH&am=${totalDue}&cu=INR&tn=${encodeURIComponent('TUHH Stay Statement ' + (guestName || 'Guest'))}`
-    : `upi://pay?pa=8299600709@ybl&pn=Firoz%20Khan%20TUHH&cu=INR&tn=${encodeURIComponent('The Unique Haven Homes')}`;
+    ? `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR&tn=${encodeURIComponent('Roost And Rest Stay Statement ' + (guestName || 'Guest'))}`
+    : `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&cu=INR&tn=${encodeURIComponent('Roost And Rest')}`;
   const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=2&color=0F172A&bgcolor=FFFFFF&data=${encodeURIComponent(upiQrString)}`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(pdfTitle)}</title>
@@ -1583,7 +1583,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
       <div class="header-card" style="background:#0F172A;color:#FFFFFF;padding:16px 20px;border-radius:8px;margin-bottom:14px;border:1px solid #1E293B;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div style="display:flex;align-items:center;gap:14px;">
-            <img src="assets/apple-touch-icon.png" alt="TUHH Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='assets/logo.svg';" />
+            <img src="assets/logo.svg" alt="TUHH Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='assets/logo.svg';" />
             <div>
               <div style="font-size:18px;font-weight:900;letter-spacing:0.5px;color:#FFFFFF;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
               <div style="font-size:12.5px;font-weight:700;color:#FCD34D;margin-top:2px;letter-spacing:0.3px;">OFFICIAL GUEST STATEMENT OF ACCOUNT & LEDGER (अतिथि खाता विवरण)</div>
@@ -1715,7 +1715,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
               ${totalDue > 0 ? '⚠️ Outstanding Account Balance: ₹' + totalDue.toLocaleString('en-IN') : '✅ Account Fully Settled & Reconciled'}
             </div>
             <div style="font-size:11px;color:${totalDue > 0 ? '#B91C1C' : '#15803D'};margin-top:2px;">
-              ${totalDue > 0 ? 'Kindly clear the remaining balance at your earliest convenience.' : 'Thank you for your valuable patronage with The Unique Haven Homes!'}
+              ${totalDue > 0 ? 'Kindly clear the remaining balance at your earliest convenience.' : 'Thank you for your valuable patronage with Roost And Rest!'}
             </div>
           </div>
           <div style="text-align:right;">
@@ -1766,7 +1766,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Official UPI ID</div>
-                <div style="font-size:12.5px;font-weight:800;color:#4338CA;font-family:monospace;margin-top:1px;">8299600709@ybl</div>
+                <div style="font-size:12.5px;font-weight:800;color:#4338CA;font-family:monospace;margin-top:1px;">9807486555@upi</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">PhonePe / GPay / Mobile</div>
@@ -1924,9 +1924,9 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     `━━━━━━━━━━━━━━━━━━━━━━━━━━${NL}` +
     dueLine + `${NL}` +
     `*Payment Account (UPI):*${NL}` +
-    `• UPI ID: 8299600709@ybl${NL}` +
+    `• UPI ID: 9807486555@upi${NL}` +
     `• Receiver: Mr. Firoz Khan (PhonePe / GPay: 8299600709)${NL}` +
-    (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=8299600709@ybl&pn=Firoz%20Khan%20TUHH&am=${totalDue}&cu=INR${NL}` : '') +
+    (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR${NL}` : '') +
     `${NL}` +
     `*Helpline:*${NL}` +
     `• Mr. Firoz Khan: 8299600709${NL}${NL}` +
@@ -7026,7 +7026,7 @@ async function exportBookingsCSV() {
   });
 
   csv += `\nTotal (${count} Bookings),,,,,,"Totals:",${totalAmount},${totalPaid},${totalDue}\n`;
-  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · roostandrest.com"\n`;
 
   const fileName = `Bookings_Report_${prop ? String(prop).replace(/[\/\\:*?"<>|]/g, '-') + '_' : ''}${todayIso}.csv`;
   if (typeof window.exportCSV === 'function') {
@@ -9541,7 +9541,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     firoz: {
       id: 'firoz',
       name: 'Mr. Firoz Khan',
-      upiId: '8299600709@ybl',
+      upiId: '9807486555@upi',
       phone: '+91 82996 00709',
       label: 'Mr. Firoz Khan (Default)'
     },
@@ -9641,7 +9641,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
             <button type="button" id="cpqrPayeeFiroz" style="padding:6px 8px;border-radius:8px;border:2px solid #4F46E5;background:#EEF2FF;cursor:pointer;text-align:left;box-shadow:0 2px 6px rgba(79,70,229,0.15);transition:all 0.2s;">
               <div style="font-size:11px;font-weight:800;color:#312E81;">👑 Firoz (Default)</div>
-              <div style="font-size:9.5px;color:#4338CA;font-family:monospace;margin-top:1px;font-weight:700;">8299600709@ybl</div>
+              <div style="font-size:9.5px;color:#4338CA;font-family:monospace;margin-top:1px;font-weight:700;">9807486555@upi</div>
             </button>
             <button type="button" id="cpqrPayeePraveen" style="padding:6px 8px;border-radius:8px;border:1.5px solid #CBD5E1;background:#FFFFFF;cursor:pointer;text-align:left;transition:all 0.2s;">
               <div style="font-size:11px;font-weight:800;color:#0F172A;">Praveen</div>
@@ -9702,7 +9702,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span style="color:#64748B;font-weight:600;">👤 Payee (UPI):</span>
-              <span id="cpqrCardPayee" style="font-weight:700;color:#0F172A;">Mr. Firoz Khan (8299600709@ybl)</span>
+              <span id="cpqrCardPayee" style="font-weight:700;color:#0F172A;">Mr. Firoz Khan (9807486555@upi)</span>
             </div>
           </div>
         </div>
@@ -9813,7 +9813,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
 
   function getSelectedRoomLabel() {
     const val = roomSel.value;
-    if (!val) return 'The Unique Haven Homes';
+    if (!val) return 'Roost And Rest';
     const r = rooms.find(x => x.room_id === val);
     if (!r) return val;
     // Prefer clean property name / nickname like website: "The Dark Blue (FLAT201)" or "Celebrity Garden (FLAT402)"
