@@ -222,14 +222,13 @@ async function renderReports() {
   };
 
   const getPropThumb = (r) => {
-    const slug = r.slug || ROOM_SLUG_MAP[r.room_id] || '';
-    const src = slug ? `assets/properties/${slug}/cover.jpg` : '';
-    if (src) {
-      return `<img src="${src}" alt="${r.nickname || r.room_id}" class="hh-prop-thumb" onerror="this.style.display='none'">`;
+    const photo = (typeof window.getRoostPropertyCover === 'function')
+      ? window.getRoostPropertyCover(r)
+      : (r.cover_image || (window.ROOST_PROPERTY_IMAGES && (window.ROOST_PROPERTY_IMAGES[r.room_id] || window.ROOST_PROPERTY_IMAGES[r.unit_no])) || '');
+    if (photo && !photo.includes('logo')) {
+      return `<img src="${photo}" alt="${escapeHtml(r.nickname || r.room_id)}" class="hh-prop-thumb" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid #E2E8F0;" onerror="this.onerror=null;this.src='assets/logo.svg';">`;
     }
-    const photo = r.cover_image || (window.PROPERTY_PHOTOS && window.PROPERTY_PHOTOS[r.room_id]?.cover) || '';
-    if (photo) return `<img src="${photo}" alt="${r.nickname || r.room_id}" class="hh-prop-thumb" style="width:28px;height:28px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">`;
-    return `<div class="hh-prop-thumb" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#B45309,#78350F);color:#fff;font-weight:800;font-size:11px;border-radius:6px;">${r.unit_no || 'RR'}</div>`;
+    return `<div class="hh-prop-thumb" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#B45309,#78350F);color:#fff;font-weight:800;font-size:12px;border-radius:8px;">${escapeHtml(r.unit_no || 'RR')}</div>`;
   };
 
   if (window._calViewMode === 'timeline') {
@@ -859,11 +858,12 @@ async function renderReports() {
       'VIL-101': 'gomti-grand-villa','VIL-102': 'royal-white-house',
       'VIL-107': 'the-velvet-house', 'LUL-101': 'the-luxe-haven'
     };
-    const slug = r.slug || ROOM_SLUG_MAP[r.room_id] || '';
-    const thumbSrc = slug ? `assets/properties/${slug}/cover.jpg` : '';
-    const thumbHtml = thumbSrc
-      ? `<img src="${thumbSrc}" alt="${r.nickname || r.room_id}" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid #E2E8F0;">`
-      : `<div style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#b58d3d,#8c6a23);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🏠</div>`;
+    const thumbSrc = (typeof window.getRoostPropertyCover === 'function')
+      ? window.getRoostPropertyCover(r)
+      : (r.cover_image || (window.ROOST_PROPERTY_IMAGES && (window.ROOST_PROPERTY_IMAGES[r.room_id] || window.ROOST_PROPERTY_IMAGES[r.unit_no])) || '');
+    const thumbHtml = (thumbSrc && !thumbSrc.includes('logo'))
+      ? `<img src="${thumbSrc}" alt="${escapeHtml(r.nickname || r.room_id)}" onerror="this.onerror=null;this.src='assets/logo.svg';" style="width:46px;height:46px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1.5px solid #E2E8DA;box-shadow:0 2px 6px rgba(44,36,30,0.08);">`
+      : `<div style="width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,#B45309,#78350F);color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 6px rgba(180,83,9,0.2);">${escapeHtml(r.unit_no || 'RR')}</div>`;
 
     html += `
       <div class="card cal-room-card" style="padding:12px;border-radius:14px;margin-bottom:14px;">

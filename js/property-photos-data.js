@@ -24,9 +24,32 @@ window.ROOST_PROPERTY_IMAGES = {
   "RST-118": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
 };
 
-// Helper function to resolve property cover photo
-window.getRoostPropertyCover = function(roomId, fallback = 'assets/logo.svg') {
-  if (!roomId) return fallback;
-  return window.ROOST_PROPERTY_IMAGES[roomId] || fallback;
+// Map numeric unit numbers as well
+for (let i = 101; i <= 118; i++) {
+  const code = 'RST-' + i;
+  if (window.ROOST_PROPERTY_IMAGES[code]) {
+    window.ROOST_PROPERTY_IMAGES[String(i)] = window.ROOST_PROPERTY_IMAGES[code];
+  }
+}
+
+// Universal Helper function to resolve property cover photo
+window.getRoostPropertyCover = function(roomOrId, fallback = 'assets/logo.svg') {
+  if (!roomOrId) return fallback;
+  if (typeof roomOrId === 'object') {
+    if (roomOrId.cover_image && !roomOrId.cover_image.includes('logo')) {
+      return roomOrId.cover_image;
+    }
+    const rId = roomOrId.room_id || '';
+    const uNo = roomOrId.unit_no || '';
+    return window.ROOST_PROPERTY_IMAGES[rId] ||
+           window.ROOST_PROPERTY_IMAGES[uNo] ||
+           window.ROOST_PROPERTY_IMAGES['RST-' + uNo] ||
+           fallback;
+  }
+  const s = String(roomOrId).trim();
+  return window.ROOST_PROPERTY_IMAGES[s] ||
+         window.ROOST_PROPERTY_IMAGES['RST-' + s] ||
+         window.ROOST_PROPERTY_IMAGES[s.replace(/^RST-/, '')] ||
+         fallback;
 };
 

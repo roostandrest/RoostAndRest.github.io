@@ -19,25 +19,25 @@
   --navy-int: #2C241E;
 
   /* Surface & Canvas System — Crisp Pure White & Architectural Soft Off-White */
-  --bg: #ffffff; /* Pristine Airbnb / HomeyHuts Canvas */
+  --bg: #FBF9F5; /* Pristine Airbnb / HomeyHuts Canvas */
   --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f5f5f5; /* HomeyHuts Neutral 50 */
+  --bg-secondary: #F8F6F0;
+  --bg-tertiary: #F3EFEA; /* HomeyHuts Neutral 50 */
   --card: #ffffff;
   --card-bg: #ffffff;
 
   /* High-Contrast Luxury Typography — HomeyHuts Exact Neutral Tokens */
-  --text: #222222; /* HomeyHuts Neutral 900 */
-  --text-primary: #222222;
-  --text-secondary: #696767; /* HomeyHuts Neutral 600 */
-  --text-muted: #a7a7a7; /* HomeyHuts Neutral 500 */
-  --muted: #696767;
+  --text: #1C1917; /* HomeyHuts Neutral 900 */
+  --text-primary: #1C1917;
+  --text-secondary: #57534E; /* HomeyHuts Neutral 600 */
+  --text-muted: #78716C; /* HomeyHuts Neutral 500 */
+  --muted: #57534E;
 
   /* Crisp Border Tokens — HomeyHuts Exact Neutral Scales */
-  --border: #e7e7e7; /* HomeyHuts Neutral 100 */
-  --border-color: #e7e7e7;
-  --border-strong: #cccccc; /* HomeyHuts Neutral 300 */
-  --border-light: #f5f5f5; /* HomeyHuts Neutral 50 */
+  --border: #E7E2DA; /* HomeyHuts Neutral 100 */
+  --border-color: #E7E2DA;
+  --border-strong: #D6CEBE; /* HomeyHuts Neutral 300 */
+  --border-light: #F3EFEA; /* HomeyHuts Neutral 50 */
 
   /* Channel Colors (Direct from HomeyHuts Extracted CSS) */
   --ch-airbnb: #ff5a5f;
@@ -595,7 +595,7 @@ html, body, #app {
   font-weight: 700;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1400px) {
   .topbar-desktop-nav {
     display: none !important;
   }
@@ -2627,7 +2627,7 @@ code {
     right: 0;
     bottom: 62px;
     z-index: 5000 !important;
-    background: var(--sidebar-bg);
+    background: #2C241E !important; color: #FFFFFF !important;
     overflow-y: auto;
     padding: 16px !important;
     height: auto !important;
@@ -5777,38 +5777,16 @@ textarea:focus {
 .stat-card .stat-num { font-size: 24px; margin-bottom: 2px; }
 .stat-card .stat-label { display: flex; align-items: center; gap: 6px; }
 
-/* Green family — revenue, success, matched */
-.stat-card[style*="var(--green)"],
-.stat-card[style*="#25D366"] {
-  background: linear-gradient(135deg, #EAF7F1 0%, #ffffff 55%);
+/* Curated luxury uniform stat card styling (zero rainbow AI-slop) */
+.stat-card {
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 1px 3px rgba(44, 36, 30, 0.04) !important;
 }
-
-/* Red family — due, overdue, alerts */
-.stat-card[style*="var(--red)"],
-.stat-card[style*="#FF385C"] {
-  background: linear-gradient(135deg, #FDE9EC 0%, #ffffff 55%);
-}
-
-/* Yellow/amber family — pending, past due */
-.stat-card[style*="var(--yellow)"],
-.stat-card[style*="#FFB800"] {
-  background: linear-gradient(135deg, #FFF6E0 0%, #ffffff 55%);
-}
-
-/* Blue family — informational, this month, occupied */
-.stat-card[style*="var(--blue)"],
-.stat-card[style*="#60a5fa"] {
-  background: linear-gradient(135deg, #EAF3FE 0%, #ffffff 55%);
-}
-
-/* Primary violet — brand highlight */
-.stat-card[style*="var(--primary)"] {
-  background: linear-gradient(135deg, #FFF0ED 0%, #ffffff 55%);
-}
-
-/* Purple — review bookings */
-.stat-card[style*="#722ED1"] {
-  background: linear-gradient(135deg, #F3EBFC 0%, #ffffff 55%);
+.stat-card:hover {
+  box-shadow: 0 8px 24px rgba(44, 36, 30, 0.08) !important;
+  border-color: #D6CEBE !important;
 }
 
 .stat-card:hover {

@@ -545,12 +545,12 @@ async function renderDashboard() {
       const stroke = color || (isPos ? '#10B981' : '#EF4444');
       const fill = isPos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
       if (isPos) {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
+        return `<svg viewBox="0 0 100 28" preserveAspectRatio="none" height="28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:28px;display:block;margin-top:6px;overflow:hidden;">
         <path d="M0 24 Q 25 18, 50 12 T 100 4" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
         <path d="M0 24 Q 25 18, 50 12 T 100 4 L 100 28 L 0 28 Z" fill="${fill}"/>
       </svg>`;
       } else {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
+        return `<svg viewBox="0 0 100 28" preserveAspectRatio="none" height="28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:28px;display:block;margin-top:6px;overflow:hidden;">
         <path d="M0 8 Q 25 14, 50 18 T 100 24" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
         <path d="M0 8 Q 25 14, 50 18 T 100 24 L 100 28 L 0 28 Z" fill="${fill}"/>
       </svg>`;
@@ -609,8 +609,9 @@ async function renderDashboard() {
       const rOcc = Math.min(100, Math.round((rNights / lastDay) * 100));
       const rNet = Math.round(rRev * 0.62);
       const rName = propLabel(fl.rooms) || fl.room_id || 'Unit';
-      const slug = fl.rooms?.slug || ROOM_SLUG_MAP[rId] || '';
-      const thumb = slug ? `assets/properties/${slug}/cover.jpg` : '';
+      const thumb = (typeof window.getRoostPropertyCover === 'function')
+        ? window.getRoostPropertyCover(fl.rooms || fl)
+        : (fl.rooms?.cover_image || (window.ROOST_PROPERTY_IMAGES && (window.ROOST_PROPERTY_IMAGES[rId] || window.ROOST_PROPERTY_IMAGES[fl.rooms?.unit_no])) || '');
 
       return { rId, rName, rRev, rOcc, rNet, thumb, unit: fl.rooms?.unit_no || fl.unit_no || '' };
     });
@@ -2005,12 +2006,12 @@ window.renderExecutiveDashboard = async function () {
       const stroke = color || (isPos ? '#10B981' : '#EF4444');
       const fill = isPos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
       if (isPos) {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
+        return `<svg viewBox="0 0 100 28" preserveAspectRatio="none" height="28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:28px;display:block;margin-top:6px;overflow:hidden;">
           <path d="M0 24 Q 25 18, 50 12 T 100 4" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M0 24 Q 25 18, 50 12 T 100 4 L 100 28 L 0 28 Z" fill="${fill}"/>
         </svg>`;
       } else {
-        return `<svg viewBox="0 0 100 28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:30px;display:block;margin-top:6px;">
+        return `<svg viewBox="0 0 100 28" preserveAspectRatio="none" height="28" class="hh-kpi-sparkline" style="width:100%;height:28px;max-height:28px;display:block;margin-top:6px;overflow:hidden;">
           <path d="M0 8 Q 25 14, 50 18 T 100 24" fill="none" stroke="${stroke}" stroke-width="2.5" stroke-linecap="round"/>
           <path d="M0 8 Q 25 14, 50 18 T 100 24 L 100 28 L 0 28 Z" fill="${fill}"/>
         </svg>`;
@@ -2077,8 +2078,9 @@ window.renderExecutiveDashboard = async function () {
       const rNet = propExpSum > 0 ? Math.max(0, rRev - propExpSum) : Math.round(rRev * 0.62);
 
       const rName = propLabel(fl.rooms) || fl.room_id || 'Unit';
-      const slug = fl.rooms?.slug || ROOM_SLUG_MAP[rId] || '';
-      const thumb = slug ? `assets/properties/${slug}/cover.jpg` : '';
+      const thumb = (typeof window.getRoostPropertyCover === 'function')
+        ? window.getRoostPropertyCover(fl.rooms || fl)
+        : (fl.rooms?.cover_image || (window.ROOST_PROPERTY_IMAGES && (window.ROOST_PROPERTY_IMAGES[rId] || window.ROOST_PROPERTY_IMAGES[fl.rooms?.unit_no])) || '');
 
       return { rId, rName, rRev, rOcc, rNet, thumb, unit: fl.rooms?.unit_no || fl.unit_no || '' };
     });
