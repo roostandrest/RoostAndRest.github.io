@@ -584,7 +584,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
                       <td style="padding:2px 4px;font-weight:700;">${(p.paid_at || p.created_at) ? formatDateTime(p.paid_at || p.created_at) : formatDate(p.payment_date)}</td>
                       <td style="padding:2px 4px;"><span style="background:#E2E8F0;padding:1px 4px;border-radius:3px;font-size:8.5px;font-weight:700;">${escapeHtml(p.payment_mode || 'Direct')}</span></td>
                       <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.notes || '-')}</td>
-                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'UHH Team')}</td>
+                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'Roost & Rest')}</td>
                       <td style="padding:2px 4px;text-align:right;font-weight:900;color:#059669;">₹${Number(p.amount || 0).toLocaleString('en-IN')}</td>
                     </tr>
                   `).join('')}
@@ -2287,7 +2287,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
                       <td style="padding:2px 4px;font-family:monospace;font-size:9px;color:#92400E;">${escapeHtml(p.booking_id)}</td>
                       <td style="padding:2px 4px;"><span style="background:#E2E8F0;padding:1px 4px;border-radius:3px;font-size:8.5px;font-weight:700;">${escapeHtml(p.payment_mode || 'Direct')}</span></td>
                       <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.notes || '-')}</td>
-                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'UHH Team')}</td>
+                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'Roost & Rest')}</td>
                       <td style="padding:2px 4px;text-align:right;font-weight:900;color:#059669;">₹${Number(p.amount || 0).toLocaleString('en-IN')}</td>
                     </tr>
                   `).join('')}

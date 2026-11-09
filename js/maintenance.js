@@ -220,10 +220,9 @@ async function renderAddMaintenance() {
         <div class="form-grid">
                     <div class="form-group">
             <label>Payment Source / Account <span class="warn">*</span></label>
-            <select id="mPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-              <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-              <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
-              <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
+            <select id="mPaymentSource" style="border: 1.5px solid #B45309; font-weight: 700; width:100%; padding:9px; border-radius:8px;">
+              <option value="Roost&rest-Od" selected>🏦 Roost&rest-Od (Company Current A/c)</option>
+              <option value="Anwar">👤 Anwar (Owner / Cash)</option>
             </select>
           </div>
           <div class="form-group">
@@ -525,10 +524,9 @@ async function editMaintenance(id) {
         <div class="form-grid">
           <div class="form-group">
             <label>Payment Source / Account <span class="warn">*</span></label>
-            <select id="mPaymentSourceEdit" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-              <option value="COMPANY" ${m.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-              <option value="ROOST-BANK" ${m.payment_source === 'ROOST-BANK' || !m.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-              <option value="FIROZ" ${m.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+            <select id="mPaymentSourceEdit" style="border: 1.5px solid #B45309; font-weight: 700; width:100%; padding:9px; border-radius:8px;">
+              <option value="Roost&rest-Od" ${m.payment_source !== 'Anwar' && m.payment_source !== 'FIROZ' && m.payment_source !== 'COMPANY' ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
+              <option value="Anwar" ${m.payment_source === 'Anwar' || m.payment_source === 'FIROZ' || m.payment_source === 'COMPANY' ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
             </select>
           </div>
           <div class="form-group">

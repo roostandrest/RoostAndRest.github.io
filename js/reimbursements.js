@@ -438,10 +438,9 @@ window.editReimbursement = async function(id) {
     <div class="card">
       <div class="form-group">
         <label style="font-weight:700;font-size:14px;color:#1e293b;">💳 Payment Source / Account *</label>
-        <select id="rPaymentSource" style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;border:1.5px solid #0d6efd;border-radius:8px;background:#ffffff;color:#0f172a;">
-          <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-          <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+        <select id="rPaymentSource" style="width:100%;padding:10px 12px;font-size:14px;font-weight:700;border:1.5px solid #B45309;border-radius:8px;background:#ffffff;color:#0f172a;">
+          <option value="Roost&rest-Od" ${rec.payment_source !== 'Anwar' && rec.payment_source !== 'FIROZ' && rec.payment_source !== 'COMPANY' ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
+          <option value="Anwar" ${rec.payment_source === 'Anwar' || rec.payment_source === 'FIROZ' || rec.payment_source === 'COMPANY' ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
         </select>
       </div>
       <div class="form-group">

@@ -4,22 +4,22 @@
  */
 
 const UHHS_PAYMENT_SOURCES = {
-    OD: 'ROOST-BANK',
-    FIROZ: 'FIROZ',
-    COMPANY: 'COMPANY'
+    OD: 'Roost&rest-Od',
+    ANWAR: 'Anwar'
 };
 
-// 1. Payment Source Dropdown HTML Generator
-function getPaymentSourceDropdownHTML(selected = 'ROOST-BANK', id = 'payment_source') {
+// 1. Payment Source Dropdown HTML Generator (strictly Roost&rest-Od and Anwar)
+function getPaymentSourceDropdownHTML(selected = 'Roost&rest-Od', id = 'payment_source') {
+    const s = String(selected || 'Roost&rest-Od').toUpperCase();
+    const isAnwar = s.includes('ANWAR') || s.includes('FIROZ') || s.includes('COMPANY') || (s.includes('CASH') && !s.includes('OD'));
     return `
         <div class="form-group mb-2">
             <label class="form-label fw-bold" style="font-size:13px; color:#333;">
                 💳 Payment Account / Source
             </label>
-            <select id="${id}" name="payment_source" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; width: 100%; max-width: 100%; box-sizing: border-box;" required>
-                <option value="ROOST-BANK" ${selected === 'ROOST-BANK' ? 'selected' : ''}>🏦 Roost & Rest Bank Account</option>
-                <option value="COMPANY" ${selected === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-                <option value="FIROZ" ${selected === 'FIROZ' ? 'selected' : ''}>👤 Anwar Ahmad (Owner Direct)</option>
+            <select id="${id}" name="payment_source" class="form-select form-control" style="border: 1.5px solid #B45309; font-weight: 700; width: 100%; max-width: 100%; box-sizing: border-box;" required>
+                <option value="Roost&rest-Od" ${!isAnwar ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
+                <option value="Anwar" ${isAnwar ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
             </select>
         </div>
     `;
@@ -27,15 +27,11 @@ function getPaymentSourceDropdownHTML(selected = 'ROOST-BANK', id = 'payment_sou
 
 // 2. Badge UI Helper for Table Display
 function getPaymentSourceBadge(source) {
-    const s = (source || 'COMPANY').toUpperCase();
-    if (s === 'ROOST-BANK' || s === 'Roost-Bank') {
-        return `<span style="background-color:#dc3545; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 Roost-Bank</span>`;
-    } else if (s === 'FIROZ') {
-        return `<span style="background-color:#0d6efd; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">👤 FIROZ</span>`;
-    } else if (s === 'COMPANY') {
-        return `<span style="background-color:#198754; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏢 COMPANY</span>`;
+    const s = (source || 'Roost&rest-Od').toUpperCase();
+    if (s.includes('OD') || s.includes('BANK') || s.includes('ROOST')) {
+        return `<span style="background-color:#B45309; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 Roost&rest-Od</span>`;
     } else {
-        return `<span style="background-color:#F59E0B; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">⚠️ OTHER</span>`;
+        return `<span style="background-color:#2C241E; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">👤 Anwar</span>`;
     }
 }
 

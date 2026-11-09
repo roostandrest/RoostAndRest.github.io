@@ -35,12 +35,10 @@ window._claimsState = {
 
 // 1. Normalizers
 function normalizePaymentSource(rawVal) {
-  if (!rawVal) return 'OTHER';
+  if (!rawVal) return 'Roost&rest-Od';
   const s = String(rawVal).trim().toUpperCase();
-  if (s === 'FIROZ') return 'FIROZ';
-  if (s === 'COMPANY') return 'COMPANY';
-  if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
-  return 'OTHER';
+  if (s.includes('ANWAR') || s.includes('FIROZ') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'))) return 'Anwar';
+  return 'Roost&rest-Od';
 }
 
 function normalizeStatus(st) {

@@ -676,9 +676,9 @@ window.openStaffAdvanceModal = async function(preselectedEmpId = '') {
           <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
             <div class="form-group">
               <label style="font-size:12.5px;font-weight:700;">Paid From (Source) *</label>
-              <select id="advPaidBy" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-                <option value="ROOST-BANK">🏦 Roost Bank Account</option>
-                <option value="COMPANY">🏢 COMPANY / FIROZ</option>
+              <select id="advPaidBy" style="width:100%;padding:9px;border:1.5px solid #B45309;border-radius:10px;font-weight:700;">
+                <option value="Roost&rest-Od">🏦 Roost&rest-Od (Company Current A/c)</option>
+                <option value="Anwar">👤 Anwar (Owner / Cash)</option>
               </select>
             </div>
             <div class="form-group">
@@ -798,9 +798,9 @@ window.openLaundryQuickModal = async function() {
           <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
             <div class="form-group">
               <label style="font-size:12.5px;font-weight:700;">Paid Via *</label>
-              <select id="lqPaidBy" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-                <option value="ROOST-BANK">🏦 Roost Bank Account</option>
-                <option value="COMPANY">🏢 COMPANY / FIROZ</option>
+              <select id="lqPaidBy" style="width:100%;padding:9px;border:1.5px solid #B45309;border-radius:10px;font-weight:700;">
+                <option value="Roost&rest-Od">🏦 Roost&rest-Od (Company Current A/c)</option>
+                <option value="Anwar">👤 Anwar (Owner / Cash)</option>
               </select>
             </div>
             <div class="form-group">
@@ -2896,33 +2896,19 @@ window.onExpPayModeChange = async function() {
     else label.innerHTML = '💵 Paid By *';
   }
   
-  // Only 2 options: Praveen + Company
-  let html = '<option value="">-- Select --</option>';
-  html += '<option value="Praveen">🔵 Praveen (my pocket)</option>';
-  html += '<option value="Company">🏢 Company (company account)</option>';
-  dropdown.innerHTML = html;
-  
-  if (mode === 'UPI' || mode === 'Bank') {
-    if (finalH.includes('Anwar')) dropdown.value = 'Anwar';
-  }
-  
-  dropdown.onchange = function() {
-    if (custom) {
-      if (this.value === '__custom__') { custom.style.display = 'block'; setTimeout(() => custom.focus(), 50); }
-      else { custom.style.display = 'none'; custom.value = ''; }
-    }
-  };
+  const isCash = (mode === 'Cash');
+  dropdown.innerHTML = `
+    <option value="Roost&rest-Od" ${!isCash ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
+    <option value="Anwar" ${isCash ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+  `;
+  dropdown.value = isCash ? 'Anwar' : 'Roost&rest-Od';
   
   if (custom) { custom.style.display = 'none'; custom.value = ''; }
 };
 
 window.getExpPaidBy = function() {
   const dropdown = document.getElementById('exPaidBy');
-  if (!dropdown) return null;
-  if (dropdown.value === '__custom__') {
-    return document.getElementById('exPaidByCustom')?.value?.trim() || null;
-  }
-  return dropdown.value || null;
+  return dropdown?.value || 'Roost&rest-Od';
 };
 
 // ═══════════════════════════════════════════════════════════

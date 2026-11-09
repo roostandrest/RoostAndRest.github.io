@@ -5425,17 +5425,15 @@ async function loadCashHolders(forceRefresh = false) {
  * @param {object} opts - { filterType: 'final'|'manager'|'receiver'|null (all), allowCustom: true, addNew: true }
  * @returns {string} - HTML string
  */
-// Master Universal 3-Option Payment Source Dropdown (Company, Roost-Bank, Anwar)
+// Master Universal 2-Option Payment Source Dropdown (Roost&rest-Od, Anwar)
 window.renderCashHolderDropdown = async function(elementId, selectedVal) {
-  const s = String(selectedVal || 'COMPANY').toUpperCase();
-  const isOD = s.includes('OD') || s.includes('UHHS') || s.includes('TUHH');
-  const isAnwar = s.includes('FIROZ');
+  const s = String(selectedVal || 'Roost&rest-Od').toUpperCase();
+  const isAnwar = s.includes('ANWAR') || s.includes('FIROZ') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'));
   
   return `
-    <select id="${elementId}" name="${elementId}" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; padding: 10px; border-radius: 8px; width: 100%; background: #ffffff; color: #0f172a;">
-      <option value="COMPANY" ${(!isOD && !isAnwar) ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-      <option value="ROOST-BANK" ${isOD ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-      <option value="FIROZ" ${isAnwar ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+    <select id="${elementId}" name="${elementId}" class="form-select form-control" style="border: 1.5px solid #B45309; font-weight: 700; padding: 10px; border-radius: 8px; width: 100%; background: #ffffff; color: #0f172a;">
+      <option value="Roost&rest-Od" ${!isAnwar ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
+      <option value="Anwar" ${isAnwar ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
     </select>
   `;
 };
