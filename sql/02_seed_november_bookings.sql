@@ -63,3 +63,4 @@ SELECT
 FROM public.guest_register
 WHERE booking_id LIKE 'RR-NOV%'
 ON CONFLICT DO NOTHING;
+

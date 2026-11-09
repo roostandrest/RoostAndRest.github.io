@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS public.payment_history (
   amount NUMERIC NOT NULL,
   payment_date DATE DEFAULT CURRENT_DATE,
   payment_mode TEXT DEFAULT 'UPI',
+  payment_method TEXT DEFAULT 'UPI',
   payment_type TEXT DEFAULT 'Room Rent',
   reference_no TEXT,
   notes TEXT,
@@ -555,11 +556,13 @@ ON CONFLICT (booking_id) DO UPDATE SET
   status       = EXCLUDED.status;
 
 -- Sync initial payments into public.payment_history
+ALTER TABLE public.payment_history ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'UPI';
+
 INSERT INTO public.payment_history (
-  booking_id, amount, payment_date, payment_method, payment_type, notes
+  booking_id, amount, payment_date, payment_mode, payment_method, payment_type, notes
 )
 SELECT 
-  booking_id, total_amount, check_in, 'Online / Airbnb Payout', 'full_payment', 'November 2026 seed booking'
+  booking_id, total_amount, check_in, 'Online / Airbnb Payout', 'Online / Airbnb Payout', 'full_payment', 'November 2026 seed booking'
 FROM public.guest_register
 WHERE booking_id LIKE 'RR-NOV%'
 ON CONFLICT DO NOTHING;

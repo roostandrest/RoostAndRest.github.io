@@ -29,3 +29,4 @@ window.getRoostPropertyCover = function(roomId, fallback = 'assets/logo.svg') {
   if (!roomId) return fallback;
   return window.ROOST_PROPERTY_IMAGES[roomId] || fallback;
 };
+
