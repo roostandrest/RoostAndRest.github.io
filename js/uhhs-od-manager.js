@@ -1,23 +1,23 @@
 /**
- * UHHS-OD & Payment Source Global Manager (v2 FIXED)
+ * ROOST-BANK & Payment Source Global Manager (v2 FIXED)
  * ROOST AND REST STAYS
  */
 
 const UHHS_PAYMENT_SOURCES = {
-    OD: 'UHHS-OD',
+    OD: 'ROOST-BANK',
     FIROZ: 'FIROZ',
     COMPANY: 'COMPANY'
 };
 
 // 1. Payment Source Dropdown HTML Generator
-function getPaymentSourceDropdownHTML(selected = 'UHHS-OD', id = 'payment_source') {
+function getPaymentSourceDropdownHTML(selected = 'ROOST-BANK', id = 'payment_source') {
     return `
         <div class="form-group mb-2">
             <label class="form-label fw-bold" style="font-size:13px; color:#333;">
                 💳 Payment Account / Source
             </label>
             <select id="${id}" name="payment_source" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; width: 100%; max-width: 100%; box-sizing: border-box;" required>
-                <option value="UHHS-OD" ${selected === 'UHHS-OD' ? 'selected' : ''}>🏦 Roost & Rest Bank Account</option>
+                <option value="ROOST-BANK" ${selected === 'ROOST-BANK' ? 'selected' : ''}>🏦 Roost & Rest Bank Account</option>
                 <option value="COMPANY" ${selected === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
                 <option value="FIROZ" ${selected === 'FIROZ' ? 'selected' : ''}>👤 Anwar Ahmad (Owner Direct)</option>
             </select>
@@ -28,8 +28,8 @@ function getPaymentSourceDropdownHTML(selected = 'UHHS-OD', id = 'payment_source
 // 2. Badge UI Helper for Table Display
 function getPaymentSourceBadge(source) {
     const s = (source || 'COMPANY').toUpperCase();
-    if (s === 'UHHS-OD' || s === 'TUHH-OD') {
-        return `<span style="background-color:#dc3545; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 TUHH-OD</span>`;
+    if (s === 'ROOST-BANK' || s === 'Roost-Bank') {
+        return `<span style="background-color:#dc3545; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 Roost-Bank</span>`;
     } else if (s === 'FIROZ') {
         return `<span style="background-color:#0d6efd; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">👤 FIROZ</span>`;
     } else if (s === 'COMPANY') {
@@ -60,7 +60,7 @@ function setLocalODDeposits(list) {
 function normalizePaymentSource(src) {
     if (!src) return '';
     const s = String(src).trim().toUpperCase();
-    if (s.includes('OD') || s.includes('UHHS') || s.includes('TUHH')) return 'UHHS-OD';
+    if (s.includes('OD') || s.includes('UHHS') || s.includes('TUHH')) return 'ROOST-BANK';
     return src;
 }
 
@@ -155,8 +155,8 @@ async function getODSecurityRefunds(client, startDate, endDate) {
             const sec = extractSecurityDeposit(b);
             if (!sec) return;
             const refAmt = parseFloat(sec.refundAmount || 0);
-            const isODRef = normalizePaymentSource(sec.refundedBy) === 'UHHS-OD' || 
-                            (normalizePaymentSource(sec.receivedBy) === 'UHHS-OD' && (sec.refundMode || 'UPI') !== 'Cash');
+            const isODRef = normalizePaymentSource(sec.refundedBy) === 'ROOST-BANK' || 
+                            (normalizePaymentSource(sec.receivedBy) === 'ROOST-BANK' && (sec.refundMode || 'UPI') !== 'Cash');
             if (refAmt > 0 && isODRef) {
                 const refDate = sec.refundDate || b.check_out || '';
                 if (startDate && refDate && refDate < startDate) return;
@@ -180,7 +180,7 @@ async function getODSecurityRefunds(client, startDate, endDate) {
         });
         return refunds;
     } catch (e) {
-        console.warn('UHHS-OD security refund read error:', e.message);
+        console.warn('ROOST-BANK security refund read error:', e.message);
         return [];
     }
 }
@@ -190,7 +190,7 @@ const BASELINE_OD_ENTRIES = [
     {
         id: 'settlement_2026_09_16_od',
         transaction_date: '2026-09-16',
-        description: 'Reconciliation & Full Settlement: All UHHS-OD expenses & advances settled up to 16-Sep-2026',
+        description: 'Reconciliation & Full Settlement: All ROOST-BANK expenses & advances settled up to 16-Sep-2026',
         amount: 77962,
         transaction_type: 'INFLOW',
         payment_mode: 'BANK',
@@ -213,14 +213,14 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
     if (client) {
         // 2. Primary cloud persistence: company_advances
         try {
-            let q = client.from('company_advances').select('*').or('payment_source.eq.UHHS-OD,given_to.eq.UHHS-OD');
+            let q = client.from('company_advances').select('*').or('payment_source.eq.ROOST-BANK,given_to.eq.ROOST-BANK');
             if (startDate) q = q.gte('advance_date', startDate);
             if (endDate) q = q.lte('advance_date', endDate);
             const { data: caData, error: caErr } = await q.order('advance_date', { ascending: false });
             if (!caErr && Array.isArray(caData)) {
                 caData.forEach(ca => {
                     // Exclude returns/handovers (which are outflows)
-                    if (ca.given_by === 'UHHS-OD' || ca.status === 'Returned' || ca.status === 'Handover') return;
+                    if (ca.given_by === 'ROOST-BANK' || ca.status === 'Returned' || ca.status === 'Handover') return;
                     const uniqueKey = 'ca_' + ca.id;
                     itemsMap.set(uniqueKey, {
                         id: uniqueKey,
@@ -241,11 +241,11 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
             console.warn('Company advances OD read error:', e.message);
         }
 
-        // 2b. Auto-synced Guest Payments directly received into UHHS-OD
+        // 2b. Auto-synced Guest Payments directly received into ROOST-BANK
         try {
             let qPay = client.from('payment_history')
                 .select('id, amount, payment_date, payment_mode, received_by, notes, booking_id, guest_register(guest_name, rooms(nickname, unit_no))')
-                .or('received_by.eq.UHHS-OD,received_by.ilike.%UHHS-OD%')
+                .or('received_by.eq.ROOST-BANK,received_by.ilike.%ROOST-BANK%')
                 .neq('verification_status', 'rejected');
             if (startDate) qPay = qPay.gte('payment_date', startDate);
             if (endDate) qPay = qPay.lte('payment_date', endDate);
@@ -274,17 +274,17 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
                 });
             }
         } catch (e) {
-            console.warn('UHHS-OD payment_history auto-sync read error:', e.message);
+            console.warn('ROOST-BANK payment_history auto-sync read error:', e.message);
         }
 
-        // 2c. Auto-synced Guest Security Deposits directly received into UHHS-OD
+        // 2c. Auto-synced Guest Security Deposits directly received into ROOST-BANK
         try {
             const secBookings = await fetchRawSecurityDepositBookings(client);
             secBookings.forEach(b => {
                 const sec = extractSecurityDeposit(b);
                 if (!sec) return;
                 const isCollected = sec.amount > 0 && ['collected', 'refunded', 'partially_refunded', 'retained'].includes(sec.status);
-                const isODReceived = normalizePaymentSource(sec.receivedBy) === 'UHHS-OD';
+                const isODReceived = normalizePaymentSource(sec.receivedBy) === 'ROOST-BANK';
 
                 if (isCollected && isODReceived) {
                     const txDate = sec.receivedDate || b.check_in || '';
@@ -315,7 +315,7 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
                 }
             });
         } catch (e) {
-            console.warn('UHHS-OD security deposit auto-sync read error:', e.message);
+            console.warn('ROOST-BANK security deposit auto-sync read error:', e.message);
         }
 
         // 3. Historical account_transactions prior to 2026-09-17
@@ -355,7 +355,7 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
     return Array.from(itemsMap.values()).sort((a, b) => new Date(b.transaction_date) - new Date(a.transaction_date));
 }
 
-// 3. Live UHHS-OD Ledger Engine & Single Source of Truth
+// 3. Live ROOST-BANK Ledger Engine & Single Source of Truth
 async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     const client = supabaseClient || window.sb || window.supabaseClient || window.supabase;
     if (!client) return { txns: [], totalInflow: 0, totalOutflow: 0, netBalance: 0, openingBalance: 0 };
@@ -387,7 +387,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             client.from('maintenance_log').select('*').gte('reported_date', CHECKPOINT_START).lte('reported_date', dayBefore),
             client.from('laundry_payments').select('*').gte('payment_date', CHECKPOINT_START).lte('payment_date', dayBefore),
             client.from('advance_tracker').select('*').gte('date_given', CHECKPOINT_START).lte('date_given', dayBefore),
-            client.from('company_advances').select('*').or('given_by.eq.UHHS-OD,status.eq.Returned,status.eq.Handover').gte('advance_date', CHECKPOINT_START).lte('advance_date', dayBefore),
+            client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover').gte('advance_date', CHECKPOINT_START).lte('advance_date', dayBefore),
             getODSecurityRefunds(client, CHECKPOINT_START, dayBefore)
         ]);
 
@@ -400,16 +400,16 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             }
         });
 
-        (pExps || []).filter(e => normalizePaymentSource(e.payment_source || e.paid_by) === 'UHHS-OD').forEach(e => {
+        (pExps || []).filter(e => normalizePaymentSource(e.payment_source || e.paid_by) === 'ROOST-BANK').forEach(e => {
             openingOutflow += parseFloat(e.amount || 0);
         });
-        (pMaints || []).filter(m => normalizePaymentSource(m.payment_source || m.paid_by) === 'UHHS-OD').forEach(m => {
+        (pMaints || []).filter(m => normalizePaymentSource(m.payment_source || m.paid_by) === 'ROOST-BANK').forEach(m => {
             openingOutflow += parseFloat(m.cost || 0);
         });
-        (pLaunds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode) === 'UHHS-OD').forEach(l => {
+        (pLaunds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode) === 'ROOST-BANK').forEach(l => {
             openingOutflow += parseFloat(l.amount || 0);
         });
-        (pAdvs || []).filter(a => normalizePaymentSource(a.paid_by) === 'UHHS-OD').forEach(a => {
+        (pAdvs || []).filter(a => normalizePaymentSource(a.paid_by) === 'ROOST-BANK').forEach(a => {
             openingOutflow += parseFloat(a.advance_amount || 0);
         });
         (pReturns || []).forEach(r => {
@@ -437,7 +437,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
 
     let qAdv = client.from('advance_tracker').select('*, employees(name)');
 
-    let qReturns = client.from('company_advances').select('*').or('given_by.eq.UHHS-OD,status.eq.Returned,status.eq.Handover').gte('advance_date', startDate);
+    let qReturns = client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover').gte('advance_date', startDate);
     if (endDate) qReturns = qReturns.lte('advance_date', endDate);
 
     const [{ data: exps }, { data: maints }, { data: launds }, { data: allAdvs }, { data: returns }, secRefunds] = await Promise.all([
@@ -468,7 +468,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     });
 
     // Daily Expenses (-)
-    (exps || []).filter(e => normalizePaymentSource(e.payment_source || e.paid_by) === 'UHHS-OD').forEach(e => {
+    (exps || []).filter(e => normalizePaymentSource(e.payment_source || e.paid_by) === 'ROOST-BANK').forEach(e => {
         txns.push({
             id: e.id,
             source: 'reimbursements',
@@ -481,7 +481,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     });
 
     // Maintenance (-)
-    (maints || []).filter(m => normalizePaymentSource(m.payment_source || m.paid_by) === 'UHHS-OD').forEach(m => {
+    (maints || []).filter(m => normalizePaymentSource(m.payment_source || m.paid_by) === 'ROOST-BANK').forEach(m => {
         txns.push({
             id: m.id,
             source: 'maintenance_log',
@@ -494,7 +494,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     });
 
     // Laundry (-)
-    (launds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode) === 'UHHS-OD').forEach(l => {
+    (launds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode) === 'ROOST-BANK').forEach(l => {
         txns.push({
             id: l.id,
             source: 'laundry_payments',
@@ -511,7 +511,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
         const aDate = a.date_given || '';
         if (aDate < startDate) return false;
         if (endDate && aDate > endDate) return false;
-        return normalizePaymentSource(a.paid_by) === 'UHHS-OD';
+        return normalizePaymentSource(a.paid_by) === 'ROOST-BANK';
     }).forEach(a => {
         const realName = a.employees?.name || 'Staff';
         txns.push({
@@ -540,7 +540,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
         });
     });
 
-    // Security Deposit Refunds to Guests from UHHS-OD (-)
+    // Security Deposit Refunds to Guests from ROOST-BANK (-)
     (secRefunds || []).forEach(sr => {
         txns.push({
             id: sr.id,
@@ -711,7 +711,7 @@ window.renderClosingStatementForDate = function(startDate, endDate) {
         tCloseEl.style.color = periodClosingBal >= 0 ? '#4ADE80' : '#F87171';
     }
     const tCloseTitle = document.getElementById('today-proof-closing-title');
-    if (tCloseTitle) tCloseTitle.innerText = isRange ? `💰 Closing Balance (${fmtShort(endD)})` : '💰 TUHH-OD Closing Balance';
+    if (tCloseTitle) tCloseTitle.innerText = isRange ? `💰 Closing Balance (${fmtShort(endD)})` : '💰 Roost-Bank Closing Balance';
 
     // Update Timestamp
     const tTimeEl = document.getElementById('today-proof-timestamp');
@@ -784,23 +784,23 @@ window.renderClosingStatementForDate = function(startDate, endDate) {
     const cInput = document.getElementById('proofCustomDate');
 
     if (bRange) {
-        bRange.style.background = isRange ? '#0284C7' : '#F1F5F9';
+        bRange.style.background = isRange ? '#92400E' : '#F1F5F9';
         bRange.style.color = isRange ? '#FFFFFF' : '#475569';
-        bRange.style.border = isRange ? '1px solid #0284C7' : '1px solid #CBD5E1';
+        bRange.style.border = isRange ? '1px solid #92400E' : '1px solid #CBD5E1';
         bRange.innerText = `📅 Range: ${fmtShort(startD)} → ${fmtShort(endD)}`;
     }
     if (bLatest) {
         const isLatest = (!isRange && startD === latestActiveDate);
-        bLatest.style.background = isLatest ? '#0284C7' : '#F1F5F9';
+        bLatest.style.background = isLatest ? '#92400E' : '#F1F5F9';
         bLatest.style.color = isLatest ? '#FFFFFF' : '#475569';
-        bLatest.style.border = isLatest ? '1px solid #0284C7' : '1px solid #CBD5E1';
+        bLatest.style.border = isLatest ? '1px solid #92400E' : '1px solid #CBD5E1';
         bLatest.innerText = `⚡ ${fmtShort(latestActiveDate)} (Last Closed)`;
     }
     if (bToday) {
         const isCurToday = (!isRange && startD === localToday);
-        bToday.style.background = isCurToday ? '#0284C7' : '#F1F5F9';
+        bToday.style.background = isCurToday ? '#92400E' : '#F1F5F9';
         bToday.style.color = isCurToday ? '#FFFFFF' : '#475569';
-        bToday.style.border = isCurToday ? '1px solid #0284C7' : '1px solid #CBD5E1';
+        bToday.style.border = isCurToday ? '1px solid #92400E' : '1px solid #CBD5E1';
         bToday.innerText = `📅 Today (${fmtShort(localToday)})`;
     }
     if (cInput && !isRange && cInput.value !== startD) {
@@ -808,7 +808,7 @@ window.renderClosingStatementForDate = function(startDate, endDate) {
     }
 };
 
-// 4. Live UHHS-OD Balance Calculator & DOM Synchronizer
+// 4. Live ROOST-BANK Balance Calculator & DOM Synchronizer
 async function calculateLiveODBalance(supabaseClient) {
     const client = supabaseClient || window.sb || window.supabaseClient || window.supabase;
     if (!client) return { inflow: 0, outflow: 0, balance: 0 };
@@ -854,7 +854,7 @@ async function calculateLiveODBalance(supabaseClient) {
                         <div style="padding:14px; border-radius:10px; background:${isNegative ? '#fff5f5' : '#f0fff4'}; border:1.5px solid ${isNegative ? '#dc3545' : '#198754'}; margin-bottom:12px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <div>
-                                    <div style="font-size:12px; font-weight:700; color:#555; text-transform:uppercase;">🏦 TUHH-OD ACCOUNT BALANCE</div>
+                                    <div style="font-size:12px; font-weight:700; color:#555; text-transform:uppercase;">🏦 Roost-Bank ACCOUNT BALANCE</div>
                                     <div style="font-size:24px; font-weight:800; color:${isNegative ? '#dc3545' : '#198754'}; margin-top:2px;">
                                         ${netBalance < 0 ? '-₹' : '₹'}${Math.abs(netBalance).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                     </div>
@@ -906,7 +906,7 @@ window.notifyDataChanged = function() {
 };
 
 // =========================================================================
-// 📥 GLOBAL MODAL: Deposit Funds into UHHS-OD Account
+// 📥 GLOBAL MODAL: Deposit Funds into ROOST-BANK Account
 // =========================================================================
 // =========================================================================
 window.cbDepositToODModal = function(defaultSender = 'Aniket', defaultAmount = '') {
@@ -924,7 +924,7 @@ window.cbDepositToODModal = function(defaultSender = 'Aniket', defaultAmount = '
         <div class="modal-box" style="background:#fff;border-radius:16px;padding:22px;max-width:480px;width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 20px 40px rgba(0,0,0,0.3);margin:auto;box-sizing:border-box;border:1px solid #e2e8f0;" onclick="event.stopPropagation()">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
                 <h3 style="margin:0;font-size:18px;color:#059669;font-weight:800;display:flex;align-items:center;gap:6px;">
-                    <span>🏦</span> Deposit to TUHH-OD
+                    <span>🏦</span> Deposit to Roost Bank
                 </h3>
                 <button type="button" onclick="this.closest('.modal-overlay').remove()" style="background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:#64748b;display:flex;align-items:center;justify-content:center;font-weight:700;">✕</button>
             </div>
@@ -1028,11 +1028,11 @@ window.cbSaveODDeposit = async function() {
                 advance_date: date,
                 amount_given: amount,
                 given_by: sender,
-                given_to: 'UHHS-OD',
+                given_to: 'ROOST-BANK',
                 purpose: `Funds added by ${sender} via ${mode}${note ? ' - ' + note : ''}`,
-                payment_source: 'UHHS-OD',
+                payment_source: 'ROOST-BANK',
                 status: 'Active',
-                notes: note || 'UHHS-OD Deposit'
+                notes: note || 'ROOST-BANK Deposit'
             }]).select();
 
             if (dbErr) {
@@ -1047,9 +1047,9 @@ window.cbSaveODDeposit = async function() {
         // Close deposit modal & notify
         document.querySelector('.od-deposit-modal-overlay')?.remove();
         if (window.fsn?.success) {
-            fsn.success('Success', `🏦 ₹${amount.toLocaleString('en-IN')} deposited to TUHH-OD!`);
+            fsn.success('Success', `🏦 ₹${amount.toLocaleString('en-IN')} deposited to Roost Bank!`);
         } else {
-            alert(`✅ ₹${amount.toLocaleString('en-IN')} deposited to TUHH-OD!`);
+            alert(`✅ ₹${amount.toLocaleString('en-IN')} deposited to Roost Bank!`);
         }
 
         // Refresh UI & Balance
@@ -1069,7 +1069,7 @@ window.cbSaveODDeposit = async function() {
 };
 
 // =========================================================================
-// 💸 GLOBAL MODAL: Return / Handover Funds to Company (from UHHS-OD)
+// 💸 GLOBAL MODAL: Return / Handover Funds to Company (from ROOST-BANK)
 // =========================================================================
 window.cbReturnFromODModal = function() {
     const oldModal = document.querySelector('.od-return-modal-overlay');
@@ -1092,7 +1092,7 @@ window.cbReturnFromODModal = function() {
             </div>
 
             <div style="background:#fef2f2;padding:10px 12px;border-radius:10px;font-size:12.5px;color:#991b1b;margin-bottom:14px;border:1px solid #fecaca;line-height:1.4;">
-                Record funds returned from TUHH-OD back to Company or Firoz. This reduces your TUHH-OD balance.
+                Record funds returned from Roost-Bank back to Company or Firoz. This reduces your Roost-Bank balance.
             </div>
 
             <div class="form-group" style="margin-bottom:12px;">
@@ -1172,10 +1172,10 @@ window.cbSaveODReturn = async function() {
             const { error: dbErr } = await client.from('company_advances').insert([{
                 advance_date: date,
                 amount_given: amount,
-                given_by: 'UHHS-OD',
+                given_by: 'ROOST-BANK',
                 given_to: target || 'Company',
                 purpose: `Funds returned to ${target || 'Company'} via ${mode}${note ? ' - ' + note : ''}`,
-                payment_source: 'UHHS-OD',
+                payment_source: 'ROOST-BANK',
                 status: 'Returned',
                 notes: note || 'Funds returned to company'
             }]);
@@ -1186,11 +1186,11 @@ window.cbSaveODReturn = async function() {
             if (mode === 'CASH') {
                 try {
                     await client.from('cash_handovers').insert([{
-                        from_person: 'UHHS-OD',
+                        from_person: 'ROOST-BANK',
                         to_person: target === 'FIROZ' ? 'Firoz' : 'Company',
                         amount: amount,
                         handover_date: date,
-                        notes: `Cash return from UHHS-OD | ${note || ''}`,
+                        notes: `Cash return from ROOST-BANK | ${note || ''}`,
                         created_by: window.SESSION?.userId || null
                     }]);
                 } catch (e) {
@@ -1225,7 +1225,7 @@ window.cbSaveODReturn = async function() {
 };
 
 // =========================================================================
-// ✏️ GLOBAL MODAL: Edit / Delete an existing UHHS-OD Deposit Entry
+// ✏️ GLOBAL MODAL: Edit / Delete an existing ROOST-BANK Deposit Entry
 // =========================================================================
 window.cbEditODDeposit = async function(id) {
     const client = window.sb || window.supabaseClient || window.supabase;
@@ -1291,13 +1291,13 @@ window.cbEditODDeposit = async function(id) {
             document.body.appendChild(actionModal);
             return;
         }
-        alert('ℹ️ This is an auto-synced Guest Booking Payment. Any changes to this payment in Bookings manager will automatically sync with UHHS-OD.');
+        alert('ℹ️ This is an auto-synced Guest Booking Payment. Any changes to this payment in Bookings manager will automatically sync with ROOST-BANK.');
         return;
     }
 
     if (String(id).startsWith('ret_')) {
         const retId = id.replace('ret_', '');
-        if (confirm('Delete this Return to Company record? The amount will be added back to your TUHH-OD balance.')) {
+        if (confirm('Delete this Return to Company record? The amount will be added back to your Roost-Bank balance.')) {
             await client.from('company_advances').delete().eq('id', retId);
             if (window.fsn?.success) fsn.success('Deleted', 'Return record deleted');
             if (window.UHHSODManager) window.UHHSODManager.calculateBalance(client);
@@ -1355,7 +1355,7 @@ window.cbEditODDeposit = async function(id) {
     modal.innerHTML = `
         <div class="modal-box" style="background:#fff;border-radius:12px;padding:22px;max-width:450px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,0.2);" onclick="event.stopPropagation()">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px;">
-                <h3 style="margin:0;font-size:18px;color:#3B82F6;font-weight:800;">✏️ Edit TUHH-OD Deposit</h3>
+                <h3 style="margin:0;font-size:18px;color:#3B82F6;font-weight:800;">✏️ Edit Roost Bank Deposit</h3>
                 <button onclick="this.closest('.modal-overlay').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">✕</button>
             </div>
 
@@ -1426,7 +1426,7 @@ window.cbSaveODEditDeposit = async function(id) {
                     amount_given: amount,
                     given_by: sender,
                     purpose: `Funds added by ${sender} via ${mode}${note ? ' - ' + note : ''}`,
-                    notes: note || 'UHHS-OD Deposit'
+                    notes: note || 'ROOST-BANK Deposit'
                 }).eq('id', dbId);
             } catch (e) {
                 console.error('Failed to update company_advances:', e);
@@ -1510,4 +1510,4 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
     });
 }
 
-console.log("✅ UHHS-OD Global Manager loaded & Global Modals Attached!");
+console.log("✅ ROOST-BANK Global Manager loaded & Global Modals Attached!");

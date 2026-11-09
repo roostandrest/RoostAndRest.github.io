@@ -461,7 +461,7 @@ window.CA_AUDIT_PACK = (function() {
                   💼 Airbnb Payouts, Section 194-O TDS &amp; CA Tax Audit
                 </h1>
                 <div style="font-size:12.5px;color:#64748B;">
-                  PAN: <strong style="color:#0F172A;">${CO.pan}</strong> &bull; GSTIN: <strong style="color:#0F172A;">${CO.gstin}</strong> &bull; Bank: <strong style="color:#0F172A;">${CO.bank}</strong> &bull; TDS: <strong style="color:#0284C7;">Section 194-O @ 5.0%</strong>
+                  PAN: <strong style="color:#0F172A;">${CO.pan}</strong> &bull; GSTIN: <strong style="color:#0F172A;">${CO.gstin}</strong> &bull; Bank: <strong style="color:#0F172A;">${CO.bank}</strong> &bull; TDS: <strong style="color:#92400E;">Section 194-O @ 5.0%</strong>
                 </div>
               </div>
 
@@ -469,7 +469,7 @@ window.CA_AUDIT_PACK = (function() {
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 
                 <!-- 1-Click Import CSV -->
-                <label style="margin:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#0284C7;color:#ffffff;padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:800;box-shadow:0 2px 4px rgba(2,132,199,0.25);transition:all 0.15s ease;">
+                <label style="margin:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#92400E;color:#ffffff;padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:800;box-shadow:0 2px 4px rgba(2,132,199,0.25);transition:all 0.15s ease;">
                   <i class="ti ti-upload"></i>
                   <span>📁 Import CSV</span>
                   <input type="file" accept=".csv" onchange="window.CA_AUDIT_PACK.uploadCSV(this.files[0])" style="display:none;" />
@@ -536,16 +536,16 @@ window.CA_AUDIT_PACK = (function() {
 
             <!-- SUB-TABS NAVIGATION -->
             <div style="display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:22px;gap:6px;overflow-x:auto;">
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('summary')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'summary' ? '#0284C7' : '#64748B'};border-bottom:3px solid ${activeTab === 'summary' ? '#0284C7' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('summary')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'summary' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'summary' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
                 📊 CA Tax Summary &amp; Monthly Trajectory
               </button>
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('properties')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'properties' ? '#0284C7' : '#64748B'};border-bottom:3px solid ${activeTab === 'properties' ? '#0284C7' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('properties')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'properties' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'properties' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
                 🏡 Property &amp; Listing Breakdown (${properties.length})
               </button>
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('reservations')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'reservations' ? '#0284C7' : '#64748B'};border-bottom:3px solid ${activeTab === 'reservations' ? '#0284C7' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('reservations')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'reservations' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'reservations' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
                 📋 Detailed Reservations Register (${reservations.length})
               </button>
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('payouts')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'payouts' ? '#0284C7' : '#64748B'};border-bottom:3px solid ${activeTab === 'payouts' ? '#0284C7' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('payouts')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'payouts' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'payouts' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
                 🏦 Bank Transfers Register (${payouts.length})
               </button>
             </div>
@@ -684,7 +684,7 @@ window.CA_AUDIT_PACK = (function() {
                             <td style="padding:11px 16px;text-align:center;color:#64748B;">
                               ${p.nights}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:700;color:#0284C7;">
+                            <td style="padding:11px 16px;text-align:right;font-weight:700;color:#92400E;">
                               ₹${adr.toLocaleString('en-IN')}
                             </td>
                             <td style="padding:11px 16px;text-align:right;font-weight:900;color:#047857;">
@@ -761,7 +761,7 @@ window.CA_AUDIT_PACK = (function() {
                         ${paginatedReservations.map(r => `
                           <tr style="border-bottom:1px solid #F1F5F9;transition:background 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
                             <td style="padding:10px 14px;white-space:nowrap;font-size:12px;color:#64748B;">${r.date}</td>
-                            <td style="padding:10px 14px;font-family:monospace;font-weight:800;color:#0284C7;">${r.code}</td>
+                            <td style="padding:10px 14px;font-family:monospace;font-weight:800;color:#92400E;">${r.code}</td>
                             <td style="padding:10px 14px;font-weight:700;color:#0F172A;">${r.guest}</td>
                             <td style="padding:10px 14px;color:#334155;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.listing}">${r.listing}</td>
                             <td style="padding:10px 14px;font-size:12px;color:#64748B;white-space:nowrap;">${r.start_date} → ${r.end_date}</td>
@@ -814,7 +814,7 @@ window.CA_AUDIT_PACK = (function() {
                         <tr style="border-bottom:1px solid #F1F5F9;transition:background 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
                           <td style="padding:11px 16px;font-weight:800;color:#0F172A;">${p.date}</td>
                           <td style="padding:11px 16px;color:#64748B;">${p.arriving_date || '-'}</td>
-                          <td style="padding:11px 16px;font-family:monospace;color:#0284C7;font-weight:700;">${p.ref_code || '-'}</td>
+                          <td style="padding:11px 16px;font-family:monospace;color:#92400E;font-weight:700;">${p.ref_code || '-'}</td>
                           <td style="padding:11px 16px;color:#334155;">${p.details || 'Transfer to Current 0550 (INR)'}</td>
                           <td style="padding:11px 16px;text-align:right;font-weight:900;color:#047857;font-size:13.5px;">
                             ₹${p.amount.toLocaleString('en-IN', {maximumFractionDigits:2})}

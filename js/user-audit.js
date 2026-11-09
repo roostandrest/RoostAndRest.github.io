@@ -224,7 +224,7 @@
           <div style="font-size:11.5px;color:#CBD5E1;margin-top:2px;">Logged in at ${alert.time_label || 'Just now'}</div>
         </div>
         <button onclick="window.openUserAuditModal('${alert.user_id}','${(alert.user_name||'').replace(/'/g, "\\'")}', '${alert.user_role}');document.getElementById('devLoginToastBanner')?.remove();"
-          style="background:#0284C7;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;">
+          style="background:#92400E;color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;">
           📊 Audit
         </button>
         <button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:#94A3B8;font-size:14px;cursor:pointer;padding:2px 4px;margin-left:2px;">✕</button>
@@ -445,7 +445,7 @@
         <!-- Header -->
         <div style="padding:18px 24px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;background:#F8FAFC;">
           <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:44px;height:44px;border-radius:50%;background:#0284C7;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;">
+            <div style="width:44px;height:44px;border-radius:50%;background:#92400E;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;">
               ${(displayName || 'U').charAt(0).toUpperCase()}
             </div>
             <div>
@@ -742,9 +742,9 @@
       'expenses': '🧾 Expenses & Outflows',
       'monthly-expenses': '🧾 Monthly Expenses',
       'emp-expenses': '🧾 Staff Expenses',
-      'claims': '💰 TUHH-OD & Finances',
-      'finance': '💰 TUHH-OD & Finances',
-      'finances': '💰 TUHH-OD & Finances',
+      'claims': '💰 Roost Bank & Finances',
+      'finance': '💰 Roost Bank & Finances',
+      'finances': '💰 Roost Bank & Finances',
       'cashbook': '💰 Cashbook & Reimbursements',
       'investors': '💼 Investor Portfolios',
       'invester': '💼 Investor Portfolios',
@@ -827,7 +827,7 @@
                 <span style="font-size:12.5px;font-weight:700;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                   ${PAGE_HUMAN_NAMES[pageKey] || pageKey}
                 </span>
-                <span style="background:#0284C7;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;flex-shrink:0;">
+                <span style="background:#92400E;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;flex-shrink:0;">
                   ${count}
                 </span>
               </div>
@@ -845,7 +845,7 @@
         <div style="margin-bottom:22px;">
           <div style="font-size:13px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
             <span>🕒 Recent Page Navigation Stream (Latest ${recentVisitsStream.length})</span>
-            <span style="font-size:11px;font-weight:700;color:#0284C7;background:#E0F2FE;padding:2px 8px;border-radius:6px;">Live Trace</span>
+            <span style="font-size:11px;font-weight:700;color:#92400E;background:#E0F2FE;padding:2px 8px;border-radius:6px;">Live Trace</span>
           </div>
           <div style="border:1px solid #E2E8F0;border-radius:10px;max-height:180px;overflow-y:auto;background:#FAFAFA;">
             ${recentVisitsStream.map(v => {
@@ -1164,16 +1164,16 @@
         a.user_role === 'caretaker' ? '🔑 Caretaker' : (a.user_role || 'Staff');
 
       return `
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #F1F5F9;${unread ? 'background:#F0F9FF;border-left:3px solid #0284C7;' : 'background:#FFFFFF;'}">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #F1F5F9;${unread ? 'background:#F0F9FF;border-left:3px solid #92400E;' : 'background:#FFFFFF;'}">
           <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-            <div style="width:40px;height:40px;border-radius:50%;background:${unread ? '#0284C7' : '#94A3B8'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;">
+            <div style="width:40px;height:40px;border-radius:50%;background:${unread ? '#92400E' : '#94A3B8'};color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;flex-shrink:0;">
               ${(a.user_name || 'U').charAt(0).toUpperCase()}
             </div>
             <div style="min-width:0;">
               <div style="font-size:13.5px;font-weight:800;color:#0F172A;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                 <span>${escapeHtml(a.user_name || 'Unknown')}</span>
                 <span style="background:#E2E8F0;color:#334155;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">${roleBadge}</span>
-                ${a.device ? `<span style="background:#F1F5F9;color:#0284C7;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;border:1px solid #E2E8F0;">${a.device}</span>` : ''}
+                ${a.device ? `<span style="background:#F1F5F9;color:#92400E;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;border:1px solid #E2E8F0;">${a.device}</span>` : ''}
                 ${unread ? '<span style="background:#EF4444;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:10px;">NEW</span>' : ''}
               </div>
               <div style="font-size:12px;color:#64748B;margin-top:2px;">
@@ -1954,7 +1954,7 @@
                   amtVal = d.totalAmount || 0;
                   descHtml = `
                     <div style="font-weight:700;color:#0F172A;">
-                      Guest: <span style="color:#0284C7;">${escapeHtml(d.guestName || 'Guest')}</span>
+                      Guest: <span style="color:#92400E;">${escapeHtml(d.guestName || 'Guest')}</span>
                       ${d.bookingId ? ` &middot; <span style="font-family:monospace;font-size:11.5px;color:#475569;">${d.bookingId}</span>` : ''}
                     </div>
                     <div style="font-size:11.5px;color:#64748B;margin-top:2px;">
@@ -1965,7 +1965,7 @@
                   amtVal = d.totalAmount || null;
                   descHtml = `
                     <div style="font-weight:700;color:#0F172A;">
-                      Guest: <span style="color:#0284C7;">${escapeHtml(d.guestName || 'Guest')}</span>
+                      Guest: <span style="color:#92400E;">${escapeHtml(d.guestName || 'Guest')}</span>
                       ${d.bookingId ? ` &middot; <span style="font-family:monospace;font-size:11.5px;color:#475569;">${d.bookingId}</span>` : ''}
                     </div>
                     <div style="font-size:11.5px;color:#B45309;margin-top:2px;font-style:italic;">

@@ -386,7 +386,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
             <div style="margin-top:3px;font-size:9.5px;line-height:1.4;">
               <span style="color:#64748B;">Receipt No:</span> <strong style="color:#0F172A;">${escapeHtml(receiptNo)}</strong> &nbsp;|&nbsp;
               <span style="color:#64748B;">Date:</span> <strong>${todayStr}</strong><br>
-              <span style="color:#64748B;">Booking ID:</span> <strong style="color:#0284C7;">${escapeHtml(booking.booking_id)}</strong>
+              <span style="color:#64748B;">Booking ID:</span> <strong style="color:#92400E;">${escapeHtml(booking.booking_id)}</strong>
             </div>
           </div>
         </div>
@@ -447,7 +447,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
               ${escapeHtml(propName)}${escapeHtml(unitNo)}
             </div>
             <div style="font-size:10px;color:#334155;line-height:1.5;">
-              📍 <strong>${escapeHtml(address)}</strong> ${mapLink ? `<a href="${mapLink}" target="_blank" style="color:#0284C7;text-decoration:none;font-weight:700;">[📍 Map]</a>` : ''}<br>
+              📍 <strong>${escapeHtml(address)}</strong> ${mapLink ? `<a href="${mapLink}" target="_blank" style="color:#92400E;text-decoration:none;font-weight:700;">[📍 Map]</a>` : ''}<br>
               📅 <strong>${checkInDate}</strong> (${checkInTime}) → <strong>${checkOutDate}</strong> (${checkOutTime}) · <strong>${nights}N</strong>
             </div>
           </div>
@@ -486,7 +486,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
                 <div style="font-size:9px;font-weight:800;color:#0369A1;text-transform:uppercase;margin-bottom:1px;">
                   🛡️ Security Deposit
                 </div>
-                <div style="font-size:15px;font-weight:900;color:#0284C7;">
+                <div style="font-size:15px;font-weight:900;color:#92400E;">
                   ₹${secAmount.toLocaleString('en-IN')}
                 </div>
                 <div style="font-size:8.5px;color:#0369A1;font-weight:700;">
@@ -546,9 +546,9 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
                     <td style="padding:3px 4px;font-weight:700;color:#0369A1;">
                       🛡️ Refundable Security Deposit (वापसी योग्य सुरक्षा राशि)
                     </td>
-                    <td style="padding:3px 4px;text-align:center;color:#0284C7;font-weight:700;">Security Deposit</td>
+                    <td style="padding:3px 4px;text-align:center;color:#92400E;font-weight:700;">Security Deposit</td>
                     <td style="padding:3px 4px;text-align:center;"><span style="background:#DCFCE7;color:#166534;padding:1px 5px;border-radius:3px;font-weight:800;font-size:8px;">Yes (100%)</span></td>
-                    <td style="padding:3px 4px;text-align:right;font-weight:900;color:#0284C7;">₹${secAmount.toLocaleString('en-IN')}</td>
+                    <td style="padding:3px 4px;text-align:right;font-weight:900;color:#92400E;">₹${secAmount.toLocaleString('en-IN')}</td>
                   </tr>
                   <tr style="background:#F1F5F9;font-weight:800;">
                     <td colspan="3" style="padding:3px 4px;text-align:right;color:#475569;font-size:8.5px;text-transform:uppercase;">
@@ -599,7 +599,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
             <!-- Words Summary -->
             <div style="padding:3px 6px;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:4px;font-size:9px;color:#334155;line-height:1.4;">
               <strong>Advance Paid in Words:</strong> ${wordsPaid} &nbsp;|&nbsp;
-              ${secAmount > 0 ? `<strong>Security Deposit:</strong> <span style="color:#0284C7;font-weight:700;">${numToWords(secAmount)}</span> (${secStatus === 'collected' ? 'Held' : 'Pending'}) &nbsp;|&nbsp; ` : ''}
+              ${secAmount > 0 ? `<strong>Security Deposit:</strong> <span style="color:#92400E;font-weight:700;">${numToWords(secAmount)}</span> (${secStatus === 'collected' ? 'Held' : 'Pending'}) &nbsp;|&nbsp; ` : ''}
               ${balanceDue > 0 ? `<strong>Remaining Balance:</strong> <span style="color:#DC2626;font-weight:700;">${wordsBalance}</span> (Due at Check-in)` : '<strong>Status:</strong> <span style="color:#059669;font-weight:700;">Full payment received with thanks!</span>'}
             </div>
 
@@ -1375,7 +1375,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
             ${secAmount > 0 ? `
               <div style="padding:10px 4px;border-right:1px solid #CBD5E1;background:#F0F9FF;">
                 <div style="font-size:9.5px;font-weight:900;color:#0369A1;text-transform:uppercase;">🛡️ Deposit</div>
-                <div style="font-size:16px;font-weight:900;color:#0284C7;margin-top:2px;">₹${secAmount.toLocaleString('en-IN')}</div>
+                <div style="font-size:16px;font-weight:900;color:#92400E;margin-top:2px;">₹${secAmount.toLocaleString('en-IN')}</div>
               </div>
             ` : ''}
             <div style="padding:10px 4px;border-right:1px solid #CBD5E1;background:#F0FDF4;">
@@ -1413,7 +1413,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
           ${secAmount > 0 ? `
             <div style="padding:7px 12px;background:#F0F9FF;border-top:1px dashed #BAE6FD;font-size:11px;display:flex;justify-content:space-between;align-items:center;">
               <span style="color:#0369A1;font-weight:700;">Total Stay + Security Deposit:</span>
-              <strong style="color:#0284C7;font-size:12.5px;">₹${(totalAmount + secAmount).toLocaleString('en-IN')}</strong>
+              <strong style="color:#92400E;font-size:12.5px;">₹${(totalAmount + secAmount).toLocaleString('en-IN')}</strong>
             </div>
           ` : ''}
         </div>
@@ -1706,10 +1706,10 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- Format Switcher Pill Tabs -->
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
           <div style="display:inline-flex;align-items:center;gap:4px;background:#1E293B;padding:4px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);">
-            <button type="button" id="btnTabMobile" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;${isMobile ? 'background:#0284C7;color:#fff;box-shadow:0 2px 8px rgba(2,132,199,0.4);' : 'background:transparent;color:#94A3B8;'}">
+            <button type="button" id="btnTabMobile" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;${isMobile ? 'background:#92400E;color:#fff;box-shadow:0 2px 8px rgba(2,132,199,0.4);' : 'background:transparent;color:#94A3B8;'}">
               📱 WhatsApp Mobile Pass (Vertical)
             </button>
-            <button type="button" id="btnTabOfficial" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;${!isMobile ? 'background:#0284C7;color:#fff;box-shadow:0 2px 8px rgba(2,132,199,0.4);' : 'background:transparent;color:#94A3B8;'}">
+            <button type="button" id="btnTabOfficial" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;${!isMobile ? 'background:#92400E;color:#fff;box-shadow:0 2px 8px rgba(2,132,199,0.4);' : 'background:transparent;color:#94A3B8;'}">
               📄 Full Official Receipt (PDF Format)
             </button>
           </div>
@@ -1721,7 +1721,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
           <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;font-weight:800;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="btnCopySlipImg">
             📋 Copy Image (for WhatsApp Ctrl+V)
           </button>
-          <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:800;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="btnDownloadSlipImg">
+          <button type="button" class="btn-sm" style="background:#92400E;color:#fff;font-weight:800;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="btnDownloadSlipImg">
             📥 Download PNG
           </button>
           ${navigator.canShare && navigator.canShare({ files: [file] }) ? `
@@ -2192,7 +2192,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
                 const room = b.rooms || {};
                 const prop = room.nickname || room.property_name || b.room_id || 'Homestay Property';
                 const unit = room.unit_no ? ` (${room.unit_no})` : '';
-                const mapLink = room.map_link ? ` <a href="${room.map_link}" target="_blank" style="color:#0284C7;text-decoration:none;font-weight:700;">[📍 Map]</a>` : '';
+                const mapLink = room.map_link ? ` <a href="${room.map_link}" target="_blank" style="color:#92400E;text-decoration:none;font-weight:700;">[📍 Map]</a>` : '';
                 const n = calcNights(b.check_in, b.check_out);
                 const ciTime = formatTime(b.check_in_time || '14:00');
                 const coTime = formatTime(b.check_out_time || '11:00');
@@ -2284,7 +2284,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
                     <tr style="border-bottom:1px solid #E2E8F0;">
                       <td style="padding:2px 4px;color:#64748B;">${String(idx + 1).padStart(2, '0')}</td>
                       <td style="padding:2px 4px;font-weight:700;">${(p.paid_at || p.created_at) ? formatDateTime(p.paid_at || p.created_at) : formatDate(p.payment_date)}</td>
-                      <td style="padding:2px 4px;font-family:monospace;font-size:9px;color:#0284C7;">${escapeHtml(p.booking_id)}</td>
+                      <td style="padding:2px 4px;font-family:monospace;font-size:9px;color:#92400E;">${escapeHtml(p.booking_id)}</td>
                       <td style="padding:2px 4px;"><span style="background:#E2E8F0;padding:1px 4px;border-radius:3px;font-size:8.5px;font-weight:700;">${escapeHtml(p.payment_mode || 'Direct')}</span></td>
                       <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.notes || '-')}</td>
                       <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'UHH Team')}</td>
@@ -2538,7 +2538,7 @@ ${propertiesList}
             <button type="button" class="btn-sm" style="background:#B45309;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.printBookingReceipt('multiReceiptPrintArea', '${escapeHtml(docTitle).replace(/'/g, "\\'")}')">
               🖨️ Print / Save PDF
             </button>
-            <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.shareSlipAsImage('multiReceiptPrintArea', 'Payment_Slip_Combined', window._activeMultiReceiptData)">
+            <button type="button" class="btn-sm" style="background:#92400E;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.shareSlipAsImage('multiReceiptPrintArea', 'Payment_Slip_Combined', window._activeMultiReceiptData)">
               📸 Share as Image (Preview)
             </button>
             <button type="button" class="btn-sm" style="background:#25D366;color:#fff;font-weight:800;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.sendReceiptWhatsApp('${escapeHtml(data.phone || '')}', document.getElementById('multiReceiptWaHidden').value)">
@@ -2630,7 +2630,7 @@ ${propertiesList}
                 onclick="this.closest('.modal-overlay').remove();window.openBookingReceiptModal('${b.booking_id}')">
                 <div>
                   <div style="font-weight:800;font-size:14px;color:#0F172A;">
-                    ${escapeHtml(b.guest_name)} · <span style="color:#0284C7;">${escapeHtml(prop)}${escapeHtml(unit)}</span>
+                    ${escapeHtml(b.guest_name)} · <span style="color:#92400E;">${escapeHtml(prop)}${escapeHtml(unit)}</span>
                   </div>
                   <div style="font-size:12px;color:#64748B;margin-top:2px;">
                     📅 ${formatDate(b.check_in)} → ${formatDate(b.check_out)} (${n} night${n > 1 ? 's' : ''})
@@ -2705,7 +2705,7 @@ ${propertiesList}
             <button type="button" class="btn-sm" style="background:#B45309;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.printBookingReceipt('receiptPrintArea', '${escapeHtml(docTitle).replace(/'/g, "\\'")}')">
               🖨️ Print / Save PDF
             </button>
-            <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.shareSlipAsImage('receiptPrintArea', 'Payment_Slip_${escapeHtml(data.booking.booking_id)}', window._activeSingleReceiptData)">
+            <button type="button" class="btn-sm" style="background:#92400E;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.shareSlipAsImage('receiptPrintArea', 'Payment_Slip_${escapeHtml(data.booking.booking_id)}', window._activeSingleReceiptData)">
               📸 Share as Image (Preview)
             </button>
             <button type="button" class="btn-sm" style="background:#25D366;color:#fff;font-weight:800;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.sendReceiptWhatsApp('${escapeHtml(data.booking.phone || '')}', document.getElementById('receiptWaHidden').value)">
@@ -2717,7 +2717,7 @@ ${propertiesList}
             <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;font-weight:700;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;" onclick="this.closest('.modal-overlay').remove();window.openMultiPropertyReceiptModal('${data.booking.stay_group_id || data.booking.phone || data.booking.booking_id}')" title="View Combined Multi-Property Receipt for this guest / group">
               🏢 Combined Group Receipt
             </button>
-            <button type="button" class="btn-sm outline" style="background:transparent;color:#38BDF8;border:1px solid #0284C7;padding:7px 10px;font-size:11.5px;font-weight:700;" onclick="const m=this.closest('.modal-overlay');if(m)m.remove();if(window.openWithoutGSTInvoiceModal){window.openWithoutGSTInvoiceModal('${data.booking.booking_id}');}">
+            <button type="button" class="btn-sm outline" style="background:transparent;color:#38BDF8;border:1px solid #92400E;padding:7px 10px;font-size:11.5px;font-weight:700;" onclick="const m=this.closest('.modal-overlay');if(m)m.remove();if(window.openWithoutGSTInvoiceModal){window.openWithoutGSTInvoiceModal('${data.booking.booking_id}');}">
               📄 Without GST Invoice
             </button>
             <button type="button" class="btn-sm outline" style="background:transparent;color:#FDE047;border:1px solid #B45309;padding:7px 10px;font-size:11.5px;font-weight:700;" onclick="const m=this.closest('.modal-overlay');if(m)m.remove();if(window.openGSTInvoiceModal){window.openGSTInvoiceModal('${data.booking.booking_id}');}">

@@ -830,7 +830,7 @@ The Unique Haven Homes Property Management`;
                 <div style="font-weight:700;margin-bottom:4px;color:#334155;">Available WhatsApp Groups (Click to copy ID):</div>
                 ${gData.groups.map(g => `
                   <div style="padding:4px;border-bottom:1px solid #F1F5F9;cursor:pointer;" onclick="navigator.clipboard.writeText('${g.id}');if(window.fsn)fsn.toast('Copied: ${g.id}');" title="Click to copy Group ID">
-                    👥 <b>${g.subject}</b> — <code style="color:#0284C7;">${g.id}</code>
+                    👥 <b>${g.subject}</b> — <code style="color:#92400E;">${g.id}</code>
                   </div>
                 `).join('')}
               </div>
@@ -1534,7 +1534,7 @@ The Unique Haven Homes Property Management`;
           </form>
           <div style="font-size:11px;color:#64748B;margin-top:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
             <span>💡 Click <b>AI Mode: ON</b> above anytime to let AI handle guest questions.</span>
-            <a href="https://wa.me/${chat.phone}" target="_blank" style="color:#0284C7;text-decoration:none;font-weight:600;">Open WhatsApp App ↗</a>
+            <a href="https://wa.me/${chat.phone}" target="_blank" style="color:#92400E;text-decoration:none;font-weight:600;">Open WhatsApp App ↗</a>
           </div>
         </div>
       `;

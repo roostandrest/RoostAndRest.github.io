@@ -589,7 +589,7 @@ async function renderSmartManageBookings(forceRefresh = false) {
           <button type="button" onclick="window.scrollToSection('sbkSecCheckins')" style="font-size:11.5px;font-weight:700;background:#ECFDF5;color:#059669;padding:4px 10px;border-radius:999px;border:1px solid #A7F3D0;cursor:pointer;">
             🔑 ${arrivalsCount} In
           </button>
-          <button type="button" onclick="window.scrollToSection('sbkSecInhouse')" style="font-size:11.5px;font-weight:700;background:#F0F9FF;color:#0284C7;padding:4px 10px;border-radius:999px;border:1px solid #BAE6FD;cursor:pointer;">
+          <button type="button" onclick="window.scrollToSection('sbkSecInhouse')" style="font-size:11.5px;font-weight:700;background:#F0F9FF;color:#92400E;padding:4px 10px;border-radius:999px;border:1px solid #BAE6FD;cursor:pointer;">
             🏠 ${inHouseCount} Stay
           </button>
           <button type="button" onclick="window.scrollToSection('sbkSecUpcoming')" style="font-size:11.5px;font-weight:700;background:#F8FAFC;color:#475569;padding:4px 10px;border-radius:999px;border:1px solid #E2E8F0;cursor:pointer;">
@@ -996,7 +996,7 @@ function renderAirbnbReservationsHtml(bookings, paidMap, canM, today) {
 
     if (inHouse.length > 0) {
       html += `
-        <div id="sbkSecInhouse" style="font-size:12px;font-weight:800;color:#0284C7;text-transform:uppercase;letter-spacing:0.8px;margin:18px 0 2px 4px;display:flex;align-items:center;gap:6px;">
+        <div id="sbkSecInhouse" style="font-size:12px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:0.8px;margin:18px 0 2px 4px;display:flex;align-items:center;gap:6px;">
           <span>🏠</span> CURRENTLY IN-HOUSE (${inHouse.length})
         </div>
         ${inHouse.slice(0, 6).map(b => renderSingleAirbnbResCard(b, paidMap, canM, today)).join('')}
@@ -1005,7 +1005,7 @@ function renderAirbnbReservationsHtml(bookings, paidMap, canM, today) {
             ${inHouse.slice(6).map(b => renderSingleAirbnbResCard(b, paidMap, canM, today)).join('')}
           </div>
           <div style="text-align:center;margin-top:4px;">
-            <button type="button" onclick="document.getElementById('sbkInHouseMore').style.display='flex';this.style.display='none';" style="background:#F0F9FF;border:1px solid #BAE6FD;color:#0284C7;font-size:12px;font-weight:700;padding:6px 16px;border-radius:999px;cursor:pointer;">
+            <button type="button" onclick="document.getElementById('sbkInHouseMore').style.display='flex';this.style.display='none';" style="background:#F0F9FF;border:1px solid #BAE6FD;color:#92400E;font-size:12px;font-weight:700;padding:6px 16px;border-radius:999px;cursor:pointer;">
               + View all ${inHouse.length} in-house guests &darr;
             </button>
           </div>
@@ -1019,7 +1019,7 @@ function renderAirbnbReservationsHtml(bookings, paidMap, canM, today) {
           <div style="display:flex;align-items:center;gap:6px;">
             <span>📅</span> UPCOMING RESERVATIONS (${upcoming.length})
           </div>
-          <button type="button" onclick="navigate('calendar')" style="background:none;border:none;color:#0284C7;font-size:12px;font-weight:700;cursor:pointer;">
+          <button type="button" onclick="navigate('calendar')" style="background:none;border:none;color:#92400E;font-size:12px;font-weight:700;cursor:pointer;">
             View in Calendar &rarr;
           </button>
         </div>
@@ -1686,7 +1686,7 @@ window.openBookingDrawer = async function(bookingId) {
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                 <button class="btn-sm" onclick="window.openCustomPaymentQRModal({ guestName: '${escapeHtml(b.guest_name || '')}', phone: '${escapeHtml(b.phone || '')}', roomId: '${b.room_id || ''}', amount: ${bal > 0 ? Math.round(bal) : 0} })" style="background:linear-gradient(135deg, #4F46E5, #6366F1);color:#fff;border:none;padding:4px 10px;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Generate & Send Branded Payment QR for this Booking">💳 Send QR</button>
                 <button class="btn-sm" onclick="window.openBookingReceiptModal('${b.booking_id}')" style="background:#0F172A;color:#fff;border:none;padding:4px 9px;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;" title="Booking Confirmation & Advance Voucher (No GST)">📄 Receipt</button>
-                <button class="btn-sm" onclick="window.openWithoutGSTInvoiceModal('${b.booking_id}')" style="background:#0284C7;color:#fff;border:none;padding:4px 9px;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;" title="Generate or View Bill Without GST (0% Tax / Clean Bill)">📄 Bill (No GST)</button>
+                <button class="btn-sm" onclick="window.openWithoutGSTInvoiceModal('${b.booking_id}')" style="background:#92400E;color:#fff;border:none;padding:4px 9px;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;" title="Generate or View Bill Without GST (0% Tax / Clean Bill)">📄 Bill (No GST)</button>
                 <button class="btn-sm" onclick="window.openGSTInvoiceModal('${b.booking_id}')" style="background:#B45309;color:#fff;border:none;padding:4px 9px;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;" title="Generate or View GST Invoice">🧾 GST Bill</button>
                 <button class="btn-sm" onclick="window.openPOSTerminal && window.openPOSTerminal({ room_id: '${b.room_id}', guest_name: '${escapeHtml(b.guest_name || '')}', phone: '${escapeHtml(b.phone || '')}' })" style="background:#0F172A;color:#fff;border:none;padding:4px 9px;font-size:11.5px;font-weight:700;border-radius:6px;cursor:pointer;" title="Add Concierge Services / Add-Ons for this Stay">🛎️ Add-Ons</button>
                 ${canM ? `<button class="btn-sm" onclick="showPaymentModal('${b.booking_id}')" style="background:#10B981;color:#fff;border:none;padding:4px 10px;font-size:11.5px;">+ Add Payment</button>` : ''}
@@ -1809,7 +1809,7 @@ window.openBookingDrawer = async function(bookingId) {
             <button class="btn-sm" style="background:#6366F1;color:#fff;padding:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="window.drawerDuplicateBooking('${b.booking_id}')" title="Duplicate this booking">
               📋 Duplicate
             </button>
-            <button class="btn-sm" style="background:#0284C7;color:#fff;padding:10px;" onclick="showSecurityDepositModal('${b.booking_id}')">
+            <button class="btn-sm" style="background:#92400E;color:#fff;padding:10px;" onclick="showSecurityDepositModal('${b.booking_id}')">
               🛡️ Security Deposit
             </button>
             <button class="btn-sm" style="background:#8B5CF6;color:#fff;padding:10px;" onclick="quickExtend('${b.booking_id}')">
@@ -1837,7 +1837,7 @@ window.openBookingDrawer = async function(bookingId) {
                 🎊 Group Manager
               </button>
             ` : ''}
-            <button class="btn-sm" style="background:#0284C7;color:#fff;padding:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="window.openWithoutGSTInvoiceModal('${b.booking_id}')" title="Generate Bill Without GST">
+            <button class="btn-sm" style="background:#92400E;color:#fff;padding:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="window.openWithoutGSTInvoiceModal('${b.booking_id}')" title="Generate Bill Without GST">
               📄 Without GST Invoice
             </button>
             <button class="btn-sm" style="background:#B45309;color:#fff;padding:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;" onclick="window.openGSTInvoiceModal('${b.booking_id}')" title="Generate GST Tax Invoice">

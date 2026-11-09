@@ -520,7 +520,7 @@ function getSecurityDepositBadge(b) {
 
   const amtStr = '₹' + (sec.amount || 0).toLocaleString('en-IN');
   if (sec.status === 'collected') {
-    return ` <span class="badge" style="background:#0284C7;color:#fff;font-size:9.5px;font-weight:700;cursor:pointer;padding:2px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;" onclick="event.stopPropagation();showSecurityDepositModal('${b.booking_id}')" title="Security Deposit Held: ₹${sec.amount} — Click to manage/refund">🛡️ Sec: ${amtStr} (Held)</span>`;
+    return ` <span class="badge" style="background:#92400E;color:#fff;font-size:9.5px;font-weight:700;cursor:pointer;padding:2px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;" onclick="event.stopPropagation();showSecurityDepositModal('${b.booking_id}')" title="Security Deposit Held: ₹${sec.amount} — Click to manage/refund">🛡️ Sec: ${amtStr} (Held)</span>`;
   } else if (sec.status === 'pending') {
     return ` <span class="badge yellow" style="font-size:9.5px;font-weight:700;cursor:pointer;padding:2px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px;" onclick="event.stopPropagation();showSecurityDepositModal('${b.booking_id}')" title="Security Deposit Pending Collection">🛡️ Sec: ${amtStr} (Pending)</span>`;
   } else if (sec.status === 'refunded') {
@@ -1136,7 +1136,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
                   </td>
                   <td style="text-align:center;white-space:nowrap;">
                     <button class="btn-sm" style="background:#0F172A;color:#fff;padding:2px 7px;font-size:10.5px;font-weight:700;border:none;border-radius:4px;cursor:pointer;margin-right:2px;" onclick="window.openBookingReceiptModal('${b.booking_id}')" title="Receipt">📄 Receipt</button>
-                    <button class="btn-sm" style="background:#0284C7;color:#fff;padding:2px 7px;font-size:10.5px;font-weight:700;border:none;border-radius:4px;cursor:pointer;margin-right:2px;" onclick="window.openWithoutGSTInvoiceModal('${b.booking_id}')" title="Without GST Bill">📄 Bill (No-GST)</button>
+                    <button class="btn-sm" style="background:#92400E;color:#fff;padding:2px 7px;font-size:10.5px;font-weight:700;border:none;border-radius:4px;cursor:pointer;margin-right:2px;" onclick="window.openWithoutGSTInvoiceModal('${b.booking_id}')" title="Without GST Bill">📄 Bill (No-GST)</button>
                     <button class="btn-sm" style="background:#B45309;color:#fff;padding:2px 7px;font-size:10.5px;font-weight:700;border:none;border-radius:4px;cursor:pointer;" onclick="window.openGSTInvoiceModal('${b.booking_id}')" title="GST Tax Invoice">🧾 GST Bill</button>
                   </td>
                 </tr>
@@ -2271,7 +2271,7 @@ window.openBookingIdUploadModal = async function(bkId) {
               <span id="bIdFrontStatus" style="font-size:11px;color:#64748B;">No file chosen</span>
             </div>
             <div style="display:flex;gap:8px;">
-              <button type="button" class="btn-sm" style="flex:1;background:#0284C7;color:#fff;padding:7px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="document.getElementById('bIdFrontCam').click()">📷 Camera</button>
+              <button type="button" class="btn-sm" style="flex:1;background:#92400E;color:#fff;padding:7px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="document.getElementById('bIdFrontCam').click()">📷 Camera</button>
               <button type="button" class="btn-sm" style="flex:1;background:#475569;color:#fff;padding:7px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="document.getElementById('bIdFrontGal').click()">🖼️ Gallery</button>
             </div>
             <input id="bIdFrontCam" type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.previewBookingIdFile(this, 'bIdFrontPreview', 'bIdFrontStatus')">
@@ -2286,7 +2286,7 @@ window.openBookingIdUploadModal = async function(bkId) {
               <span id="bIdBackStatus" style="font-size:11px;color:#64748B;">No file chosen</span>
             </div>
             <div style="display:flex;gap:8px;">
-              <button type="button" class="btn-sm" style="flex:1;background:#0284C7;color:#fff;padding:7px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="document.getElementById('bIdBackCam').click()">📷 Camera</button>
+              <button type="button" class="btn-sm" style="flex:1;background:#92400E;color:#fff;padding:7px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="document.getElementById('bIdBackCam').click()">📷 Camera</button>
               <button type="button" class="btn-sm" style="flex:1;background:#475569;color:#fff;padding:7px 10px;font-size:12px;border:none;border-radius:6px;cursor:pointer;font-weight:600;" onclick="document.getElementById('bIdBackGal').click()">🖼️ Gallery</button>
             </div>
             <input id="bIdBackCam" type="file" accept="image/*" capture="environment" style="display:none;" onchange="window.previewBookingIdFile(this, 'bIdBackPreview', 'bIdBackStatus')">
@@ -2820,7 +2820,7 @@ async function renderManageBookings() {
               <span class="channel-badge ${b.booking_mode === 'Online-Airbnb' ? 'channel-airbnb' : 'channel-direct'}">${b.booking_mode === 'Online-Airbnb' ? 'Airbnb' : 'Direct'}</span>
               ${b.airbnb_confirmation_code ? `<br><code style="font-size:10px;font-weight:700;background:rgba(255,56,92,0.1);color:#FF385C;padding:2px 5px;border-radius:4px;display:inline-block;margin-top:3px;letter-spacing:0.5px;cursor:pointer;" title="Click to copy confirmation code" onclick="navigator.clipboard.writeText('${b.airbnb_confirmation_code}');if(window.fsn)fsn.toast('Copied: ${b.airbnb_confirmation_code}');">${b.airbnb_confirmation_code}</code>` : ''}
               ${b.is_review_booking ? '<span class="badge" style="background:#722ED1;color:#fff;font-size:9px;">⭐ REVIEW</span>' : ''}
-              ${b.linked_booking_id ? `<span class="badge" style="background:#0EA5E9;color:#fff;font-size:9px;cursor:pointer;" title="Linked to booking ${b.linked_booking_id}" onclick="showLinkedBooking('${b.linked_booking_id}')">🔗 LINKED</span>` : ''}
+              ${b.linked_booking_id ? `<span class="badge" style="background:#B45309;color:#fff;font-size:9px;cursor:pointer;" title="Linked to booking ${b.linked_booking_id}" onclick="showLinkedBooking('${b.linked_booking_id}')">🔗 LINKED</span>` : ''}
               ${(!b.linked_booking_id && !b.is_review_booking && !b.is_cancelled && !b.parent_booking_id && !b.stay_group_id && window.checkDuplicate && window.checkDuplicate(b, window._rawBookingsList || window._allBookings || [])) ? `<span class="badge" style="background:#F59E0B;color:#fff;font-size:9px;cursor:pointer;" title="Same room + date overlap detected" onclick="showDuplicateOptions('${b.booking_id}')">⚠️ DUPE</span>` : ''}
             </td>
           <td><small>${b.check_in || '-'}</small></td>
@@ -2841,7 +2841,7 @@ async function renderManageBookings() {
             <button class="btn-sm" style="background:#0D9488;color:#fff;" onclick="window.openBookingIdUploadModal('${b.booking_id}')" title="Upload / Manage Guest ID">🪪 ID</button>
             <button class="btn-sm" style="background:#8B5CF6;color:#fff;" onclick="duplicateBooking('${b.booking_id}')" title="Duplicate this booking">📋</button>
             <button class="btn-sm secondary" onclick="showPaymentModal('${b.booking_id}')" title="Pay">💰</button>
-            <button class="btn-sm" style="background:#0284C7;color:#fff;" onclick="showSecurityDepositModal('${b.booking_id}')" title="Security Deposit (सुरक्षा जमा)">🛡️</button>
+            <button class="btn-sm" style="background:#92400E;color:#fff;" onclick="showSecurityDepositModal('${b.booking_id}')" title="Security Deposit (सुरक्षा जमा)">🛡️</button>
             <button class="btn-sm" style="background:var(--primary);color:#fff;" onclick="quickExtend('${b.booking_id}')" title="Extend">⏭️</button>
             <button class="btn-sm outline" onclick="createOfflineExtension('${b.booking_id}')" title="New Ext">➕</button>
             <button class="btn-sm" style="background:#8B5CF6;color:#fff;" onclick="showGroupBookingModal('${b.booking_id}')" title="Group">🎊</button>
@@ -3319,7 +3319,7 @@ async function renderAddBooking(prefillOpts) {
       <div id="balInfo" style="font-size:13px;font-weight:600;margin:2px 0 8px;"></div>
 
       <!-- 🛡️ SECURITY DEPOSIT -->
-      <div class="form-group" style="padding:14px;background:#F0F9FF;border-radius:10px;border:1.5px solid #0284C7;margin:12px 0;">
+      <div class="form-group" style="padding:14px;background:#F0F9FF;border-radius:10px;border:1.5px solid #92400E;margin:12px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14px;color:#0369A1;margin:0;">
             <input type="checkbox" id="hasSecurityDeposit" onchange="toggleSecurityDepositBox()" style="width:18px;height:18px;" />
@@ -4773,7 +4773,7 @@ window.showCheckoutRatingModal = function(bkId, roomId, bk, nights, calcTotal, t
     <div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <strong style="color:#B45309;">🛡️ Security Deposit Held: ₹${sec.amount.toLocaleString('en-IN')}</strong>
-        <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-size:11px;padding:3px 8px;" onclick="showSecurityDepositModal('${bkId}')">Settle / Refund</button>
+        <button type="button" class="btn-sm" style="background:#92400E;color:#fff;font-size:11px;padding:3px 8px;" onclick="showSecurityDepositModal('${bkId}')">Settle / Refund</button>
       </div>
       <div style="color:#78350F;margin-top:4px;font-size:11.5px;">
         Guest is checking out. Check flat for any damages. If damage occurred, enter deduction and refund the balance.
@@ -5153,7 +5153,7 @@ async function editBooking(bkId) {
       </div>` : ''}
 
       <!-- 🛡️ SECURITY DEPOSIT IN EDIT FORM -->
-      <div class="form-group" style="padding:14px;background:#F0F9FF;border-radius:10px;border:1.5px solid #0284C7;margin:14px 0;">
+      <div class="form-group" style="padding:14px;background:#F0F9FF;border-radius:10px;border:1.5px solid #92400E;margin:14px 0;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;font-size:14px;color:#0369A1;margin:0;">
             <input type="checkbox" id="eHasSecDeposit" onchange="toggleEditSecBox()" style="width:18px;height:18px;" ${sec && sec.status !== 'none' && (sec.amount > 0 || sec.status === 'pending') ? 'checked' : ''} />
@@ -5161,7 +5161,7 @@ async function editBooking(bkId) {
           </label>
           <div style="display:flex;gap:6px;align-items:center;">
             <span style="font-size:11px;background:#E0F2FE;color:#0369A1;font-weight:700;padding:2px 8px;border-radius:12px;">Not in Revenue</span>
-            <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-size:11px;padding:3px 8px;" onclick="showSecurityDepositModal('${bkId}')">Open Settle Modal</button>
+            <button type="button" class="btn-sm" style="background:#92400E;color:#fff;font-size:11px;padding:3px 8px;" onclick="showSecurityDepositModal('${bkId}')">Open Settle Modal</button>
           </div>
         </div>
 
@@ -6088,8 +6088,8 @@ async function loadReceiveByHolders() {
     .map(e => e.name);
   
   const owners = (holders || []).filter(h => h.type === 'final').map(h => h.name);
-  if (!owners.includes('UHHS-OD')) {
-    owners.unshift('UHHS-OD');
+  if (!owners.includes('ROOST-BANK')) {
+    owners.unshift('ROOST-BANK');
   }
   if (!owners.some(o => (o || '').toLowerCase() === 'firoz')) {
     owners.unshift('Firoz');
@@ -6115,7 +6115,7 @@ window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, c
 
   const isOD = (currentVal || '').toUpperCase().includes('OD') || (currentVal || '').toUpperCase().includes('UHHS') || (currentVal || '').toUpperCase().includes('TUHH');
   html += '<optgroup label="🏦 Overdraft Account">';
-  html += `<option value="UHHS-OD" ${isOD ? 'selected' : ''}>🏦 TUHH-OD (Praveen / Overdraft)</option>`;
+  html += `<option value="ROOST-BANK" ${isOD ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>`;
   html += '</optgroup>';
 
   if (mode === 'Cash') {
@@ -6160,7 +6160,7 @@ window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, c
   }
 
   // Preserve existing value if not in list
-  const allKnown = ['UHHS-OD', ...finalHolders, ...managers, ...receivers];
+  const allKnown = ['ROOST-BANK', ...finalHolders, ...managers, ...receivers];
   if (currentVal && !allKnown.includes(currentVal) && currentVal !== '__custom__' && !isOD) {
     html += '<optgroup label="Existing / Other">';
     html += `<option value="${currentVal}" selected>${currentVal}</option>`;
@@ -6172,7 +6172,7 @@ window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, c
 
   if (currentVal) {
     if (isOD) {
-      selectEl.value = 'UHHS-OD';
+      selectEl.value = 'ROOST-BANK';
       if (customEl) customEl.style.display = 'none';
     } else {
       selectEl.value = currentVal;
@@ -6753,7 +6753,7 @@ async function saveEditPayment(payId, bkId) {
 }
 
 async function delPayment(payId, bkId) {
-  if (!confirm('⚠️ Are you sure you want to delete this payment record?\n\nThis will remove the payment, update the balance due, and remove it from any UHHS-OD accounts.')) return;
+  if (!confirm('⚠️ Are you sure you want to delete this payment record?\n\nThis will remove the payment, update the balance due, and remove it from any ROOST-BANK accounts.')) return;
   await sb.from('payment_history').delete().eq('id', payId);
   await recalcPaymentStatus(bkId);
   if (window.UHHSODManager && window.UHHSODManager.calculateBalance) window.UHHSODManager.calculateBalance();
@@ -7718,7 +7718,7 @@ window.showLinkedBooking = async function(linkedBookingId) {
     <div class="modal-box" style="max-width:450px;">
       <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
       <h2>🔗 Linked Booking</h2>
-      <div style="background:#F0F9FF;padding:14px;border-radius:8px;margin-top:12px;border:1px solid #0EA5E9;">
+      <div style="background:#F0F9FF;padding:14px;border-radius:8px;margin-top:12px;border:1px solid #B45309;">
         <div style="font-size:16px;font-weight:700;">${bk.guest_name}</div>
         <div style="font-size:12px;color:#666;margin-top:4px;">
           📞 ${bk.phone || '-'} · 🏠 ${bk.room_id}<br>
@@ -7835,14 +7835,14 @@ window.showDuplicateOptions = async function(bookingId) {
         <div style="background:#F9FAFB;padding:12px;border-radius:8px;margin-bottom:8px;border:1px solid #E5E7EB;">
           <div><strong>${b.guest_name}</strong>
             ${b.is_review_booking ? '<span class="badge" style="background:#722ED1;color:#fff;font-size:9px;">⭐ REVIEW</span>' : ''}
-            ${b.linked_booking_id === bookingId ? '<span class="badge" style="background:#0EA5E9;color:#fff;font-size:9px;">🔗 LINKED</span>' : ''}
+            ${b.linked_booking_id === bookingId ? '<span class="badge" style="background:#B45309;color:#fff;font-size:9px;">🔗 LINKED</span>' : ''}
           </div>
           <div style="font-size:12px;color:#666;margin:4px 0;">
             ${b.check_in} → ${b.check_out || 'Open'} · ${b.booking_mode} · ₹${(b.total_amount || 0).toLocaleString('en-IN')}
           </div>
           ${!b.linked_booking_id ? `
             <button onclick="linkBookings('${bookingId}', '${b.booking_id}')" 
-                    style="background:#0EA5E9;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:6px;">
+                    style="background:#B45309;color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;margin-top:6px;">
               🔗 Link These Bookings
             </button>
           ` : `<span style="font-size:11px;color:#059669;">✓ Already linked</span>`}
@@ -8268,7 +8268,7 @@ window.onAdvanceModeChange = async function() {
   
   let html = '<option value="">-- Select --</option>';
   html += '<optgroup label="🏦 Overdraft Account">';
-  html += '<option value="UHHS-OD">🏦 TUHH-OD (Praveen / Overdraft)</option>';
+  html += '<option value="ROOST-BANK">🏦 Roost Bank Account (Current A/c)</option>';
   html += '</optgroup>';
   
   if (mode === 'Cash') {
@@ -8418,7 +8418,7 @@ window.onAdvanceModeChange = async function() {
   
   let html = '<option value="">-- Select --</option>';
   html += '<optgroup label="🏦 Overdraft Account">';
-  html += '<option value="UHHS-OD">🏦 TUHH-OD (Praveen / Overdraft)</option>';
+  html += '<option value="ROOST-BANK">🏦 Roost Bank Account (Current A/c)</option>';
   html += '</optgroup>';
   
   if (mode === 'Cash') {
@@ -8566,7 +8566,7 @@ window.onAdvanceModeChange = async function() {
   
   let html = '<option value="">-- Select --</option>';
   html += '<optgroup label="🏦 Overdraft Account">';
-  html += '<option value="UHHS-OD">🏦 TUHH-OD (Praveen / Overdraft)</option>';
+  html += '<option value="ROOST-BANK">🏦 Roost Bank Account (Current A/c)</option>';
   html += '</optgroup>';
   
   if (mode === 'Cash') {
@@ -8703,7 +8703,7 @@ window.onEditPayModeChange = async function() {
   
   let html = '<option value="">-- Select --</option>';
   html += '<optgroup label="🏦 Overdraft Account">';
-  html += '<option value="UHHS-OD">🏦 TUHH-OD (Praveen / Overdraft)</option>';
+  html += '<option value="ROOST-BANK">🏦 Roost Bank Account (Current A/c)</option>';
   html += '</optgroup>';
   
   if (mode === 'Cash') {
@@ -9175,7 +9175,7 @@ window.showSecurityDepositModal = async function(bkId) {
           </div>
           <div style="text-align:right;">
             <div style="font-size:11px;color:#64748B;">Security Amount</div>
-            <div style="font-size:18px;font-weight:800;color:#0284C7;">₹${(sec.amount || 0).toLocaleString('en-IN')}</div>
+            <div style="font-size:18px;font-weight:800;color:#92400E;">₹${(sec.amount || 0).toLocaleString('en-IN')}</div>
           </div>
         </div>
 
@@ -9243,7 +9243,7 @@ window.showSecurityDepositModal = async function(bkId) {
         </div>
         <div style="display:flex;gap:8px;margin-top:14px;">
           <button type="button" class="outline" onclick="this.closest('.modal-overlay').remove()" style="flex:1;">Close</button>
-          <button type="button" style="background:#0284C7;color:#fff;font-weight:700;flex:2;" onclick="submitSecurityCollection('${bkId}')">💾 Save Collection Details</button>
+          <button type="button" style="background:#92400E;color:#fff;font-weight:700;flex:2;" onclick="submitSecurityCollection('${bkId}')">💾 Save Collection Details</button>
         </div>
       </div>
 
@@ -9314,7 +9314,7 @@ window.showSecurityDepositModal = async function(bkId) {
       <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:12px;">
         <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px;">📱 WhatsApp Notifications to Guest</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <button type="button" class="btn-sm" style="background:#F0F9FF;color:#0284C7;border:1px solid #BAE6FD;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="if(window.sendSecurityDepositReceipt) sendSecurityDepositReceipt('${bkId}')">
+          <button type="button" class="btn-sm" style="background:#F0F9FF;color:#92400E;border:1px solid #BAE6FD;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="if(window.sendSecurityDepositReceipt) sendSecurityDepositReceipt('${bkId}')">
             <span>🛡️</span> Send Deposit Receipt
           </button>
           <button type="button" class="btn-sm" style="background:#FAF5FF;color:#7C3AED;border:1px solid #DDD6FE;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="if(window.sendSecurityDepositRefund) sendSecurityDepositRefund('${bkId}')">
@@ -9332,7 +9332,7 @@ window.showSecurityDepositModal = async function(bkId) {
     if (window.populateReceivedByDropdown) {
       await window.populateReceivedByDropdown(document.getElementById('mSecReceivedBy'), sec.mode || 'UPI', sec.receivedBy || '', document.getElementById('mSecReceivedByCustom'));
       const isSecOD = (sec.receivedBy || '').toUpperCase().includes('OD') || (sec.receivedBy || '').toUpperCase().includes('UHHS') || (sec.receivedBy || '').toUpperCase().includes('TUHH');
-      const defaultRefBy = sec.refundedBy || (isSecOD ? 'UHHS-OD' : '');
+      const defaultRefBy = sec.refundedBy || (isSecOD ? 'ROOST-BANK' : '');
       await window.populateReceivedByDropdown(document.getElementById('mSecRefBy'), sec.refundMode || 'UPI', defaultRefBy, document.getElementById('mSecRefByCustom'));
     }
   }, 30);
@@ -9470,7 +9470,7 @@ window.submitSecurityRefund = async function(bkId) {
     refundDate: refDate,
     refundAmount: net,
     refundMode: refMode,
-    refundedBy: refBy || (((currentSec.receivedBy || '').toUpperCase().includes('OD') || (currentSec.receivedBy || '').toUpperCase().includes('UHHS') || (currentSec.receivedBy || '').toUpperCase().includes('TUHH')) ? 'UHHS-OD' : ''),
+    refundedBy: refBy || (((currentSec.receivedBy || '').toUpperCase().includes('OD') || (currentSec.receivedBy || '').toUpperCase().includes('UHHS') || (currentSec.receivedBy || '').toUpperCase().includes('TUHH')) ? 'ROOST-BANK' : ''),
     deductedAmount: ded,
     deductionReason: reason,
     notes: refNotes || currentSec.notes || ''

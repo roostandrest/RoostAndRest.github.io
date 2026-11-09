@@ -1503,7 +1503,7 @@ async function quickClean(roomId, newStatus, btnEl = null) {
       <div style="background:#fff;border-radius:16px;padding:22px 24px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.25);position:relative;">
         <div style="font-size:18px;font-weight:900;color:#0F172A;margin-bottom:4px;">🧹 Mark as Clean</div>
         <div style="font-size:12.5px;color:#64748B;margin-bottom:16px;">Room <strong>${roomId}</strong> · Select who cleaned it</div>
-        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:6px;">Cleaned By Staff <span style="color:#0284C7;font-size:10px;">(Links to Salary @ ₹133/flat)</span></label>
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:6px;">Cleaned By Staff <span style="color:#92400E;font-size:10px;">(Links to Salary @ ₹133/flat)</span></label>
         <select id="quickCleanerSelect" style="width:100%;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:9px;font-size:14px;font-weight:600;color:#0F172A;background:#F8FAFC;margin-bottom:16px;">
           ${opts}
         </select>

@@ -387,7 +387,7 @@
 
     const statusEl = document.getElementById('fileUploadStatus');
     if (statusEl) {
-      statusEl.innerHTML = `<span style="color:#0284C7;">⏳ Reading ${file.name} (${Math.round(file.size / 1024)} KB)...</span>`;
+      statusEl.innerHTML = `<span style="color:#92400E;">⏳ Reading ${file.name} (${Math.round(file.size / 1024)} KB)...</span>`;
     }
 
     const text = await file.text();

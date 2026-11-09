@@ -57,7 +57,7 @@ async function renderExpenses() {
   function normSource(raw) {
     if (!raw) return 'COMPANY';
     const s = String(raw).trim().toUpperCase();
-    if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'UHHS-OD';
+    if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
     if (s.includes('FIROZ') || s.includes('DIRECT')) return 'FIROZ';
     return 'COMPANY';
   }
@@ -221,8 +221,8 @@ async function renderExpenses() {
   const thisMonthList = masterList.filter(item => item.monthYm === cm);
   const thisMonthExps = thisMonthList;
   const totalMonthExp = thisMonthList.reduce((s, x) => s + x.amount, 0);
-  const totalOdExp = thisMonthList.filter(x => x.paidBy === 'UHHS-OD').reduce((s, x) => s + x.amount, 0);
-  const totalCompanyExp = thisMonthList.filter(x => x.paidBy !== 'UHHS-OD').reduce((s, x) => s + x.amount, 0);
+  const totalOdExp = thisMonthList.filter(x => x.paidBy === 'ROOST-BANK').reduce((s, x) => s + x.amount, 0);
+  const totalCompanyExp = thisMonthList.filter(x => x.paidBy !== 'ROOST-BANK').reduce((s, x) => s + x.amount, 0);
   const pendingStaffAdvs = masterList.filter(x => x.channel === 'advance' && !x.raw?.is_deducted).reduce((s, x) => s + x.amount, 0);
   const pendingStaffAdvances = pendingStaffAdvs;
 
@@ -269,7 +269,7 @@ async function renderExpenses() {
       } else {
         rec.otherSpends += item.amount;
       }
-      if (item.paidBy === 'UHHS-OD') rec.odPaid += item.amount;
+      if (item.paidBy === 'ROOST-BANK') rec.odPaid += item.amount;
       else rec.companyPaid += item.amount;
       rec.totalOutflow += item.amount;
     }
@@ -291,7 +291,7 @@ async function renderExpenses() {
         </div>
 
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-          <button onclick="if(window.renderAddReimbursement) window.renderAddReimbursement(); else navigate('expenses');" style="background:#0284C7;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+          <button onclick="if(window.renderAddReimbursement) window.renderAddReimbursement(); else navigate('expenses');" style="background:#92400E;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
             <span>➕</span> Add Expense
           </button>
           <button onclick="window.openEmployeeTransportModal()" style="background:#D97706;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
@@ -336,8 +336,8 @@ async function renderExpenses() {
 
       <!-- Row 2: Payment Source Quick Breakdown Badges -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:8px;">
-        <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('UHHS-OD')" title="Click to filter by TUHH-OD">
-          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏦 TUHH-OD Paid</span>
+        <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('ROOST-BANK')" title="Click to filter by Roost-Bank">
+          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏦 Roost Bank Paid</span>
           <span style="font-size:13px;font-weight:800;color:#059669;">₹${totalOdExp.toLocaleString('en-IN')}</span>
         </div>
         <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('COMPANY')" title="Click to filter by Cash/Company">
@@ -384,7 +384,7 @@ async function renderExpenses() {
           <label style="display:block;font-size:11px;font-weight:700;color:#64748B;margin-bottom:3px;">Account / Paid By</label>
           <select id="expSourceFilter" onchange="applyExpenseFilters()" style="width:100%;box-sizing:border-box;padding:7px 8px;font-size:12px;border:1px solid #CBD5E1;border-radius:8px;">
             <option value="all">All Accounts</option>
-            <option value="UHHS-OD">🏦 TUHH-OD</option>
+            <option value="ROOST-BANK">🏦 Roost-Bank</option>
             <option value="COMPANY">🏢 Company / Cash</option>
           </select>
         </div>
@@ -420,7 +420,7 @@ async function renderExpenses() {
         <div style="font-size:42px;margin-bottom:12px;">⚠️</div>
         <h3 style="margin:0 0 8px 0;font-size:18px;font-weight:800;color:#0F172A;">Failed to load Expenses</h3>
         <p style="font-size:13px;color:#64748B;margin:0 0 18px 0;line-height:1.5;">${escapeHtml(err?.message || String(err))}</p>
-        <button type="button" style="background:#0284C7;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="renderExpenses()">
+        <button type="button" style="background:#92400E;color:#fff;border:none;padding:10px 24px;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="renderExpenses()">
           <i class="ti ti-refresh"></i> <span>Retry</span>
         </button>
       </div>
@@ -450,8 +450,8 @@ function applyExpenseFilters() {
   }
   if (sourceVal !== 'all') {
     list = list.filter(e => {
-      if (sourceVal === 'UHHS-OD') return e.paidBy === 'UHHS-OD';
-      return e.paidBy !== 'UHHS-OD';
+      if (sourceVal === 'ROOST-BANK') return e.paidBy === 'ROOST-BANK';
+      return e.paidBy !== 'ROOST-BANK';
     });
   }
   if (staffVal !== 'all') {
@@ -530,8 +530,8 @@ function applyExpenseFilters() {
                   <td style="font-size:12px;white-space:nowrap;">${escapeHtml(item.roomLabel || 'General')}</td>
                   <td style="font-size:12px;font-weight:600;white-space:nowrap;">${escapeHtml(item.staffName || '-')}</td>
                   <td>
-                    <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:${item.paidBy === 'UHHS-OD' ? '#E0F2FE' : '#FEF3C7'};color:${item.paidBy === 'UHHS-OD' ? '#0369A1' : '#92400E'};white-space:nowrap;">
-                      ${item.paidBy === 'UHHS-OD' ? '🏦 TUHH-OD' : '🏢 COMPANY (Firoz)'}
+                    <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:${item.paidBy === 'ROOST-BANK' ? '#E0F2FE' : '#FEF3C7'};color:${item.paidBy === 'ROOST-BANK' ? '#0369A1' : '#92400E'};white-space:nowrap;">
+                      ${item.paidBy === 'ROOST-BANK' ? '🏦 Roost-Bank' : '🏢 COMPANY (Firoz)'}
                     </span>
                   </td>
                   <td style="font-weight:800;color:#DC2626;font-size:13.5px;white-space:nowrap;">
@@ -677,7 +677,7 @@ window.openStaffAdvanceModal = async function(preselectedEmpId = '') {
             <div class="form-group">
               <label style="font-size:12.5px;font-weight:700;">Paid From (Source) *</label>
               <select id="advPaidBy" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-                <option value="UHHS-OD">🏦 TUHH-OD Account</option>
+                <option value="ROOST-BANK">🏦 Roost Bank Account</option>
                 <option value="COMPANY">🏢 COMPANY / FIROZ</option>
               </select>
             </div>
@@ -799,7 +799,7 @@ window.openLaundryQuickModal = async function() {
             <div class="form-group">
               <label style="font-size:12.5px;font-weight:700;">Paid Via *</label>
               <select id="lqPaidBy" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-                <option value="UHHS-OD">🏦 TUHH-OD Account</option>
+                <option value="ROOST-BANK">🏦 Roost Bank Account</option>
                 <option value="COMPANY">🏢 COMPANY / FIROZ</option>
               </select>
             </div>
@@ -820,7 +820,7 @@ window.openLaundryQuickModal = async function() {
 
           <div style="display:flex;gap:10px;">
             <button type="button" class="secondary" onclick="document.getElementById('${modalId}').remove()" style="flex:1;">Cancel</button>
-            <button type="submit" id="lqSubmitBtn" style="flex:2;background:#0284C7;color:#fff;font-weight:800;border:none;border-radius:10px;padding:10px;">💾 Save Laundry Bill</button>
+            <button type="submit" id="lqSubmitBtn" style="flex:2;background:#92400E;color:#fff;font-weight:800;border:none;border-radius:10px;padding:10px;">💾 Save Laundry Bill</button>
           </div>
           <div id="lqModalErr" style="margin-top:8px;"></div>
         </form>
@@ -2159,7 +2159,7 @@ async function saveDefaultExpense() {
     return;
   }
 
-  const expSource = document.getElementById('defPaymentSource')?.value || 'UHHS-OD';
+  const expSource = document.getElementById('defPaymentSource')?.value || 'ROOST-BANK';
   const { error } = await sb.from('property_default_expenses').insert({
     room_id: roomId,
     expense_name: name,
@@ -2238,7 +2238,7 @@ async function updateDefaultExpense(id) {
     return;
   }
 
-  const expSource = document.getElementById('editDefPaymentSource')?.value || 'UHHS-OD';
+  const expSource = document.getElementById('editDefPaymentSource')?.value || 'ROOST-BANK';
   const { error } = await sb.from('property_default_expenses').update({
     room_id: roomId,
     expense_name: name,
@@ -2541,7 +2541,7 @@ async function saveMonthlyExpenses() {
   const d = window._monthlyExpData;
   const inputs = document.querySelectorAll('input[id^="expInput_"]');
 
-  const expSource = document.getElementById('monthlyPaymentSource')?.value || 'UHHS-OD';
+  const expSource = document.getElementById('monthlyPaymentSource')?.value || 'ROOST-BANK';
   const errors = [];
   let saved = 0;
 
@@ -3005,7 +3005,7 @@ window.openWifiRechargeModal = async function() {
           <div class="form-group" style="margin-bottom:16px;">
             <label style="font-size:12.5px;font-weight:700;">Payment Source *</label>
             <select id="wifiPaySource" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-              <option value="UHHS-OD">🏦 TUHH-OD (Overdraft Account)</option>
+              <option value="ROOST-BANK">🏦 Roost Bank Account (Current A/c)</option>
               <option value="COMPANY">🏢 COMPANY (Cash / QR)</option>
             </select>
           </div>
@@ -3106,14 +3106,14 @@ window.openEmployeeTransportModal = async function() {
             <span style="font-size:26px;">🛵</span>
             <div>
               <h2 style="margin:0;font-size:17px;font-weight:800;color:#1e293b;">Staff Rapido &amp; Travel Tracker</h2>
-              <div style="font-size:12px;color:#64748b;">Record rides &amp; petrol allowance (Paid by Company / TUHH-OD)</div>
+              <div style="font-size:12px;color:#64748b;">Record rides &amp; petrol allowance (Paid by Company / Roost-Bank)</div>
             </div>
           </div>
           <button type="button" onclick="document.getElementById('${modalId}').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
         </div>
 
         <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1E40AF;line-height:1.4;">
-          🛡️ <strong>COMPANY OPERATIONAL EXPENSE:</strong> Ye expense company ya TUHH-OD se pay hota hai. Employee ki monthly salary se <strong>₹0 katenge</strong> (Non-deductible).
+          🛡️ <strong>COMPANY OPERATIONAL EXPENSE:</strong> Ye expense company ya Roost-Bank se pay hota hai. Employee ki monthly salary se <strong>₹0 katenge</strong> (Non-deductible).
         </div>
 
         <form id="empTransportForm" onsubmit="window.saveEmpTransport(event)">
@@ -3160,7 +3160,7 @@ window.openEmployeeTransportModal = async function() {
           <div class="form-group" style="margin-bottom:16px;">
             <label style="font-size:12.5px;font-weight:700;">Paid Via *</label>
             <select id="transportPaySource" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-              <option value="UHHS-OD">🏦 TUHH-OD (Direct App Booking / Overdraft)</option>
+              <option value="ROOST-BANK">🏦 Roost-Bank (Direct App Booking / Overdraft)</option>
               <option value="COMPANY">🏢 COMPANY (Reimbursement / Cash in Hand)</option>
             </select>
           </div>

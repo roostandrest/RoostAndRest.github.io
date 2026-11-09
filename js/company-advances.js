@@ -34,7 +34,7 @@ window.renderCompanyAdvances = async function() {
 
 // Auto-update spent amounts from linked reimbursements
 async function refreshAdvanceSpending() {
-  const { data: advances } = await sb.from('company_advances').select('id, amount_given').eq('status', 'Active').neq('given_to', 'UHHS-OD');
+  const { data: advances } = await sb.from('company_advances').select('id, amount_given').eq('status', 'Active').neq('given_to', 'ROOST-BANK');
   for (const adv of (advances || [])) {
     const { data: exps } = await sb.from('reimbursements').select('amount').eq('company_advance_id', adv.id);
     const spent = (exps || []).reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -51,7 +51,7 @@ async function renderCAActive(tabs) {
   const { data: advances } = await sb.from('company_advances')
     .select('*')
     .eq('status', 'Active')
-    .neq('given_to', 'UHHS-OD')
+    .neq('given_to', 'ROOST-BANK')
     .order('advance_date', { ascending: false });
   
   const totalGiven = (advances || []).reduce((s, a) => s + Number(a.amount_given || 0), 0);
@@ -150,7 +150,7 @@ async function renderCANew(tabs) {
         <label>Payment Source / Account *</label>
         <select id="caPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
           <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="UHHS-OD" selected>🏦 TUHH-OD (Overdraft Account)</option>
+          <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
           <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
         </select>
       </div>
@@ -201,7 +201,7 @@ window.saveNewAdvance = async function() {
     return;
   }
   
-  const paymentSource = document.getElementById('caPaymentSource')?.value || 'UHHS-OD';
+  const paymentSource = document.getElementById('caPaymentSource')?.value || 'ROOST-BANK';
 
   try {
     // 🚨 DUPLICATE ADVANCE CHECK
@@ -261,7 +261,7 @@ window.saveNewAdvance = async function() {
 
 // ═══ TAB 3: SPENDING REPORT ═══
 async function renderCASpending(tabs) {
-  const { data: advances } = await sb.from('company_advances').select('*').neq('given_to', 'UHHS-OD').order('advance_date', { ascending: false });
+  const { data: advances } = await sb.from('company_advances').select('*').neq('given_to', 'ROOST-BANK').order('advance_date', { ascending: false });
   
   // Get all expenses linked to advances
   const advIds = (advances || []).map(a => a.id);
@@ -321,7 +321,7 @@ async function renderCASpending(tabs) {
 
 // ═══ TAB 4: HISTORY ═══
 async function renderCAHistory(tabs) {
-  const { data: advances } = await sb.from('company_advances').select('*').neq('given_to', 'UHHS-OD').order('advance_date', { ascending: false });
+  const { data: advances } = await sb.from('company_advances').select('*').neq('given_to', 'ROOST-BANK').order('advance_date', { ascending: false });
   
   renderShell(`
     ${tabs}

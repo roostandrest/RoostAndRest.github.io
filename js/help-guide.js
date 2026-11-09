@@ -26,7 +26,7 @@
       { key: `${altSymbol}B`, single: 'B', title: 'Bookings Management Hub', desc: 'All confirmed, active, check-in aur check-out bookings ki complete register.', action: 'window.openBookingsShortcut()' },
       { key: `${altSymbol}F`, single: 'F', title: 'Flats Status & Turnaround', desc: 'Real-time room cleanliness, dirty status aur turnaround Kanban board.', action: 'window.openFlatsShortcut()' },
       { key: `${altSymbol}U`, single: 'U', title: 'Units & Master Pricing', desc: '19 units ki live inventory, nightly rates, caretaker & manager contacts.', action: 'window.openUnitsShortcut()' },
-      { key: `${altSymbol}Q`, single: 'Q', title: 'Universal Claims & TUHH-OD', desc: 'Daily Closing Statements, company ledger & vendor claim approvals.', action: 'window.openClaimShortcut()' },
+      { key: `${altSymbol}Q`, single: 'Q', title: 'Universal Claims & Roost-Bank', desc: 'Daily Closing Statements, company ledger & vendor claim approvals.', action: 'window.openClaimShortcut()' },
       { key: `${altSymbol}E`, single: 'E', title: 'Expenses & Outflow Hub', desc: 'Expenses page par jayein (Wi-Fi, Maintenance, Laundry, Staff Advances & P&L).', action: 'window.openExpensesShortcut()', altKey: `${altSymbol}⇧E for Add Expense` },
       { key: `${altSymbol}T`, single: 'T', title: 'Staff Tasks & Checklists', desc: 'Housekeeping, deep cleans aur staff maintenance tasks list.', action: 'window.openTasksShortcut()', altKey: `${altSymbol}⇧T for New` },
       { key: `${altSymbol}A`, single: 'A', title: 'Staff Salary Advances Tracker', desc: 'Employees ko di gayi peshgi (loan/advance) aur pending balance.', action: 'window.openAdvanceShortcut()', altKey: `${altSymbol}⇧A for New` },
@@ -56,7 +56,7 @@
           <!-- Search & Filter Bar inside Help -->
           <div class="tuhh-help-search-row">
             <div class="tuhh-help-search-box">
-              <i class="ti ti-search" style="font-size:18px;color:#0284C7;"></i>
+              <i class="ti ti-search" style="font-size:18px;color:#92400E;"></i>
               <input type="text" id="helpGuideSearch" placeholder="Search guide: e.g. 'booking kaise kare', 'upi sync', 'advance', 'shortcut', 'wifi', 'adr'..." oninput="window.filterHelpGuideContent(this.value)" autocomplete="off" />
               <button type="button" class="tuhh-help-search-clear" onclick="const i=document.getElementById('helpGuideSearch');i.value='';i.dispatchEvent(new Event('input'));" title="Clear Search">✕</button>
             </div>
@@ -121,7 +121,7 @@
           <!-- SECTION 1: QUICK START WORKFLOW -->
           <div class="tuhh-help-section-block" data-category="overview" id="section-overview">
             <div class="tuhh-section-header">
-              <div class="tuhh-section-icon" style="background:#EFF6FF;color:#0284C7;"><i class="ti ti-rocket"></i></div>
+              <div class="tuhh-section-icon" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-rocket"></i></div>
               <div>
                 <h2 class="tuhh-section-title">1. Daily Manager Routine (5-Minute Quick Start)</h2>
                 <p class="tuhh-section-subtitle">Rozana subah CRM open karke sabse pehle ye 4 steps follow karein across 19 properties:</p>
@@ -269,7 +269,7 @@
             <div class="tuhh-grid-2">
               <div class="tuhh-info-box">
                 <h4><i class="ti ti-palette"></i> Calendar Color Legend</h4>
-                <div class="tuhh-legend-item"><span class="tuhh-dot" style="background:#0284C7;"></span> <strong>Blue Bar:</strong> Direct / Offline Walk-in reservation.</div>
+                <div class="tuhh-legend-item"><span class="tuhh-dot" style="background:#92400E;"></span> <strong>Blue Bar:</strong> Direct / Offline Walk-in reservation.</div>
                 <div class="tuhh-legend-item"><span class="tuhh-dot" style="background:#FF385C;"></span> <strong>Red/Pink Bar:</strong> Airbnb confirmed reservation.</div>
                 <div class="tuhh-legend-item"><span class="tuhh-dot" style="background:#003580;"></span> <strong>Dark Blue:</strong> Booking.com reservation.</div>
                 <div class="tuhh-legend-item"><span class="tuhh-dot" style="background:#64748B;"></span> <strong>Grey Hatched Bar:</strong> Maintenance / Owner Blocked dates.</div>
@@ -303,7 +303,7 @@
 
             <div class="tuhh-grid-3">
               <div class="tuhh-card-compact">
-                <div class="tuhh-card-icon" style="background:#EFF6FF;color:#0284C7;"><i class="ti ti-currency-rupee"></i></div>
+                <div class="tuhh-card-icon" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-currency-rupee"></i></div>
                 <h4>Net Revenue &amp; NOI</h4>
                 <p><strong>Net Revenue</strong> total room earnings minus OTA commissions hai. <strong>Net Operating Income (NOI)</strong> actual profit hai jo Wi-Fi, electricity, staff salary aur laundry kharche deduct karne ke baad bachta hai.</p>
               </div>
@@ -353,7 +353,7 @@
               </div>
 
               <div class="tuhh-wf-card">
-                <div class="tuhh-wf-badge" style="background:#0284C7;color:#fff;">12-Digit UTR Bank Auto-Match</div>
+                <div class="tuhh-wf-badge" style="background:#92400E;color:#fff;">12-Digit UTR Bank Auto-Match</div>
                 <div class="tuhh-wf-content">
                   <h4>Kaise Kaam Karta Hai?</h4>
                   <ul>
@@ -367,21 +367,21 @@
             </div>
           </div>
 
-          <!-- SECTION 6: CLAIMS & TUHH-OD STATEMENT -->
+          <!-- SECTION 6: CLAIMS & Roost-Bank STATEMENT -->
           <div class="tuhh-help-section-block" data-category="claims" id="section-claims">
             <div class="tuhh-section-header">
               <div class="tuhh-section-icon" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-scale"></i></div>
               <div>
-                <h2 class="tuhh-section-title">6. Universal Claims, TUHH-OD &amp; Daily Closing Statement</h2>
+                <h2 class="tuhh-section-title">6. Universal Claims, Roost-Bank &amp; Daily Closing Statement</h2>
                 <p class="tuhh-section-subtitle">Vendor claims, company advances aur daily financial balance reconciliation:</p>
               </div>
             </div>
 
             <div class="tuhh-grid-2">
               <div class="tuhh-info-box">
-                <h4><i class="ti ti-report-money"></i> TUHH-OD Account &amp; Claims Balance</h4>
+                <h4><i class="ti ti-report-money"></i> Roost Bank Account &amp; Claims Balance</h4>
                 <p>
-                  Company account (TUHH-OD) se staff ko diye gaye funds, deposit entries, aur verified vendor bills (plumbing, electrical, laundry, grocery) <strong>Finances &gt; TUHH-OD &amp; Claims</strong> me maintain hote hain.
+                  Company account (Roost-Bank) se staff ko diye gaye funds, deposit entries, aur verified vendor bills (plumbing, electrical, laundry, grocery) <strong>Finances &gt; Roost-Bank &amp; Claims</strong> me maintain hote hain.
                 </p>
                 <div style="margin-top:10px;">
                   <button type="button" class="tuhh-action-inline-btn" onclick="window.openClaimShortcut()"><i class="ti ti-scale"></i> Open Claims Manager (${altSymbol}Q)</button>
@@ -412,7 +412,7 @@
 
             <div class="tuhh-grid-3">
               <div class="tuhh-card-compact">
-                <div class="tuhh-card-icon" style="background:#EFF6FF;color:#0284C7;"><i class="ti ti-receipt"></i></div>
+                <div class="tuhh-card-icon" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-receipt"></i></div>
                 <h4>Add Expense &amp; Outflow</h4>
                 <p>Kisi bhi flat ka kharcha direct log karein. Keyboard par <strong>${altSymbol}⇧E</strong> dabakar instant modal kholein aur bill receipt photo attach karein.</p>
                 <div class="tuhh-card-link"><kbd>${altSymbol}E</kbd> Expenses Hub</div>
@@ -504,7 +504,7 @@
           <!-- SECTION 10: INTERACTIVE KEYBOARD SHORTCUTS MATRIX -->
           <div class="tuhh-help-section-block" data-category="shortcuts" id="section-shortcuts">
             <div class="tuhh-section-header">
-              <div class="tuhh-section-icon" style="background:#F0F9FF;color:#0284C7;"><i class="ti ti-command"></i></div>
+              <div class="tuhh-section-icon" style="background:#F0F9FF;color:#92400E;"><i class="ti ti-command"></i></div>
               <div>
                 <h2 class="tuhh-section-title">10. High-Speed Keyboard Shortcuts Matrix</h2>
                 <p class="tuhh-section-subtitle">Mouse use kiye bina super-fast speed se CRM chalayein (Click 'Run' to test any shortcut now):</p>

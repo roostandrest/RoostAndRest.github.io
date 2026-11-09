@@ -166,7 +166,7 @@ window.renderAddReimbursement = async function() {
         <label style="font-weight:700;font-size:14px;color:#1e293b;">💳 Payment Source / Account *</label>
         <select id="rPaymentSource" style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;border:1.5px solid #0d6efd;border-radius:8px;background:#ffffff;color:#0f172a;">
           <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="UHHS-OD" selected>🏦 TUHH-OD (Overdraft Account)</option>
+          <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
           <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
         </select>
       </div>
@@ -251,7 +251,7 @@ window.saveReimbursement = async function() {
   const fromProp = document.getElementById('rFromText').value.trim() || null;
   const toProp = document.getElementById('rToText').value.trim() || null;
   const notes = document.getElementById('rNotes').value.trim();
-  const paymentSource = document.getElementById('rPaymentSource')?.value || 'UHHS-OD';
+  const paymentSource = document.getElementById('rPaymentSource')?.value || 'ROOST-BANK';
 
   if (!date || !cat || !desc || amt <= 0) {
     document.getElementById('rErr').innerHTML = '<div class="error">Date, Category, Description, Amount required</div>';
@@ -331,8 +331,8 @@ window.saveReimbursement = async function() {
       return;
     }
 
-    // Auto-record transaction in account_transactions for UHHS-OD spends (safe failsafe)
-    if (paymentSource === 'UHHS-OD') {
+    // Auto-record transaction in account_transactions for ROOST-BANK spends (safe failsafe)
+    if (paymentSource === 'ROOST-BANK') {
       try {
         await sb.from('account_transactions').insert({
           account_type: 'UHHS_OD',
@@ -440,7 +440,7 @@ window.editReimbursement = async function(id) {
         <label style="font-weight:700;font-size:14px;color:#1e293b;">💳 Payment Source / Account *</label>
         <select id="rPaymentSource" style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;border:1.5px solid #0d6efd;border-radius:8px;background:#ffffff;color:#0f172a;">
           <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="UHHS-OD" ${rec.payment_source === 'UHHS-OD' || !rec.payment_source ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+          <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
           <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
         </select>
       </div>
@@ -499,7 +499,7 @@ window.updateReimbursement = async function() {
   const toProp = document.getElementById('rToText').value.trim() || null;
   const status = document.getElementById('rStatus').value;
   const notes = document.getElementById('rNotes').value.trim();
-  const paymentSource = document.getElementById('rPaymentSource')?.value || 'UHHS-OD';
+  const paymentSource = document.getElementById('rPaymentSource')?.value || 'ROOST-BANK';
 
   if (!date || !cat || !desc || amt <= 0) {
     document.getElementById('rErr').innerHTML = '<div class="error">Date, Category, Description, Amount required</div>';
@@ -853,7 +853,7 @@ window.claimAllPending = async function() {
   renderReimbursements();
 };
 
-console.log('✅ Reimbursements module v7 loaded (UHHS-OD / Company Cash / UPI)');
+console.log('✅ Reimbursements module v7 loaded (ROOST-BANK / Company Cash / UPI)');
 
 window.loadAvailableCash = function(){}; window._old_load = function() { return; }; window._disabled_loadCash = function() { return; };
 window.updateCashInfo = function(){}; window._old_upd = function() { return; }; window._disabled_updateCash = function() { return; };

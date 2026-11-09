@@ -1039,9 +1039,9 @@ Generated automatically via TUHH Management Portal.`;
               ` : ''}
 
               <!-- ⭐️ CORE FEATURE: INVOICE TYPE SELECTION (WITH GST vs WITHOUT GST) -->
-              <div style="background:#F8FAFC;border:2px solid ${state.is_gst_invoice ? '#B45309' : '#0284C7'};border-radius:12px;padding:16px;margin-bottom:16px;transition:all 0.15s;">
+              <div style="background:#F8FAFC;border:2px solid ${state.is_gst_invoice ? '#B45309' : '#92400E'};border-radius:12px;padding:16px;margin-bottom:16px;transition:all 0.15s;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:${state.is_gst_invoice ? '#B45309' : '#0284C7'};">
+                  <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.8px;color:${state.is_gst_invoice ? '#B45309' : '#92400E'};">
                     📌 Invoice Classification Option
                   </div>
                   <span class="badge" style="background:${state.is_gst_invoice ? '#FEF3C7' : '#E0F2FE'};color:${state.is_gst_invoice ? '#92400E' : '#0369A1'};font-size:11px;font-weight:800;">
@@ -1056,10 +1056,10 @@ Generated automatically via TUHH Management Portal.`;
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                   
                   <!-- Option A: Without GST Invoice -->
-                  <label style="border:2px solid ${!state.is_gst_invoice ? '#0284C7' : 'var(--border)'};background:${!state.is_gst_invoice ? '#F0F9FF' : '#fff'};border-radius:10px;padding:12px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;transition:all 0.15s;box-shadow:${!state.is_gst_invoice ? '0 4px 12px rgba(2,132,199,0.15)' : 'none'};">
+                  <label style="border:2px solid ${!state.is_gst_invoice ? '#92400E' : 'var(--border)'};background:${!state.is_gst_invoice ? '#F0F9FF' : '#fff'};border-radius:10px;padding:12px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;transition:all 0.15s;box-shadow:${!state.is_gst_invoice ? '0 4px 12px rgba(2,132,199,0.15)' : 'none'};">
                     <input type="radio" name="is_gst_choice" value="no" ${!state.is_gst_invoice ? 'checked' : ''} onchange="window._gstSetIsGST(false)" style="margin-top:3px;cursor:pointer;"/>
                     <div>
-                      <div style="font-weight:800;font-size:13.5px;color:${!state.is_gst_invoice ? '#0284C7' : 'var(--dark)'};">
+                      <div style="font-weight:800;font-size:13.5px;color:${!state.is_gst_invoice ? '#92400E' : 'var(--dark)'};">
                         📄 Without GST Invoice (Clean Bill)
                       </div>
                       <div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4;">
@@ -1138,7 +1138,7 @@ Generated automatically via TUHH Management Portal.`;
               <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;">
                 <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
                   <span>💰 Stay Value Computation ${state.is_gst_invoice ? '(SAC: 996311)' : '(Non-GST Direct Bill)'}</span>
-                  <span style="font-size:11px;color:${state.is_gst_invoice ? '#B45309' : '#0284C7'};font-weight:700;">Rate per night: ₹${calc.perNight.toLocaleString('en-IN')}</span>
+                  <span style="font-size:11px;color:${state.is_gst_invoice ? '#B45309' : '#92400E'};font-weight:700;">Rate per night: ₹${calc.perNight.toLocaleString('en-IN')}</span>
                 </div>
 
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;">
@@ -1240,7 +1240,7 @@ Generated automatically via TUHH Management Portal.`;
 
           <!-- Bottom Action Buttons -->
           <div style="display:flex;gap:10px;align-items:center;border-top:1px solid var(--border);padding-top:14px;margin-top:12px;flex-wrap:wrap;">
-            <button class="btn-sm" style="background:${state.is_gst_invoice ? '#B45309' : '#0284C7'};color:#fff;padding:10px 18px;font-weight:800;display:inline-flex;align-items:center;gap:6px;" onclick="window._gstSaveAndPrint()">
+            <button class="btn-sm" style="background:${state.is_gst_invoice ? '#B45309' : '#92400E'};color:#fff;padding:10px 18px;font-weight:800;display:inline-flex;align-items:center;gap:6px;" onclick="window._gstSaveAndPrint()">
               🖨️ Print / Save PDF (${state.is_gst_invoice ? 'With GST' : 'Without GST'})
             </button>
             <button type="button" class="btn-sm" style="background:#0F766E;color:#fff;padding:10px 16px;font-weight:800;display:inline-flex;align-items:center;gap:6px;" onclick="window._gstDownloadImage()">

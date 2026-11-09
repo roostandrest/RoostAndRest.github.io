@@ -1018,7 +1018,7 @@ window.giveAdvanceModal = async function(empId, empName) {
         <label style="font-weight:700;">Given By *</label>
         <select id="advBy">
           <option value="COMPANY">🏢 TUHH Company Account</option>
-          <option value="UHHS-OD">🔵 Praveen Singh (Personal)</option>
+          <option value="ROOST-BANK">🔵 Praveen Singh (Personal)</option>
         </select>
       </div>
 

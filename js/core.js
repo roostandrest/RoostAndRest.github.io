@@ -1112,7 +1112,7 @@ function renderLogin() {
         height: 76px;
         margin: 0 auto 16px;
         border-radius: 20px;
-        background: linear-gradient(135deg, #0284C7 0%, #38BDF8 100%);
+        background: linear-gradient(135deg, #92400E 0%, #38BDF8 100%);
         padding: 3px;
         box-shadow: 0 8px 24px rgba(2, 132, 199, 0.28);
         display: flex;
@@ -1245,7 +1245,7 @@ function renderLogin() {
       }
       .uhh-input::placeholder { color: #94A3B8; font-weight: 400; }
       .uhh-input:focus {
-        border-color: #0284C7;
+        border-color: #92400E;
         background: #FFFFFF;
         box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
       }
@@ -1261,7 +1261,7 @@ function renderLogin() {
         cursor: pointer;
         font-family: inherit;
         letter-spacing: 0.3px;
-        background: linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%);
+        background: linear-gradient(135deg, #92400E 0%, #B45309 100%);
         color: #FFFFFF;
         box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
         transition: all 0.2s ease;
@@ -1270,7 +1270,7 @@ function renderLogin() {
       .uhh-signin-btn:hover:not(:disabled) {
         transform: translateY(-1px);
         box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
-        background: linear-gradient(135deg, #0369A1 0%, #0284C7 100%);
+        background: linear-gradient(135deg, #0369A1 0%, #92400E 100%);
       }
       .uhh-signin-btn:active:not(:disabled) { transform: translateY(0); }
       .uhh-signin-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
@@ -1514,7 +1514,7 @@ function renderShell(content, activePage = 'dashboard') {
       pages: ['expenses', 'claims', 'reimbursements', 'laundry', 'maintenance', 'store', 'cashbook'],
       tabs: [
         { id: 'expenses', label: '📊 Expenses & P&L' },
-        { id: 'claims', label: '🏦 TUHH-OD & Claims' },
+        { id: 'claims', label: '🏦 Roost Bank & Claims' },
         { id: 'laundry', label: '🧺 Laundry' },
         { id: 'maintenance', label: '🔧 Maintenance' }
       ]
@@ -1757,7 +1757,7 @@ function renderShell(content, activePage = 'dashboard') {
     cashbook: { title: 'Cash Book', sub: 'Cash flow, handovers & safe balance', icon: '💰' },
     reimbursements: { title: 'Daily Expenses', sub: 'Staff reimbursements & operational spends', icon: '💸' },
     expenses: { title: 'Monthly Expenses & P&L', sub: 'Property-wise profit & loss reporting', icon: '📊' },
-    claims: { title: 'TUHH-OD & Universal Claims', sub: 'TUHH-OD Overdraft balance, daily closing statement & vendor settlements', icon: '🏦' },
+    claims: { title: 'Roost Bank & Universal Claims', sub: 'Roost-Bank Overdraft balance, daily closing statement & vendor settlements', icon: '🏦' },
     'ca-audit': { title: 'CA Payout & Tax Audit (Section 194-O TDS)', sub: 'Audited Airbnb payouts, 1% Section 194-O TDS, gross earnings & 1-click CA export', icon: '💼' },
     investors: { title: 'Investors Ledger', sub: 'Property investor shares & payouts', icon: '🧑‍💼' },
     dailyReport: { title: 'Daily Operations Report', sub: 'End-of-day revenue, checkins & summaries', icon: '📈' },
@@ -2045,7 +2045,7 @@ function renderShell(content, activePage = 'dashboard') {
 
             <!-- Help Center Button -->
             <button class="topbar-icon-btn" onclick="navigate('help')" title="Help & User Operating Guide (Press ? or F1)" aria-label="Help & Guide">
-              <span><i class="ti ti-help-circle" style="font-size:1.18rem;color:#0284C7;"></i></span>
+              <span><i class="ti ti-help-circle" style="font-size:1.18rem;color:#92400E;"></i></span>
             </button>
 
             <!-- Notifications Bell -->
@@ -2630,10 +2630,10 @@ window.getBookingSource = function(b) {
     badge: '🏠 Direct',
     badgeClass: 'channel-direct',
     chipClass: 'direct',
-    color: '#0284C7',
+    color: '#92400E',
     bgColor: '#E0F2FE',
     borderColor: '#BAE6FD',
-    pillGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+    pillGradient: 'linear-gradient(135deg, #92400E 0%, #0369A1 100%)',
     isOnline: false
   };
 
@@ -2735,10 +2735,10 @@ window.getBookingSource = function(b) {
     badge: '🏠 Direct',
     badgeClass: 'channel-direct',
     chipClass: 'direct',
-    color: '#0284C7',
+    color: '#92400E',
     bgColor: '#E0F2FE',
     borderColor: '#BAE6FD',
-    pillGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+    pillGradient: 'linear-gradient(135deg, #92400E 0%, #0369A1 100%)',
     isOnline: false
   };
 };
@@ -3215,7 +3215,7 @@ async function renderUserManagement() {
           <div class="stat-num" style="color:#6D28D9;">${adminCount}</div>
           <div class="stat-label">🛡️ Admins & Devs</div>
         </div>
-        <div class="stat-card" onclick="setUserFilter('manager')" style="cursor:pointer;border-left:4px solid #0EA5E9;${activeFilter === 'manager' ? 'background:#F0F9FF;box-shadow:0 0 0 2px #0EA5E9;' : ''}">
+        <div class="stat-card" onclick="setUserFilter('manager')" style="cursor:pointer;border-left:4px solid #B45309;${activeFilter === 'manager' ? 'background:#F0F9FF;box-shadow:0 0 0 2px #B45309;' : ''}">
           <div class="stat-num" style="color:#0369A1;">${managerCount}</div>
           <div class="stat-label">👑 Owners & Mgrs</div>
         </div>
@@ -4656,13 +4656,13 @@ function initDrawerSearch() {
                 <a href="javascript:void(0)" class="drawer-search-item" onclick="navigate('${item.id}');const d=document.getElementById('drawerSearchInput');if(d){d.value='';d.dispatchEvent(new Event('input'));}const s=document.getElementById('sidebarEl');if(s){s.classList.remove('mobile-drawer-open');}const b=document.getElementById('sidebarBackdrop');if(b){b.classList.remove('active');}" 
                   style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#F8FAFC;color:#0F172A;text-decoration:none;font-size:12.5px;font-weight:600;border:1px solid #E2E8F0;transition:all 0.15s ease;">
                   <div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;">
-                    <i class="ti ${iconClass}" style="color:#0EA5E9;font-size:15px;flex-shrink:0;"></i>
+                    <i class="ti ${iconClass}" style="color:#B45309;font-size:15px;flex-shrink:0;"></i>
                     <div style="display:flex;flex-direction:column;min-width:0;">
                       <span style="color:#0F172A;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cleanLabel}</span>
                       ${item.sub ? `<span style="font-size:10.5px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.sub}</span>` : ''}
                     </div>
                   </div>
-                  <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#E0F2FE;color:#0284C7;border:1px solid #BAE6FD;white-space:nowrap;margin-left:6px;flex-shrink:0;">
+                  <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#E0F2FE;color:#92400E;border:1px solid #BAE6FD;white-space:nowrap;margin-left:6px;flex-shrink:0;">
                     ${item.hub}
                   </span>
                 </a>
@@ -5030,7 +5030,7 @@ window.renderChart = function(canvasId, type, data, options) {
   const textColor = isDark ? '#E0E0E0' : '#334155';
   const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
 
-  const defaultColors = ['#4F46E5', '#10B981', '#0EA5E9', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+  const defaultColors = ['#4F46E5', '#10B981', '#B45309', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
 
   const config = {
     type: type,
@@ -5424,7 +5424,7 @@ async function loadCashHolders(forceRefresh = false) {
  * @param {object} opts - { filterType: 'final'|'manager'|'receiver'|null (all), allowCustom: true, addNew: true }
  * @returns {string} - HTML string
  */
-// Master Universal 3-Option Payment Source Dropdown (Company, TUHH-OD, Firoz)
+// Master Universal 3-Option Payment Source Dropdown (Company, Roost-Bank, Firoz)
 window.renderCashHolderDropdown = async function(elementId, selectedVal) {
   const s = String(selectedVal || 'COMPANY').toUpperCase();
   const isOD = s.includes('OD') || s.includes('UHHS') || s.includes('TUHH');
@@ -5433,7 +5433,7 @@ window.renderCashHolderDropdown = async function(elementId, selectedVal) {
   return `
     <select id="${elementId}" name="${elementId}" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; padding: 10px; border-radius: 8px; width: 100%; background: #ffffff; color: #0f172a;">
       <option value="COMPANY" ${(!isOD && !isFiroz) ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-      <option value="UHHS-OD" ${isOD ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+      <option value="ROOST-BANK" ${isOD ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
       <option value="FIROZ" ${isFiroz ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
     </select>
   `;
@@ -5892,7 +5892,7 @@ window.printDocumentHTML = function(htmlContent, title = 'Document', options = {
           <button type="button" class="uhh-print-btn primary" onclick="window.print()" style="background:#10B981;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
             🖨️ Print / AirPrint
           </button>
-          <button type="button" class="uhh-print-btn" onclick="window.downloadPrintDocAsImage('${escapeHtml(docTitle).replace(/'/g, "\\'")}')" style="background:#0284C7;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+          <button type="button" class="uhh-print-btn" onclick="window.downloadPrintDocAsImage('${escapeHtml(docTitle).replace(/'/g, "\\'")}')" style="background:#92400E;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
             📸 Save Image (PNG)
           </button>
           <button type="button" class="uhh-print-btn secondary" onclick="window.downloadExportFile(document.getElementById('uhhPrintCardInner').innerHTML, '${escapeHtml(docTitle).replace(/'/g, "\\'")}.html', 'text/html;charset=utf-8')" style="background:#3B82F6;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
@@ -6316,7 +6316,7 @@ function renderAppMenu() {
           <div class="tuhh-menu-row" onclick="navigate('claims')">
             <div class="tuhh-icon-box" style="background:#EEF2FF;color:#4F46E5;"><i class="ti ti-building-bank"></i></div>
             <div class="tuhh-row-content">
-              <div class="tuhh-row-title">TUHH-OD &amp; Claims Hub</div>
+              <div class="tuhh-row-title">Roost-Bank &amp; Claims Hub</div>
               <div class="tuhh-row-sub">Overdraft balance, daily closing statement &amp; vendor claims</div>
             </div>
             <i class="ti ti-chevron-right tuhh-chevron"></i>
@@ -6341,7 +6341,7 @@ function renderAppMenu() {
           </div>
 
           <div class="tuhh-menu-row" onclick="navigate('laundry')">
-            <div class="tuhh-icon-box" style="background:#F0F9FF;color:#0284C7;"><i class="ti ti-wash-machine"></i></div>
+            <div class="tuhh-icon-box" style="background:#F0F9FF;color:#92400E;"><i class="ti ti-wash-machine"></i></div>
             <div class="tuhh-row-content">
               <div class="tuhh-row-title">Laundry &amp; Linen Tracker</div>
               <div class="tuhh-row-sub">Vendor dispatches, count audit &amp; settlement</div>
@@ -6398,7 +6398,7 @@ function renderAppMenu() {
         <div class="tuhh-section-header">SUPPORT &amp; SYSTEM</div>
         <div class="tuhh-menu-group">
           <div class="tuhh-menu-row" onclick="navigate('help')">
-            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#0284C7;"><i class="ti ti-help-circle"></i></div>
+            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-help-circle"></i></div>
             <div class="tuhh-row-content">
               <div class="tuhh-row-title">Help Center &amp; Operating Guide</div>
               <div class="tuhh-row-sub">Step-by-step CRM manual, workflows &amp; shortcut keys</div>

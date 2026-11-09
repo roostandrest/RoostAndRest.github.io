@@ -627,7 +627,7 @@ async function renderDashboard() {
       <tr>
         <td class="hh-prop-cell-name">
           <div class="hh-prop-cell-inner" style="display:flex;align-items:center;gap:10px;min-width:0;max-width:210px;">
-            ${p.thumb ? `<img src="${p.thumb}" alt="${escapeHtml(p.rName)}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;border:1px solid #E2E8F0;flex-shrink:0;">` : `<div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;color:#0284C7;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">${escapeHtml(p.unit || p.rId)}</div>`}
+            ${p.thumb ? `<img src="${p.thumb}" alt="${escapeHtml(p.rName)}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;border:1px solid #E2E8F0;flex-shrink:0;">` : `<div style="width:32px;height:32px;border-radius:8px;background:#E0F2FE;color:#92400E;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;">${escapeHtml(p.unit || p.rId)}</div>`}
             <div style="min-width:0;flex:1;overflow:hidden;">
               <div style="font-weight:700;color:#0F172A;font-size:12.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHtml(p.rName)}">${escapeHtml(p.rName)}</div>
               <div style="font-size:11px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(p.unit || '')}</div>
@@ -1416,7 +1416,7 @@ async function renderDashboard() {
         text-decoration: none;
       }
       .dash-guest-name:hover {
-        color: #0284C7;
+        color: #92400E;
         text-decoration: underline;
       }
       .dash-guest-name:hover { text-decoration: underline; }
@@ -1664,7 +1664,7 @@ async function renderDashboard() {
                 <span style="font-size:11.5px;font-weight:700;background:#ECFDF5;color:#059669;padding:4px 10px;border-radius:999px;border:1px solid #A7F3D0;">
                   🔑 ${realCheckins.length} In
                 </span>
-                <span style="font-size:11.5px;font-weight:700;background:#F0F9FF;color:#0284C7;padding:4px 10px;border-radius:999px;border:1px solid #BAE6FD;">
+                <span style="font-size:11.5px;font-weight:700;background:#F0F9FF;color:#92400E;padding:4px 10px;border-radius:999px;border:1px solid #BAE6FD;">
                   🏠 ${activeNow.length} Stay
                 </span>
               </div>
@@ -1695,7 +1695,7 @@ async function renderDashboard() {
               ` : ''}
 
               ${activeNow.length > 0 ? `
-                <div style="font-size:11.5px;font-weight:800;color:#0284C7;text-transform:uppercase;letter-spacing:0.8px;margin:12px 0 2px 4px;display:flex;align-items:center;gap:6px;">
+                <div style="font-size:11.5px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:0.8px;margin:12px 0 2px 4px;display:flex;align-items:center;gap:6px;">
                   <span>🏠</span> Currently In-House (${activeNow.length})
                 </div>
                 ${activeNow.slice(0, 6).map(b => window.renderAirbnbResCard(b, 'inhouse')).join('')}
@@ -1704,7 +1704,7 @@ async function renderDashboard() {
                     ${activeNow.slice(6).map(b => window.renderAirbnbResCard(b, 'inhouse')).join('')}
                   </div>
                   <div style="text-align:center;margin-top:4px;">
-                    <button type="button" onclick="document.getElementById('airbnbInHouseExpandedList').style.display='flex';this.style.display='none';" style="background:#F0F9FF;border:1px solid #BAE6FD;color:#0284C7;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">
+                    <button type="button" onclick="document.getElementById('airbnbInHouseExpandedList').style.display='flex';this.style.display='none';" style="background:#F0F9FF;border:1px solid #BAE6FD;color:#92400E;font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;cursor:pointer;">
                       + View all ${activeNow.length} in-house guests &darr;
                     </button>
                   </div>
@@ -1722,7 +1722,7 @@ async function renderDashboard() {
             <h2 style="font-size:18px;font-weight:800;color:#111827;margin:0;letter-spacing:-0.3px;">
               Upcoming reservations (${upcomingReservations.length})
             </h2>
-            <button type="button" onclick="navigate('calendar')" style="background:none;border:none;color:#0284C7;font-size:12.5px;font-weight:700;cursor:pointer;padding:0;">
+            <button type="button" onclick="navigate('calendar')" style="background:none;border:none;color:#92400E;font-size:12.5px;font-weight:700;cursor:pointer;padding:0;">
               View in Calendar &rarr;
             </button>
           </div>
@@ -1740,7 +1740,7 @@ async function renderDashboard() {
                   ${upcomingReservations.slice(8).map(b => window.renderAirbnbResCard(b, 'upcoming')).join('')}
                 </div>
                 <div style="text-align:center;margin-top:6px;">
-                  <button type="button" onclick="document.getElementById('airbnbUpcomingExpandedList').style.display='flex';this.style.display='none';" style="background:#FFFFFF;border:1.5px solid #E2E8F0;color:#0284C7;font-size:12.5px;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer;">
+                  <button type="button" onclick="document.getElementById('airbnbUpcomingExpandedList').style.display='flex';this.style.display='none';" style="background:#FFFFFF;border:1.5px solid #E2E8F0;color:#92400E;font-size:12.5px;font-weight:700;padding:8px 18px;border-radius:999px;cursor:pointer;">
                     + View all ${upcomingReservations.length} upcoming reservations &darr;
                   </button>
                 </div>
@@ -2287,7 +2287,7 @@ window.renderExecutiveDashboard = async function () {
                   
                   <!-- Dynamic Property Selector Pill -->
                   <div class="hh-analytics-pill-select ${globalProp ? 'active-filter' : ''}" style="position:relative;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:${globalProp ? '#EFF6FF' : '#F8FAFC'};border:1px solid ${globalProp ? '#3B82F6' : '#CBD5E1'};padding:6px 14px;border-radius:999px;" title="Filter analytics by specific property or view all">
-                    <span style="color:${globalProp ? '#2563EB' : '#0284C7'};font-weight:900;">@</span>
+                    <span style="color:${globalProp ? '#2563EB' : '#92400E'};font-weight:900;">@</span>
                     <span style="font-weight:700;color:${globalProp ? '#1E40AF' : '#0F172A'};max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(selectedPropDisplay)}</span>
                     <i class="ti ti-chevron-down" style="font-size:12px;color:#64748B;"></i>
                     <select onchange="window.setAnalyticsPropertyFilter(this.value)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:3;">
@@ -2331,7 +2331,7 @@ window.renderExecutiveDashboard = async function () {
 
                   <!-- 📅 SPECIFIC MONTH SELECTOR DROPDOWN -->
                   <div class="hh-analytics-pill-select" style="position:relative;cursor:pointer;background:#F8FAFC;border:1px solid #CBD5E1;padding:6px 14px;border-radius:999px;display:inline-flex;align-items:center;gap:6px;" title="Pick any specific month in 2026">
-                    <i class="ti ti-calendar" style="color:#0284C7;font-size:13px;"></i>
+                    <i class="ti ti-calendar" style="color:#92400E;font-size:13px;"></i>
                     <span style="font-weight:800;color:#0F172A;font-size:12px;">${escapeHtml(periodDisplayLabel)}</span>
                     <i class="ti ti-chevron-down" style="font-size:11px;color:#64748B;"></i>
                     <select onchange="window.setDashboardCustomMonth(this.value)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:3;">
@@ -2431,7 +2431,7 @@ window.renderExecutiveDashboard = async function () {
                     <div class="hh-kpi-main-val">${periodOccupancyPct > 0 ? periodOccupancyPct : occupancyPct}%</div>
                     ${formatDeltaTag(occDiffPts, true)}
                   </div>
-                  ${sparklineSvg(parseFloat(occDiffPts) >= 0, '#0284C7')}
+                  ${sparklineSvg(parseFloat(occDiffPts) >= 0, '#92400E')}
                 </div>
 
                 <!-- KPI 4: ADR -->
@@ -3740,7 +3740,7 @@ function initExecutiveDashboardCharts(data) {
         labels: ['Occupied', 'Ready Clean', 'Turnover / Dirty', 'Maintenance'],
         datasets: [{
           data: [occupied, clean, dirty, maint],
-          backgroundColor: ['#0EA5E9', '#10B981', '#F59E0B', '#94A3B8'],
+          backgroundColor: ['#B45309', '#10B981', '#F59E0B', '#94A3B8'],
           borderWidth: 3,
           borderColor: '#FFFFFF',
           hoverOffset: 4

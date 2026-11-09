@@ -66,7 +66,7 @@ async function renderMaintenanceLog() {
           </h1>
           <div class="sub" style="margin-top:2px;font-size:12.5px;color:#64748B;">${filtered.length} of ${(logs||[]).length} entries recorded</div>
         </div>
-        <button onclick="renderAddMaintenance()" style="background:#0284C7;color:#fff;font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+        <button onclick="renderAddMaintenance()" style="background:#92400E;color:#fff;font-weight:700;font-size:12.5px;padding:7px 14px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
           <span>➕</span> Add Issue
         </button>
       </div>
@@ -222,7 +222,7 @@ async function renderAddMaintenance() {
             <label>Payment Source / Account <span class="warn">*</span></label>
             <select id="mPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
               <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-              <option value="UHHS-OD" selected>🏦 TUHH-OD (Overdraft Account)</option>
+              <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
               <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
             </select>
           </div>
@@ -432,7 +432,7 @@ async function saveMaintenance() {
   }
 
   const { data: newMaint, error } = await sb.from('maintenance_log').insert({
-    payment_source: document.getElementById('mPaymentSource')?.value || 'UHHS-OD',
+    payment_source: document.getElementById('mPaymentSource')?.value || 'ROOST-BANK',
     room_id: document.getElementById('mRoom').value || null,
     issue_type: getMaintType(),
     priority: document.getElementById('mPriority').value,
@@ -446,7 +446,7 @@ async function saveMaintenance() {
     photo_before: billPhotoUrl,
     payment_photo: payPhotoUrl,
     notes: document.getElementById('mNotes').value.trim() || null,
-    paid_by: cost > 0 ? (document.getElementById('mPaymentSource')?.value || 'UHHS-OD') : null,
+    paid_by: cost > 0 ? (document.getElementById('mPaymentSource')?.value || 'ROOST-BANK') : null,
     payment_mode: cost > 0 ? payMode : null,
     payment_date: cost > 0 ? (payDate || new Date().toISOString().slice(0,10)) : null
   }).select().single();
@@ -527,7 +527,7 @@ async function editMaintenance(id) {
             <label>Payment Source / Account <span class="warn">*</span></label>
             <select id="mPaymentSourceEdit" style="border: 1.5px solid #0d6efd; font-weight: 600;">
               <option value="COMPANY" ${m.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-              <option value="UHHS-OD" ${m.payment_source === 'UHHS-OD' || !m.payment_source ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+              <option value="ROOST-BANK" ${m.payment_source === 'ROOST-BANK' || !m.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
               <option value="FIROZ" ${m.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
             </select>
           </div>
@@ -710,7 +710,7 @@ async function updateMaintenance() {
     photo_after: photoAfterUrl,
     payment_photo: paymentPhotoUrl,
     notes: document.getElementById('mNotes').value.trim() || null,
-    paid_by: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentSourceEdit')?.value || 'UHHS-OD') : null,
+    paid_by: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentSourceEdit')?.value || 'ROOST-BANK') : null,
     payment_mode: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentMode')?.value || null) : null,
     payment_date: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentDate')?.value || null) : null
   };
@@ -727,7 +727,7 @@ async function updateMaintenance() {
     updateObj.resolved_date = new Date().toISOString().slice(0, 10);
   }
 
-  updateObj.payment_source = document.getElementById('mPaymentSourceEdit')?.value || 'UHHS-OD';
+  updateObj.payment_source = document.getElementById('mPaymentSourceEdit')?.value || 'ROOST-BANK';
   const { error } = await sb.from('maintenance_log').update(updateObj).eq('id', id);
   if (error) {
     document.getElementById('mErr').innerHTML = '<div class="error">' + error.message + '</div>';

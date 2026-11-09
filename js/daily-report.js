@@ -116,7 +116,7 @@ async function renderDailyReport(selectedDate) {
           <button onclick="printDailyReportWindow()" class="btn-sm" style="background:#0F172A;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(15,23,42,0.15);">
             🖨️ Print / PDF
           </button>
-          <button onclick="exportDailyReportCSV('${repDate}')" class="btn-sm" style="background:#0284C7;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(2,132,199,0.2);">
+          <button onclick="exportDailyReportCSV('${repDate}')" class="btn-sm" style="background:#92400E;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(2,132,199,0.2);">
             📥 Export CSV
           </button>
           <button onclick="whatsappDailyReport('${repDate}')" class="btn-sm" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(5,150,105,0.2);">
@@ -178,7 +178,7 @@ async function renderDailyReport(selectedDate) {
           <div style="font-size:24px;font-weight:800;color:${totalDueOverall > 0 ? '#DC2626' : '#059669'};margin-top:2px;">₹${totalDueOverall.toLocaleString('en-IN')}</div>
           <div style="font-size:11.5px;color:#64748B;margin-top:2px;">Active guest accounts</div>
         </div>
-        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #0284C7;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #92400E;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
           <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">🏠 Currently Staying</div>
           <div style="font-size:24px;font-weight:800;color:#0F172A;margin-top:2px;">${staying.length} guests</div>
           <div style="font-size:11.5px;color:#64748B;margin-top:2px;">In-house right now</div>

@@ -357,7 +357,7 @@ window.renderAddLaundry = async function() {
           <label>Payment Source / Account <span class="warn">*</span></label>
           <select id="lPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="UHHS-OD" selected>🏦 UHHS-OD (Overdraft Account)</option>
+            <option value="ROOST-BANK" selected>🏦 ROOST-BANK (Overdraft Account)</option>
             <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
           </select>
         </div>
@@ -609,7 +609,7 @@ window.saveLaundry = async function() {
     total_amount: total,
     payment_mode: payMode,
     payment_status: paymentStatus,
-    payment_source: document.getElementById('lPaymentSource')?.value || 'UHHS-OD',
+    payment_source: document.getElementById('lPaymentSource')?.value || 'ROOST-BANK',
     paid_amount: paidAmt,
     notes: notes,
     bill_photo: billPhotoPath
@@ -727,7 +727,7 @@ window.editLaundry = async function(id) {
           <label>Payment Source / Account <span class="warn">*</span></label>
           <select id="lPaymentSourceEdit" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="UHHS-OD" ${rec.payment_source === 'UHHS-OD' || !rec.payment_source ? 'selected' : ''}>🏦 UHHS-OD (Overdraft Account)</option>
+            <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 ROOST-BANK (Overdraft Account)</option>
             <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
           </select>
         </div>
@@ -872,7 +872,7 @@ window.updateLaundry = async function() {
     total_amount: total,
     payment_mode: payMode,
     payment_status: paymentStatus,
-    payment_source: document.getElementById('lPaymentSourceEdit')?.value || 'UHHS-OD',
+    payment_source: document.getElementById('lPaymentSourceEdit')?.value || 'ROOST-BANK',
     paid_amount: paidAmt,
     notes: notes,
     bill_photo: billPhotoPath
@@ -1296,7 +1296,7 @@ window.addLaundryPayment = async function(recordId, dueAmount) {
             <div class="form-group"><label>Payment Source / Account *</label>
         <select id="lpPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
           <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="UHHS-OD" selected>🏦 UHHS-OD (Overdraft Account)</option>
+          <option value="ROOST-BANK" selected>🏦 ROOST-BANK (Overdraft Account)</option>
           <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
         </select>
       </div>
@@ -1375,7 +1375,7 @@ window.saveLaundryPayment = async function(recordId) {
   const { error } = await sb.from('laundry_payments').insert({
     record_id: recordId,
     amount, payment_date: date, payment_mode: mode, notes,
-    payment_source: document.getElementById('lpPaymentSource')?.value || 'UHHS-OD',
+    payment_source: document.getElementById('lpPaymentSource')?.value || 'ROOST-BANK',
     payment_photo: paymentPhotoPath,
     claim_status: 'unclaimed'
   });
@@ -1490,7 +1490,7 @@ window.editLaundryPayment = async function(paymentId, recordId) {
             <div class="form-group"><label>Payment Source / Account *</label>
         <select id="lpPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
           <option value="COMPANY" ${pay.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="UHHS-OD" ${pay.payment_source === 'UHHS-OD' || !pay.payment_source ? 'selected' : ''}>🏦 UHHS-OD (Overdraft Account)</option>
+          <option value="ROOST-BANK" ${pay.payment_source === 'ROOST-BANK' || !pay.payment_source ? 'selected' : ''}>🏦 ROOST-BANK (Overdraft Account)</option>
           <option value="FIROZ" ${pay.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
         </select>
       </div>
@@ -1525,7 +1525,7 @@ window.updateLaundryPayment = async function(paymentId, recordId) {
     return;
   }
 
-  const paymentSource = document.getElementById('lpPaymentSource')?.value || 'UHHS-OD';
+  const paymentSource = document.getElementById('lpPaymentSource')?.value || 'ROOST-BANK';
 
   const { error } = await sb.from('laundry_payments').update({
     amount, payment_date: date, payment_mode: mode, notes,

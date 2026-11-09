@@ -3,20 +3,20 @@
 :root,
 [data-theme="light"] {
   /* Brand Accents — Extracted from HomeyHuts / Next.js Production Design System */
-  --primary: #0EA5E9; /* HomeyIndia Brand Sky Blue */
-  --primary-dark: #0284C7;
-  --primary-light: #E0F2FE;
-  --primary-hover: #0284C7;
-  --primary-glow: rgba(14, 165, 233, 0.25);
-  --theme-accent: #0EA5E9;
-  --theme-homeyhuts-coral: #0EA5E9;
-  --theme-homeyhuts-peach: #E0F2FE;
+  --primary: #B45309; /* HomeyIndia Brand Sky Blue */
+  --primary-dark: #92400E;
+  --primary-light: #FEF3C7;
+  --primary-hover: #78350F;
+  --primary-glow: rgba(180, 83, 9, 0.25);
+  --theme-accent: #B45309;
+  --theme-homeyhuts-coral: #C27835;
+  --theme-homeyhuts-peach: #FDF8F3;
   --theme-homeyhuts-canvas: #ffffff;
 
   /* HomeyHuts & Airbnb Deep Navy / Slate Contrast Accents */
   --dark: #222222; /* HomeyHuts / Airbnb Core Body Neutral */
-  --sidebar-bg: #0a1d4b; /* HomeyHuts Navy 900 */
-  --navy-int: #0a1d4b;
+  --sidebar-bg: #2C241E; /* HomeyHuts Navy 900 */
+  --navy-int: #2C241E;
 
   /* Surface & Canvas System — Crisp Pure White & Architectural Soft Off-White */
   --bg: #ffffff; /* Pristine Airbnb / HomeyHuts Canvas */
@@ -3277,7 +3277,7 @@ button.btn:active,
 }
 .notif-toast.notif-booking::before { background: linear-gradient(180deg, #10B981, #059669); }
 .notif-toast.notif-payment::before { background: linear-gradient(180deg, #4F46E5, #6366F1); }
-.notif-toast.notif-checkin::before { background: linear-gradient(180deg, #0EA5E9, #0284C7); }
+.notif-toast.notif-checkin::before { background: linear-gradient(180deg, #B45309, #92400E); }
 .notif-toast.notif-checkout::before { background: linear-gradient(180deg, #64748B, #475569); }
 .notif-toast.notif-task::before { background: linear-gradient(180deg, #F59E0B, #D97706); }
 
@@ -6640,9 +6640,9 @@ textarea:focus {
 }
 
 .sbk-action-btn.call {
-  background: #0284C7;
+  background: #92400E;
   color: #ffffff;
-  border-color: #0284C7;
+  border-color: #92400E;
   flex: 0 0 36px;
   padding: 0;
 }
@@ -7437,9 +7437,9 @@ textarea:focus {
   border-color: #25D366;
 }
 .airbnb-action-circle.call:hover {
-  background: #0284C7;
+  background: #92400E;
   color: #fff;
-  border-color: #0284C7;
+  border-color: #92400E;
 }
 
 /* Follow-ups Section (like Airbnb screenshot) */
@@ -8015,7 +8015,7 @@ textarea:focus {
 .voice-wave-bar {
   width: 4px;
   border-radius: 4px;
-  background: #38BDF8;
+  background: #D97706;
   animation: waveBarAnim 1.2s ease-in-out infinite;
 }
 .voice-wave-bar:nth-child(2) { animation-delay: 0.15s; background: #818CF8; }

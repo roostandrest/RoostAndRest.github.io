@@ -1610,7 +1610,7 @@ async function renderEmployeeTasks(viewMode) {
         if (!isDone) {
           if (!isInProg) {
             quickBtn = `
-              <button class="btn-sm" style="background:#0284C7;color:#fff;padding:4px 8px;font-size:11px;font-weight:700;" onclick="quickUpdateTaskStatus(${t.id}, 'In Progress')">
+              <button class="btn-sm" style="background:#92400E;color:#fff;padding:4px 8px;font-size:11px;font-weight:700;" onclick="quickUpdateTaskStatus(${t.id}, 'In Progress')">
                 🔄 Start
               </button>
               <button class="btn-sm" style="background:#059669;color:#fff;padding:4px 8px;font-size:11px;font-weight:700;margin-left:4px;" onclick="quickUpdateTaskStatus(${t.id}, 'Completed')">
@@ -1840,7 +1840,7 @@ async function renderEmployeeTasks(viewMode) {
         <div style="padding:28px 20px;text-align:center;background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;">
           <div style="font-weight:700;font-size:14.5px;color:#0F172A;">⚠️ Selected filter (${activeFilterDesc}) me koi task nahi mila</div>
           <div style="font-size:12.5px;color:#64748B;margin:5px 0 14px;">Total <strong>${totalMonth} tasks</strong> is month (${selectedMonth}) me moujood hain.</div>
-          <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:700;padding:7px 16px;border-radius:8px;cursor:pointer;" onclick="window.clearTaskFilters('${viewMode}')">
+          <button type="button" class="btn-sm" style="background:#92400E;color:#fff;font-weight:700;padding:7px 16px;border-radius:8px;cursor:pointer;" onclick="window.clearTaskFilters('${viewMode}')">
             🔄 Reset Filter & Show All (${totalMonth}) Tasks
           </button>
         </div>
@@ -3209,7 +3209,7 @@ async function renderAddAdv() {
           <label>Payment Source / Account *</label>
           <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="UHHS-OD" selected>🏦 TUHH-OD (Overdraft Account)</option>
+            <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
             <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
           </select>
         </div>
@@ -3231,7 +3231,7 @@ async function saveAdv() {
     if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Advance'; }
     return;
   }
-  const paidByVal = document.getElementById('aPaidBy')?.value || 'UHHS-OD';
+  const paidByVal = document.getElementById('aPaidBy')?.value || 'ROOST-BANK';
   const dateVal = document.getElementById('aDate').value || null;
 
   // 🚨 DUPLICATE ADVANCE CHECK
@@ -3327,7 +3327,7 @@ async function editAdv(id) {
         <div class="form-group"><label>Payment Source / Account *</label>
           <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY" ${a.paid_by === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="UHHS-OD" ${a.paid_by === 'UHHS-OD' || !a.paid_by ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+            <option value="ROOST-BANK" ${a.paid_by === 'ROOST-BANK' || !a.paid_by ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
             <option value="FIROZ" ${a.paid_by === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
           </select>
         </div>
@@ -3345,7 +3345,7 @@ async function updAdv(id) {
     repaid_amount: parseFloat(document.getElementById('aRep').value) || 0,
     repaid_date: document.getElementById('aRepDate').value || null,
     payment_mode: document.getElementById('aMode').value || null,
-    paid_by: document.getElementById('aPaidBy')?.value || 'UHHS-OD',
+    paid_by: document.getElementById('aPaidBy')?.value || 'ROOST-BANK',
     reason: document.getElementById('aReason').value.trim() || null
   }).eq('id', id);
   if (window.notifyDataChanged) window.notifyDataChanged();

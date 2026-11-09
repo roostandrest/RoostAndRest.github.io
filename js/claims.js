@@ -39,7 +39,7 @@ function normalizePaymentSource(rawVal) {
   const s = String(rawVal).trim().toUpperCase();
   if (s === 'FIROZ') return 'FIROZ';
   if (s === 'COMPANY') return 'COMPANY';
-  if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'UHHS-OD';
+  if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
   return 'OTHER';
 }
 
@@ -81,10 +81,10 @@ window.renderClaims = async function() {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
         <div>
           <h1>⚖️ Universal Claims Manager</h1>
-          <div class="sub">Checkpoint: <strong>16-Sep-2026 11:59 PM (Settled)</strong> · TUHH-OD Engine</div>
+          <div class="sub">Checkpoint: <strong>16-Sep-2026 11:59 PM (Settled)</strong> · Roost Bank Engine</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button onclick="openUhhsDepositModal()" style="background:#0284C7;color:#fff;font-weight:700;">📥 Deposit Entry (TUHH-OD)</button>
+          <button onclick="openUhhsDepositModal()" style="background:#92400E;color:#fff;font-weight:700;">📥 Deposit Entry (Roost Bank)</button>
           <button onclick="showUhhsStatementModal()" style="background:#0F766E;color:#fff;font-weight:600;">📜 TUHH Ledger</button>
           <button onclick="showCompanyLedgerModal()" style="background:#EA580C;color:#fff;font-weight:600;">🏢 Company Ledger</button>
           <button onclick="generateClaimReport()" style="background:#8B5CF6;color:#fff;font-weight:600;">📊 Claim Report Statement</button>
@@ -93,16 +93,16 @@ window.renderClaims = async function() {
       </div>
     </div>
 
-    <!-- UHHS-OD LIVE ACCOUNT BANNER -->
+    <!-- ROOST-BANK LIVE ACCOUNT BANNER -->
     <div class="card" style="background:#F0FDF4;border:1.5px solid #86EFAC;padding:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
         <div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:20px;">🏦</span>
-            <strong style="font-size:16px;color:#15803D;">TUHH-OD Account (Online Balance)</strong>
+            <strong style="font-size:16px;color:#15803D;">Roost Bank Account (Online Balance)</strong>
           </div>
           <div style="font-size:12px;color:#64748B;margin-top:2px;">
-            Money received online from Firoz &amp; spent via TUHH-OD (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
+            Money received online from Firoz &amp; spent via Roost-Bank (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
@@ -159,11 +159,11 @@ window.renderClaims = async function() {
         }
       }
     </style>
-    <div class="card" id="todayBalanceProofCard" style="background:#FFFFFF;border:1.5px solid #0284C7;box-shadow:0 8px 24px -4px rgba(2,132,199,0.12);padding:18px;margin-bottom:14px;border-radius:12px;">
+    <div class="card" id="todayBalanceProofCard" style="background:#FFFFFF;border:1.5px solid #92400E;box-shadow:0 8px 24px -4px rgba(2,132,199,0.12);padding:18px;margin-bottom:14px;border-radius:12px;">
       <!-- Header with Live Stamp -->
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #E2E8F0;padding-bottom:12px;margin-bottom:14px;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <div style="width:42px;height:42px;border-radius:10px;background:#E0F2FE;color:#0284C7;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;">
+          <div style="width:42px;height:42px;border-radius:10px;background:#E0F2FE;color:#92400E;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;">
             📅
           </div>
           <div>
@@ -181,7 +181,7 @@ window.renderClaims = async function() {
 
         <!-- ACTION BUTTONS: SCREENSHOT & WHATSAPP (HIDDEN IN EXPORTED PROOF) -->
         <div id="todayProofActions" data-html2canvas-ignore="true" style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" onclick="downloadTodayBalanceScreenshot(event)" style="padding:8px 14px;background:#0284C7;color:#ffffff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(2,132,199,0.25);">
+          <button type="button" onclick="downloadTodayBalanceScreenshot(event)" style="padding:8px 14px;background:#92400E;color:#ffffff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(2,132,199,0.25);">
             <span>📸</span>
             <span>Download Mobile Proof</span>
           </button>
@@ -205,7 +205,7 @@ window.renderClaims = async function() {
           <button id="proofBtnRange" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('range')" style="padding:5px 12px;background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
             📅 Active Filter Range
           </button>
-          <button id="proofBtnToday" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('today')" style="padding:5px 12px;background:#0284C7;color:#fff;border:1px solid #0284C7;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(2,132,199,0.25);">
+          <button id="proofBtnToday" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('today')" style="padding:5px 12px;background:#92400E;color:#fff;border:1px solid #92400E;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(2,132,199,0.25);">
             📅 Today (${todayStr.slice(-2)}-Oct)
           </button>
           <button id="proofBtnLatest" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('latest')" style="padding:5px 12px;background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">
@@ -257,9 +257,9 @@ window.renderClaims = async function() {
       <!-- FOOTER AUDIT NOTE FOR OWNERS -->
       <div style="background:#F8FAFC;border-radius:8px;padding:8px 12px;font-size:11.5px;color:#64748B;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
         <div>
-          🛡️ <strong>Owner Assurance:</strong> Automatically compiled from TUHH-OD bank receipts and verified vendor claims. Zero manual adjustments.
+          🛡️ <strong>Owner Assurance:</strong> Automatically compiled from Roost-Bank bank receipts and verified vendor claims. Zero manual adjustments.
         </div>
-        <div style="color:#0284C7;font-weight:600;">
+        <div style="color:#92400E;font-weight:600;">
           The Unique Haven Homes Private Limited
         </div>
       </div>
@@ -313,7 +313,7 @@ window.renderClaims = async function() {
           <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">👤 Paid By (Payer)</label>
           <select id="cfPaidBy" onchange="updateClaimsFilter()">
             <option value="all" ${window._claimsState.paidByFilter==='all'?'selected':''}>All Payers</option>
-            <option value="UHHS-OD" ${window._claimsState.paidByFilter==='UHHS-OD'?'selected':''}>🏦 TUHH-OD</option>
+            <option value="ROOST-BANK" ${window._claimsState.paidByFilter==='ROOST-BANK'?'selected':''}>🏦 Roost-Bank</option>
             <option value="COMPANY" ${window._claimsState.paidByFilter==='COMPANY'?'selected':''}>🏢 COMPANY</option>
             <option value="FIROZ" ${window._claimsState.paidByFilter==='FIROZ'?'selected':''}>👤 FIROZ</option>
             <option value="OTHER" ${window._claimsState.paidByFilter==='OTHER'?'selected':''}>⚠️ OTHER</option>
@@ -658,7 +658,7 @@ function renderClaimsTable() {
 
   window._claimsState.filteredKeys = filtered.map(item => item.uniqKey);
 
-  // Calculate Summaries — Staff Advances are also paid FROM the UHHS-OD account
+  // Calculate Summaries — Staff Advances are also paid FROM the ROOST-BANK account
   // (just like expenses/maintenance/laundry), so they ADD to the claimable total,
   // they are never subtracted from it.
   let totalExps = 0;
@@ -1086,7 +1086,7 @@ window.showUhhsStatementModal = async function() {
         <div style="padding:12px 16px;border-bottom:1.5px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#F8FAFC;">
           <div style="min-width:0;flex:1;">
             <h2 style="margin:0;color:#0F766E;font-size:16px;font-weight:800;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              📜 TUHH-OD Statement / Ledger
+              📜 Roost Bank Statement / Ledger
             </h2>
             <div style="font-size:11px;color:#64748B;margin-top:2px;">
               Period: <strong>${fDate}</strong> → <strong>${tDate}</strong> · Txns: <strong>${txns.length}</strong>
@@ -1148,7 +1148,7 @@ window.showUhhsStatementModal = async function() {
                     <td style="padding:8px 10px;text-align:right;font-weight:700;color:${t.isDep?'#15803D':'#B91C1C'};white-space:nowrap;min-width:115px;">${t.isDep ? '+' : '-'}₹${t.amount.toLocaleString('en-IN')}</td>
                     <td style="padding:8px 10px;text-align:center;white-space:nowrap;min-width:135px;">
                       ${(t.isSecurityDeposit || t.isSecurityRefund) && t.booking_id ? `
-                        <button onclick="window.showSecurityDepositModal('${t.booking_id}')" class="btn-sm" style="background:#0284C7;color:#fff;padding:4px 9px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;" title="Manage Security Deposit">🛡️ Manage</button>
+                        <button onclick="window.showSecurityDepositModal('${t.booking_id}')" class="btn-sm" style="background:#92400E;color:#fff;padding:4px 9px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;" title="Manage Security Deposit">🛡️ Manage</button>
                       ` : (t.isDep ? `
                         <button onclick="window.cbEditODDeposit('${t.id}')" class="btn-sm" style="background:#3B82F6;color:#fff;padding:4px 8px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;margin-right:4px;">✏️ Edit</button>
                         <button onclick="window.cbDeleteODDeposit('${t.id}')" class="btn-sm" style="background:#DC2626;color:#fff;padding:4px 8px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;">🗑️ Delete</button>
@@ -1246,7 +1246,7 @@ window.openReimbursementEditModal = async function(id) {
         <div style="margin-bottom:14px;">
           <label style="font-weight:700;font-size:12.5px;color:#0F172A;display:block;margin-bottom:4px;">💳 Payment Account / Source *</label>
           <select id="ledgerEditSource" style="width:100%;padding:8px;border:1.5px solid #0D6EFD;border-radius:6px;font-weight:600;background:#F8FAFC;box-sizing:border-box;">
-            <option value="UHHS-OD" ${rec.payment_source === 'UHHS-OD' || !rec.payment_source ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+            <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
             <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
             <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
           </select>
@@ -1282,7 +1282,7 @@ window.saveReimbursementFromLedger = async function(id) {
   const amt = parseFloat(document.getElementById('ledgerEditAmt')?.value) || 0;
   const cat = document.getElementById('ledgerEditCat')?.value;
   const desc = document.getElementById('ledgerEditDesc')?.value?.trim();
-  const paymentSource = document.getElementById('ledgerEditSource')?.value || 'UHHS-OD';
+  const paymentSource = document.getElementById('ledgerEditSource')?.value || 'ROOST-BANK';
   const notes = document.getElementById('ledgerEditNotes')?.value?.trim();
 
   if (!date || amt <= 0 || !desc) {
@@ -1641,7 +1641,7 @@ window.exportUhhsLedgerPDF = function(fDate, tDate, totalInflow, totalOutflow, n
       </div>
 
       <div class="header">
-        <h1>📜 TUHH-OD Account Statement / Ledger</h1>
+        <h1>📜 Roost Bank Account Statement / Ledger</h1>
         <div class="sub">Period: <strong>${safeFDate}</strong> → <strong>${safeTDate}</strong> | Generated: ${new Date().toLocaleString('en-IN')}</div>
       </div>
 
@@ -2258,7 +2258,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
           <div>
             <div style="font-size:15px;font-weight:900;color:#0f172a;letter-spacing:0.2px;">THE UNIQUE HAVEN HOMES</div>
             <div style="font-size:11px;font-weight:700;color:#0284c7;text-transform:uppercase;">
-              ${isRange ? 'TUHH-OD Period Financial Statement' : 'TUHH-OD Official Daily Statement'}
+              ${isRange ? 'Roost Bank Period Financial Statement' : 'Roost Bank Official Daily Statement'}
             </div>
           </div>
         </div>
@@ -2275,7 +2275,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
       <!-- Primary Hero Closing Balance Card -->
       <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#ffffff;border-radius:14px;padding:20px;text-align:center;border:1.5px solid #334155;box-shadow:0 6px 18px rgba(15,23,42,0.25);margin-bottom:16px;">
         <div style="font-size:11.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">
-          💰 ${isRange ? `CLOSING BALANCE AS OF ${endDateFmt}` : 'TUHH-OD CLOSING BALANCE'}
+          💰 ${isRange ? `CLOSING BALANCE AS OF ${endDateFmt}` : 'ROOST BANK CLOSING BALANCE'}
         </div>
         <div style="font-size:34px;font-weight:900;color:#4ade80;margin:6px 0;letter-spacing:-0.5px;">
           ${closeBalStr}
@@ -2442,7 +2442,7 @@ window.shareTodayBalanceWhatsApp = function() {
 
   const text = isRange ? [
     '🏦 *THE UNIQUE HAVEN HOMES PVT LTD*',
-    '📊 *TUHH-OD PERIOD FINANCIAL STATEMENT*',
+    '📊 *Roost-Bank PERIOD FINANCIAL STATEMENT*',
     `📅 *Statement Period:* ${dateRangeFmt}`,
     `🕒 *Refreshed:* ${timeStr}`,
     '────────────────────────────',
@@ -2458,14 +2458,14 @@ window.shareTodayBalanceWhatsApp = function() {
     `• Total Outflow: ${totalOut} (claims & spends)`,
     `• Running OD Balance: ${closeBal}`,
     '────────────────────────────',
-    '_🛡️ Owner Assurance: Automatically compiled from verified TUHH-OD bank receipts & claims._',
+    '_🛡️ Owner Assurance: Automatically compiled from verified Roost-Bank bank receipts & claims._',
     '_Generated by TUHH Financial Engine_'
   ].filter(Boolean).join('\n') : [
     '🏦 *THE UNIQUE HAVEN HOMES PVT LTD*',
-    '📊 *DAILY TUHH-OD CLOSING & BALANCE STATEMENT*',
+    '📊 *DAILY Roost-Bank CLOSING & BALANCE STATEMENT*',
     `📅 *Statement Day:* ${state.dateFmt} | ${timeStr}`,
     '────────────────────────────',
-    `💰 *CURRENT TUHH-OD CLOSING BALANCE:* *${closeBal}*`,
+    `💰 *CURRENT ROOST BANK CLOSING BALANCE:* *${closeBal}*`,
     '🛡️ *Status:* Verified & Reconciled (Zero Discrepancy)',
     '────────────────────────────',
     '📈 *ALL-TIME LEDGER (Post-Checkpoint 17-Sep):*',
@@ -2479,7 +2479,7 @@ window.shareTodayBalanceWhatsApp = function() {
     `• Net Daily Delta: ${netVal}`,
     (inVal === '₹0' && outVal === '₹0') ? '_(No new entries recorded yet today. Previous running balance carried forward)_' : '',
     '────────────────────────────',
-    '_🛡️ Owner Assurance: Automatically compiled from TUHH-OD bank receipts & verified vendor claims._',
+    '_🛡️ Owner Assurance: Automatically compiled from Roost-Bank bank receipts & verified vendor claims._',
     '_Generated by TUHH Financial Engine_'
   ].filter(Boolean).join('\n');
 

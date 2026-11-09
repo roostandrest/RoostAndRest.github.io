@@ -227,7 +227,7 @@ async function renderReports() {
     if (src) {
       return `<img src="${src}" alt="${r.nickname || r.room_id}" class="hh-prop-thumb" onerror="this.style.display='none'">`;
     }
-    return `<div class="hh-prop-thumb" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0284C7,#0369A1);color:#fff;font-weight:800;font-size:12px;">${r.unit_no || 'UH'}</div>`;
+    return `<div class="hh-prop-thumb" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#92400E,#0369A1);color:#fff;font-weight:800;font-size:12px;">${r.unit_no || 'UH'}</div>`;
   };
 
   if (window._calViewMode === 'timeline') {
@@ -327,7 +327,7 @@ async function renderReports() {
         }
         .hh-timeline-row:hover .hh-prop-card {
           background: #F0F9FF !important;
-          border-left: 3px solid #0284C7;
+          border-left: 3px solid #92400E;
         }
         .hh-timeline-row:hover .hh-timeline-track {
           background: rgba(2, 132, 199, 0.02) !important;
@@ -351,7 +351,7 @@ async function renderReports() {
         <div class="hh-cal-toolbar">
           <div class="hh-cal-toolbar-left">
             <h1 class="hh-cal-title">
-              <span><i class="ti ti-calendar" style="color:#0284C7;"></i></span>
+              <span><i class="ti ti-calendar" style="color:#92400E;"></i></span>
               <span>Unified Calendar</span>
             </h1>
             <div class="hh-cal-range-selector">
@@ -394,7 +394,7 @@ async function renderReports() {
         <!-- CHANNEL & PAYMENT STATUS LEGEND -->
         <div class="hh-cal-legend-bar">
           <span style="font-weight:800;color:#0F172A;font-size:11.5px;text-transform:uppercase;letter-spacing:0.4px;">Channels:</span>
-          <span class="hh-cal-legend-item"><span class="hh-legend-dot" style="background:#0284C7;"></span> Direct / Offline</span>
+          <span class="hh-cal-legend-item"><span class="hh-legend-dot" style="background:#92400E;"></span> Direct / Offline</span>
           <span class="hh-cal-legend-item"><span class="hh-legend-dot" style="background:#FF385C;"></span> Airbnb</span>
           ${bcomCount > 0 ? `<span class="hh-cal-legend-item"><span class="hh-legend-dot" style="background:#003580;"></span> Booking.com</span>` : ''}
           <span class="hh-cal-legend-item"><span class="hh-legend-dot" style="background:#475569;"></span> Blocked</span>
@@ -403,7 +403,7 @@ async function renderReports() {
           <span class="hh-cal-legend-item"><span class="hh-gantt-status-tag paid" style="font-size:10px;">✓ Paid</span> Full Balance Settled</span>
           <span class="hh-cal-legend-item"><span class="hh-gantt-status-tag due" style="font-size:10px;">⚠️ Due</span> Payment Outstanding</span>
           <span style="height:14px;width:1px;background:#CBD5E1;display:inline-block;margin:0 4px;"></span>
-          <span class="hh-cal-legend-item" style="color:#0284C7;font-weight:700;"><i class="ti ti-hand-click"></i> Click empty date to book instantly</span>
+          <span class="hh-cal-legend-item" style="color:#92400E;font-weight:700;"><i class="ti ti-hand-click"></i> Click empty date to book instantly</span>
         </div>
 
         <!-- KPI SUMMARY BAR -->
@@ -411,8 +411,8 @@ async function renderReports() {
           <div><span style="color:#64748B;">Properties:</span> <strong style="color:#0F172A;">${displayRooms.length}</strong></div>
           <div><span style="color:#64748B;">Total Bookings:</span> <strong style="color:#0F172A;">${realMb.length}</strong></div>
           <div><span style="color:#64748B;">Revenue:</span> <strong style="color:#10B981;">₹${(rev/1000).toFixed(0)}K</strong></div>
-          <div><span style="color:#64748B;">Occupancy:</span> <strong style="color:#0284C7;">${occ}%</strong></div>
-          <div><span style="color:#64748B;">Direct:</span> <strong style="color:#0284C7;">${offCount}</strong></div>
+          <div><span style="color:#64748B;">Occupancy:</span> <strong style="color:#92400E;">${occ}%</strong></div>
+          <div><span style="color:#64748B;">Direct:</span> <strong style="color:#92400E;">${offCount}</strong></div>
           <div><span style="color:#64748B;">Airbnb:</span> <strong style="color:#FF385C;">${onCount}</strong></div>
           ${bcomCount > 0 ? `<div><span style="color:#64748B;">Booking.com:</span> <strong style="color:#003580;">${bcomCount}</strong></div>` : ''}
         </div>
@@ -443,7 +443,7 @@ async function renderReports() {
                     <th class="hh-date-col-header ${isWeekend ? 'is-weekend' : ''} ${isToday ? 'is-today' : ''}" style="position:sticky;top:0;z-index:80;background:${thBg};width:${colWidth}px;min-width:${colWidth}px;max-width:${colWidth}px;">
                       <div class="hh-day-name">${dayShort}</div>
                       <div class="hh-day-num">${dayNum}</div>
-                      ${dayNum === 1 || idx === 0 ? `<div style="font-size:9.5px;font-weight:700;color:#0284C7;text-transform:uppercase;">${monthShort}</div>` : ''}
+                      ${dayNum === 1 || idx === 0 ? `<div style="font-size:9.5px;font-weight:700;color:#92400E;text-transform:uppercase;">${monthShort}</div>` : ''}
                       ${isToday ? `<div class="hh-today-pin-badge"><span>${dayNum}</span><small>Today</small></div>` : ''}
                     </th>
                   `;
@@ -639,14 +639,14 @@ async function renderReports() {
             <span>📆</span> ${mName} ${yr}
           </h1>
           <div class="sub" style="margin-top:2px;font-size:12px;color:#64748B;">
-            ${selRoom === 'all' ? 'All Properties (' + allRooms.length + ')' : allRooms.find(r => r.room_id === selRoom)?.nickname || selRoom} &bull; <strong style="color:#0284C7;">${occ}% Occupancy</strong>
+            ${selRoom === 'all' ? 'All Properties (' + allRooms.length + ')' : allRooms.find(r => r.room_id === selRoom)?.nickname || selRoom} &bull; <strong style="color:#92400E;">${occ}% Occupancy</strong>
           </div>
         </div>
 
         <!-- Single unified month navigation group -->
         <div style="display:inline-flex;align-items:center;background:#F1F5F9;border:1px solid #CBD5E1;border-radius:8px;padding:2px;flex-shrink:0;">
           <button type="button" class="btn-cal-nav" onclick="chMo(-1)" title="Previous Month" style="border:none;background:transparent;padding:6px 12px;font-size:13px;font-weight:800;color:#0F172A;cursor:pointer;border-radius:6px;">‹</button>
-          <button type="button" class="btn-cal-nav" onclick="calGoToday()" title="Current Month" style="border:none;background:#FFFFFF;padding:6px 14px;font-size:11.5px;font-weight:800;color:#0284C7;cursor:pointer;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">Today</button>
+          <button type="button" class="btn-cal-nav" onclick="calGoToday()" title="Current Month" style="border:none;background:#FFFFFF;padding:6px 14px;font-size:11.5px;font-weight:800;color:#92400E;cursor:pointer;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.08);">Today</button>
           <button type="button" class="btn-cal-nav" onclick="chMo(1)" title="Next Month" style="border:none;background:transparent;padding:6px 12px;font-size:13px;font-weight:800;color:#0F172A;cursor:pointer;border-radius:6px;">›</button>
           <button type="button" class="btn-cal-nav" onclick="renderReports()" title="Refresh live data" style="border:none;background:transparent;padding:6px 8px;font-size:12px;color:#475569;cursor:pointer;border-radius:6px;border-left:1px solid #E2E8F0;margin-left:2px;">🔄</button>
         </div>
@@ -674,7 +674,7 @@ async function renderReports() {
       <!-- PLATFORMS / CHANNELS COLOR LEGEND -->
       <div style="margin-top:12px;padding-top:10px;border-top:1px solid #E2E8F0;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:#475569;">
         <span style="font-weight:800;color:#0F172A;text-transform:uppercase;letter-spacing:0.4px;font-size:11px;">Platforms:</span>
-        <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#0284C7;display:inline-block;"></span> <strong>Direct / Offline</strong></span>
+        <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#92400E;display:inline-block;"></span> <strong>Direct / Offline</strong></span>
         <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#FF385C;display:inline-block;"></span> <strong>Airbnb</strong></span>
         ${bcomCount > 0 ? `<span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#003580;display:inline-block;"></span> <strong>Booking.com</strong></span>` : ''}
         <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:3px;background:#475569;display:inline-block;"></span> <strong>Blocked</strong></span>
@@ -694,8 +694,8 @@ async function renderReports() {
         <div class="stat-num" style="font-size:20px;font-weight:900;color:#10B981;">₹${(rev/1000).toFixed(0)}K</div>
         <div class="stat-label" style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;">Revenue Paid</div>
       </div>
-      <div class="stat-card" style="border-left:4px solid #0284C7;border-radius:12px;padding:12px 14px;">
-        <div class="stat-num" style="font-size:20px;font-weight:900;color:#0284C7;">${offCount}</div>
+      <div class="stat-card" style="border-left:4px solid #92400E;border-radius:12px;padding:12px 14px;">
+        <div class="stat-num" style="font-size:20px;font-weight:900;color:#92400E;">${offCount}</div>
         <div class="stat-label" style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;">Direct Stays</div>
       </div>
       <div class="stat-card" style="border-left:4px solid #FF385C;border-radius:12px;padding:12px 14px;">
@@ -870,7 +870,7 @@ async function renderReports() {
             ${thumbHtml}
             <div style="min-width:0;">
               <strong style="font-size:14px;color:var(--dark);word-break:break-word;display:flex;align-items:center;flex-wrap:wrap;gap:6px;line-height:1.2;">
-                ${r.unit_no ? `<span style="background:#0284C7;color:#fff;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(r.unit_no)}</span>` : ''}
+                ${r.unit_no ? `<span style="background:#92400E;color:#fff;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:800;letter-spacing:0.3px;">${escapeHtml(r.unit_no)}</span>` : ''}
                 <span>${escapeHtml(r.nickname || r.property_name || r.unit_no)}</span>
               </strong>
               <span style="color:var(--muted);font-size:11.5px;word-break:break-word;margin-top:2px;display:inline-block;">${r.unit_no}${r.rent_per_night ? ' · <span style="color:#059669;font-weight:700;">₹' + r.rent_per_night.toLocaleString('en-IN') + '/night</span>' : ''}</span>
@@ -1262,7 +1262,7 @@ async function showMultiBookingList(bookings, roomId, dateStr) {
           <button class="btn-sm" style="background:#0F172A;color:#fff;flex:1;" onclick="this.closest('.modal-overlay').remove(); openBookingDetails('${b.booking_id}');">📋 Details</button>
           <button class="btn-sm" onclick="this.closest('.modal-overlay').remove(); if(window.editBooking) editBooking('${b.booking_id}');" style="flex:1;">✏️ Edit</button>
           <button class="btn-sm secondary" onclick="this.closest('.modal-overlay').remove(); if(window.openAddPaymentModal) openAddPaymentModal('${b.booking_id}'); else if(window.showPaymentModal) showPaymentModal('${b.booking_id}');" style="flex:1;">💰 Pay</button>
-          <button class="btn-sm" style="background:#0284C7;color:#fff;flex:1;" onclick="this.closest('.modal-overlay').remove(); if(window.showSecurityDepositModal) showSecurityDepositModal('${b.booking_id}');" title="Manage Security Deposit">🛡️ Deposit</button>
+          <button class="btn-sm" style="background:#92400E;color:#fff;flex:1;" onclick="this.closest('.modal-overlay').remove(); if(window.showSecurityDepositModal) showSecurityDepositModal('${b.booking_id}');" title="Manage Security Deposit">🛡️ Deposit</button>
           <button class="btn-sm" style="background:#7C3AED;color:#fff;flex:1;" onclick="this.closest('.modal-overlay').remove(); openExtractBookingModal('${b.booking_id}', '${dateStr}');">✂️ Shift</button>
           <button class="btn-sm" style="background:#25D366;color:#fff;flex:1;" onclick="calOpenWhatsApp('${b.booking_id}', this);">📱 WA</button>
           <button class="btn-sm danger" onclick="calDeleteBooking('${b.booking_id}', '${(b.guest_name || 'Booking').replace(/'/g, "\\'")}', '${b.room_id}');" style="background:#DC2626;color:#fff;flex:1;">🗑️ Del</button>
@@ -1519,7 +1519,7 @@ window.openBookingDetails = async function(bId) {
           <button onclick="this.closest('.modal-overlay').remove(); if(window.openAddPaymentModal) openAddPaymentModal('${b.booking_id}'); else if(window.showPaymentModal) showPaymentModal('${b.booking_id}');" style="padding:10px;background:#059669;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
             💵 Add Payment
           </button>
-          <button onclick="this.closest('.modal-overlay').remove(); if(window.showSecurityDepositModal) showSecurityDepositModal('${b.booking_id}');" style="padding:10px;background:#0284C7;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
+          <button onclick="this.closest('.modal-overlay').remove(); if(window.showSecurityDepositModal) showSecurityDepositModal('${b.booking_id}');" style="padding:10px;background:#92400E;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">
             🛡️ Security Deposit
           </button>
           <button onclick="this.closest('.modal-overlay').remove(); openExtractBookingModal('${b.booking_id}', '${b.check_in}');" style="padding:10px;background:#7C3AED;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">

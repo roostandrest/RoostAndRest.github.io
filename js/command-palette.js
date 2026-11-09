@@ -1285,7 +1285,7 @@
             { key: `${altSymbol}B`, single: 'B', label: '📑 Smart Bookings', desc: 'View all reservations & guests register', action: 'window.openBookingsShortcut()' },
             { key: `${altSymbol}F`, single: 'F', label: '🛏️ Flats & Turnaround', desc: 'Realtime room turnaround Kanban board', action: 'window.openFlatsShortcut()' },
             { key: `${altSymbol}U`, single: 'U', label: '🏢 Units & Nightly Pricing', desc: 'Master inventory, live nightly rates, caretaker & manager contacts', action: 'window.openUnitsShortcut()' },
-            { key: `${altSymbol}Q`, single: 'Q', label: '⚖️ Universal Claims & TUHH-OD', desc: 'Daily Closing Statements, company ledger & vendor claim approvals', action: 'window.openClaimShortcut()' },
+            { key: `${altSymbol}Q`, single: 'Q', label: '⚖️ Universal Claims & Roost-Bank', desc: 'Daily Closing Statements, company ledger & vendor claim approvals', action: 'window.openClaimShortcut()' },
             { key: `${altSymbol}E`, single: 'E', label: '📊 Expenses & Outflow Hub', desc: 'Open Expenses page (Wi-Fi, Maintenance, Laundry, Staff Advances & P&L)', action: 'window.openExpensesShortcut()' },
             { key: `${altSymbol}⇧E`, single: '⇧E', label: '➕ Add Expense', desc: 'Directly open Add Expense modal', action: 'window.openAddExpenseModalShortcut()' },
             { key: `${altSymbol}T`, single: 'T', label: '📋 Staff Tasks & Checklists', desc: 'Housekeeping, deep cleans & staff duties (Alt+Shift+T for new)', action: 'window.openTasksShortcut()' },
@@ -1311,7 +1311,7 @@
         </div>
 
         <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
-          <button type="button" onclick="document.getElementById('uhhShortcutsModal')?.remove();navigate('help')" style="flex:1;background:linear-gradient(135deg,#0284C7,#0369A1);border:none;color:#FFFFFF;border-radius:10px;padding:11px 16px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(2,132,199,0.35);">
+          <button type="button" onclick="document.getElementById('uhhShortcutsModal')?.remove();navigate('help')" style="flex:1;background:linear-gradient(135deg,#92400E,#0369A1);border:none;color:#FFFFFF;border-radius:10px;padding:11px 16px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(2,132,199,0.35);">
             <i class="ti ti-book-2" style="font-size:16px;"></i> <span>Open Full Software Guide & User Manual (How to Use)</span>
           </button>
         </div>
