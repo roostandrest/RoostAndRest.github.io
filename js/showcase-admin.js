@@ -298,7 +298,7 @@
               📁 Upload from Device
               <input type="file" accept="image/*" style="display:none;" onchange="window.uploadShowcaseCoverFile(this.files[0])"/>
             </label>
-            <img src="${prop.cover_image || 'assets/logo.png'}" alt="Cover Preview" style="width:60px;height:45px;border-radius:8px;object-fit:cover;border:1px solid #CBD5E1;" />
+            <img src="${prop.cover_image || 'assets/logo.svg'}" alt="Cover Preview" style="width:60px;height:45px;border-radius:8px;object-fit:cover;border:1px solid #CBD5E1;" />
           </div>
         </div>
 
@@ -318,7 +318,7 @@
               <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;">
                 ${list.map((url, idx) => `
                   <div style="position:relative;width:110px;height:80px;flex-shrink:0;border-radius:8px;overflow:hidden;border:1.5px solid #CBD5E1;">
-                    <img src="${url}" alt="${cat.key}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='assets/logo.png';" />
+                    <img src="${url}" alt="${cat.key}" style="width:100%;height:100%;object-fit:cover;" onerror="this.src='assets/logo.svg';" />
                     <button onclick="window.removeShowcasePhoto('${cat.key}', ${idx})" title="Remove Photo" style="position:absolute;top:3px;right:3px;background:rgba(239,68,68,0.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
                       ✕
                     </button>

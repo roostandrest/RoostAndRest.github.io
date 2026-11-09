@@ -2220,7 +2220,7 @@ async function renderFYSummary(range = 'FY', propFilter = '', modeFilter = '') {
 
   if (isCA) {
     appEl.innerHTML = `<div class="ca-wrap">
-      <div class="ca-header"><img src="assets/logo.png" alt="" style="width:48px;height:48px;object-fit:contain;border-radius:10px;margin-bottom:6px;" />
+      <div class="ca-header"><img src='assets/logo.svg' alt="" style="width:48px;height:48px;object-fit:contain;border-radius:10px;margin-bottom:6px;" />
         <h1>${BRAND}</h1><div class="sub">👋 ${SESSION.displayName || 'CA'} — Accountant</div>
         <button class="ca-logout" onclick="logout()">🚪 Logout</button></div>
       ${summaryContent}

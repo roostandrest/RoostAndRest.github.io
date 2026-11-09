@@ -953,7 +953,7 @@ function renderPendingApprovalScreen(name, email, avatar = '') {
   appEl.innerHTML = `
     <div class="wrap">
       <div class="card" style="text-align:center;max-width:460px;margin:40px auto;padding:32px 24px;box-shadow:0 10px 25px rgba(0,0,0,0.08);border-radius:16px;">
-        <img src="assets/logo.png" alt="" style="width:68px;height:68px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
+        <img src='assets/logo.svg' alt="" style="width:68px;height:68px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
         <h2 style="margin:0 0 8px;font-size:20px;color:var(--dark);">${BRAND}</h2>
         ${avatar ? `<img src="${avatar}" style="width:52px;height:52px;border-radius:50%;margin:10px auto;border:2px solid #F59E0B;" />` : ''}
         <div style="margin:16px 0;padding:18px;background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:12px;text-align:center;">
@@ -984,7 +984,7 @@ function renderAccessSuspendedScreen(name, email) {
   appEl.innerHTML = `
     <div class="wrap">
       <div class="card" style="text-align:center;max-width:460px;margin:40px auto;padding:32px 24px;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
-        <img src="assets/logo.png" alt="" style="width:68px;height:68px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
+        <img src='assets/logo.svg' alt="" style="width:68px;height:68px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
         <h2 style="margin:0 0 8px;font-size:20px;color:var(--dark);">${BRAND}</h2>
         <div style="margin:16px 0;padding:18px;background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:12px;">
           <div style="font-size:32px;margin-bottom:6px;">🚫</div>

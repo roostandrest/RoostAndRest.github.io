@@ -2280,7 +2280,7 @@
           currency: 'INR',
           name: 'The Unique Haven Homes',
           description: `${p.name} (${this.nights} Nights)`,
-          image: 'assets/logo.png',
+          image: 'assets/logo.svg',
           prefill: {
             name: data.name,
             contact: data.phone,
@@ -2463,7 +2463,7 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
         companyGstin,
         utr,
         waUrl,
-        propertyCover: p.cover_image || (this.catalog.all[0] ? this.catalog.all[0].url : 'assets/logo.png'),
+        propertyCover: p.cover_image || (this.catalog.all[0] ? this.catalog.all[0].url : 'assets/logo.svg'),
         paymentMode,
         bookedAt: new Date().toISOString()
       };
@@ -2527,7 +2527,7 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
                 SAC Code: <strong>996311</strong> (Short-Stay Accommodation Services)
               </div>
             </div>
-            <img src="assets/logo.png" alt="Logo" style="width:48px; height:48px; border-radius:10px; object-fit:contain;" />
+            <img src='assets/logo.svg' alt="Logo" style="width:48px; height:48px; border-radius:10px; object-fit:contain;" />
           </div>
 
           <div style="text-align:center; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px; margin-bottom:16px;">

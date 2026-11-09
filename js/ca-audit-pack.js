@@ -432,7 +432,7 @@ window.CA_AUDIT_PACK = (function() {
                 <span style="width:11px;height:11px;border-radius:50%;background:#10B981;display:inline-block;"></span>
               </div>
               <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#0F172A;">
-                <img src="assets/logo-emblem.png?v=393" alt="TUHH" style="width:18px;height:18px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
+                <img src='assets/logo.svg' alt="TUHH" style="width:18px;height:18px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
                 <span>${CO.name} · CA Tax &amp; Airbnb Payout Suite</span>
               </div>
             </div>

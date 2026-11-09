@@ -1583,7 +1583,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
       <div class="header-card" style="background:#0F172A;color:#FFFFFF;padding:16px 20px;border-radius:8px;margin-bottom:14px;border:1px solid #1E293B;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div style="display:flex;align-items:center;gap:14px;">
-            <img src="assets/apple-touch-icon.png" alt="TUHH Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='https://uniquehavenhomesstay.com/assets/logo.png';" />
+            <img src="assets/apple-touch-icon.png" alt="TUHH Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='assets/logo.svg';" />
             <div>
               <div style="font-size:18px;font-weight:900;letter-spacing:0.5px;color:#FFFFFF;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
               <div style="font-size:12.5px;font-weight:700;color:#FCD34D;margin-top:2px;letter-spacing:0.3px;">OFFICIAL GUEST STATEMENT OF ACCOUNT & LEDGER (अतिथि खाता विवरण)</div>

@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS public.rooms (
   mode TEXT DEFAULT 'Active',
   bookable BOOLEAN DEFAULT true,
   notes TEXT,
+  cover_image TEXT,
   airbnb_ical_url TEXT,
   whatsapp_group_link TEXT,
   whatsapp_group_name TEXT,
@@ -376,30 +377,31 @@ CREATE POLICY "Allow all laundry_records" ON public.laundry_records FOR ALL USIN
 -- ═══════════════════════════════════════════════════════════════════
 -- 16. SEED ALL 18 ROOST AND REST PROPERTIES
 -- ═══════════════════════════════════════════════════════════════════
-INSERT INTO public.rooms (room_id, unit_no, property_name, nickname, unit_type, rent_per_night, max_guests, address, notes) VALUES
-  ('RST-101', '101', 'Awadh Abode : Modern 2BHK in City Centre', 'Awadh Abode', '2BHK Modern Flat', 3443, 6, 'City Centre, Lucknow, UP', '[AIRBNB_ID: 1513689704038700506]'),
-  ('RST-102', '102', 'Green leaf Corner: 2Bhk in Lucknow', 'Green Leaf Corner', '2BHK Flat', 3000, 6, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1432351238708631534]'),
-  ('RST-103', '103', 'Moon Light House: 3Bhk with garden', 'Moon Light House', '3BHK Villa with Garden', 3600, 8, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1403663140808704064]'),
-  ('RST-104', '104', 'Palladium Loft: Medanta Hospital | LuLu | Ekana', 'Palladium Loft', 'Luxury Loft', 3800, 4, 'Near Medanta & LuLu Mall, Shaheed Path, Lucknow', '[AIRBNB_ID: 1728065461825716832]'),
-  ('RST-105', '105', 'Peaceful Nest', 'Peaceful Nest', 'Cozy Homestay', 3250, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1472836855538423252]'),
-  ('RST-106', '106', 'The Awadh Retreat | Amity University', 'The Awadh Retreat', 'Executive Stay', 3600, 4, 'Near Amity University, Gomti Nagar, Lucknow', '[AIRBNB_ID: 1754920271857081441]'),
-  ('RST-107', '107', 'The Comfort Corner: 2BHK Centrally located', 'The Comfort Corner', '2BHK Central Flat', 2639, 6, 'Centrally Located, Lucknow', '[AIRBNB_ID: 1546149723330595826]'),
-  ('RST-108', '108', 'The Cozy Corner', 'The Cozy Corner', '1BHK Cozy Flat', 2800, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1765272258371576617]'),
-  ('RST-109', '109', 'The Eighteenth: Amity Campus', 'The Eighteenth', 'Executive Flat', 3200, 4, 'Amity Campus, Lucknow', '[AIRBNB_ID: 1778104021407872339]'),
-  ('RST-110', '110', 'The Family Fun Heaven; 1BHK in posh locality', 'Family Fun Heaven', '1BHK Posh Stay', 3000, 4, 'Posh Locality, Lucknow', '[AIRBNB_ID: 1381275814432030373]'),
-  ('RST-111', '111', 'The Grand Alcove : Krishnam Villa', 'The Grand Alcove', 'Luxury Villa', 6500, 8, 'Krishnam Villa, Lucknow', '[AIRBNB_ID: 1673624571406248647]'),
-  ('RST-112', '112', 'The Luxe Haven : Gomti Nagar Extension', 'The Luxe Haven', 'Luxury Homestay', 4200, 6, 'Gomti Nagar Extension, Lucknow', '[AIRBNB_ID: 1756974059274081131]'),
-  ('RST-113', '113', 'The Monarch Suites', 'The Monarch Suites', 'Executive Suite', 3500, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1759943752045444261]'),
-  ('RST-114', '114', 'The Nestora', 'The Nestora', 'Boutique Homestay', 3200, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1758780588353629399]'),
-  ('RST-115', '115', 'The Nivora Nest- A cozy retreat for memorable stay', 'The Nivora Nest', 'Cozy Retreat', 3100, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1754941277309610915]'),
-  ('RST-116', '116', 'The Rustic Anjuman : A day in Gray and white', 'The Rustic Anjuman', 'Thematic Designer Flat', 3300, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1311579015127768002]'),
-  ('RST-117', '117', 'The Zenvana:A Peaceful Retreat like blissful scape', 'The Zenvana', 'Peaceful Retreat', 3400, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1700681506593234895]'),
-  ('RST-118', '118', 'Roost Presidential Suite : Luxury Stay', 'Presidential Suite', 'Luxury Penthouse', 4500, 6, 'Gomti Nagar, Lucknow', '[AIRBNB_ID: roost_suite_118]')
+INSERT INTO public.rooms (room_id, unit_no, property_name, nickname, unit_type, rent_per_night, max_guests, address, notes, cover_image) VALUES
+  ('RST-101', '101', 'Awadh Abode : Modern 2BHK in City Centre', 'Awadh Abode', '2BHK Modern Flat', 3443, 6, 'City Centre, Lucknow, UP', '[AIRBNB_ID: 1513689704038700506]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1513689704038700506/original/9b405a54-f22b-4de7-a965-05d3ff1e0767.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-102', '102', 'Green leaf Corner: 2Bhk in Lucknow', 'Green Leaf Corner', '2BHK Flat', 3000, 6, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1432351238708631534]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1432351238708631534/original/275e9ae8-50a2-4895-9bb3-abce94f0d920.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-103', '103', 'Moon Light House: 3Bhk with garden', 'Moon Light House', '3BHK Villa with Garden', 3600, 8, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1403663140808704064]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1403663140808704064/original/dd177a7d-833a-40c2-95b9-b5aa3f39ac97.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-104', '104', 'Palladium Loft: Medanta Hospital | LuLu | Ekana', 'Palladium Loft', 'Luxury Loft', 3800, 4, 'Near Medanta & LuLu Mall, Shaheed Path, Lucknow', '[AIRBNB_ID: 1728065461825716832]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1728065461825716832/original/829b15d0-1a86-4123-8769-ee1b960953cd.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-105', '105', 'Peaceful Nest', 'Peaceful Nest', 'Cozy Homestay', 3250, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1472836855538423252]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1472836855538423252/original/44cd3e32-8c59-40c6-b389-3bf8da3acc84.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-106', '106', 'The Awadh Retreat | Amity University', 'The Awadh Retreat', 'Executive Stay', 3600, 4, 'Near Amity University, Gomti Nagar, Lucknow', '[AIRBNB_ID: 1754920271857081441]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1754920271857081441/original/d8b0694b-88ac-487b-9316-7b4f370d2126.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-107', '107', 'The Comfort Corner: 2BHK Centrally located', 'The Comfort Corner', '2BHK Central Flat', 2639, 6, 'Centrally Located, Lucknow', '[AIRBNB_ID: 1546149723330595826]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1546149723330595826/original/198c4447-ad8e-4dca-8f26-af3f552e7874.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-108', '108', 'The Cozy Corner', 'The Cozy Corner', '1BHK Cozy Flat', 2800, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1765272258371576617]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1765272258371576617/original/5887cb69-b96f-4816-b4c4-844756337556.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-109', '109', 'The Eighteenth: Amity Campus', 'The Eighteenth', 'Executive Flat', 3200, 4, 'Amity Campus, Lucknow', '[AIRBNB_ID: 1778104021407872339]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1778104021407872339/original/32963758-29bc-4d07-9c3f-112e7940785f.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-110', '110', 'The Family Fun Heaven; 1BHK in posh locality', 'Family Fun Heaven', '1BHK Posh Stay', 3000, 4, 'Posh Locality, Lucknow', '[AIRBNB_ID: 1381275814432030373]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1381275814432030373/original/69034a2c-d262-4579-b710-c7995e31acfe.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-111', '111', 'The Grand Alcove : Krishnam Villa', 'The Grand Alcove', 'Luxury Villa', 6500, 8, 'Krishnam Villa, Lucknow', '[AIRBNB_ID: 1673624571406248647]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1673624571406248647/original/b0bfbd82-fc94-4229-94a8-118b7d80db77.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-112', '112', 'The Luxe Haven : Gomti Nagar Extension', 'The Luxe Haven', 'Luxury Homestay', 4200, 6, 'Gomti Nagar Extension, Lucknow', '[AIRBNB_ID: 1756974059274081131]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1756974059274081131/original/9c4d07d0-50c6-46fb-b70a-b8007d1e0910.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-113', '113', 'The Monarch Suites', 'The Monarch Suites', 'Executive Suite', 3500, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1759943752045444261]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1759943752045444261/original/35df2128-4c72-418b-8c0b-e6da033a9921.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-114', '114', 'The Nestora', 'The Nestora', 'Boutique Homestay', 3200, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1758780588353629399]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1758780588353629399/original/822ce740-7146-4bd3-aae4-ef5e9756e2bb.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-115', '115', 'The Nivora Nest- A cozy retreat for memorable stay', 'The Nivora Nest', 'Cozy Retreat', 3100, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1754941277309610915]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1754941277309610915/original/dc389cd9-7fdc-4ca1-aff8-eccc1bb8d9a4.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-116', '116', 'The Rustic Anjuman : A day in Gray and white', 'The Rustic Anjuman', 'Thematic Designer Flat', 3300, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1311579015127768002]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1311579015127768002/original/194e0123-70f8-4d6f-a511-cd10ab4ab4b9.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-117', '117', 'The Zenvana:A Peaceful Retreat like blissful scape', 'The Zenvana', 'Peaceful Retreat', 3400, 4, 'Lucknow, Uttar Pradesh', '[AIRBNB_ID: 1700681506593234895]', 'https://a0.muscache.com/im/pictures/hosting/Hosting-1700681506593234895/original/6500a33c-c7c9-4bd6-8ea8-84f9c09e9014.jpeg?im_w=720&width=720&quality=70&auto=webp'),
+  ('RST-118', '118', 'Roost Presidential Suite : Luxury Stay', 'Presidential Suite', 'Luxury Penthouse', 4500, 6, 'Gomti Nagar, Lucknow', '[AIRBNB_ID: roost_suite_118]', 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80')
 ON CONFLICT (room_id) DO UPDATE SET
   property_name  = EXCLUDED.property_name,
   nickname       = EXCLUDED.nickname,
   rent_per_night = EXCLUDED.rent_per_night,
-  unit_type      = EXCLUDED.unit_type;
+  unit_type      = EXCLUDED.unit_type,
+  cover_image    = EXCLUDED.cover_image;
 
 -- Seed initial flats cleaning status
 INSERT INTO public.flats_status (room_id, status, cleaning_status)

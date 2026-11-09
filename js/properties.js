@@ -278,7 +278,7 @@ async function renderManageRooms() {
 
         const scProp = (window.ShowcaseData && window.ShowcaseData.getProperty ? window.ShowcaseData.getProperty(r.room_id) : null) ||
                        (window.ShowcaseData && window.ShowcaseData.BASELINE ? window.ShowcaseData.BASELINE[r.room_id] : null);
-        const coverImg = scProp?.cover_image || r.cover_image || 'assets/logo-emblem.png';
+        const coverImg = (window.ROOST_PROPERTY_IMAGES && window.ROOST_PROPERTY_IMAGES[r.room_id]) || scProp?.cover_image || r.cover_image || 'assets/logo.svg';
         const displayName = r.nickname || scProp?.name || r.property_name || r.room_id;
         const areaName = scProp?.area_name || r.building_name || r.address || '';
         const isBookable = r.bookable !== false && r.mode !== 'Off';
@@ -293,7 +293,7 @@ async function renderManageRooms() {
           <div class="unit-prop-card" data-search="${escapeHtml(searchKeywords)}" data-status="${statusType}">
             <div class="unit-media-row">
               <div class="unit-thumb-wrapper">
-                <img src="${coverImg}" alt="${escapeHtml(displayName)}" class="unit-thumb-img" onerror="this.onerror=null;this.src='assets/logo-emblem.png';" />
+                <img src="${coverImg}" alt="${escapeHtml(displayName)}" class="unit-thumb-img" onerror="this.onerror=null;this.src='assets/logo.svg';" />
                 <span class="unit-badge-unit">${r.unit_no || r.room_id}</span>
               </div>
               <div class="unit-info-body">
@@ -1038,13 +1038,13 @@ async function renderFlatsStatus() {
 
           const scProp = (window.ShowcaseData && window.ShowcaseData.getProperty ? window.ShowcaseData.getProperty(f.room_id) : null) ||
                          (window.ShowcaseData && window.ShowcaseData.BASELINE ? window.ShowcaseData.BASELINE[f.room_id] : null);
-          const coverImg = scProp?.cover_image || f.rooms?.cover_image || 'assets/logo-emblem.png';
+          const coverImg = (window.ROOST_PROPERTY_IMAGES && window.ROOST_PROPERTY_IMAGES[f.room_id]) || scProp?.cover_image || f.rooms?.cover_image || 'assets/logo.svg';
 
           // Caretaker contact & whatsapp
           const ctName = f.rooms?.checkin_manager || 'Staff';
           const ctPhone = (f.rooms?.caretaker_phone || '').replace(/[^0-9]/g, '');
           const propTitle = propLabel(f.rooms) || f.room_id;
-          const waMsg = encodeURIComponent(`*TUHH Housekeeping Update*\nFlat: ${propTitle} (Unit ${f.rooms?.unit_no || f.room_id})\nCleaning Status: ${f.cleaning_status || 'Dirty'}\nPlease inspect and prepare.`);
+          const waMsg = encodeURIComponent(`*Roost & Rest Housekeeping Update*\nFlat: ${propTitle} (Unit ${f.rooms?.unit_no || f.room_id})\nCleaning Status: ${f.cleaning_status || 'Dirty'}\nPlease inspect and prepare.`);
           const waLink = ctPhone ? `https://wa.me/91${ctPhone.slice(-10)}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
 
           return `
@@ -1052,7 +1052,7 @@ async function renderFlatsStatus() {
               <div>
                 <!-- Property Title, Thumbnail & Occupancy Badge -->
                 <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;">
-                  <img src="${coverImg}" alt="${escapeHtml(propTitle)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#E2E8F0;" onerror="this.onerror=null;this.src='assets/logo-emblem.png';" />
+                  <img src="${coverImg}" alt="${escapeHtml(propTitle)}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#E2E8F0;" onerror="this.onerror=null;this.src='assets/logo.svg';" />
                   <div style="flex:1;min-width:0;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
                       <div style="font-size:15px;font-weight:800;color:var(--dark);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">

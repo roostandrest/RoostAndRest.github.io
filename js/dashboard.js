@@ -215,7 +215,7 @@ window.renderAirbnbOverlappingMedia = function (b) {
     ))
   )) || {};
 
-  let coverImg = base.cover_image;
+  let coverImg = (window.ROOST_PROPERTY_IMAGES && (window.ROOST_PROPERTY_IMAGES[b.room_id] || window.ROOST_PROPERTY_IMAGES[base.room_id])) || base.cover_image;
   if (!coverImg || coverImg.includes('logo-emblem.png') || coverImg.includes('logo.png')) {
     if (typeof getPropertyCoverThumb === 'function') {
       coverImg = getPropertyCoverThumb(b);
@@ -230,7 +230,7 @@ window.renderAirbnbOverlappingMedia = function (b) {
     if (isTehzeeb) {
       coverImg = 'https://a0.muscache.com/im/pictures/hosting/Hosting-1814548211970648885/original/58465c71-9bc8-49a9-8ab9-51c98f663392.png?im_w=720&width=720&quality=70&auto=webp';
     } else {
-      coverImg = 'assets/logo-emblem.png';
+      coverImg = 'assets/logo.svg';
     }
   }
 
@@ -247,7 +247,7 @@ window.renderAirbnbOverlappingMedia = function (b) {
       <div class="airbnb-avatar-bubble" style="background:${bg};">
         ${guestPhoto ? `<img src="${guestPhoto}" alt="${escapeHtml(name)}" />` : `<span>${initial}</span>`}
       </div>
-      <img src="${coverImg}" alt="${escapeHtml(base.name || 'Listing')}" class="airbnb-thumb-bubble" onerror="this.onerror=null;this.src='assets/logo-emblem.png';" />
+      <img src="${coverImg}" alt="${escapeHtml(base.name || 'Listing')}" class="airbnb-thumb-bubble" onerror="this.onerror=null;this.src='assets/logo.svg';" />
     </div>
   `;
 };
@@ -2271,8 +2271,8 @@ window.renderExecutiveDashboard = async function () {
               <span class="hh-mac-dot green"></span>
             </div>
             <div class="hh-mac-title" style="display:flex;align-items:center;gap:7px;">
-              <img src="assets/logo-emblem.png?v=393" alt="TUHH" style="width:17px;height:17px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
-              <span>The Unique Haven Homes · Analytics</span>
+              <img src='assets/logo.svg' alt="TUHH" style="width:17px;height:17px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
+              <span>Roost And Rest · Analytics</span>
             </div>
             <div class="hh-mac-live-badge">
               <span class="hh-mac-live-dot"></span> Live data

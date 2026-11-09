@@ -798,7 +798,7 @@ function getPropertyCoverThumb(b) {
   for (const [rid, url] of Object.entries(ROOM_COVER_FALLBACKS)) {
     if (nick && nick.includes(rid.toLowerCase())) return url;
   }
-  return 'assets/logo.png';
+  return 'assets/logo.svg';
 }
 
 function renderSingleAirbnbResCard(b, paidMap, canM, today) {
@@ -880,7 +880,7 @@ function renderSingleAirbnbResCard(b, paidMap, canM, today) {
                 ${escapeHtml(avatarInfo.initial)}
               </div>
             `}
-            <img src="${propThumb}" class="airbnb-property-thumb-badge" alt="${escapeHtml(propertySub)}" title="${escapeHtml(propertySub)}" onerror="this.src='assets/logo.png'"/>
+            <img src="${propThumb}" class="airbnb-property-thumb-badge" alt="${escapeHtml(propertySub)}" title="${escapeHtml(propertySub)}" onerror="this.src='assets/logo.svg'"/>
           `}
         </div>
       </div>

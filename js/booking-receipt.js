@@ -351,9 +351,9 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
     const wordsPaid = numToWords(paidAmount);
     const wordsBalance = balanceDue > 0 ? numToWords(balanceDue) : '';
 
-    let logoSrc = 'assets/logo.png';
+    let logoSrc = 'assets/logo.svg';
     try {
-      logoSrc = new URL('assets/logo.png', window.location.href).href;
+      logoSrc = new URL('assets/logo.svg', window.location.href).href;
     } catch(e) {}
 
     return `
@@ -1150,8 +1150,8 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     const receiptNo = isMulti ? `UHH-GRP/${data.stayGroupId || 'GROUP'}` : `UHH-REC/${data.booking?.booking_id || 'SLIP'}`;
     const todayStr = formatDate(new Date().toISOString().slice(0, 10));
 
-    let logoSrc = 'assets/logo.png';
-    try { logoSrc = new URL('assets/logo.png', window.location.href).href; } catch(e) {}
+    let logoSrc = 'assets/logo.svg';
+    try { logoSrc = new URL('assets/logo.svg', window.location.href).href; } catch(e) {}
 
     // Status Styling
     let statusText = 'FULL PAYMENT SETTLED';
@@ -2080,9 +2080,9 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     const wordsPaid = numToWords(paidAmount);
     const wordsBalance = balanceDue > 0 ? numToWords(balanceDue) : '';
 
-    let logoSrc = 'assets/logo.png';
+    let logoSrc = 'assets/logo.svg';
     try {
-      logoSrc = new URL('assets/logo.png', window.location.href).href;
+      logoSrc = new URL('assets/logo.svg', window.location.href).href;
     } catch(e) {}
 
     return `

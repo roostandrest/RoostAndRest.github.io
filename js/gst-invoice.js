@@ -292,7 +292,7 @@ window.GST_ENGINE = (function() {
         
         <!-- Left: Company Info -->
         <div style="flex:1.25;padding:8px 10px;border-right:1.5px solid #000;display:flex;gap:10px;align-items:flex-start;">
-          <img src="https://uniquehavenhomesstay.com/assets/logo.png" alt="Logo" style="width:58px;height:58px;object-fit:contain;flex-shrink:0;" onerror="this.onerror=null;this.src='assets/logo.png';"/>
+          <img src='assets/logo.svg' alt="Logo" style="width:58px;height:58px;object-fit:contain;flex-shrink:0;" onerror="this.onerror=null;this.src='assets/logo.svg';"/>
           <div style="font-size:10px;line-height:1.45;">
             <div style="font-size:13.5px;font-weight:900;color:#000;margin-bottom:2px;letter-spacing:0.2px;">
               ${CO.name}
