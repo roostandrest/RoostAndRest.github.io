@@ -1112,9 +1112,9 @@ function renderLogin() {
         height: 76px;
         margin: 0 auto 16px;
         border-radius: 20px;
-        background: linear-gradient(135deg, #92400E 0%, #38BDF8 100%);
+        background: linear-gradient(135deg, #B45309 0%, #78350F 100%);
         padding: 3px;
-        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.28);
+        box-shadow: 0 8px 24px rgba(180, 83, 9, 0.28);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1269,8 +1269,8 @@ function renderLogin() {
       }
       .uhh-signin-btn:hover:not(:disabled) {
         transform: translateY(-1px);
-        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
-        background: linear-gradient(135deg, #0369A1 0%, #92400E 100%);
+        box-shadow: 0 6px 20px rgba(180, 83, 9, 0.35);
+        background: linear-gradient(135deg, #78350F 0%, #92400E 100%);
       }
       .uhh-signin-btn:active:not(:disabled) { transform: translateY(0); }
       .uhh-signin-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
@@ -1349,9 +1349,12 @@ function renderLogin() {
             ✦ &nbsp;Sign In to CRM
           </button>
 
-          <div style="margin-top:12px;text-align:center;">
+          <div style="margin-top:12px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" onclick="quickFillAnwar()" style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#92400E;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+              <span>🔑</span> Auto-fill Anwar (Admin)
+            </button>
             <button type="button" onclick="quickFillAdmin()" style="background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:700;color:#475569;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
-              <span>🔑</span> Auto-fill Admin Login
+              <span>🔑</span> Auto-fill Admin
             </button>
           </div>
 
@@ -1383,6 +1386,13 @@ async function loginWithGoogle() {
     document.getElementById('loginErr').innerHTML = `<div class="error">${error.message}</div>`;
   }
 }
+
+window.quickFillAnwar = function() {
+  const em = document.getElementById('email');
+  const pw = document.getElementById('password');
+  if (em) em.value = 'anwar@roostandrest.com';
+  if (pw) pw.value = 'Airbnb.in1';
+};
 
 window.quickFillAdmin = function() {
   const em = document.getElementById('email');
@@ -2631,9 +2641,9 @@ window.getBookingSource = function(b) {
     badgeClass: 'channel-direct',
     chipClass: 'direct',
     color: '#92400E',
-    bgColor: '#E0F2FE',
-    borderColor: '#BAE6FD',
-    pillGradient: 'linear-gradient(135deg, #92400E 0%, #0369A1 100%)',
+    bgColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    pillGradient: 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
     isOnline: false
   };
 
@@ -2736,9 +2746,9 @@ window.getBookingSource = function(b) {
     badgeClass: 'channel-direct',
     chipClass: 'direct',
     color: '#92400E',
-    bgColor: '#E0F2FE',
-    borderColor: '#BAE6FD',
-    pillGradient: 'linear-gradient(135deg, #92400E 0%, #0369A1 100%)',
+    bgColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    pillGradient: 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
     isOnline: false
   };
 };

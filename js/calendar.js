@@ -227,7 +227,9 @@ async function renderReports() {
     if (src) {
       return `<img src="${src}" alt="${r.nickname || r.room_id}" class="hh-prop-thumb" onerror="this.style.display='none'">`;
     }
-    return `<div class="hh-prop-thumb" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#92400E,#0369A1);color:#fff;font-weight:800;font-size:12px;">${r.unit_no || 'UH'}</div>`;
+    const photo = r.cover_image || (window.PROPERTY_PHOTOS && window.PROPERTY_PHOTOS[r.room_id]?.cover) || '';
+    if (photo) return `<img src="${photo}" alt="${r.nickname || r.room_id}" class="hh-prop-thumb" style="width:28px;height:28px;border-radius:6px;object-fit:cover;" onerror="this.style.display='none'">`;
+    return `<div class="hh-prop-thumb" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#B45309,#78350F);color:#fff;font-weight:800;font-size:11px;border-radius:6px;">${r.unit_no || 'RR'}</div>`;
   };
 
   if (window._calViewMode === 'timeline') {
