@@ -1,0 +1,2642 @@
+/**
+ * Investors Module
+ * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ */
+
+// ============ MANAGE INVESTORS ============
+async function renderManageInvestors() {
+  renderShell(`<div class="loading">Loading...</div>`, 'investors');
+
+  const [{data:invs}, {data:links}, {data:rooms}] = await Promise.all([
+    sb.from('investors').select('*').order('name'),
+    sb.from('investor_properties').select('investor_id, room_id, share_percent, is_active, investors(name), rooms(unit_no, property_name, nickname)'),
+    sb.from('rooms').select('room_id, unit_no, property_name, nickname').order('room_id')
+  ]);
+  window._invRooms = rooms || [];
+
+  const invPropMap = {};
+  (links || []).forEach(l => {
+    if (!invPropMap[l.investor_id]) invPropMap[l.investor_id] = [];
+    invPropMap[l.investor_id].push(l);
+  });
+
+  const isO = ['developer','admin'].includes(SESSION.role);
+
+  renderShell(`
+    <div class="card" style="padding:8px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button style="flex:1;">👥 Investors List</button>
+        <button onclick="renderMonthlyExpenses()" class="secondary" style="flex:1;">📅 Monthly Expenses</button>
+      </div>
+    </div>
+    <div class="card">
+      <h1>🧑‍💼 Investors</h1>
+      <div class="sub">${(invs || []).length} investors</div>
+      <div class="btn-row">
+        <button onclick="renderAddInv()">➕ Add Investor</button>
+        <button class="secondary" onclick="renderLinkProp()">🔗 Link Property</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">All Investors</div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Name</th><th>Phone</th><th>Properties & Shares</th>
+          <th>Actions</th>
+        </tr></thead>
+        <tbody>${(invs || []).map(i => {
+          const iLinks = invPropMap[i.investor_id] || [];
+          const propBadges = iLinks.length === 0 
+            ? '<span class="sub">No properties</span>'
+            : iLinks.map(l => {
+                const share = l.share_percent || 0;
+                const shareColor = share === 100 ? 'green' : share >= 50 ? 'blue' : share > 0 ? 'yellow' : 'red';
+                return `<div style="display:inline-block;margin:2px;padding:4px 8px;background:#f8f8f8;border-radius:6px;font-size:12px;">
+                  🏠 <strong>${propLabel(l.rooms) || l.room_id}</strong>
+                  <span class="badge ${shareColor}" style="margin-left:4px;">${share}%</span>
+                </div>`;
+              }).join('');
+          return `<tr>
+            <td><strong>${i.name}</strong></td>
+            <td>${i.phone || '-'}</td>
+            <td style="font-size:12px;">${propBadges}</td>
+            <td class="table-actions" style="white-space:nowrap;">
+              ${iLinks.map(l => `<button class="btn-sm" title="Report ${l.room_id}" onclick="renderInvestorReport('${i.investor_id}','${l.room_id}')">📊</button>`).join('')}
+              ${i.phone ? `<button class="btn-sm" style="background:#25D366;color:#fff;" title="Send WhatsApp" onclick="quickWhatsAppInvestor('${i.investor_id}')">📱</button>` : ''}
+              ${isO ? `<button class="btn-sm" title="Edit" onclick="editInvestor('${i.investor_id}')">✏️</button>` : ''}
+              ${isO ? `<button class="btn-sm danger" title="Delete" onclick="deleteInvestor('${i.investor_id}','${i.name}')">🗑️</button>` : ''}
+            </td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Property → Investor Mapping</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Property</th><th>Investor</th><th>Share</th><th>Remove</th></tr></thead>
+        <tbody>${(links || []).map(l => {
+          const share = l.share_percent || 0;
+          const shareColor = share === 100 ? 'green' : share >= 50 ? 'blue' : share > 0 ? 'yellow' : 'red';
+          return `<tr>
+            <td><strong>${propLabel(l.rooms) || l.room_id}</strong><br><small style="color:var(--muted);">${l.rooms?.unit_no || ''}</small></td>
+            <td>${l.investors?.name || l.investor_id}</td>
+            <td><span class="badge ${shareColor}">${share}%</span></td>
+            <td class="table-actions">
+              <button class="btn-sm" onclick="editShareInline('${l.investor_id}','${l.room_id}',${share})" title="Edit Share">✏️</button>
+              <button class="btn-sm danger" onclick="unlinkProperty('${l.investor_id}','${l.room_id}')" title="Remove">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="4" class="sub">No mappings</td></tr>'}</tbody>
+      </table></div>
+    </div>
+  `, 'investors');
+}
+
+// ============ ADD INVESTOR ============
+async function renderAddInv() {
+  const {data:rooms} = await sb.from('rooms').select('room_id, nickname, unit_no').order('room_id');
+
+  renderShell(`
+    <div class="card">
+      <h1>➕ Add Investor</h1>
+      <button class="secondary btn-sm" onclick="renderManageInvestors()">← Back</button>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Name *</label><input id="invName" placeholder="e.g. Papa Ammi" /></div>
+        <div class="form-group"><label>Phone</label><input id="invPhone" type="tel" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Revenue Share %</label><input id="invShare" type="number" value="70" min="0" max="100" /></div>
+        <div class="form-group"><label>Email</label><input id="invEmail" type="email" placeholder="For future login" /></div>
+      </div>
+      <div class="form-group">
+        <label>Assign Properties</label>
+        <select id="invRooms" multiple style="min-height:120px;">
+          ${(rooms || []).map(r => `<option value="${r.room_id}">${propLabel(r)}</option>`).join('')}
+        </select>
+        <small style="color:var(--muted);">Hold Ctrl/Cmd to select multiple</small>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="invNotes" placeholder="Optional"></textarea></div>
+      <button onclick="saveInvSafe()" style="width:100%;margin-top:10px;">💾 Save Investor</button>
+      <div id="invErr"></div>
+    </div>
+  `, 'investors');
+}
+
+async function saveInvSafe() {
+  const btn = document.querySelector('button[onclick="saveInvSafe()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+
+  const name = document.getElementById('invName').value.trim();
+  if (!name) {
+    document.getElementById('invErr').innerHTML = '<div class="error">Name required</div>';
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Investor'; }
+    return;
+  }
+
+  const phone = document.getElementById('invPhone').value.trim();
+  const share = parseFloat(document.getElementById('invShare').value) || 70;
+  const email = document.getElementById('invEmail').value.trim();
+  const notes = document.getElementById('invNotes').value.trim();
+  const roomsSelect = document.getElementById('invRooms');
+  const selectedRooms = roomsSelect ? Array.from(roomsSelect.selectedOptions).map(o => o.value) : [];
+
+  try {
+    const investorId = 'INV' + Date.now();
+    const { error } = await sb.from('investors').insert({
+      investor_id: investorId,
+      name,
+      phone: phone || null,
+      revenue_share_pct: share,
+      notes: [notes, email ? `Email: ${email}` : ''].filter(Boolean).join(' | ') || null
+    });
+    if (error) throw new Error(error.message);
+
+    if (selectedRooms.length > 0) {
+      const links = selectedRooms.map(rid => ({ investor_id: investorId, room_id: rid }));
+      const { error: linkErr } = await sb.from('investor_properties').insert(links);
+      if (linkErr) throw new Error(linkErr.message);
+    }
+
+    fsn.success(`Success`, `✅ Investor "${name}" added successfully!`);
+    renderManageInvestors();
+  } catch (err) {
+    document.getElementById('invErr').innerHTML = `<div class="error">${err.message}</div>`;
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Investor'; }
+  }
+}
+
+// ============ EDIT INVESTOR ============
+async function editInvestor(investorId) {
+  const { data: inv } = await sb.from('investors').select('*').eq('investor_id', investorId).single();
+  if (!inv) { fsn.error('Error', 'Not found'); return; }
+
+  const { data: links } = await sb.from('investor_properties').select('room_id').eq('investor_id', investorId);
+  const linkedRooms = (links || []).map(l => l.room_id);
+
+  const { data: rooms } = await sb.from('rooms').select('room_id, nickname, unit_no').order('room_id');
+
+  // Extract email from notes if stored
+  const emailMatch = (inv.notes || '').match(/Email:\s*(\S+)/);
+  const email = emailMatch ? emailMatch[1] : '';
+  const cleanNotes = (inv.notes || '').replace(/\s*\|\s*Email:\s*\S+/, '').trim();
+
+  renderShell(`
+    <div class="card">
+      <h1>✏️ Edit Investor</h1>
+      <button class="secondary btn-sm" onclick="renderManageInvestors()">← Back</button>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Name *</label><input id="invName" value="${inv.name}" /></div>
+        <div class="form-group"><label>Phone</label><input id="invPhone" value="${inv.phone || ''}" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Revenue Share %</label><input id="invShare" type="number" value="${inv.revenue_share_pct || 70}" min="0" max="100" /></div>
+        <div class="form-group"><label>Email</label><input id="invEmail" type="email" value="${email}" /></div>
+      </div>
+      <div class="form-group">
+        <label>Assigned Properties</label>
+        <select id="invRooms" multiple style="min-height:120px;">
+          ${(rooms || []).map(r => `<option value="${r.room_id}" ${linkedRooms.includes(r.room_id) ? 'selected' : ''}>${propLabel(r)}</option>`).join('')}
+        </select>
+        <small style="color:var(--muted);">Hold Ctrl/Cmd to select multiple. Deselect to remove link.</small>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="invNotes">${cleanNotes}</textarea></div>
+      <button onclick="updateInvestor('${investorId}')" style="width:100%;margin-top:10px;">💾 Update Investor</button>
+      <div id="invErr"></div>
+    </div>
+  `, 'investors');
+}
+
+async function updateInvestor(investorId) {
+  const name = document.getElementById('invName').value.trim();
+  if (!name) { document.getElementById('invErr').innerHTML = '<div class="error">Name required</div>'; return; }
+
+  const phone = document.getElementById('invPhone').value.trim();
+  const share = parseFloat(document.getElementById('invShare').value) || 70;
+  const email = document.getElementById('invEmail').value.trim();
+  const notes = document.getElementById('invNotes').value.trim();
+
+  const roomsSelect = document.getElementById('invRooms');
+  const selectedRooms = roomsSelect ? Array.from(roomsSelect.selectedOptions).map(o => o.value) : [];
+
+  try {
+    // Update investor details
+    const { error } = await sb.from('investors').update({
+      name,
+      phone: phone || null,
+      revenue_share_pct: share,
+      notes: [notes, email ? `Email: ${email}` : ''].filter(Boolean).join(' | ') || null
+    }).eq('investor_id', investorId);
+    if (error) throw new Error(error.message);
+
+    // SMART UPDATE: preserve share_percent for existing links
+    // Get current links with their share_percent
+    const { data: currentLinks } = await sb.from('investor_properties')
+      .select('room_id, share_percent, is_active')
+      .eq('investor_id', investorId);
+    
+    const currentRoomIds = (currentLinks || []).map(l => l.room_id);
+    
+    // Rooms to ADD (in selected but not in current)
+    const toAdd = selectedRooms.filter(rid => !currentRoomIds.includes(rid));
+    // Rooms to REMOVE (in current but not in selected)
+    const toRemove = currentRoomIds.filter(rid => !selectedRooms.includes(rid));
+    
+    // Remove only unselected ones (preserves share_percent for others!)
+    if (toRemove.length > 0) {
+      await sb.from('investor_properties')
+        .delete()
+        .eq('investor_id', investorId)
+        .in('room_id', toRemove);
+    }
+    
+    // Add new ones with default 100% share (user can edit later)
+    if (toAdd.length > 0) {
+      const newLinks = toAdd.map(rid => ({ 
+        investor_id: investorId, 
+        room_id: rid,
+        share_percent: 100,
+        is_active: true
+      }));
+      const { error: linkErr } = await sb.from('investor_properties').insert(newLinks);
+      if (linkErr) throw new Error(linkErr.message);
+    }
+
+    fsn.success(`Success`, `✅ Investor "${name}" updated!`);
+    renderManageInvestors();
+  } catch (err) {
+    document.getElementById('invErr').innerHTML = `<div class="error">${err.message}</div>`;
+  }
+}
+
+// ============ DELETE INVESTOR ============
+async function deleteInvestor(investorId, name) {
+  if (!confirm(`⚠️ Delete investor "${name}"?\n\nProperty links bhi remove ho jayengi.`)) return;
+
+  try {
+    console.log('🗑️ Deleting investor:', investorId);
+
+    // Step 1: Remove property links with select() for verification
+    const linkResult = await sb.from('investor_properties').delete().eq('investor_id', investorId).select();
+    console.log('Link delete result:', linkResult);
+
+    // Step 2: Remove investor with select() for verification
+    const invResult = await sb.from('investors').delete().eq('investor_id', investorId).select();
+    console.log('Investor delete result:', invResult);
+
+    if (invResult.error) throw new Error(invResult.error.message);
+
+    // Verify actually deleted
+    if (!invResult.data || invResult.data.length === 0) {
+      throw new Error('BACKEND BLOCKED: 0 rows deleted. Supabase RLS policy issue. Check SQL Editor.');
+    }
+
+    fsn.success(`Success`, `✅ Investor "${name}" deleted (${invResult.data.length} row)`);
+    renderManageInvestors();
+  } catch (err) {
+    console.error('Delete error:', err);
+    fsn.error('Error', '❌ Delete failed: ' + err.message);
+  }
+}
+
+// ============ LINK / UNLINK PROPERTY ============
+async function renderLinkProp() {
+  const { data: invs } = await sb.from('investors').select('investor_id, name').order('name');
+
+  renderShell(`
+    <div class="card">
+      <h1>🔗 Link Property to Investor</h1>
+      <button class="secondary btn-sm" onclick="renderManageInvestors()">← Back</button>
+    </div>
+    <div class="card">
+      <div class="form-group"><label>Investor *</label>
+        <select id="lInv"><option value="">Select Investor</option>
+          ${(invs || []).map(i => `<option value="${i.investor_id}">${i.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Property *</label>
+        <select id="lRoom"><option value="">Select Property</option>
+          ${(window._invRooms || []).map(r => `<option value="${r.room_id}">${propLabel(r)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Share % for this Property *</label>
+        <input id="lShare" type="number" min="0" max="100" step="0.01" 
+          value="100" placeholder="e.g. 50 for 50%" />
+        <small style="color:var(--muted);">
+          Agar property ke multiple investors hain to divide karo.<br>
+          Example: 2 investors = 50 each, 3 investors = 33.33 each
+        </small>
+      </div>
+      <button onclick="saveLink()" style="width:100%;">💾 Link Property</button>
+      <div id="lErr"></div>
+    </div>
+  `, 'investors');
+}
+
+async function saveLink() {
+  const inv = document.getElementById('lInv').value;
+  const room = document.getElementById('lRoom').value;
+  const share = parseFloat(document.getElementById('lShare')?.value) || 100;
+  
+  if (!inv || !room) {
+    document.getElementById('lErr').innerHTML = '<div class="error">Investor & property required</div>';
+    return;
+  }
+  
+  if (share < 0 || share > 100) {
+    document.getElementById('lErr').innerHTML = '<div class="error">Share % must be between 0 and 100</div>';
+    return;
+  }
+
+  // Check if already linked
+  const { data: existing } = await sb.from('investor_properties')
+    .select('investor_id').eq('investor_id', inv).eq('room_id', room).single();
+
+  if (existing) {
+    document.getElementById('lErr').innerHTML = '<div class="error">Already linked! Use Edit Share instead.</div>';
+    return;
+  }
+
+  const { error } = await sb.from('investor_properties').insert({ 
+    investor_id: inv, 
+    room_id: room,
+    share_percent: share,
+    is_active: true
+  });
+  if (error) { document.getElementById('lErr').innerHTML = `<div class="error">${error.message}</div>`; return; }
+
+  fsn.success('Success', `✅ Property linked with ${share}% share!`);
+  renderManageInvestors();
+}
+
+async function unlinkProperty(inv, room) {
+  if (!confirm('Remove this property link?')) return;
+  await sb.from('investor_properties').delete().eq('investor_id', inv).eq('room_id', room);
+  fsn.success('Success', '✅ Property unlinked');
+  renderManageInvestors();
+}
+
+// ============ INVESTOR REPORT ============
+// ============ INVESTOR REPORT (3-PAGE AUDITED LUXURY STATEMENT) ============
+async function renderInvestorReport(investorId, roomId, month) {
+  renderShell(`<div class="loading">Generating report...</div>`, 'investors');
+
+  const now = new Date();
+  const selMonth = month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthDate = new Date(selMonth + '-01');
+  const monthName = monthDate.toLocaleString('en-IN', { month: 'long' }).toUpperCase();
+  const monthYear = monthDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+  const monthStart = selMonth + '-01';
+  const [mYear, mMonth] = selMonth.split('-').map(Number);
+  const lastDay = new Date(mYear, mMonth, 0).getDate();
+  const monthEnd = `${selMonth}-${String(lastDay).padStart(2, '0')}`;
+  const monthShort = monthDate.toLocaleString('en-IN', { month: 'short', year: 'numeric' }).replace(' ', '-');
+  const cn = b => (b && b.check_in && b.check_out) ? Math.max(Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000), 0) : 0;
+  const rev = b => (b && b.booking_id && pm) ? (pm[b.booking_id] || 0) : 0;
+
+  const [{data:inv}, {data:room}, {data:bookings}, {data:defaults}, {data:expenses}, {data:payments}, {data:link}] = await Promise.all([
+    sb.from('investors').select('*').eq('investor_id', investorId).single(),
+    sb.from('rooms').select('*').eq('room_id', roomId).single(),
+    sb.from('guest_register').select('*').eq('room_id', roomId).lte('check_in', monthEnd + 'T23:59:59').gte('check_out', monthStart).order('check_in'),
+    sb.from('property_default_expenses').select('*').eq('room_id', roomId).order('expense_name'),
+    sb.from('expenses').select('*, expense_categories(category_name)').eq('room_id', roomId).eq('month', monthShort),
+    sb.from('payment_history').select('booking_id, amount'),
+    sb.from('investor_properties').select('share_percent').eq('investor_id', investorId).eq('room_id', roomId).maybeSingle(),
+  ]);
+
+  // Filter out blocked fill slots, complimentary/friends bookings, and cancelled bookings
+  const excludeKeywords = ['(friends)', '(complimentary)', '(comp)', '(free)', '(owner)', '(family)', 'friends)', 'complimentary)', 'comp)', 'free)', 'owner)', 'family)'];
+  
+  const isBlockedSlot = (b) => {
+    if (!b) return false;
+    const bId = String(b.booking_id || '');
+    const bMode = (b.booking_mode || '').toLowerCase();
+    const name = (b.guest_name || '').toLowerCase();
+    const notes = (b.notes || '').toLowerCase();
+    return bId.startsWith('BLK_') || 
+           bMode === 'offline-blocked' || 
+           bMode.includes('blocked') || 
+           name.includes('blocked') || 
+           name.includes('🔒') || 
+           notes.includes('offline slot reserved') || 
+           notes.includes('(not available)') ||
+           (Number(b.total_amount || 0) === 0 && (bMode.includes('block') || bId.startsWith('BLK_')));
+  };
+
+  const isExcluded = (b) => {
+    if (!b) return true;
+    if (b.is_cancelled === true) return true;
+    if (b.verification_status === 'rejected') return true;
+    if (isBlockedSlot(b)) return true; // Strictly exclude blocked fill bookings
+
+    const name = (b.guest_name || '').toLowerCase().replace(/\s+/g, ' ');
+    const notes = (b.notes || '').toLowerCase();
+    // Only exclude if admin marked as hidden from investor
+    if (b.show_to_investor === false) return true;
+    // Legacy: Also exclude if guest name contains "friends", "complimentary" etc.
+    return excludeKeywords.some(k => name.includes(k) || notes.includes(k));
+  };
+
+  // Only real friends/complimentary stays go into excludedBookings for the Friends Report
+  const excludedBookings = (bookings || []).filter(b => !isBlockedSlot(b) && isExcluded(b));
+  const activeBookings = (bookings || []).filter(b => !isExcluded(b));
+  
+  // Count hidden bookings (for footer transparency)
+  const hiddenCount = (bookings || []).filter(b => !isBlockedSlot(b) && b.show_to_investor === false).length;
+
+  // MULTI-INVESTOR FORMULA:
+  // Company: FIXED 30%
+  // Investor Pool: 70% of profit
+  // This investor's share: pool × (link.share_percent / 100)
+  const COMPANY_PCT = 30;
+  const INVESTOR_POOL_PCT = 70;
+  const investorPoolShare = link?.share_percent || 100;  // % of pool for THIS investor
+  const share = INVESTOR_POOL_PCT;      // for display "70% investor pool"
+  const cs = COMPANY_PCT;                // for display "30% company"
+  const bkIds = activeBookings.map(b => b.booking_id);
+  const pm = {};
+  (payments || []).forEach(p => { if (bkIds.includes(p.booking_id)) pm[p.booking_id] = (pm[p.booking_id] || 0) + (p.amount || 0); });
+
+  // PURE HOSPITALITY NIGHT-DATE STRING PRORATION (100% AUTOMATIC FOR ALL MONTHS)
+  function getProratedStats(b, totalPaid) {
+    if (!b.check_in || !b.check_out) return { nights: 0, rev: 0 };
+
+    const cinParts = b.check_in.split('-');
+    const coutParts = b.check_out.split('-');
+    if (cinParts.length < 3 || coutParts.length < 3) return { nights: 0, rev: 0 };
+
+    const cinDt = new Date(parseInt(cinParts[0]), parseInt(cinParts[1]) - 1, parseInt(cinParts[2]));
+    const coutDt = new Date(parseInt(coutParts[0]), parseInt(coutParts[1]) - 1, parseInt(coutParts[2]));
+
+    const totalNights = Math.max(Math.round((coutDt - cinDt) / 86400000), 1);
+
+    let monthNights = 0;
+    for (let i = 0; i < totalNights; i++) {
+      const nightDt = new Date(parseInt(cinParts[0]), parseInt(cinParts[1]) - 1, parseInt(cinParts[2]) + i);
+      const yyyy = nightDt.getFullYear();
+      const mm = String(nightDt.getMonth() + 1).padStart(2, '0');
+      const nightMonthStr = `${yyyy}-${mm}`;
+
+      if (nightMonthStr === selMonth) {
+        monthNights++;
+      }
+    }
+
+    if (monthNights <= 0) return { nights: 0, rev: 0 };
+
+    const proratedRev = Math.round((totalPaid || 0) * (monthNights / totalNights));
+    return { nights: monthNights, rev: proratedRev };
+  }
+
+  const isOnline = (b) => {
+    const m = (b.booking_mode || '').toLowerCase();
+    return m === 'online-airbnb' || m.includes('online') || m.includes('airbnb');
+  };
+
+  const getBookingPaid = (b) => {
+    if (pm[b.booking_id] !== undefined && pm[b.booking_id] > 0) return pm[b.booking_id];
+    return Number(b.total_amount) || 0;
+  };
+
+  const reviewBks = activeBookings.filter(b => b.is_review_booking === true && getProratedStats(b, getBookingPaid(b)).nights > 0);
+  const onBks = activeBookings.filter(b => isOnline(b) && !b.is_review_booking && getProratedStats(b, getBookingPaid(b)).nights > 0);
+  const offBks = activeBookings.filter(b => !isOnline(b) && !b.is_review_booking && getProratedStats(b, getBookingPaid(b)).nights > 0);
+
+  let onNights = 0, onRev = 0;
+  onBks.forEach(b => {
+    const p = getProratedStats(b, getBookingPaid(b));
+    onNights += p.nights;
+    onRev += p.rev;
+  });
+
+  let offNights = 0, offRev = 0;
+  offBks.forEach(b => {
+    const p = getProratedStats(b, getBookingPaid(b));
+    offNights += p.nights;
+    offRev += p.rev;
+  });
+
+  let reviewNights = 0, reviewRev = 0;
+  reviewBks.forEach(b => {
+    const p = getProratedStats(b, getBookingPaid(b));
+    reviewNights += p.nights;
+    reviewRev += p.rev;
+  });
+
+  const totalNights = onNights + offNights + reviewNights;
+  const totalRev = onRev + offRev + reviewRev;
+
+  const useDefaults = (expenses || []).length === 0;
+  const expList = useDefaults ? (defaults || []) : (expenses || []);
+  const totalExp = useDefaults
+    ? (defaults || []).reduce((s, d) => s + (d.default_amount || 0), 0)
+    : (expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
+
+  const profit = totalRev - totalExp;
+  // Company always gets 30%
+  const companyAmount = Math.round(profit * COMPANY_PCT / 100);
+  // Investor pool = 70% of profit
+  const investorPool = profit - companyAmount;
+  // THIS specific investor's share of the pool
+  const investorAmount = Math.round(investorPool * investorPoolShare / 100);
+  // For UI clarity
+  const otherInvestorsAmount = investorPool - investorAmount;
+  
+  // ===== SPLIT INVESTOR NAME BY "&" =====
+  const investorNames = (inv?.name || 'Investor')
+    .split('&')
+    .map(n => n.trim())
+    .filter(n => n.length > 0);
+  const personCount = investorNames.length;
+  const perPersonAmount = personCount > 0 ? Math.round(investorPool / personCount) : investorPool;
+  const isMultiPerson = personCount > 1;
+
+  const onlinePct = totalRev > 0 ? Math.round(onRev * 100 / totalRev) : 0;
+  const offlinePct = totalRev > 0 ? Math.round(offRev * 100 / totalRev) : 0;
+
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      val: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      lbl: d.toLocaleString('en-IN', { month: 'short', year: 'numeric' })
+    });
+  }
+
+  const today = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  // ═══════════════════════════════════════════════════════════
+  // 🧩 DYNAMIC MULTI-PAGE AUDITED LEDGER GENERATOR (2, 3, 4+ PAGES)
+  // ═══════════════════════════════════════════════════════════
+  function chunkArray(arr, size) {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
+  }
+
+  function renderOnlineTableHtml(bks, isFull = true, isPartial = false, partNum = 1, totalParts = 1) {
+    return `
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;font-weight:700;margin-bottom:4px;color:#1E3A8A;display:flex;align-items:center;justify-content:space-between;">
+          <span>🌐 Online Bookings (Airbnb Platform)${isPartial ? ` · Part ${partNum} of ${totalParts}` : ''}</span>
+          <span style="font-size:10px;background:#EFF6FF;color:#1D4ED8;padding:1px 6px;border-radius:8px;border:1px solid #BFDBFE;font-weight:700;">
+            ${bks.length} Stays · ${isFull ? onNights : bks.reduce((s,b)=>s+getProratedStats(b,getBookingPaid(b)).nights,0)} Nights
+          </span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:left;color:#475569;">Guest Name / Booking ID</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:75px;">Check-In</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:75px;">Check-Out</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:50px;">Nights</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;color:#475569;width:85px;">Net Payout</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bks.length === 0 ? '<tr><td colspan="5" style="padding:10px;border:1px solid #CBD5E1;text-align:center;color:#94A3B8;font-style:italic;">No Airbnb bookings recorded for this period.</td></tr>' : ''}
+            ${bks.map((b, idx) => {
+              const p = getProratedStats(b, getBookingPaid(b));
+              const displayName = b.guest_name ? b.guest_name : 'Airbnb Guest';
+              const rowBg = idx % 2 === 1 ? 'background:#F8FAFC;' : '';
+              return `
+              <tr style="${rowBg}">
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;">
+                  <strong style="color:#0F172A;">${displayName}</strong>
+                  ${b.booking_id ? `<span style="font-size:8.5px;color:#64748B;display:block;">Ref: ${b.booking_id}</span>` : ''}
+                </td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">${b.check_in || '-'}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">${b.check_out || '-'}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;font-weight:700;">${p.nights}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">₹${p.rev.toLocaleString('en-IN')}</td>
+              </tr>`;
+            }).join('')}
+            ${isFull ? `
+            <tr style="background:#EFF6FF;font-weight:800;color:#1E3A8A;">
+              <td colspan="3" style="padding:6px 8px;border:1px solid #93C5FD;text-align:right;">Subtotal Online (Airbnb):</td>
+              <td style="padding:6px 8px;border:1px solid #93C5FD;text-align:center;">${onNights}</td>
+              <td style="padding:6px 8px;border:1px solid #93C5FD;text-align:right;">₹${onRev.toLocaleString('en-IN')}</td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderOfflineTableHtml(bks, isFull = true, isPartial = false, partNum = 1, totalParts = 1) {
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;margin-bottom:5px;color:#065F46;display:flex;align-items:center;justify-content:space-between;">
+          <span>🏠 Direct Offline Reservations${isPartial ? ` · Part ${partNum} of ${totalParts}` : ''}</span>
+          <span style="font-size:10px;background:#ECFDF5;color:#065F46;padding:2px 7px;border-radius:8px;border:1px solid #A7F3D0;font-weight:700;">
+            ${bks.length} Stays · ${isFull ? offNights : bks.reduce((s,b)=>s+getProratedStats(b,getBookingPaid(b)).nights,0)} Nights
+          </span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:left;color:#475569;">Guest Name / Source</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:75px;">Check-In</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:75px;">Check-Out</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:50px;">Nights</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;color:#475569;width:85px;">Paid Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bks.length === 0 ? '<tr><td colspan="5" style="padding:10px;border:1px solid #CBD5E1;text-align:center;color:#94A3B8;font-style:italic;">No direct offline bookings recorded for this period.</td></tr>' : ''}
+            ${bks.map((b, idx) => {
+              const p = getProratedStats(b, getBookingPaid(b));
+              const rowBg = idx % 2 === 1 ? 'background:#F8FAFC;' : '';
+              return `
+              <tr style="${rowBg}">
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;">
+                  <strong style="color:#0F172A;">${b.guest_name || 'Direct Guest'}</strong>
+                  ${b.booking_id ? `<span style="font-size:8.5px;color:#64748B;display:block;">Ref: ${b.booking_id}</span>` : ''}
+                </td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">${b.check_in || '-'}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">${b.check_out || '-'}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;font-weight:700;">${p.nights}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">₹${p.rev.toLocaleString('en-IN')}</td>
+              </tr>`;
+            }).join('')}
+            ${isFull ? `
+            <tr style="background:#ECFDF5;font-weight:800;color:#065F46;">
+              <td colspan="3" style="padding:6px 8px;border:1px solid #A7F3D0;text-align:right;">Subtotal Offline / Direct:</td>
+              <td style="padding:6px 8px;border:1px solid #A7F3D0;text-align:center;">${offNights}</td>
+              <td style="padding:6px 8px;border:1px solid #A7F3D0;text-align:right;">₹${offRev.toLocaleString('en-IN')}</td>
+            </tr>` : ''}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderReviewTableHtml(bks) {
+    if (!bks || bks.length === 0) return '';
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;margin-bottom:5px;color:#6D28D9;display:flex;align-items:center;justify-content:space-between;">
+          <span>⭐ Airbnb Review Promotional Stays</span>
+          <span style="font-size:10px;background:#F5F3FF;color:#6D28D9;padding:2px 7px;border-radius:8px;border:1px solid #DDD6FE;font-weight:700;">
+            ${bks.length} Stays · ${reviewNights} Nights
+          </span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:left;color:#475569;">Guest Name</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:75px;">Check-In</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:75px;">Check-Out</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;color:#475569;width:50px;">Nights</th>
+              <th style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;color:#475569;width:85px;">Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${bks.map((b, idx) => {
+              const p = getProratedStats(b, getBookingPaid(b));
+              const rowBg = idx % 2 === 1 ? 'background:#F8FAFC;' : '';
+              return `
+              <tr style="${rowBg}">
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;">${b.guest_name || '-'} <span style="background:#7C3AED;color:#fff;padding:1px 4px;border-radius:3px;font-size:8px;">REVIEW</span></td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">${b.check_in || '-'}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">${b.check_out || '-'}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;font-weight:700;">${p.nights}</td>
+                <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">₹${p.rev.toLocaleString('en-IN')}</td>
+              </tr>`;
+            }).join('')}
+            <tr style="background:#F5F3FF;font-weight:800;color:#6D28D9;">
+              <td colspan="3" style="padding:6px 8px;border:1px solid #DDD6FE;text-align:right;">Subtotal Reviews:</td>
+              <td style="padding:6px 8px;border:1px solid #DDD6FE;text-align:center;">${reviewNights}</td>
+              <td style="padding:6px 8px;border:1px solid #DDD6FE;text-align:right;">₹${reviewRev.toLocaleString('en-IN')}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  function renderChannelSummaryHtml() {
+    return `
+      <div style="margin-top:12px;">
+        <div style="font-size:11px;font-weight:800;color:#0F172A;text-transform:uppercase;margin-bottom:5px;letter-spacing:0.5px;">
+          📊 Channel Contribution &amp; Occupancy Summary
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+              <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:left;color:#475569;">Channel Source</th>
+              <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;color:#475569;">Stays</th>
+              <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;color:#475569;">Nights</th>
+              <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;color:#475569;">Realized Revenue</th>
+              <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;color:#475569;">Share %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;font-weight:600;">Online (Airbnb OTA)</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;">${onBks.length}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;">${onNights}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">₹${onRev.toLocaleString('en-IN')}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;font-weight:700;">${onlinePct}%</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;font-weight:600;">Offline (Direct / Walk-In)</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;">${offBks.length}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;">${offNights}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">₹${offRev.toLocaleString('en-IN')}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;font-weight:700;">${offlinePct}%</td>
+            </tr>
+            ${reviewBks.length > 0 ? `
+            <tr>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;font-weight:600;">Promotional Reviews</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;">${reviewBks.length}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;">${reviewNights}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">₹${reviewRev.toLocaleString('en-IN')}</td>
+              <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:center;font-weight:700;">${totalRev > 0 ? Math.round(reviewRev * 100 / totalRev) : 0}%</td>
+            </tr>` : ''}
+            <tr style="background:#F1F5F9;font-weight:800;color:#0F172A;">
+              <td style="padding:7px 10px;border:1px solid #94A3B8;">Consolidated Total</td>
+              <td style="padding:7px 10px;border:1px solid #94A3B8;text-align:center;">${activeBookings.length}</td>
+              <td style="padding:7px 10px;border:1px solid #94A3B8;text-align:center;">${totalNights}</td>
+              <td style="padding:7px 10px;border:1px solid #94A3B8;text-align:right;font-size:11px;">₹${totalRev.toLocaleString('en-IN')}</td>
+              <td style="padding:7px 10px;border:1px solid #94A3B8;text-align:center;">100%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Construct ledger page content blocks
+  const totalLedgerCount = onBks.length + offBks.length + reviewBks.length;
+  const ledgerPageBlocks = [];
+
+  if (totalLedgerCount <= 6) {
+    // Fits comfortably on a single clean page
+    ledgerPageBlocks.push({
+      title: '2. Verified Booking Ledger &amp; Channel Breakdown',
+      icon: '🏨',
+      html: `
+        ${renderOnlineTableHtml(onBks, true)}
+        ${renderOfflineTableHtml(offBks, true)}
+        ${renderReviewTableHtml(reviewBks)}
+        ${renderChannelSummaryHtml()}
+      `
+    });
+  } else if (onBks.length > 0 && offBks.length > 0) {
+    // Both Online and Offline exist and total > 6
+    const onChunks = chunkArray(onBks, 9);
+    onChunks.forEach((chunk, i) => {
+      const isLast = (i === onChunks.length - 1);
+      ledgerPageBlocks.push({
+        title: `2. Verified Online Booking Ledger (Airbnb)${onChunks.length > 1 ? ` · Part ${i+1}/${onChunks.length}` : ''}`,
+        icon: '🌐',
+        html: renderOnlineTableHtml(chunk, isLast, onChunks.length > 1, i + 1, onChunks.length)
+      });
+    });
+
+    const offChunks = chunkArray(offBks, 7);
+    offChunks.forEach((chunk, i) => {
+      const isLast = (i === offChunks.length - 1);
+      ledgerPageBlocks.push({
+        title: `Direct Offline Reservations &amp; Channel Summary${offChunks.length > 1 ? ` · Part ${i+1}/${offChunks.length}` : ''}`,
+        icon: '🏠',
+        html: `
+          ${renderOfflineTableHtml(chunk, isLast, offChunks.length > 1, i + 1, offChunks.length)}
+          ${isLast ? renderReviewTableHtml(reviewBks) : ''}
+          ${isLast ? renderChannelSummaryHtml() : ''}
+        `
+      });
+    });
+  } else {
+    // Single channel has all bookings (> 6 bookings)
+    const isOnlineOnly = onBks.length > 0;
+    const activeList = isOnlineOnly ? onBks : offBks;
+    const chunks = chunkArray(activeList, 7);
+    chunks.forEach((chunk, i) => {
+      const isLast = (i === chunks.length - 1);
+      ledgerPageBlocks.push({
+        title: `Verified Booking Ledger (${isOnlineOnly ? 'Airbnb' : 'Direct Offline'})${chunks.length > 1 ? ` · Part ${i+1}/${chunks.length}` : ''}`,
+        icon: isOnlineOnly ? '🌐' : '🏠',
+        html: `
+          ${isOnlineOnly ? renderOnlineTableHtml(chunk, isLast, chunks.length > 1, i + 1, chunks.length) : renderOfflineTableHtml(chunk, isLast, chunks.length > 1, i + 1, chunks.length)}
+          ${isLast ? renderReviewTableHtml(reviewBks) : ''}
+          ${isLast ? renderChannelSummaryHtml() : ''}
+        `
+      });
+    });
+  }
+
+  // Dynamic Total Pages Calculation
+  const totalPages = 1 + ledgerPageBlocks.length + 1; // Cover + Ledger Pages + Signatures/Expenses Page
+  const finalPageNo = totalPages;
+
+  function renderRunningFooter(pageNo, totalPages) {
+    return `
+      <div class="inv-page-footer">
+        <div style="font-size:9px;color:#64748B;">
+          <strong style="color:#0F172A;">The Unique Haven Homes</strong> &bull; ${escapeHtml(room?.nickname || room?.property_name || roomId)} &bull; ${monthYear.toUpperCase()}
+        </div>
+        <div style="font-size:9.5px;font-weight:700;color:#0F172A;">
+          Page ${pageNo} of ${totalPages}
+        </div>
+      </div>
+    `;
+  }
+
+  renderShell(`
+    <!-- TOP TOOLBAR & MONTH CONTROLS (Screen Only) -->
+    <div class="card no-print" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h1 style="font-size:20px;margin:0 0 4px 0;display:flex;align-items:center;gap:8px;">
+            <span>📊</span> Official Investor Earnings Report
+          </h1>
+          <div class="sub" style="margin:0;">
+            ${inv?.name || 'Investor'} · ${room?.nickname || room?.property_name || roomId} (${monthYear})
+          </div>
+        </div>
+        <div>
+          <button class="secondary btn-sm" onclick="renderManageInvestors()">← Back to Investors</button>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-top:14px;align-items:center;">
+        <div class="form-group" style="margin-bottom:0;max-width:240px;">
+          <label style="font-weight:700;font-size:12px;margin-bottom:4px;">Billing Period</label>
+          <select onchange="renderInvestorReport('${investorId}','${roomId}',this.value)" style="font-weight:600;">
+            ${months.map(m => `<option value="${m.val}" ${m.val === selMonth ? 'selected' : ''}>${m.lbl}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;justify-content:flex-end;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm" style="background:#0F172A;color:#fff;font-weight:700;" onclick="printInvestorReport('${inv?.name || 'Investor'}','${room?.nickname || roomId}','${monthYear}')">🖨️ Print / Save PDF</button>
+          <button class="btn-sm" style="background:#2563EB;color:#fff;font-weight:700;" onclick="downloadInvestorReport('${inv?.name || 'Investor'}','${room?.nickname || roomId}','${monthYear}')">📥 Download PDF</button>
+          <button class="btn-sm" style="background:#25D366;color:#fff;font-weight:700;" onclick="shareInvestorReportWA('${investorId}','${roomId}','${selMonth}')">💬 WhatsApp Report</button>
+          <button class="btn-sm outline" onclick="downloadInvestorReportHTML('${inv?.name || 'Investor'}','${room?.nickname || roomId}','${monthYear}')">📥 HTML Backup</button>
+          ${excludedBookings.length > 0 ? `<button class="btn-sm outline" onclick="renderFriendsReport('${investorId}','${roomId}','${selMonth}')">🎁 Friends Report (${excludedBookings.length})</button>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 📄 DYNAMIC LUXURY AUDITED STATEMENT (.report-doc)           -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <div class="card report-doc" id="investorReportDoc" style="max-width:860px;margin:0 auto;padding:26px;background:#FFFFFF;box-shadow:0 10px 30px rgba(15,23,42,0.06);border:1px solid #E2E8F0;border-radius:12px;color:#0F172A;">
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- 📄 PAGE 1: CORPORATE IDENTITY, EXECUTIVE P&L & DISTRIBUTION -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="inv-page inv-page-1">
+        <div class="inv-page-content">
+          <!-- Corporate Header Banner -->
+          <div style="background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);color:#fff;padding:16px 20px;border-radius:10px;text-align:center;border-bottom:3px solid #EAB308;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;">
+              <img src="https://uniquehavenhomesstay.com/assets/logo.png" onerror="this.src='assets/logo.png'" alt="TUHH Logo" style="width:42px;height:42px;border-radius:8px;background:#fff;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
+              <div style="text-align:left;">
+                <div style="font-size:15px;letter-spacing:1px;font-weight:900;color:#FFFFFF;text-transform:uppercase;line-height:1.2;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+                <div style="font-size:9px;color:#94A3B8;letter-spacing:0.8px;font-weight:600;margin-top:2px;">
+                  CIN: U55101UP2026PTC244637 · Regd. with Dept. of Tourism, Govt. of UP & ROC Kanpur
+                </div>
+              </div>
+            </div>
+            <div style="display:inline-block;padding:2px 10px;background:rgba(234,179,8,0.15);border:1px solid #EAB308;border-radius:20px;color:#FDE047;font-size:10px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin:2px 0;">
+              OFFICIAL INVESTOR EARNINGS & SETTLEMENT STATEMENT
+            </div>
+            <div style="font-size:11.5px;color:#E2E8F0;font-weight:700;margin-top:3px;">
+              STATEMENT PERIOD: <span style="color:#FFFFFF;text-decoration:underline;">${monthYear.toUpperCase()}</span>
+            </div>
+          </div>
+
+          <!-- Property & Investor Profile (Compact 2-Column Grid) -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 14px;font-size:11px;line-height:1.45;">
+            <div>
+              <div style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Investor / Asset Owner</div>
+              <div style="font-weight:800;font-size:13px;color:#0F172A;margin-top:2px;">${inv?.name || '-'}</div>
+              <div style="color:#64748B;margin-top:3px;"><strong style="color:#334155;">Property:</strong> ${room?.nickname || room?.property_name || '-'}</div>
+              <div style="color:#64748B;"><strong style="color:#334155;">Location:</strong> ${room?.address || 'Lucknow, Uttar Pradesh'}</div>
+            </div>
+            <div style="border-left:1px solid #E2E8F0;padding-left:14px;">
+              <div style="color:#64748B;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Audit & Settlement Details</div>
+              <div style="margin-top:2px;"><strong style="color:#334155;">Reporting Period:</strong> ${monthYear}</div>
+              <div><strong style="color:#334155;">Statement Date:</strong> ${today}</div>
+              <div><strong style="color:#334155;">Contract Model:</strong> ${INVESTOR_POOL_PCT}% Investor Pool / ${COMPANY_PCT}% Operator Share</div>
+            </div>
+          </div>
+
+          <!-- Section 1.1: Executive Summary -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11.5px;font-weight:800;padding:6px 10px;background:#0F172A;color:#fff;border-radius:5px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px;">
+              <span>📋</span> 1. Executive Performance Summary
+            </div>
+            <p style="font-size:10.5px;line-height:1.45;text-align:justify;margin:6px 0 0 0;color:#334155;">
+              This audited monthly statement certifies the operational and financial performance of <strong>${room?.nickname || room?.property_name}</strong> for <strong>${monthYear}</strong> under the professional hospitality management of <strong>The Unique Haven Homes Private Limited</strong>. All bookings across Online Travel Agencies (Airbnb) and Direct Offline Concierge reservations have been reconciled and night-prorated.
+            </p>
+            <p style="font-size:10.5px;line-height:1.45;text-align:justify;margin:4px 0 0 0;color:#334155;">
+              Operational disbursements including electricity, high-speed Wi-Fi, property caretaking, laundry, supplies, and facility maintenance have been deducted. The Net Operating Profit has been apportioned according to the governing <strong>${INVESTOR_POOL_PCT}% Investor Pool &amp; ${COMPANY_PCT}% Operator Share</strong> contractual agreement.
+            </p>
+          </div>
+
+          <!-- Section 1.2: Key Financial Metrics Table -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11.5px;font-weight:800;padding:6px 10px;background:#0F172A;color:#fff;border-radius:5px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px;">
+              <span>💰</span> Key Financial Metrics (Audited)
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-top:4px;">
+              <tbody>
+                <tr>
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;color:#334155;"><strong>Gross Booking Revenue (${totalNights} Nights)</strong></td>
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;text-align:right;font-weight:800;color:#0F172A;">₹${totalRev.toLocaleString('en-IN')}</td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;color:#334155;"><strong>Itemized Operating Expenses (Electricity, Wi-Fi, Caretaker, Maintenance)</strong></td>
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;text-align:right;font-weight:800;color:#DC2626;">− ₹${totalExp.toLocaleString('en-IN')}</td>
+                </tr>
+                <tr style="background:#ECFDF5;">
+                  <td style="padding:6px 10px;border:1px solid #A7F3D0;font-weight:800;color:#065F46;">Net Operating Profit</td>
+                  <td style="padding:6px 10px;border:1px solid #A7F3D0;text-align:right;font-weight:900;color:#059669;font-size:12.5px;">₹${profit.toLocaleString('en-IN')}</td>
+                </tr>
+                <tr style="background:#F8FAFC;">
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;font-weight:600;color:#475569;">TUHH Operator Fee (${COMPANY_PCT}%)</td>
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;text-align:right;color:#0F172A;font-weight:800;">₹${companyAmount.toLocaleString('en-IN')}</td>
+                </tr>
+                <tr style="background:#EEF2FF;">
+                  <td style="padding:6px 10px;border:1.5px solid #4F46E5;font-weight:800;color:#312E81;">
+                    Total Investor Pool ${isMultiPerson ? `(${inv?.name || ''})` : `(${INVESTOR_POOL_PCT}%)`}
+                  </td>
+                  <td style="padding:6px 10px;border:1.5px solid #4F46E5;text-align:right;color:#4338CA;font-weight:900;font-size:13px;">
+                    ₹${investorPool.toLocaleString('en-IN')}
+                  </td>
+                </tr>
+                ${isMultiPerson ? investorNames.map(n => `
+                  <tr style="background:#F8FAFC;">
+                    <td style="padding:5px 10px;border:1px solid #E2E8F0;padding-left:20px;color:#475569;font-size:10px;">
+                      ↳ <strong>${n}</strong> Share (${(100/personCount).toFixed(2)}% of pool)
+                    </td>
+                    <td style="padding:5px 10px;border:1px solid #E2E8F0;text-align:right;color:#4F46E5;font-weight:700;">
+                      ₹${perPersonAmount.toLocaleString('en-IN')}
+                    </td>
+                  </tr>
+                `).join('') : ''}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Section 1.3: Profit Distribution Table -->
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11.5px;font-weight:800;padding:6px 10px;background:#0F172A;color:#fff;border-radius:5px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.5px;">
+              <span>🎯</span> Profit Distribution Schedule (${monthYear})
+            </div>
+            <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px;">
+              <thead>
+                <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+                  <th style="padding:5px 8px;border:1px solid #E2E8F0;text-align:left;color:#475569;">Beneficiary Stakeholder</th>
+                  <th style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;color:#475569;">Allocation</th>
+                  <th style="padding:5px 8px;border:1px solid #E2E8F0;text-align:right;color:#475569;">Payable Amount</th>
+                  <th style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;color:#475569;">Audit Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="padding:5px 8px;border:1px solid #E2E8F0;font-weight:600;">The Unique Haven Homes Pvt. Ltd. (Operator)</td>
+                  <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;">${COMPANY_PCT}%</td>
+                  <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:right;font-weight:700;">₹${companyAmount.toLocaleString('en-IN')}</td>
+                  <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;color:#059669;font-weight:700;">Verified</td>
+                </tr>
+                <tr style="background:#EEF2FF;">
+                  <td style="padding:6px 8px;border:1.5px solid #4F46E5;font-weight:800;color:#312E81;">Investor Pool — ${inv?.name || '-'}</td>
+                  <td style="padding:6px 8px;border:1.5px solid #4F46E5;text-align:center;font-weight:800;color:#312E81;">${INVESTOR_POOL_PCT}%</td>
+                  <td style="padding:6px 8px;border:1.5px solid #4F46E5;text-align:right;color:#4338CA;font-weight:900;font-size:11.5px;">₹${investorPool.toLocaleString('en-IN')}</td>
+                  <td style="padding:6px 8px;border:1.5px solid #4F46E5;text-align:center;color:#4338CA;font-weight:800;">Approved</td>
+                </tr>
+                ${isMultiPerson ? investorNames.map(n => `
+                  <tr style="background:#F8FAFC;">
+                    <td style="padding:5px 8px;border:1px solid #E2E8F0;padding-left:18px;color:#475569;">↳ ${n}</td>
+                    <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;color:#475569;">${(100/personCount).toFixed(2)}% of pool</td>
+                    <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:right;color:#4F46E5;font-weight:700;">₹${perPersonAmount.toLocaleString('en-IN')}</td>
+                    <td style="padding:5px 8px;border:1px solid #E2E8F0;text-align:center;color:#059669;font-weight:600;">Disbursable</td>
+                  </tr>
+                `).join('') : ''}
+                <tr style="background:#F1F5F9;font-weight:800;">
+                  <td style="padding:6px 8px;border:1px solid #CBD5E1;">Total Distributed Operating Profit</td>
+                  <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center;">100%</td>
+                  <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right;color:#059669;font-size:11.5px;">₹${profit.toLocaleString('en-IN')}</td>
+                  <td style="padding:5px 8px;border:1px solid #CBD5E1;text-align:center;color:#0F172A;">Audited 100%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Note on Model -->
+          <div style="font-size:9.5px;color:#64748B;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:7px 12px;line-height:1.45;margin-bottom:12px;">
+            <strong>Institutional Note:</strong> Settlement is calculated upon realized room revenues minus documented operating overheads. Disbursements are routed directly into the designated bank account on file.
+          </div>
+        </div>
+
+        <!-- Page 1 Running Footer -->
+        ${renderRunningFooter(1, totalPages)}
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- 📄 PAGES 2+: DYNAMIC VERIFIED STAY LEDGERS                 -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      ${ledgerPageBlocks.map((block, idx) => {
+        const pageNo = 2 + idx;
+        return `
+        <!-- ✂️ EXPLICIT PAGE BREAK -->
+        <div class="inv-page-break">
+          <span class="inv-pb-badge">PAGE ${pageNo} · ${block.title.toUpperCase()}</span>
+        </div>
+
+        <div class="inv-page inv-page-${pageNo}">
+          <div class="inv-page-content" style="padding-top:4px;">
+            <div style="font-size:11.5px;font-weight:700;padding:7px 12px;background:#F8FAFC;color:#0F172A;border:1px solid #E2E8F0;border-left:4px solid #0F172A;border-radius:6px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:14px;">
+              <span>${block.icon}</span> ${block.title}
+            </div>
+            ${block.html}
+          </div>
+          ${renderRunningFooter(pageNo, totalPages)}
+        </div>
+        `;
+      }).join('\n')}
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- ✂️ EXPLICIT PAGE BREAK TO FINAL AUDIT PAGE                  -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="inv-page-break">
+        <span class="inv-pb-badge">PAGE ${finalPageNo} · OPERATING EXPENSES, AUDIT &amp; DUAL SIGNATURES</span>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <!-- 📄 FINAL PAGE: OPERATING EXPENSES, AUDIT & DUAL SIGNATURES  -->
+      <!-- ═══════════════════════════════════════════════════════════ -->
+      <div class="inv-page inv-page-${finalPageNo}">
+        <div class="inv-page-content" style="padding-top:4px;">
+          <div style="font-size:11.5px;font-weight:700;padding:7px 12px;background:#F8FAFC;color:#0F172A;border:1px solid #E2E8F0;border-left:4px solid #0F172A;border-radius:6px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:14px;">
+            <span>💸</span> 3. Monthly Operational Expenses &amp; P&amp;L Audit
+          </div>
+
+          <!-- Section 3.1: Itemized Expenses Table -->
+          <div style="margin-bottom:10px;">
+            ${useDefaults ? '<div style="font-size:10px;color:#D97706;font-style:italic;margin-bottom:6px;font-weight:600;">ℹ️ Standard recurring benchmark expenses applied for this unit.</div>' : ''}
+            <table style="width:100%;border-collapse:collapse;font-size:10px;">
+              <thead>
+                <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+                  <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:left;color:#475569;">Operational Expense Category</th>
+                  <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:left;color:#475569;">Notes / Billing Reference</th>
+                  <th style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;color:#475569;width:120px;">Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${useDefaults
+                  ? (defaults || []).map((d, idx) => `
+                    <tr style="${idx % 2 === 1 ? 'background:#F8FAFC;' : ''}">
+                      <td style="padding:6px 10px;border:1px solid #CBD5E1;font-weight:600;">${d.expense_name}</td>
+                      <td style="padding:6px 10px;border:1px solid #CBD5E1;color:#64748B;font-size:9.5px;">Standard Unit Benchmark</td>
+                      <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">
+                        ${(d.default_amount || 0) === 0 ? 'Complimentary' : '₹' + d.default_amount.toLocaleString('en-IN')}
+                      </td>
+                    </tr>
+                  `).join('')
+                  : (expenses || []).map((e, idx) => `
+                    <tr style="${idx % 2 === 1 ? 'background:#F8FAFC;' : ''}">
+                      <td style="padding:6px 10px;border:1px solid #CBD5E1;font-weight:600;">
+                        ${e.expense_categories?.category_name || e.category_id || 'Operational Expense'}
+                      </td>
+                      <td style="padding:6px 10px;border:1px solid #CBD5E1;color:#64748B;font-size:9.5px;">
+                        ${e.notes || '-'}
+                      </td>
+                      <td style="padding:6px 10px;border:1px solid #CBD5E1;text-align:right;font-weight:700;">
+                        ₹${(e.amount || 0).toLocaleString('en-IN')}
+                        <span class="no-print" style="cursor:pointer;margin-left:6px;color:#EF4444;font-weight:800;" title="Delete Expense" onclick="deleteInlineInvestorExpense('${e.id}','${investorId}','${roomId}','${selMonth}')">✕</span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                <tr style="background:#FEF2F2;font-weight:800;color:#991B1B;">
+                  <td colspan="2" style="padding:6px 10px;border:1px solid #FCA5A5;text-align:right;">Total Monthly Operating Expenses:</td>
+                  <td style="padding:6px 10px;border:1px solid #FCA5A5;text-align:right;font-size:11px;">₹${totalExp.toLocaleString('en-IN')}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ⚡ INLINE QUICK EXPENSE ENTRY (Screen Only - .no-print) -->
+          <div class="no-print" style="margin-bottom:12px;padding:10px 12px;background:#FFF7F5;border:1.5px dashed #EA3829;border-radius:8px;">
+            <div style="font-weight:700;font-size:11.5px;color:#EA3829;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+              <span>⚡</span> Quick Add Expense (Electricity, Wi-Fi, Caretaker, Maintenance, Supplies)
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+              <select id="inlineExpCat" style="flex:1;min-width:130px;padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:11.5px;background:#fff;">
+                <option value="Electricity">⚡ Electricity Bill</option>
+                <option value="WiFi">📶 Wi-Fi Recharge</option>
+                <option value="Caretaker">🧹 Caretaker / Housekeeping</option>
+                <option value="Laundry">🧺 Laundry &amp; Linen</option>
+                <option value="Maintenance">🔧 Maintenance &amp; Repairs</option>
+                <option value="Items">🛒 Items &amp; Consumables</option>
+                <option value="Rent">🏢 Property Rent</option>
+                <option value="Other">📝 Other Expense</option>
+              </select>
+              <input type="number" id="inlineExpAmount" placeholder="Amount (₹)" style="width:105px;padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:11.5px;background:#fff;" />
+              <input type="text" id="inlineExpNotes" placeholder="Notes (e.g. Nov bill)" style="flex:1;min-width:130px;padding:5px 8px;border:1px solid #E2E8F0;border-radius:6px;font-size:11.5px;background:#fff;" />
+              <button type="button" class="btn-sm" style="background:#EA3829;color:#fff;border:none;font-weight:700;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:11px;" onclick="saveInlineInvestorExpense('${investorId}','${roomId}','${selMonth}','${monthShort}')">💾 Add Expense</button>
+            </div>
+          </div>
+
+          <!-- Section 3.2: Net Profitability Reconciliation Card -->
+          <div style="margin-bottom:10px;background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:8px;padding:8px 12px;font-size:10.5px;line-height:1.5;">
+            <div style="font-weight:800;font-size:11px;color:#0F172A;text-transform:uppercase;margin-bottom:4px;letter-spacing:0.5px;">
+              💹 Net Profit Reconciliation (${monthYear})
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#334155;">
+              <span>Total Realized Gross Revenue:</span>
+              <strong style="color:#059669;">₹${totalRev.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#334155;">
+              <span>Total Itemized Operating Expenses:</span>
+              <strong style="color:#DC2626;">− ₹${totalExp.toLocaleString('en-IN')}</strong>
+            </div>
+            <div style="border-top:1px solid #CBD5E1;margin-top:5px;padding-top:5px;display:flex;justify-content:space-between;font-size:12px;font-weight:800;">
+              <span style="color:#0F172A;">Net Operating Profit (Disbursable Base):</span>
+              <span style="color:#059669;font-size:12.5px;">₹${profit.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <!-- Section 3.3: Management Commentary -->
+          <div style="margin-bottom:10px;">
+            <div style="font-size:10.5px;font-weight:800;color:#0F172A;text-transform:uppercase;margin-bottom:3px;letter-spacing:0.5px;">
+              📝 Executive Asset Commentary
+            </div>
+            <p style="font-size:10px;line-height:1.4;text-align:justify;margin:0;color:#334155;">
+              <strong>${room?.nickname}</strong> demonstrated ${totalRev > 50000 ? 'robust' : totalRev > 25000 ? 'resilient' : 'steady'} hospitality operations during ${monthYear}. Revenue streams were anchored primarily through ${onRev >= offRev ? 'Airbnb dynamic algorithm listings' : 'high-yield offline executive stays'}. Operating overheads were actively audited to preserve net margin. Continued high guest satisfaction ratings position this unit strongly for upcoming booking cycles.
+            </p>
+          </div>
+
+          <!-- Section 3.4: Dual Signatories & Official Legal Seal -->
+          <div class="inv-keep-together" style="margin-bottom:10px;padding:10px 14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
+            <div style="display:grid;grid-template-columns:1fr 140px 1fr;gap:12px;align-items:center;text-align:center;">
+              <!-- Signature 1: Accounts Controller -->
+              <div style="text-align:left;">
+                <div style="font-size:9px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">
+                  Prepared &amp; Audited By:
+                </div>
+                <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Nisha Khan</div>
+                <div style="font-weight:800;font-size:11px;color:#0F172A;">NISHA KHAN</div>
+                <div style="font-size:9px;color:#475569;">Accounts &amp; Audit Controller</div>
+                <div style="font-size:8px;color:#64748B;">The Unique Haven Homes Pvt. Ltd.</div>
+              </div>
+
+              <!-- Official Corporate Seal Stamp -->
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                <div style="width:105px;height:105px;border:2px dashed #0F172A;border-radius:50%;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#FFFFFF;box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                  <div style="font-size:7.5px;font-weight:900;color:#0F172A;text-transform:uppercase;letter-spacing:0.5px;text-align:center;line-height:1.1;">
+                    ★ THE UNIQUE HAVEN HOMES ★
+                  </div>
+                  <div style="font-size:6.5px;color:#64748B;margin:2px 0;">PVT. LTD. · LUCKNOW</div>
+                  <div style="font-size:7px;font-weight:800;color:#059669;background:#ECFDF5;padding:1px 4px;border-radius:3px;margin:1px 0;">
+                    AUDITED &amp; VERIFIED
+                  </div>
+                  <div style="font-size:6.5px;color:#475569;font-weight:700;">CIN: U55101UP2026PTC244637</div>
+                </div>
+              </div>
+
+              <!-- Signature 2: Director & Operations -->
+              <div style="text-align:right;">
+                <div style="font-size:9px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">
+                  Approved for Disbursement:
+                </div>
+                <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Firoz Khan</div>
+                <div style="font-weight:800;font-size:11px;color:#0F172A;">FIROZ KHAN</div>
+                <div style="font-size:9px;color:#475569;">Director &amp; Asset Operations</div>
+                <div style="font-size:8px;color:#64748B;">The Unique Haven Homes Pvt. Ltd.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3.5: Corporate Legal Footer -->
+          <div class="inv-keep-together" style="background:#0F172A;color:#94A3B8;padding:10px 12px;border-radius:6px;text-align:center;font-size:9px;line-height:1.45;">
+            <div style="font-size:10.5px;font-weight:800;color:#FFFFFF;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">
+              THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+            </div>
+            <div style="color:#CBD5E1;font-weight:600;">
+              CIN: U55101UP2026PTC244637 · Registered with Dept. of Tourism, Govt. of Uttar Pradesh &amp; ROC Kanpur
+            </div>
+            <div style="color:#94A3B8;font-size:8.5px;margin-top:2px;">
+              Regd. Office: P NO 39 &amp; 40 RADHIKAPURI, INDIRA NAGAR TAKROHI, Lucknow, Uttar Pradesh - 226016
+            </div>
+            <div style="color:#94A3B8;font-size:8.5px;margin-top:2px;">
+              Official Portal: <span style="color:#FDE047;">uniquehavenhomesstay.com</span> · Direct Phone / WhatsApp: <span style="color:#FFFFFF;">+91 9450055554</span>
+            </div>
+            <div style="color:#64748B;font-size:8px;margin-top:3px;border-top:1px solid #1E293B;padding-top:3px;">
+              ⚡ System Architecture &amp; Core Automation Developed by Praveen Singh
+            </div>
+          </div>
+        </div>
+
+        <!-- Final Page Running Footer -->
+        ${renderRunningFooter(finalPageNo, totalPages)}
+      </div>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <!-- 🖨️ SCREEN & PRINT PAGE FIT STYLES                         -->
+    <!-- ═══════════════════════════════════════════════════════════ -->
+    <style>
+      .report-doc {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      }
+      .inv-page {
+        box-sizing: border-box;
+        margin-bottom: 24px;
+        background: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 265mm;
+      }
+      .inv-page-content {
+        flex: 1 0 auto;
+      }
+      .inv-page-footer {
+        margin-top: auto;
+        padding-top: 8px;
+        border-top: 1px solid #CBD5E1;
+        font-size: 9.5px;
+        color: #64748B;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .inv-page-break {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 22px 0;
+        position: relative;
+      }
+      .inv-page-break::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        border-bottom: 2px dashed #CBD5E1;
+        z-index: 1;
+      }
+      .inv-pb-badge {
+        position: relative;
+        z-index: 2;
+        background: #0F172A;
+        color: #F8FAFC;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        padding: 4px 14px;
+        border-radius: 20px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      }
+
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 14mm 14mm 14mm 14mm;
+        }
+        html, body {
+          background: #FFFFFF !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+        .no-print, .mobile-action-bar, .crm-header, .crm-sidebar, .card:not(.report-doc), .btn-row, #app > div:not(.report-doc), .inv-page-break {
+          display: none !important;
+        }
+        .card.report-doc {
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: #FFFFFF !important;
+        }
+        .inv-page {
+          display: flex !important;
+          flex-direction: column !important;
+          justify-content: space-between !important;
+          min-height: 270mm !important;
+          page-break-after: always !important;
+          break-after: page !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid-page !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+          background: #FFFFFF !important;
+          box-sizing: border-box !important;
+        }
+        .inv-page:last-child {
+          page-break-after: auto !important;
+          break-after: auto !important;
+        }
+        .inv-page-break {
+          display: none !important;
+        }
+        .inv-page-break::before, .inv-pb-badge {
+          display: none !important;
+        }
+        .inv-page-content {
+          flex: 1 0 auto !important;
+        }
+        .inv-page-footer {
+          margin-top: auto !important;
+          padding-top: 6px !important;
+          border-top: 1px solid #CBD5E1 !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+        table {
+          page-break-inside: auto;
+        }
+        tr {
+          page-break-inside: avoid !important;
+          break-inside: avoid-page !important;
+        }
+        thead {
+          display: table-header-group !important;
+        }
+        tfoot {
+          display: table-footer-group !important;
+        }
+        .inv-keep-together {
+          page-break-inside: avoid !important;
+          break-inside: avoid-page !important;
+        }
+      }
+    </style>
+  `, 'investors');
+}
+
+
+// ============ INVESTOR VIEW (Read-Only) ============
+function filterByRange(bks, range) {
+  if (range === 'All') return bks;
+  const now = new Date();
+  let start;
+  if (range === 'Today') start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  else if (range === 'Week') { start = new Date(now); start.setDate(now.getDate() - 7); }
+  else if (range === 'Month') start = new Date(now.getFullYear(), now.getMonth(), 1);
+  else return bks;
+  return bks.filter(b => b.check_in && new Date(b.check_in) >= start);
+}
+
+async function renderInvestorView(range = 'Month') {
+  window._investorTabsHtml = `
+    <div class="card" style="padding:8px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button style="flex:1;">👥 Investors List</button>
+        <button onclick="renderMonthlyExpenses()" class="secondary" style="flex:1;">📅 Monthly Expenses</button>
+      </div>
+    </div>`;
+
+  if (!SESSION.investorId) { showError('No property linked.'); return; }
+  appEl.innerHTML = `<div class="wrap" style="max-width:650px;"><div class="loading">Loading...</div></div>`;
+
+  const { data: inv } = await sb.from('investors').select('*').eq('investor_id', SESSION.investorId).single();
+  const { data: links } = await sb.from('investor_properties')
+    .select('room_id, share_percent, rooms(unit_no, property_name, nickname, checkin_manager)')
+    .eq('investor_id', SESSION.investorId);
+  const rids = (links || []).map(l => l.room_id);
+
+  const { data: allBk } = rids.length
+    ? await sb.from('guest_register')
+        .select('booking_id, guest_name, room_id, booking_mode, check_in, check_out, total_amount, rooms(unit_no, nickname)')
+        .in('room_id', rids).order('check_in', { ascending: false })
+    : { data: [] };
+  const cleanAllBk = (allBk || []).filter(b => {
+    const bId = String(b.booking_id || '');
+    const bMode = (b.booking_mode || '').toLowerCase();
+    const name = (b.guest_name || '').toLowerCase();
+    return !bId.startsWith('BLK_') && bMode !== 'offline-blocked' && !bMode.includes('blocked') && !name.includes('blocked') && !name.includes('🔒') && Number(b.total_amount || 0) > 0;
+  });
+
+  const bks = filterByRange(cleanAllBk, range);
+  const pm = await getPaidMap(bks.map(b => b.booking_id));
+  const rev = bks.reduce((s, b) => s + (pm[b.booking_id] || 0), 0);
+  
+  // NEW: Use investor_properties.share_percent (per property)
+  // For dashboard view (multiple properties), calculate weighted avg amount
+  const COMPANY_PCT = 30;
+  const INVESTOR_POOL_PCT = 70;
+  // Estimate investor amount using pool logic (no expenses here - just revenue view)
+  const investorPool = rev * INVESTOR_POOL_PCT / 100;
+  // Average share % across all linked properties
+  const avgShare = (links && links.length > 0)
+    ? links.reduce((s, l) => s + (l.share_percent || 100), 0) / links.length
+    : 100;
+  const investorAmountEstimated = Math.round(investorPool * avgShare / 100);
+  const share = INVESTOR_POOL_PCT;  // for display
+
+  appEl.innerHTML = `
+    <div class="wrap" style="max-width:650px;">
+      <div class="card" style="text-align:center;">
+        <img src="assets/logo.png" alt="" style="width:52px;height:52px;border-radius:12px;margin-bottom:6px;" />
+        <h1>${BRAND}</h1>
+        <div class="sub">👋 ${SESSION.displayName || inv?.name || 'Investor'}</div>
+        <div class="badge blue">Investor · View Only</div>
+        <div style="margin-top:10px;"><button class="danger btn-sm" onclick="logout()">🚪 Logout</button></div>
+      </div>
+
+      <div class="card">
+        <div class="form-group"><label>Period</label>
+          <select id="invRange">
+            <option value="Today" ${range === 'Today' ? 'selected' : ''}>Today</option>
+            <option value="Week" ${range === 'Week' ? 'selected' : ''}>Week</option>
+            <option value="Month" ${range === 'Month' ? 'selected' : ''}>Month</option>
+            <option value="All" ${range === 'All' ? 'selected' : ''}>All</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="metric-row"><span class="metric-label">Total Revenue</span><span class="metric-value">₹${rev.toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="metric-label">${BRAND} Share (${COMPANY_PCT}%)</span><span class="metric-value" style="color:#007A87;">₹${Math.round(rev * COMPANY_PCT / 100).toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="metric-label">Investor Pool (${INVESTOR_POOL_PCT}%)</span><span class="metric-value" style="color:var(--green);">₹${Math.round(investorPool).toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="metric-label">Your Estimated Share</span><span class="metric-value" style="color:var(--green);font-weight:700;">₹${investorAmountEstimated.toLocaleString('en-IN')}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:6px;">
+          💡 Note: This is revenue-based estimate. Actual share depends on expenses. See detailed report for accurate breakdown.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Properties</div>
+        ${(links || []).map(l => `
+          <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+            <strong>${propLabel(l.rooms) || '-'}</strong><br>
+            <small style="color:var(--muted);">${l.rooms?.property_name || ''}</small>
+          </div>
+        `).join('') || '<div class="sub">None</div>'}
+      </div>
+
+      <div class="card">
+        <div class="section-title">Bookings (${range})</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Guest</th><th>Property</th><th>Mode</th><th>In</th><th>Out</th><th>₹</th></tr></thead>
+          <tbody>${bks.map(b => `<tr>
+            <td>${b.guest_name || '-'}</td>
+            <td>${propLabel(b.rooms) || '-'}</td>
+            <td><span class="channel-badge ${b.booking_mode === 'Online-Airbnb' ? 'channel-airbnb' : 'channel-direct'}">${b.booking_mode === 'Online-Airbnb' ? '🌐' : '🏠'}</span></td>
+            <td>${b.check_in || '-'}</td>
+            <td>${b.check_out || '-'}</td>
+            <td style="color:var(--green);">₹${rev(b).toLocaleString('en-IN')}</td>
+          </tr>`).join('') || '<tr><td colspan="6" class="sub">None</td></tr>'}</tbody>
+        </table></div>
+      </div>
+
+      <div class="card" style="text-align:center;">
+        <button class="danger btn-sm" onclick="logout()">🚪 Logout</button>
+      </div>
+    </div>`;
+
+  document.getElementById('invRange').onchange = e => renderInvestorView(e.target.value);
+}
+
+// ============ EMPLOYEE VIEW ============
+async function renderEmployeeView() {
+  if (!SESSION.empId) {
+    appEl.innerHTML = `<div class="wrap"><div class="card"><h1>⚠️</h1><div class="error">Employee ID not set</div><button onclick="logout()">Logout</button></div></div>`;
+    return;
+  }
+
+  const [{data:emp}, {data:sal}, {data:adv}, {data:tasks}, {data:att}] = await Promise.all([
+    sb.from("employees").select("*").eq("emp_id", SESSION.empId).single(),
+    sb.from("salary_tracker").select("salary_due, salary_paid").eq("emp_id", SESSION.empId),
+    sb.from("advance_tracker").select("advance_amount, repaid_amount").eq("emp_id", SESSION.empId),
+    sb.from("employee_tasks").select("task_description, status").eq("emp_id", SESSION.empId).eq("status", "Pending"),
+    sb.from("attendance_log").select("status, att_date").eq("emp_id", SESSION.empId),
+  ]);
+
+  const pSal = (sal || []).reduce((s, r) => s + ((r.salary_due || 0) - (r.salary_paid || 0)), 0);
+  const pAdv = (adv || []).reduce((s, r) => s + ((r.advance_amount || 0) - (r.repaid_amount || 0)), 0);
+  const cm = new Date().toISOString().slice(0, 7);
+  const mr = (att || []).filter(a => a.att_date?.startsWith(cm));
+  const pr = mr.filter(a => a.status === 'Present').length;
+  const ab = mr.filter(a => a.status === 'Absent').length;
+
+  appEl.innerHTML = `
+    <div class="wrap">
+      <div class="card" style="text-align:center;">
+        <img src="assets/logo.png" alt="" style="width:48px;height:48px;border-radius:10px;margin-bottom:6px;" />
+        <h1>${BRAND}</h1>
+        <div class="sub">👋 ${SESSION.displayName}</div>
+        <button class="secondary btn-sm" onclick="logout()">🚪 Logout</button>
+      </div>
+      <div class="card">
+        <div class="metric-row"><span class="metric-label">Name</span><span class="metric-value" style="font-size:15px;">${emp?.name || '-'}</span></div>
+        <div class="metric-row"><span class="metric-label">Role</span><span>${emp?.role || '-'}</span></div>
+        <div class="metric-row"><span class="metric-label">Salary</span><span class="metric-value">₹${(emp?.monthly_salary || 0).toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="metric-label">Salary Pending</span><span class="metric-value${pSal > 0 ? ' warn' : ''}" style="color:${pSal > 0 ? 'var(--red)' : 'var(--green)'};">₹${pSal.toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="metric-label">Advance Due</span><span class="metric-value${pAdv > 0 ? ' warn' : ''}" style="color:${pAdv > 0 ? 'var(--red)' : 'var(--green)'};">₹${pAdv.toLocaleString('en-IN')}</span></div>
+        <div class="metric-row"><span class="metric-label">Present</span><span class="metric-value" style="color:var(--green);">${pr}</span></div>
+        <div class="metric-row"><span class="metric-label">Absent</span><span class="metric-value${ab > 0 ? ' warn' : ''}" style="color:${ab > 0 ? 'var(--red)' : 'var(--green)'};">${ab}</span></div>
+      </div>
+      <div class="card">
+        <div class="section-title">Pending Tasks</div>
+        ${(tasks || []).length === 0
+          ? '<div class="sub">No tasks ✅</div>'
+          : (tasks || []).map(t => `<div class="metric-row"><span class="metric-label">${t.task_description}</span><span class="badge red">Pending</span></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+// ============ PRINT WITH AUTO FILENAME ============
+
+// ═══ WHATSAPP INVESTOR REPORT ═══
+window.whatsappInvestorReport = async function(investorId, roomId, monthYear) {
+  // If no monthYear passed, prompt user to select
+  if (!monthYear) {
+    const now = new Date();
+    const monthOpts = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      const label = d.toLocaleString('en-IN', {month: 'long', year: 'numeric'});
+      monthOpts.push({ key, label });
+    }
+    let promptMsg = '📱 Send WhatsApp Report\n\nSelect month number:\n';
+    monthOpts.forEach((o, i) => {
+      const marker = i === 0 ? ' (current)' : i === 1 ? ' ⭐' : '';
+      promptMsg += (i + 1) + '. ' + o.label + marker + '\n';
+    });
+    promptMsg += '\nEnter number:';
+    const choice = prompt(promptMsg, '2');
+    if (choice === null) return;
+    const idx = parseInt(choice) - 1;
+    if (isNaN(idx) || idx < 0 || idx >= monthOpts.length) return;
+    monthYear = monthOpts[idx].label;
+  }
+  try {
+    // Fetch investor details
+    const { data: inv } = await sb.from('investors').select('*').eq('investor_id', investorId).single();
+    if (!inv) { fsn.error('Error', 'Investor not found'); return; }
+
+    // Fetch room
+    const { data: room } = await sb.from('rooms').select('*').eq('room_id', roomId).single();
+
+    // Calculate month range
+    const [year, month] = monthYear.split('-');
+    const startDate = year + '-' + month.padStart(2, '0') + '-01';
+    const lastDay = new Date(parseInt(year), parseInt(month), 0).getDate();
+    const endDate = year + '-' + month.padStart(2, '0') + '-' + lastDay;
+
+    // Fetch bookings + payments for this room in the month
+    const { data: bookings } = await sb.from('guest_register')
+      .select('booking_id, guest_name, check_in, check_out, total_amount, booking_mode')
+      .eq('room_id', roomId)
+      .gte('check_in', startDate)
+      .lte('check_in', endDate)
+      .neq('is_cancelled', true)
+      .neq('verification_status', 'rejected');
+
+    const bks = (bookings || []).filter(b => {
+      const bId = String(b.booking_id || '');
+      const bMode = (b.booking_mode || '').toLowerCase();
+      const name = (b.guest_name || '').toLowerCase();
+      return !bId.startsWith('BLK_') && bMode !== 'offline-blocked' && !bMode.includes('blocked') && !name.includes('blocked') && !name.includes('🔒') && Number(b.total_amount || 0) > 0;
+    });
+    const totalRevenue = bks.reduce((s, b) => s + (b.total_amount || 0), 0);
+    
+    // NEW MULTI-INVESTOR FORMULA
+    // Fetch this investor's share % for this specific property
+    const { data: propLink } = await sb.from('investor_properties')
+      .select('share_percent')
+      .eq('investor_id', investorId)
+      .eq('room_id', roomId)
+      .maybeSingle();
+    const poolSharePct = propLink?.share_percent || 100;
+    
+    // Fetch expenses for accurate profit calc
+    const monthShortWA = new Date(startDate).toLocaleString('en-IN', {month:'short', year:'numeric'}).replace(' ','-');
+    const { data: monthExps } = await sb.from('expenses')
+      .select('amount').eq('room_id', roomId).eq('month', monthShortWA);
+    const totalExpensesWA = (monthExps || []).reduce((s, e) => s + (e.amount || 0), 0);
+    
+    const profitWA = totalRevenue - totalExpensesWA;
+    const houseAmount = Math.round(profitWA * 0.30);  // Company 30%
+    const investorPoolWA = profitWA - houseAmount;    // Pool 70%
+    const investorAmount = Math.round(investorPoolWA * poolSharePct / 100);
+    const investorShare = poolSharePct;  // for display
+    
+    // Split combined names for cleaner display
+    const invNames = (inv.name || 'Investor').split('&').map(n => n.trim()).filter(n => n);
+    const isMulti = invNames.length > 1;
+    const perPerson = isMulti ? Math.round(investorPoolWA / invNames.length) : investorAmount;
+
+    const NL = String.fromCharCode(10);
+    const monthName = new Date(startDate).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+    const roomName = room ? (room.nickname || room.property_name || roomId) : roomId;
+
+    let bkList = '';
+    bks.forEach((b, i) => {
+      const mode = b.booking_mode === 'Online-Airbnb' ? 'Airbnb' : 'Direct';
+      bkList += (i + 1) + '. ' + b.guest_name + NL +
+        '   ' + b.check_in + ' → ' + b.check_out + ' (' + mode + ')' + NL +
+        '   Rs.' + (b.total_amount || 0).toLocaleString('en-IN') + NL + NL;
+    });
+
+    const msg = '*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*' + NL +
+      '*Investor Report — ' + monthName + '*' + NL + NL +
+      '👤 Investor: *' + inv.name + '*' + NL +
+      '🏠 Property: *' + roomName + '*' + NL + NL +
+      '━━━━━━━━━━━━━━━━━━━━' + NL +
+      '*💰 SUMMARY*' + NL +
+      '━━━━━━━━━━━━━━━━━━━━' + NL +
+      'Total Bookings: ' + bks.length + NL +
+      'Total Revenue: Rs.' + totalRevenue.toLocaleString('en-IN') + NL +
+      'Total Expenses: Rs.' + totalExpensesWA.toLocaleString('en-IN') + NL +
+      'Operating Profit: Rs.' + profitWA.toLocaleString('en-IN') + NL + NL +
+      '🏢 House Share (30%): Rs.' + houseAmount.toLocaleString('en-IN') + NL +
+      '👥 Investor Pool (70%): Rs.' + investorPoolWA.toLocaleString('en-IN') + NL +
+      (isMulti 
+        ? invNames.map(n => '   ↳ ' + n + ' (' + (100/invNames.length).toFixed(2) + '%): Rs.' + perPerson.toLocaleString('en-IN')).join(NL) + NL
+        : '   ↳ *Your Share: Rs.' + investorAmount.toLocaleString('en-IN') + '*' + NL) + NL +
+      (bks.length > 0 ? '*📅 BOOKINGS:*' + NL + bkList : '_No bookings this month_' + NL + NL) +
+      '━━━━━━━━━━━━━━━━━━━━' + NL +
+      '📞 Contact:' + NL +
+      'Mr. Shahanshah - 9450055554' + NL +
+      'Mr. Firoz Khan - 8299600709' + NL +
+      '━━━━━━━━━━━━━━━━━━━━' + NL +
+      'THE UNIQUE HAVEN HOMES PRIVATE LIMITED' + NL +
+      'uniquehavenhomesstay.com' + NL +
+      '⚡ Developed by Praveen Singh';
+
+    const phone = (inv.phone || '').replace(/[^0-9]/g, '');
+    const shareModal = document.createElement('div');
+    shareModal.className = 'modal-overlay';
+    shareModal.onclick = e => { if (e.target === shareModal) shareModal.remove(); };
+
+    const q = String.fromCharCode(39);
+    const sendBtn = phone
+      ? '<button style="background:#25D366;color:#fff;" onclick="window.open(' + q + 'https://wa.me/91' + phone + '?text=' + q + '+encodeURIComponent(document.getElementById(' + q + 'waInvMsg' + q + ').value),' + q + '_blank' + q + ')">📱 Send to ' + inv.name + '</button>'
+      : '';
+
+    shareModal.innerHTML =
+      '<div class="modal-box" style="max-width:600px;">' +
+        '<button class="modal-close" onclick="this.closest(' + q + '.modal-overlay' + q + ').remove()">✕</button>' +
+        '<h2>📱 WhatsApp Investor Report</h2>' +
+        '<textarea id="waInvMsg" style="width:100%;height:400px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--border);border-radius:8px;">' + msg + '</textarea>' +
+        '<div class="btn-row" style="margin-top:12px;">' +
+          sendBtn +
+          '<button style="background:#128C7E;color:#fff;" onclick="window.open(' + q + 'https://wa.me/?text=' + q + '+encodeURIComponent(document.getElementById(' + q + 'waInvMsg' + q + ').value),' + q + '_blank' + q + ')">📤 Share</button>' +
+          '<button class="outline" onclick="navigator.clipboard.writeText(document.getElementById(' + q + 'waInvMsg' + q + ').value);fsn.success(' + q + 'Copied' + q + ',' + q + 'Message copied' + q + ')">📋 Copy</button>' +
+          '<button class="outline" onclick="this.closest(' + q + '.modal-overlay' + q + ').remove()">Close</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(shareModal);
+  } catch (e) {
+    fsn.error('Error', e.message || 'Failed to generate report');
+  }
+};
+
+function getInvestorReportFilename(investorName, propertyName, monthYear) {
+  const clean = (s) => (s || '')
+    .trim()
+    .replace(/[^a-zA-Z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
+  const inv = clean(investorName) || 'Investor';
+  const prop = clean(propertyName) || 'Property';
+  const mon = clean(monthYear) || 'Report';
+  return `TUHH_Investor_Report_${inv}_${prop}_${mon}`;
+}
+
+const UHH_LOGO_CANONICAL = 'https://uniquehavenhomesstay.com/assets/logo.png';
+
+function buildInvestorReportHTML(reportHTML, filename) {
+  // Ensure all relative logo paths become absolute canonical URLs so downloaded reports never show '?'
+  reportHTML = (reportHTML || '').replace(/src=["']assets\/logo\.png["']/g, `src="${UHH_LOGO_CANONICAL}" onerror="this.src='assets/logo.png'"`);
+  const today = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>${filename}</title>
+  <meta name="title" content="${filename}">
+  <meta name="apple-mobile-web-app-title" content="${filename}">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 14mm 14mm 14mm 14mm;
+    }
+    * {
+      box-sizing: border-box !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #FFFFFF !important;
+      color: #0F172A !important;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .report-doc {
+      max-width: 100% !important;
+      margin: 0 !important;
+      padding: 8mm 10mm !important;
+      box-shadow: none !important;
+      border: none !important;
+      background: #FFFFFF !important;
+      border-radius: 0 !important;
+    }
+    .mobile-action-bar {
+      position: sticky;
+      top: 0;
+      background: #0F172A;
+      color: #fff;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 99999;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .mobile-action-bar .report-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #F8FAFC;
+      letter-spacing: 0.3px;
+    }
+    .mobile-action-bar .actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .mobile-action-bar button {
+      border: none;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-print { background: #10B981; color: #fff; }
+    .btn-download { background: #3B82F6; color: #fff; }
+    .btn-close { background: #475569; color: #fff; }
+
+    /* Page Fit Architecture */
+    .inv-page {
+      min-height: 265mm;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      page-break-after: always;
+      break-after: page;
+      page-break-inside: avoid !important;
+      break-inside: avoid-page !important;
+      margin: 0 auto 24px auto;
+      background: #FFFFFF;
+    }
+    .inv-page:last-child {
+      page-break-after: auto;
+      break-after: auto;
+      margin-bottom: 0;
+    }
+    .inv-page-content {
+      flex: 1 0 auto;
+    }
+    .inv-page-footer {
+      margin-top: auto;
+      padding-top: 6px;
+      border-top: 1px solid #CBD5E1;
+      font-size: 9px;
+      color: #64748B;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+    .inv-page-break {
+      page-break-before: always !important;
+      break-before: page !important;
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      display: block !important;
+    }
+    .inv-page-break::before, .inv-pb-badge {
+      display: none !important;
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm 14mm 12mm 14mm;
+      }
+      body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #FFFFFF !important;
+      }
+      .report-doc { padding: 0 !important; }
+      .no-print, .mobile-action-bar, .inv-page-break { display: none !important; }
+      .inv-page {
+        margin: 0 !important;
+        padding: 0 !important;
+        min-height: 270mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid-page !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
+      }
+      .inv-page:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+      }
+      .inv-page-content {
+        flex: 1 0 auto !important;
+      }
+      .inv-page-footer {
+        margin-top: auto !important;
+        padding-top: 6px !important;
+        border-top: 1px solid #CBD5E1 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      table {
+        page-break-inside: auto;
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid-page !important;
+      }
+      thead {
+        display: table-header-group !important;
+      }
+      tfoot {
+        display: table-footer-group !important;
+      }
+      .inv-keep-together {
+        page-break-inside: avoid !important;
+        break-inside: avoid-page !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-action-bar no-print">
+    <div class="report-name">📄 ${filename}</div>
+    <div class="actions">
+      <button class="btn-print" onclick="triggerPrint()">🖨️ Print / AirPrint (Save as PDF)</button>
+      <button class="btn-download" onclick="downloadHTML()">📥 Download HTML</button>
+      <button class="btn-close" onclick="window.close()">✕ Close</button>
+    </div>
+  </div>
+
+  ${reportHTML}
+
+  <script>
+    document.title = "${filename}";
+    function triggerPrint() {
+      document.title = "${filename}";
+      window.print();
+    }
+    function downloadHTML() {
+      const docClone = document.documentElement.cloneNode(true);
+      const bars = docClone.querySelectorAll('.no-print');
+      bars.forEach(b => b.remove());
+      const blob = new Blob(['<!DOCTYPE html>\n' + docClone.outerHTML], { type: 'text/html;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = "${filename}.html";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => a.remove(), 1000);
+    }
+    window.onload = function() {
+      document.title = "${filename}";
+      try {
+        if (history.replaceState) {
+          history.replaceState(null, "${filename}", "#${filename}");
+        }
+      } catch(e) {}
+    };
+  </script>
+</body>
+</html>`;
+}
+
+window.downloadInvestorReport = function(investorName, propertyName, monthYear) {
+  // Triggers clean Print / Save PDF flow with pre-populated filename across all devices
+  window.printInvestorReport(investorName, propertyName, monthYear);
+};
+
+window.downloadInvestorReportHTML = function(investorName, propertyName, monthYear) {
+  const reportEl = document.querySelector('.report-doc');
+  if (!reportEl) {
+    if (window.fsn) fsn.info('Info', 'Report not found. Please try again.');
+    else alert('Report not found. Please try again.');
+    return;
+  }
+  const filename = getInvestorReportFilename(investorName, propertyName, monthYear);
+  const reportHTML = reportEl.outerHTML;
+  const html = buildInvestorReportHTML(reportHTML, filename);
+  window.downloadExportFile(html, `${filename}.html`, 'text/html;charset=utf-8');
+};
+
+window.printInvestorReport = function(investorName, propertyName, monthYear) {
+  const reportEl = document.querySelector('.report-doc');
+  if (!reportEl) {
+    if (window.fsn) fsn.info('Info', 'Report not found. Please try again.');
+    else alert('Report not found. Please try again.');
+    return;
+  }
+  const filename = getInvestorReportFilename(investorName, propertyName, monthYear);
+  const reportHTML = reportEl.outerHTML;
+  const html = buildInvestorReportHTML(reportHTML, filename);
+  if (typeof window.printDocumentHTML === 'function') {
+    window.printDocumentHTML(html, filename);
+  } else {
+    const w = window.open('', '_blank');
+    if (w) {
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+    }
+  }
+};
+
+window.shareInvestorReportWA = async function(investorId, roomId, selMonth) {
+  try {
+    const [{data: inv}, {data: room}] = await Promise.all([
+      sb.from('investors').select('*').eq('investor_id', investorId).single(),
+      sb.from('rooms').select('*').eq('room_id', roomId).single()
+    ]);
+    if (!inv) { if (window.fsn) fsn.error('Error', 'Investor not found'); return; }
+
+    const [year, month] = (selMonth || '').split('-').map(Number);
+    const selectedDate = new Date(year, month - 1, 1);
+    const monthYear = selectedDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+
+    const phone = (inv.phone || '').replace(/[^0-9]/g, '');
+    const finalPhone = phone.length === 10 ? '91' + phone : phone;
+
+    const NL = String.fromCharCode(10);
+    const message = 
+      '🏨 *THE UNIQUE HAVEN HOMES PRIVATE LIMITED*' + NL +
+      'Official Investor Statement · ' + monthYear + NL +
+      '━━━━━━━━━━━━━━━━━━━━━' + NL +
+      '👤 *Investor:* ' + (inv.name || 'Valued Partner') + NL +
+      '🏠 *Property:* ' + (room?.nickname || room?.property_name || 'Lucknow Property') + NL +
+      '📊 *Contract Model:* 70% Investor Pool / 30% Operator' + NL + NL +
+      'Complete audited 3-page statement generated.' + NL +
+      'PDF statement available via CRM portal.' + NL + NL +
+      '━━━━━━━━━━━━━━━━━━━━━' + NL +
+      'Verified by: Nisha Khan (Accounts Controller)' + NL +
+      'Approved by: Firoz Khan (Director & Asset Operations)' + NL +
+      '📞 +91 9450055554 · 🌐 uniquehavenhomesstay.com';
+
+    if (finalPhone) {
+      window.open('https://wa.me/' + finalPhone + '?text=' + encodeURIComponent(message), '_blank');
+      if (window.fsn) fsn.success('Opening WhatsApp', 'Sharing report for ' + inv.name);
+    } else {
+      window.open('https://wa.me/?text=' + encodeURIComponent(message), '_blank');
+      if (window.fsn) fsn.info('WhatsApp', 'No phone on file. Opening WhatsApp picker.');
+    }
+  } catch (err) {
+    console.error('WhatsApp error:', err);
+    if (window.fsn) fsn.error('Error', err.message);
+  }
+};
+
+
+// ============ FRIENDS/COMPLIMENTARY STAYS REPORT ============
+async function renderFriendsReport(investorId, roomId, month) {
+  renderShell(`<div class="loading">Generating friends report...</div>`, 'investors');
+
+  const now = new Date();
+  const selMonth = month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const monthDate = new Date(selMonth + '-01');
+  const monthYear = monthDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+  const monthStart = selMonth + '-01';
+  const [mYear, mMonth] = selMonth.split('-').map(Number);
+  const lastDay = new Date(mYear, mMonth, 0).getDate();
+  const monthEnd = `${selMonth}-${String(lastDay).padStart(2, '0')}`;
+
+  const [{data:inv}, {data:room}, {data:bookings}] = await Promise.all([
+    sb.from('investors').select('*').eq('investor_id', investorId).single(),
+    sb.from('rooms').select('*').eq('room_id', roomId).single(),
+    sb.from('guest_register').select('*').eq('room_id', roomId).lte('check_in', monthEnd + 'T23:59:59').gte('check_out', monthStart).order('check_in'),
+  ]);
+
+  // Only friends bookings (strictly excluding dummy blocked slots)
+  const excludeKeywords = ['(friends)', '(complimentary)', '(comp)', '(free)', '(owner)', '(family)'];
+  const friendsBookings = (bookings || []).filter(b => {
+    const bId = String(b.booking_id || '');
+    const bMode = (b.booking_mode || '').toLowerCase();
+    const name = (b.guest_name || '').toLowerCase();
+    const notes = (b.notes || '').toLowerCase();
+    if (bId.startsWith('BLK_') || bMode === 'offline-blocked' || bMode.includes('blocked') || name.includes('blocked') || name.includes('🔒')) return false;
+    return excludeKeywords.some(k => name.includes(k) || notes.includes(k));
+  });
+
+  const cn = b => b.check_in && b.check_out ? calcNights(b.check_in, b.check_out) : 0;
+  const totalNights = friendsBookings.reduce((s, b) => s + cn(b), 0);
+
+  const today = new Date().toLocaleDateString('en-GB');
+
+  const months = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      val: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      lbl: d.toLocaleString('en-IN', { month: 'short', year: 'numeric' })
+    });
+  }
+
+  renderShell(`
+    <div class="card no-print">
+      <h1>🎁 Complimentary / Friends Report</h1>
+      <button class="secondary btn-sm" onclick="renderInvestorReport('${investorId}','${roomId}','${selMonth}')">← Back to Main Report</button>
+      <div class="form-grid" style="margin-top:8px;">
+        <div class="form-group">
+          <label>Month</label>
+          <select onchange="renderFriendsReport('${investorId}','${roomId}',this.value)">
+            ${months.map(m => `<option value="${m.val}" ${m.val === selMonth ? 'selected' : ''}>${m.lbl}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group" style="justify-content:flex-end;gap:8px;flex-wrap:wrap;">
+          <button class="btn-sm" onclick="printInvestorReport('${inv?.name || 'Investor'}','${room?.nickname || roomId}_Friends','${monthYear}')">🖨️ Print / Save PDF</button>
+          <button class="btn-sm outline" onclick="downloadInvestorReport('${inv?.name || 'Investor'}','${room?.nickname || roomId}_Friends','${monthYear}')">📥 Download Report</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card report-doc" style="max-width:850px;margin:0 auto;padding:30px;background:#fff;box-shadow:0 4px 20px rgba(15,23,42,0.08);border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;">
+
+      <div style="background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);color:#fff;padding:28px 20px;border-radius:12px 12px 0 0;text-align:center;margin:-30px -30px 20px -30px;border-bottom:3px solid #4F46E5;">
+        <img src="https://uniquehavenhomesstay.com/assets/logo.png" onerror="this.src='assets/logo.png'" alt="Logo" style="width:52px;height:52px;border-radius:10px;background:#fff;padding:4px;margin-bottom:8px;" />
+        <div style="font-size:11px;letter-spacing:2px;color:#94A3B8;font-weight:700;margin-bottom:4px;text-transform:uppercase;">${BRAND.toUpperCase()}</div>
+        <h1 style="font-size:22px;margin:4px 0;letter-spacing:1px;color:#fff;font-weight:800;">🎁 COMPLIMENTARY STAYS REPORT</h1>
+        <div style="font-size:13px;color:#CBD5E1;margin-top:6px;">${monthYear}</div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;padding:9px 14px;background:#0F172A;color:#fff;border-radius:6px;display:flex;align-items:center;gap:8px;">🏠 Property Details</div>
+        <div style="line-height:2;font-size:13.5px;color:#334155;padding:4px;">
+          <div><strong>Property:</strong> ${room?.nickname || room?.property_name || '-'}</div>
+          <div><strong>Owner:</strong> ${inv?.name || '-'}</div>
+          <div><strong>Location:</strong> ${room?.address || 'Lucknow'}</div>
+          <div><strong>Reporting Period:</strong> ${monthYear}</div>
+          <div><strong>Report Date:</strong> ${today}</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;margin-bottom:10px;padding:9px 14px;background:#0F172A;color:#fff;border-radius:6px;display:flex;align-items:center;gap:8px;">🎁 Complimentary / Friends Stays</div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:2px solid #E2E8F0;">
+              <th style="padding:8px 12px;border:1px solid #E2E8F0;color:#475569;text-align:left;">Guest Name</th>
+              <th style="padding:8px 12px;border:1px solid #E2E8F0;color:#475569;text-align:left;">Phone</th>
+              <th style="padding:8px 12px;border:1px solid #E2E8F0;color:#475569;text-align:left;">Check-in</th>
+              <th style="padding:8px 12px;border:1px solid #E2E8F0;color:#475569;text-align:left;">Check-out</th>
+              <th style="padding:8px 12px;border:1px solid #E2E8F0;color:#475569;text-align:center;">Nights</th>
+              <th style="padding:8px 12px;border:1px solid #E2E8F0;color:#475569;text-align:center;">Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${friendsBookings.map(b => {
+              const name = (b.guest_name || '').toLowerCase();
+              let type = 'Complimentary';
+              if (name.includes('(friends)')) type = 'Friends';
+              else if (name.includes('(owner)')) type = 'Owner';
+              else if (name.includes('(family)')) type = 'Family';
+              else if (name.includes('(comp)') || name.includes('(complimentary)')) type = 'Complimentary';
+              else if (name.includes('(free)')) type = 'Free';
+
+              return `
+                <tr style="border-bottom:1px solid #F1F5F9;">
+                  <td style="padding:9px 12px;border:1px solid #E2E8F0;"><strong>${b.guest_name || '-'}</strong></td>
+                  <td style="padding:9px 12px;border:1px solid #E2E8F0;font-size:12px;color:#64748B;">${b.phone || '-'}</td>
+                  <td style="padding:9px 12px;border:1px solid #E2E8F0;color:#64748B;">${b.check_in || '-'}</td>
+                  <td style="padding:9px 12px;border:1px solid #E2E8F0;color:#64748B;">${b.check_out || '-'}</td>
+                  <td style="padding:9px 12px;border:1px solid #E2E8F0;text-align:center;font-weight:700;">${cn(b)}</td>
+                  <td style="padding:9px 12px;border:1px solid #E2E8F0;text-align:center;"><span style="background:#F1F5F9;color:#334155;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">${type}</span></td>
+                </tr>
+              `;
+            }).join('') || '<tr><td colspan="6" style="padding:16px;text-align:center;color:#64748B;border:1px solid #E2E8F0;">No complimentary stays recorded this month</td></tr>'}
+            ${friendsBookings.length > 0 ? `
+            <tr style="background:#F8FAFC;font-weight:700;">
+              <td colspan="4" style="padding:10px 12px;border:1px solid #CBD5E1;text-align:right;color:#475569;">Total Complimentary Nights:</td>
+              <td style="padding:10px 12px;border:1px solid #CBD5E1;text-align:center;font-size:14px;color:#0F172A;">${totalNights}</td>
+              <td style="padding:10px 12px;border:1px solid #CBD5E1;text-align:center;color:#64748B;font-size:11px;">Not counted in revenue</td>
+            </tr>
+            ` : ''}
+          </tbody>
+        </table>
+      </div>
+
+      ${friendsBookings.length > 0 ? `
+      <div style="margin-bottom:20px;padding:14px 18px;background:#FFFDF7;border-left:4px solid #D97706;border:1px solid #FDE68A;border-radius:6px;font-size:13px;line-height:1.8;">
+        <strong style="color:#B45309;">📌 Note:</strong>
+        <div style="margin-top:4px;color:#78350F;">
+          These bookings are complimentary stays and are NOT included in the revenue calculation of the main investor report.
+          They are documented here for transparency and record-keeping purposes only.
+        </div>
+      </div>
+      ` : ''}
+
+      <div style="background:#0F172A;color:#94A3B8;padding:22px 24px;margin:20px -30px -30px -30px;border-radius:0 0 12px 12px;text-align:center;border-top:1px solid #1E293B;">
+        <img src="https://uniquehavenhomesstay.com/assets/logo.png" onerror="this.src='assets/logo.png'" alt="Logo" style="width:40px;height:40px;border-radius:8px;background:#fff;padding:3px;margin-bottom:6px;" />
+        <div style="font-size:11px;color:#E2E8F0;letter-spacing:2px;font-weight:800;margin-bottom:6px;text-transform:uppercase;">${BRAND.toUpperCase()}</div>
+        <div style="font-size:12px;line-height:1.8;color:#94A3B8;">
+          <div><strong style="color:#fff;">Prepared By:</strong> NISHA KHAN</div>
+          <div><strong style="color:#fff;">Operator:</strong> ${BRAND}</div>
+          <div><strong style="color:#fff;">Report Date:</strong> ${today}</div>
+        </div>
+        <div style="font-size:11px;color:#64748B;margin-top:6px;">
+          🌐 uniquehavenhomesstay.com &bull; Hospitality Management System
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @media print {
+        @page { size: A4; margin: 0; }
+        body { padding: 10mm 12mm !important; margin: 0 !important; background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .sidebar, .no-print, button, .bottom-nav, #bottomNav, .top-bar, #topBar, .drawer, #drawer, nav[class*="bottom"] { display: none !important; }
+        .app-container { display: block !important; }
+        .main-content { margin: 0 !important; padding: 0 !important; }
+        .card { border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+        body { background: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .report-doc { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+      }
+    </style>
+  `, 'investors');
+}
+
+
+
+// ═══ QUICK ACTIONS — Professional WhatsApp + Email ═══
+// ═══ SHOW MONTH SELECTOR MODAL BEFORE SENDING ═══
+window.quickWhatsAppInvestor = async function(investorId) {
+  // Check investor first
+  const { data: inv } = await sb.from('investors').select('name, phone').eq('investor_id', investorId).single();
+  if (!inv || !inv.phone) {
+    fsn.error('Error', 'Investor not found or no phone number');
+    return;
+  }
+  
+  // SIMPLE PROMPT for month selection (works reliably)
+  const now = new Date();
+  const monthOpts = [];
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const label = d.toLocaleString('en-IN', {month: 'long', year: 'numeric'});
+    monthOpts.push({ key, label });
+  }
+  
+  // Build prompt message
+  let promptMsg = '📱 Send WhatsApp to ' + inv.name + '\n\n';
+  promptMsg += 'Select month number:\n';
+  monthOpts.forEach((o, i) => {
+    const marker = i === 0 ? ' (current — incomplete)' : i === 1 ? ' ⭐ RECOMMENDED' : '';
+    promptMsg += (i + 1) + '. ' + o.label + marker + '\n';
+  });
+  promptMsg += '\nEnter number (1-6):';
+  
+  const choice = prompt(promptMsg, '2');  // Default: 2 (last month)
+  if (choice === null) return;  // Cancelled
+  
+  const idx = parseInt(choice) - 1;
+  if (isNaN(idx) || idx < 0 || idx >= monthOpts.length) {
+    fsn.error('Invalid', 'Please enter number 1-6');
+    return;
+  }
+  
+  const selected = monthOpts[idx];
+  const [year, month] = selected.key.split('-').map(Number);
+  
+  // Store for use
+  window._waSelectedMonth = {
+    year, month,
+    monthName: selected.label,
+    key: selected.key
+  };
+  
+  await _originalQuickWhatsAppInvestor(investorId);
+};
+
+// Old modal code (unused)
+async function _unusedModalFunction(investorId) {
+  const { data: inv } = await sb.from('investors').select('name, phone').eq('investor_id', investorId).single();
+  const monthOpts = [];
+  const now = new Date();
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const label = d.toLocaleString('en-IN', {month: 'long', year: 'numeric'});
+    monthOpts.push({ key, label });
+  }
+  
+  // Show modal
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:24px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;">
+      <h2 style="margin:0 0 8px;font-size:20px;">📱 Send WhatsApp Report</h2>
+      <div style="font-size:13px;color:#666;margin-bottom:16px;">
+        To: <strong>${inv.name}</strong> (${inv.phone})
+      </div>
+      
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">📅 Select Report Month:</label>
+        <select id="waMonthSelect" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+          ${monthOpts.map((o, i) => `<option value="${o.key}" ${i === 1 ? 'selected' : ''}>${o.label}${i === 0 ? ' (Current — incomplete)' : i === 1 ? ' ⭐ (Recommended)' : ''}</option>`).join('')}
+        </select>
+        <div style="font-size:11px;color:#888;margin-top:4px;">
+          💡 Last month is usually the correct choice for monthly reports
+        </div>
+      </div>
+      
+      <div style="margin-bottom:16px;padding:12px;background:#F0F7FF;border-radius:8px;border-left:3px solid #3B82F6;font-size:12px;">
+        <strong>Message will include:</strong><br>
+        • Investor name<br>
+        • Selected month<br>
+        • Properties list<br>
+        • Investor pool share (70%)<br>
+        • Individual split (if multi-investor)
+      </div>
+      
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="this.closest('.modal-overlay').remove()" 
+          style="padding:10px 20px;background:#eee;color:#333;border:none;border-radius:6px;cursor:pointer;">
+          Cancel
+        </button>
+        <button onclick="sendInvestorWhatsAppWithMonth('${investorId}', document.getElementById('waMonthSelect').value)" 
+          style="padding:10px 20px;background:#25D366;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;">
+          📱 Send WhatsApp
+        </button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+};
+
+// ═══ ACTUAL SEND FUNCTION (called from modal) ═══
+window.sendInvestorWhatsAppWithMonth = async function(investorId, selectedMonthKey) {
+  // Close modal first
+  document.querySelector('.modal-overlay')?.remove();
+  
+  // Parse selected month
+  const [year, month] = selectedMonthKey.split('-').map(Number);
+  const selectedDate = new Date(year, month - 1, 1);
+  const monthName = selectedDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+  
+  // Store for the original function to use
+  window._waSelectedMonth = { year, month, monthName, key: selectedMonthKey };
+  
+  // Call original send logic
+  await _originalQuickWhatsAppInvestor(investorId);
+};
+
+// ═══ ORIGINAL SEND LOGIC (renamed) ═══
+async function _originalQuickWhatsAppInvestor(investorId) {
+  try {
+    // Fetch investor + linked properties
+    const { data: inv } = await sb.from('investors').select('*').eq('investor_id', investorId).single();
+    if (!inv) { fsn.error('Error', 'Investor not found'); return; }
+    if (!inv.phone) { fsn.error('Error', 'Phone number not available'); return; }
+    
+    // Get linked properties
+    const { data: links } = await sb.from('investor_properties')
+      .select('room_id, rooms(nickname, property_name)')
+      .eq('investor_id', investorId);
+    
+    const propNames = (links || []).map(l => 
+      l.rooms?.nickname || l.rooms?.property_name || l.room_id
+    ).join(', ') || 'your properties';
+    
+    // Format phone (add 91 if 10 digits)
+    const phone = inv.phone.replace(/[^0-9]/g, '');
+    const finalPhone = phone.length === 10 ? '91' + phone : phone;
+    
+    // Get current month name
+    // Use SELECTED month from prompt (or current if none)
+    const selectedM = window._waSelectedMonth;
+    const now = selectedM ? new Date(selectedM.year, selectedM.month - 1, 1) : new Date();
+    const monthName = selectedM ? selectedM.monthName : now.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+    console.log('📅 WhatsApp using month:', monthName, selectedM ? '(from prompt)' : '(current)');
+    // NEW: Use pool logic (70% investor pool, split among multi-investors)
+    const invNamesArr = (inv.name || 'Investor').split('&').map(n => n.trim()).filter(n => n);
+    const isMultiInv = invNamesArr.length > 1;
+    const perInvestorPct = (100 / invNamesArr.length).toFixed(2);
+    
+    // Professional WhatsApp message
+    const NL = String.fromCharCode(10);
+    const message = 
+      '🏨 *THE UNIQUE HAVEN HOMES PRIVATE LIMITED*' + NL + NL +
+      'Namaste ' + inv.name + ' ji 🙏' + NL + NL +
+      'Umeed hai aap kushal honge.' + NL + NL +
+      '📅 *' + monthName + '* ki monthly report attached hai (PDF).' + NL + NL +
+      '🏠 *Property:* ' + propNames + NL +
+      '📊 *Investor Pool Share:* 70% of profit' + NL +
+      (isMultiInv 
+        ? invNamesArr.map(n => '   ↳ ' + n + ': ' + perInvestorPct + '% of pool').join(NL) + NL
+        : '') + NL +
+      'Kripya PDF check karein aur koi query ho toh batayein.' + NL + NL +
+      '───────────────' + NL +
+      '*Regards,*' + NL +
+      'Team TUHH' + NL +
+      '📞 Mr. Shahanshah: 9450055554' + NL +
+      '📞 Mr. Firoz Khan: 8299600709' + NL +
+      '🌐 uniquehavenhomesstay.com';
+    
+    const url = 'https://wa.me/' + finalPhone + '?text=' + encodeURIComponent(message);
+    window.open(url, '_blank');
+    
+    if (typeof fsn !== 'undefined') fsn.success('Opening WhatsApp', 'Message ready for ' + inv.name);
+
+    // Also check if automated WhatsApp Investor Group is configured
+    try {
+      if (typeof window.triggerInvestorGroupAlert === 'function') {
+        const firstProp = (links && links[0]) ? links[0].room_id : '';
+        const groupRes = await window.triggerInvestorGroupAlert(
+          inv.name,
+          propNames,
+          firstProp,
+          monthName,
+          0, // Gross
+          0, // Expenses
+          0  // Net
+        );
+        if (groupRes && groupRes.ok && !groupRes.dryRun) {
+          if (typeof fsn !== 'undefined') fsn.success('Group Alert Sent', `Report shared to ${inv.name}'s WhatsApp group!`);
+        }
+      }
+    } catch (grpErr) {
+      console.warn('Investor group auto-alert info:', grpErr);
+    }
+  } catch (e) {
+    console.error('WhatsApp error:', e);
+    if (typeof fsn !== 'undefined') fsn.error('Error', e.message);
+  }
+};
+
+window.quickEmailInvestor = async function(investorId) {
+  // Show options dialog
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  const q = String.fromCharCode(39);
+  
+  modal.innerHTML = 
+    '<div class="modal-box" style="max-width:450px;">' +
+      '<button class="modal-close" onclick="this.closest(' + q + '.modal-overlay' + q + ').remove()">✕</button>' +
+      '<h2>📧 Send Email to Investor</h2>' +
+      '<p style="color:#666;font-size:13px;margin:10px 0;">Email attachment browser se nahi ja sakti. Do options:</p>' +
+      '<div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">' +
+        '<button onclick="generateReportPDFThenEmail(' + q + investorId + q + ');this.closest(' + q + '.modal-overlay' + q + ').remove()" style="background:#4285F4;color:#fff;padding:14px;border:none;border-radius:8px;cursor:pointer;font-size:14px;text-align:left;">' +
+          '<div style="font-weight:700;">📄 Generate PDF + Open Email</div>' +
+          '<div style="font-size:11px;opacity:0.9;margin-top:4px;">Report PDF download hoga, phir email draft khulega. PDF manually attach karo.</div>' +
+        '</button>' +
+        '<button onclick="sendPlainEmail(' + q + investorId + q + ');this.closest(' + q + '.modal-overlay' + q + ').remove()" style="background:#059669;color:#fff;padding:14px;border:none;border-radius:8px;cursor:pointer;font-size:14px;text-align:left;">' +
+          '<div style="font-weight:700;">📝 Plain Email (No Attachment)</div>' +
+          '<div style="font-size:11px;opacity:0.9;margin-top:4px;">Sirf summary text with numbers. No PDF.</div>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+};
+
+window.generateReportPDFThenEmail = async function(investorId) {
+  try {
+    const { data: inv } = await sb.from('investors').select('*').eq('investor_id', investorId).single();
+    if (!inv) return;
+    
+    const { data: links } = await sb.from('investor_properties')
+      .select('room_id')
+      .eq('investor_id', investorId);
+    
+    if (!links || links.length === 0) {
+      fsn.error('Error', 'No property linked to this investor');
+      return;
+    }
+    
+    // Open report page in new window
+    const roomId = links[0].room_id;
+    const now = new Date();
+    const monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    
+    // Navigate to report first
+    fsn.success('Step 1', 'Opening report — please Print/Save as PDF from browser');
+    setTimeout(() => {
+      renderInvestorReport(investorId, roomId, monthStr);
+      setTimeout(() => {
+        if (confirm('Report tayyar hai! Print/PDF save karke ready ho? OK dabao email draft kholne ke liye.')) {
+          sendPlainEmail(investorId);
+        }
+      }, 1500);
+    }, 500);
+  } catch (e) {
+    fsn.error('Error', e.message);
+  }
+};
+
+window.sendPlainEmail = async function(investorId) {
+  try {
+    // Fetch investor + linked properties
+    const { data: inv } = await sb.from('investors').select('*').eq('investor_id', investorId).single();
+    if (!inv) { fsn.error('Error', 'Not found'); return; }
+    
+    // Extract email from notes
+    const emailMatch = (inv.notes || '').match(/Email:\s*(\S+)/);
+    const email = emailMatch ? emailMatch[1] : '';
+    
+    if (!email) {
+      fsn.error('Error', 'Email not set. Edit investor and add Email in profile.');
+      return;
+    }
+    
+    // Get linked properties
+    const { data: links } = await sb.from('investor_properties')
+      .select('room_id, rooms(nickname, property_name)')
+      .eq('investor_id', investorId);
+    
+    const propNames = (links || []).map(l => 
+      l.rooms?.nickname || l.rooms?.property_name || l.room_id
+    ).join(', ') || 'your properties';
+    
+    // Use SELECTED month (from prompt) instead of current
+    const selected = window._waSelectedMonth;
+    let now, monthName;
+    if (selected) {
+      now = new Date(selected.year, selected.month - 1, 1);
+      monthName = selected.monthName;
+      console.log('📅 Using selected month:', monthName);
+    } else {
+      now = new Date();
+      monthName = now.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
+      console.log('⚠️  No selection, using current month:', monthName);
+    }
+    // NEW: Multi-investor aware
+    const invNamesEmail = (inv.name || 'Investor').split('&').map(n => n.trim()).filter(n => n);
+    const isMultiEmail = invNamesEmail.length > 1;
+    const perPersonPct = (100 / invNamesEmail.length).toFixed(2);
+    
+    const subject = monthName + ' Monthly Report - ' + propNames + ' - TUHH';
+    
+    const body = 
+      'Namaste ' + inv.name + ' ji,\n\n' +
+      'Umeed hai aap kushal honge.\n\n' +
+      'Aapki property "' + propNames + '" ki monthly financial summary ke liye ye email hai.\n\n' +
+      '📅 Reporting Period: ' + monthName + '\n' +
+      '📊 Revenue Sharing Model: 70% Investor Pool, 30% TUHH\n' +
+      (isMultiEmail 
+        ? '👥 Investor Split:\n' + invNamesEmail.map(n => '   - ' + n + ': ' + perPersonPct + '% of investor pool').join('\n') + '\n\n'
+        : '\n') +
+      'Complete detailed report attached mein bheji ja rahi hai. Isme included hai:\n' +
+      '• Total revenue breakdown\n' +
+      '• Online (Airbnb) vs Offline bookings\n' +
+      '• Operating expenses\n' +
+      '• Your share calculation\n' +
+      '• Booking-wise details\n\n' +
+      'Kripya report review karein aur koi query ho toh niche diye number pe contact karein.\n\n' +
+      'Aapka support hamesha appreciated hai. Dhanyawad!\n\n' +
+      '───────────────────────\n' +
+      'Warm regards,\n\n' +
+      'Team TUHH\n' +
+      'THE UNIQUE HAVEN HOMES PRIVATE LIMITED\n' +
+      'CIN: U55101UP2026PTC244637\n' +
+      '📞 +91 9450055554\n' +
+      '📞 +91 9450055554 (WhatsApp)\n' +
+      '🌐 uniquehavenhomesstay.com\n' +
+      '───────────────────────';
+    
+    const url = 'mailto:' + email + 
+                '?subject=' + encodeURIComponent(subject) + 
+                '&body=' + encodeURIComponent(body);
+    window.location.href = url;
+    
+    if (typeof fsn !== 'undefined') fsn.success('Opening Email', 'Ready to send to ' + email);
+  } catch (e) {
+    console.error('Email error:', e);
+    if (typeof fsn !== 'undefined') fsn.error('Error', e.message);
+  }
+};
+
+
+// ============ INLINE EDIT SHARE % ============
+async function editShareInline(investorId, roomId, currentShare) {
+  const newShare = prompt(
+    `Edit share % for this investor-property link:\n\nCurrent: ${currentShare}%\n\nEnter new share % (0-100):`,
+    currentShare
+  );
+  
+  if (newShare === null) return; // cancelled
+  
+  const share = parseFloat(newShare);
+  if (isNaN(share) || share < 0 || share > 100) {
+    fsn.error('Invalid', '❌ Share % must be between 0 and 100');
+    return;
+  }
+  
+  const { error } = await sb.from('investor_properties')
+    .update({ share_percent: share })
+    .eq('investor_id', investorId)
+    .eq('room_id', roomId);
+  
+  if (error) {
+    fsn.error('Error', '❌ ' + error.message);
+    return;
+  }
+  
+  fsn.success('Success', `✅ Share updated to ${share}%`);
+  renderManageInvestors();
+}
+
+// ═══════════════════════════════════════════════════════════
+// ⚡ INBUILT INLINE INVESTOR PROPERTY EXPENSE HANDLERS
+// ═══════════════════════════════════════════════════════════
+window.saveInlineInvestorExpense = async function(investorId, roomId, selMonth, monthShort) {
+  const cat = document.getElementById('inlineExpCat')?.value || 'Other';
+  const amt = parseFloat(document.getElementById('inlineExpAmount')?.value);
+  const notes = document.getElementById('inlineExpNotes')?.value?.trim() || cat;
+
+  if (!amt || isNaN(amt) || amt <= 0) {
+    if (window.fsn) fsn.error('Amount Required', 'Please enter a valid expense amount.');
+    else alert('Please enter a valid expense amount.');
+    return;
+  }
+
+  try {
+    const { data: cats } = await sb.from('expense_categories').select('id, category_name');
+    const matchedCat = (cats || []).find(c => c.category_name.toLowerCase().includes(cat.toLowerCase()));
+    const catId = matchedCat?.id || cats?.[0]?.id || 1;
+
+    const { error } = await sb.from('expenses').insert({
+      room_id: roomId,
+      amount: amt,
+      month: monthShort,
+      category_id: catId,
+      notes: notes,
+      entry_date: new Date().toISOString().slice(0, 10)
+    });
+
+    if (error) throw error;
+    if (window.fsn) fsn.success('Expense Saved', `Added ₹${amt.toLocaleString('en-IN')} for ${notes}`);
+    renderInvestorReport(investorId, roomId, selMonth);
+  } catch(err) {
+    console.error('Error saving inline investor expense:', err);
+    if (window.fsn) fsn.error('Save Failed', err.message);
+    else alert('Error: ' + err.message);
+  }
+};
+
+window.deleteInlineInvestorExpense = async function(id, investorId, roomId, selMonth) {
+  if (!confirm('Are you sure you want to delete this expense entry?')) return;
+  try {
+    const { error } = await sb.from('expenses').delete().eq('id', id);
+    if (error) throw error;
+    if (window.fsn) fsn.success('Deleted', 'Expense entry removed');
+    renderInvestorReport(investorId, roomId, selMonth);
+  } catch(err) {
+    console.error('Error deleting inline expense:', err);
+    if (window.fsn) fsn.error('Delete Failed', err.message);
+  }
+};
+

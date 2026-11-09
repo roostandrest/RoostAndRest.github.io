@@ -1,0 +1,2995 @@
+/**
+ * =====================================================================
+ * THE UNIQUE HAVEN HOMES (UHHS) — BOOKING RECEIPT & ADVANCE VOUCHER ENGINE
+ * Non-GST Guest Confirmation Receipt, Advance Payment Voucher & Quotation
+ * =====================================================================
+ */
+
+window.BOOKING_RECEIPT_ENGINE = (function() {
+  'use strict';
+
+  // Company Master Data
+  const CO = {
+    name:       'THE UNIQUE HAVEN HOMES PRIVATE LIMITED',
+    tradeName:  'The Unique Haven Homes Homestays',
+    cin:        'U55101UP2026PTC244637',
+    pan:        'ABECT9843K',
+    address:    'P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, Uttar Pradesh – 226016',
+    phone:      '+91 94500 55554',
+    phone2:     '+91 82996 00709',
+    managerPhone: '+91 9194109911',
+    managerName: 'Praveen Singh',
+    owners: [
+      { name: 'Mr. Shahanshah', phone: '+91 94500 55554' },
+      { name: 'Mr. Firoz Khan', phone: '+91 82996 00709' }
+    ],
+    email:      'theuniquehavenhomes@gmail.com',
+    web:        'uniquehavenhomesstay.com'
+  };
+
+  function getSignatureStampSrc() {
+    try {
+      const custom = typeof localStorage !== 'undefined' ? localStorage.getItem('uhh_custom_signature_stamp') : null;
+      if (custom && custom.trim()) return custom;
+    } catch(e) {}
+    try {
+      return new URL('assets/signature-stamp.svg', window.location.href).href;
+    } catch(e) {
+      return 'assets/signature-stamp.svg';
+    }
+  }
+
+  function numToWords(n) {
+    if (!n || n === 0) return 'Zero Rupees';
+    const o = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const t = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    function c(x) {
+      if (x < 20) return o[x];
+      if (x < 100) return t[Math.floor(x / 10)] + (x % 10 ? ' ' + o[x % 10] : '');
+      if (x < 1000) return o[Math.floor(x / 100)] + ' Hundred' + (x % 100 ? ' ' + c(x % 100) : '');
+      if (x < 100000) return c(Math.floor(x / 1000)) + ' Thousand' + (x % 1000 ? ' ' + c(x % 1000) : '');
+      if (x < 10000000) return c(Math.floor(x / 100000)) + ' Lakh' + (x % 100000 ? ' ' + c(x % 100000) : '');
+      return c(Math.floor(x / 10000000)) + ' Crore' + (x % 10000000 ? ' ' + c(x % 10000000) : '');
+    }
+    const r = Math.floor(n);
+    return 'Rupees ' + c(r) + ' Only';
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function cleanNotes(notes) {
+    if (!notes) return '';
+    let str = String(notes);
+    str = str
+      .replace(/<!--[\s\S]*?-->/gi, '')
+      .replace(/\[SECURITY_DEPOSIT:[\s\S]*?\]/gi, '')
+      .replace(/\[SEC_DEP:[\s\S]*?\]/gi, '')
+      .replace(/\[DEPOSIT:[\s\S]*?\]/gi, '')
+      .replace(/\s*\|\s*\|\s*/g, ' | ')
+      .replace(/^\s*\|\s*/, '')
+      .replace(/\s*\|\s*$/, '')
+      .trim();
+    if (str === 'null' || str === 'undefined' || str === '""' || str === "''") return '';
+    return str;
+  }
+
+  function getSecurityDepositData(b, options = {}) {
+    if (options && options.securityDepositAmount != null) {
+      const amt = Number(options.securityDepositAmount) || 0;
+      const st = options.securityDepositStatus || (amt > 0 ? 'collected' : 'none');
+      return {
+        amount: amt,
+        status: st,
+        mode: options.securityDepositMode || 'UPI',
+        receivedBy: options.securityDepositReceivedBy || '',
+        receivedDate: options.securityDepositReceivedDate || ''
+      };
+    }
+    if (b && b.securityDepositAmount != null) {
+      const amt = Number(b.securityDepositAmount) || 0;
+      return {
+        amount: amt,
+        status: b.securityDepositStatus || (amt > 0 ? 'collected' : 'none'),
+        mode: b.securityDepositMode || 'UPI',
+        receivedBy: b.securityDepositReceivedBy || '',
+        receivedDate: b.securityDepositReceivedDate || ''
+      };
+    }
+    // Check if live modal input exists in document
+    if (typeof document !== 'undefined') {
+      const liveAmtInput = document.getElementById('receiptSecAmtInput');
+      const liveStSelect = document.getElementById('receiptSecStatusSelect');
+      if (liveAmtInput && liveAmtInput.value !== '') {
+        const amt = parseFloat(liveAmtInput.value) || 0;
+        const st = liveStSelect ? liveStSelect.value : (amt > 0 ? 'collected' : 'none');
+        return {
+          amount: amt,
+          status: st,
+          mode: 'UPI',
+          receivedBy: '',
+          receivedDate: ''
+        };
+      }
+    }
+    if (!b) return { amount: 0, status: 'none', mode: 'UPI' };
+
+    // 1. Native column check
+    if (b.security_deposit_amount != null && Number(b.security_deposit_amount) > 0) {
+      return {
+        amount: Number(b.security_deposit_amount) || 0,
+        status: b.security_deposit_status || 'collected',
+        mode: b.security_deposit_mode || 'UPI',
+        receivedBy: b.security_deposit_received_by || '',
+        receivedDate: b.security_deposit_received_date || ''
+      };
+    }
+
+    // 2. [SECURITY_DEPOSIT:{...}] check in notes
+    if (b.notes && b.notes.includes('[SECURITY_DEPOSIT:')) {
+      try {
+        const match = b.notes.match(/\[SECURITY_DEPOSIT:(.*?)\]/);
+        if (match && match[1]) {
+          const p = JSON.parse(match[1]);
+          return {
+            amount: parseFloat(p.amount) || 0,
+            status: p.status || (parseFloat(p.amount) > 0 ? 'collected' : 'none'),
+            mode: p.mode || 'UPI',
+            receivedBy: p.receivedBy || '',
+            receivedDate: p.receivedDate || ''
+          };
+        }
+      } catch(e) {}
+    }
+
+    // 3. <!--SEC_DEP:{...}--> check in notes
+    if (b.notes && b.notes.includes('<!--SEC_DEP:')) {
+      try {
+        const match = b.notes.match(/<!--SEC_DEP:(.*?)-->/);
+        if (match && match[1]) {
+          const p = JSON.parse(match[1]);
+          return {
+            amount: parseFloat(p.amount) || 0,
+            status: p.status || (parseFloat(p.amount) > 0 ? 'collected' : 'none'),
+            mode: p.mode || 'UPI',
+            receivedBy: p.receivedBy || '',
+            receivedDate: p.receivedDate || ''
+          };
+        }
+      } catch(e) {}
+    }
+
+    // 4. Global helper if available
+    if (typeof window.getSecurityDeposit === 'function') {
+      try {
+        const g = window.getSecurityDeposit(b);
+        if (g && g.amount > 0) return g;
+      } catch(e) {}
+    }
+
+    return { amount: 0, status: 'none', mode: 'UPI' };
+  }
+
+  function calcNights(cin, cout) {
+    if (!cin || !cout) return 1;
+    const diff = new Date(cout) - new Date(cin);
+    return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)));
+  }
+
+  function formatDate(dStr) {
+    if (!dStr) return '-';
+    try {
+      const d = new Date(dStr + (dStr.length === 10 ? 'T00:00:00' : ''));
+      return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch(e) {
+      return dStr;
+    }
+  }
+
+  function formatTime(tStr) {
+    if (!tStr) return '';
+    const parts = tStr.split(':');
+    if (parts.length >= 2) {
+      let h = parseInt(parts[0], 10);
+      const m = parts[1];
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      return `${h}:${m} ${ampm}`;
+    }
+    return tStr;
+  }
+
+  function formatDateTime(dtStr) {
+    if (!dtStr) return '';
+    try {
+      const d = new Date(dtStr);
+      if (isNaN(d.getTime())) return dtStr;
+      const datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      const timePart = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return `${datePart}, ${timePart}`;
+    } catch(e) {
+      return dtStr;
+    }
+  }
+
+  function cleanPhone(p) {
+    if (!p) return '';
+    if (window.normalizePhone) {
+      const norm = window.normalizePhone(p);
+      return norm.core10 || norm.digits || String(p).replace(/\D/g, '');
+    }
+    let d = String(p).replace(/\D/g, '');
+    if (d.length >= 12 && d.startsWith('91')) d = d.slice(2);
+    else if (d.length >= 13 && d.startsWith('091')) d = d.slice(3);
+    else if (d.length >= 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(-10);
+  }
+
+  // 1. Fetch Complete Booking Data for Receipt
+  async function fetchBookingReceiptData(bookingIdOrPhone) {
+    let client = window.sb;
+    if (!client && typeof supabase !== 'undefined') {
+      const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : window.SUPABASE_URL;
+      const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : window.SUPABASE_ANON_KEY;
+      if (url && key) client = supabase.createClient(url, key);
+    }
+    if (!client) throw new Error('Supabase connection not initialized.');
+
+    let booking = null;
+    const strId = String(bookingIdOrPhone).trim();
+    const isGroup = strId.startsWith('GRP-') || strId.includes('GRP');
+    const isId = strId.startsWith('B') || strId.length > 12;
+
+    if (isGroup) {
+      // Group reference passed directly
+      const multi = await fetchMultiBookingReceiptData(strId);
+      if (multi && multi.bookings && multi.bookings.length > 0) {
+        return { isMultiGroup: true, multiData: multi };
+      }
+    }
+
+    if (isId) {
+      const { data, error } = await client.from('guest_register')
+        .select('*, rooms(*)')
+        .eq('booking_id', bookingIdOrPhone)
+        .maybeSingle();
+      if (error) throw error;
+      booking = data;
+    } else {
+      // Search by phone or query
+      const digits = cleanPhone(bookingIdOrPhone);
+      const { data, error } = await client.from('guest_register')
+        .select('*, rooms(*)')
+        .or(`phone.ilike.%${digits}%,booking_id.eq.${bookingIdOrPhone}`)
+        .order('check_in', { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      if (!data || !data.length) return null;
+      if (data.length === 1) {
+        booking = data[0];
+      } else {
+        return { isMultiple: true, bookings: data };
+      }
+    }
+
+    if (!booking) return null;
+
+    // Fetch payments
+    const { data: payments } = await client.from('payment_history')
+      .select('*')
+      .eq('booking_id', booking.booking_id)
+      .neq('verification_status', 'rejected')
+      .order('payment_date', { ascending: true });
+
+    const totalAmount = Number(booking.total_amount || 0);
+    const paidAmount = (payments || []).reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const balanceDue = Math.max(0, totalAmount - paidAmount);
+    const nights = calcNights(booking.check_in, booking.check_out);
+
+    return {
+      booking,
+      payments: payments || [],
+      totalAmount,
+      paidAmount,
+      balanceDue,
+      nights
+    };
+  }
+
+  // 2. Build Print-Ready Receipt HTML
+  function buildReceiptHTML(data, options = {}) {
+    const { booking, payments, totalAmount, paidAmount, balanceDue, nights } = data;
+    const room = booking.rooms || {};
+    const propName = room.nickname || room.property_name || booking.room_id || 'Homestay Property';
+    const unitNo = room.unit_no ? ` (${room.unit_no})` : '';
+    const address = room.address || 'Lucknow, Uttar Pradesh';
+    const mapLink = room.map_link || '';
+
+    const secDep = getSecurityDepositData(booking, options);
+    const secAmount = secDep.amount || 0;
+    const secStatus = secDep.status || 'none';
+
+    const checkInDate = formatDate(booking.check_in);
+    const checkOutDate = formatDate(booking.check_out);
+    const checkInTime = formatTime(booking.check_in_time || '14:00');
+    const checkOutTime = formatTime(booking.check_out_time || '11:00');
+    const todayStr = formatDate(new Date().toISOString().slice(0, 10));
+
+    const receiptNo = options.receiptNo || `UHH-REC/${booking.booking_id}`;
+    const liveNotesInput = (typeof document !== 'undefined') ? document.getElementById('receiptCustomNotesInput') : null;
+    const rawNotes = options.customNotes !== undefined ? options.customNotes : (liveNotesInput ? liveNotesInput.value : (booking.notes || ''));
+    const customNotes = cleanNotes(rawNotes);
+
+    let statusText = 'Fully Paid';
+    let statusClass = 'status-paid';
+    let statusBg = '#DEF7EC';
+    let statusColor = '#03543F';
+    let statusBadgeText = '✅ FULLY PAID';
+
+    if (totalAmount <= 0) {
+      statusBadgeText = 'COMPLIMENTARY';
+      statusBg = '#F3F4F6';
+      statusColor = '#374151';
+    } else if (paidAmount === 0) {
+      statusBadgeText = '🔴 PAYMENT DUE';
+      statusBg = '#FDE8E8';
+      statusColor = '#9B1C1C';
+    } else if (balanceDue > 0) {
+      statusBadgeText = `⚠️ ADVANCE PAID · ₹${balanceDue.toLocaleString('en-IN')} DUE AT CHECK-IN`;
+      statusBg = '#FEF08A';
+      statusColor = '#854D0E';
+    }
+
+    const wordsTotal = numToWords(totalAmount);
+    const wordsPaid = numToWords(paidAmount);
+    const wordsBalance = balanceDue > 0 ? numToWords(balanceDue) : '';
+
+    let logoSrc = 'assets/logo.png';
+    try {
+      logoSrc = new URL('assets/logo.png', window.location.href).href;
+    } catch(e) {}
+
+    return `
+      <div class="uhh-receipt-container" style="background:#fff;color:#0F172A;font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;padding:12px 16px;max-width:760px;margin:0 auto;box-sizing:border-box;page-break-inside:avoid;break-inside:avoid;line-height:1.35;font-size:10.5px;">
+        
+        <!-- Header Strip -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #0F172A;padding-bottom:6px;margin-bottom:6px;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${logoSrc}" alt="UHH Logo" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#FAF8F5;border:1px solid #E2E8F0;padding:2px;flex-shrink:0;" />
+            <div>
+              <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#B45309;margin-bottom:1px;">
+                The Unique Haven Homes Homestays
+              </div>
+              <div style="font-size:14px;font-weight:900;color:#0F172A;line-height:1.15;">
+                ${CO.name}
+              </div>
+              <div style="font-size:9px;color:#64748B;margin-top:2px;line-height:1.35;">
+                📍 ${CO.address} &nbsp;|&nbsp; 📞 ${CO.phone} &nbsp;|&nbsp; ✉️ ${CO.email}
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="display:inline-block;background:#0F172A;color:#fff;padding:2px 8px;border-radius:4px;font-size:9.5px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:2px;">
+              Booking Voucher &amp; Receipt
+            </div>
+            <div style="font-size:8.5px;font-weight:700;color:#64748B;letter-spacing:0.3px;text-transform:uppercase;">
+              Official Guest Receipt (Without GST)
+            </div>
+            <div style="margin-top:3px;font-size:9.5px;line-height:1.4;">
+              <span style="color:#64748B;">Receipt No:</span> <strong style="color:#0F172A;">${escapeHtml(receiptNo)}</strong> &nbsp;|&nbsp;
+              <span style="color:#64748B;">Date:</span> <strong>${todayStr}</strong><br>
+              <span style="color:#64748B;">Booking ID:</span> <strong style="color:#0284C7;">${escapeHtml(booking.booking_id)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div style="background:${statusBg};border:1px solid ${statusColor};color:${statusColor};border-radius:6px;padding:4px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+          <div style="font-weight:800;font-size:11px;letter-spacing:0.3px;text-transform:uppercase;">
+            ${statusBadgeText}
+          </div>
+          <div style="font-size:10px;font-weight:600;">
+            Channel: <strong>${escapeHtml(booking.booking_mode || 'Direct')}</strong> · Stay: <strong>${nights} Night${nights > 1 ? 's' : ''}</strong>
+          </div>
+        </div>
+
+        ${secAmount > 0 ? `
+          <!-- Security Deposit Highlight Strip -->
+          <div style="background:#EFF6FF;border:1.5px solid #3B82F6;border-radius:6px;padding:5px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:14px;">🛡️</span>
+              <div>
+                <strong style="color:#1E40AF;font-size:10.5px;">REFUNDABLE SECURITY DEPOSIT: ₹${secAmount.toLocaleString('en-IN')}</strong>
+                <span style="background:${secStatus === 'collected' ? '#DEF7EC' : (secStatus === 'refunded' ? '#F0FDF4' : '#FEF3C7')};color:${secStatus === 'collected' ? '#03543F' : (secStatus === 'refunded' ? '#15803D' : '#854D0E')};font-size:8.5px;padding:1px 6px;border-radius:4px;font-weight:800;margin-left:4px;">
+                  ${secStatus === 'collected' ? '✅ DEPOSIT HELD (सुरक्षा राशि जमा है)' : (secStatus === 'refunded' ? '🟢 REFUNDED' : '🟡 PENDING COLLECTION')}
+                </span>
+              </div>
+            </div>
+            <div style="font-size:8.5px;color:#2563EB;font-weight:700;">
+              *100% Refundable at check-out upon property inspection
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- 2 Column Overview: Guest & Stay -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+          
+          <!-- Guest Details Card -->
+          <div style="border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;background:#F8FAFC;">
+            <div style="font-size:9px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#B45309;margin-bottom:2px;">
+              👤 Guest Details
+            </div>
+            <div style="font-size:13px;font-weight:900;color:#0F172A;margin-bottom:2px;">
+              ${escapeHtml(booking.guest_name || 'Valued Guest')}
+            </div>
+            <div style="font-size:10px;color:#334155;line-height:1.5;">
+              📱 Phone: <strong>${escapeHtml(booking.phone || 'N/A')}</strong> &nbsp;|&nbsp; 👥 Guests: <strong>${booking.guests || 1} Person${(booking.guests || 1) > 1 ? 's' : ''}</strong><br>
+              ${booking.booked_by ? `✍️ Booked By: <strong>${escapeHtml(booking.booked_by)}</strong> &nbsp;|&nbsp; ` : ''}
+              ${booking.created_at ? `🕒 Booked On: <strong>${formatDateTime(booking.created_at)}</strong> &nbsp;|&nbsp; ` : ''}
+              ${booking.id_proof_type ? `🪪 ID Type: <strong>${escapeHtml(booking.id_proof_type)}</strong>` : ''}
+            </div>
+          </div>
+
+          <!-- Property & Stay Card -->
+          <div style="border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;background:#F8FAFC;">
+            <div style="font-size:9px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#B45309;margin-bottom:2px;">
+              🏠 Property &amp; Stay Schedule
+            </div>
+            <div style="font-size:13px;font-weight:900;color:#0F172A;margin-bottom:2px;">
+              ${escapeHtml(propName)}${escapeHtml(unitNo)}
+            </div>
+            <div style="font-size:10px;color:#334155;line-height:1.5;">
+              📍 <strong>${escapeHtml(address)}</strong> ${mapLink ? `<a href="${mapLink}" target="_blank" style="color:#0284C7;text-decoration:none;font-weight:700;">[📍 Map]</a>` : ''}<br>
+              📅 <strong>${checkInDate}</strong> (${checkInTime}) → <strong>${checkOutDate}</strong> (${checkOutTime}) · <strong>${nights}N</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 💰 Financial & Advance Payment Tracker -->
+        <div style="border:1px solid #0F172A;border-radius:6px;overflow:hidden;margin-bottom:6px;">
+          
+          <div style="background:#0F172A;color:#fff;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;">
+              💰 Payment Breakdown &amp; Balance Statement
+            </div>
+            <div style="font-size:9px;color:#94A3B8;">
+              All amounts in Indian Rupees (INR)
+            </div>
+          </div>
+
+          <!-- Financial Highlight Boxes (With Security Deposit if present) -->
+          <div style="display:grid;grid-template-columns:${secAmount > 0 ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr'};background:#F8FAFC;border-bottom:1px solid #E2E8F0;text-align:center;">
+            
+            <div style="padding:6px;border-right:1px solid #E2E8F0;">
+              <div style="font-size:9px;font-weight:700;color:#64748B;text-transform:uppercase;margin-bottom:1px;">
+                Stay Accommodation
+              </div>
+              <div style="font-size:15px;font-weight:900;color:#0F172A;">
+                ₹${totalAmount.toLocaleString('en-IN')}
+              </div>
+              <div style="font-size:8.5px;color:#64748B;">
+                ₹${Math.round(totalAmount / (nights || 1)).toLocaleString('en-IN')} / night · ${nights}N
+              </div>
+            </div>
+
+            ${secAmount > 0 ? `
+              <div style="padding:6px;border-right:1px solid #E2E8F0;background:#F0F9FF;">
+                <div style="font-size:9px;font-weight:800;color:#0369A1;text-transform:uppercase;margin-bottom:1px;">
+                  🛡️ Security Deposit
+                </div>
+                <div style="font-size:15px;font-weight:900;color:#0284C7;">
+                  ₹${secAmount.toLocaleString('en-IN')}
+                </div>
+                <div style="font-size:8.5px;color:#0369A1;font-weight:700;">
+                  ${secStatus === 'collected' ? '✅ Held (Refundable)' : (secStatus === 'refunded' ? '🟢 Refunded' : '🟡 Pending Collection')}
+                </div>
+              </div>
+            ` : ''}
+
+            <div style="padding:6px;border-right:1px solid #E2E8F0;background:#F0FDF4;">
+              <div style="font-size:9px;font-weight:800;color:#15803D;text-transform:uppercase;margin-bottom:1px;">
+                ✔ Advance / Paid
+              </div>
+              <div style="font-size:15px;font-weight:900;color:#059669;">
+                ₹${paidAmount.toLocaleString('en-IN')}
+              </div>
+              <div style="font-size:8.5px;color:#15803D;font-weight:700;">
+                ${totalAmount > 0 ? Math.round((paidAmount / totalAmount) * 100) : 0}% Paid
+              </div>
+            </div>
+
+            <div style="padding:6px;background:${balanceDue > 0 ? '#FEF2F2' : '#F0FDF4'};">
+              <div style="font-size:9px;font-weight:800;color:${balanceDue > 0 ? '#DC2626' : '#15803D'};text-transform:uppercase;margin-bottom:1px;">
+                ${balanceDue > 0 ? '⚠️ Balance Due' : '✅ Balance Remaining'}
+              </div>
+              <div style="font-size:15px;font-weight:900;color:${balanceDue > 0 ? '#DC2626' : '#059669'};">
+                ₹${balanceDue.toLocaleString('en-IN')}
+              </div>
+              <div style="font-size:8.5px;color:${balanceDue > 0 ? '#B91C1C' : '#15803D'};font-weight:700;">
+                ${balanceDue > 0 ? 'Payable upon arrival' : 'Clear &amp; Settled'}
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Itemized Stay & Security Deposit Particulars -->
+          <div style="padding:4px 8px;border-bottom:1px solid #CBD5E1;background:#F8FAFC;">
+            <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+              <thead>
+                <tr style="color:#64748B;text-align:left;font-size:8.5px;text-transform:uppercase;letter-spacing:0.5px;">
+                  <th style="padding:2px 4px;font-weight:800;">Billing Particulars</th>
+                  <th style="padding:2px 4px;font-weight:800;text-align:center;">Type</th>
+                  <th style="padding:2px 4px;font-weight:800;text-align:center;">Refundable?</th>
+                  <th style="padding:2px 4px;font-weight:800;text-align:right;">Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #E2E8F0;">
+                  <td style="padding:3px 4px;font-weight:700;color:#0F172A;">
+                    🏠 Homestay Stay Charges (${propName}${unitNo}) · ${nights} Night(s)
+                  </td>
+                  <td style="padding:3px 4px;text-align:center;color:#64748B;">Accommodation</td>
+                  <td style="padding:3px 4px;text-align:center;color:#64748B;">No</td>
+                  <td style="padding:3px 4px;text-align:right;font-weight:800;color:#0F172A;">₹${totalAmount.toLocaleString('en-IN')}</td>
+                </tr>
+                ${secAmount > 0 ? `
+                  <tr style="background:#F0F9FF;border-bottom:1px solid #BAE6FD;">
+                    <td style="padding:3px 4px;font-weight:700;color:#0369A1;">
+                      🛡️ Refundable Security Deposit (वापसी योग्य सुरक्षा राशि)
+                    </td>
+                    <td style="padding:3px 4px;text-align:center;color:#0284C7;font-weight:700;">Security Deposit</td>
+                    <td style="padding:3px 4px;text-align:center;"><span style="background:#DCFCE7;color:#166534;padding:1px 5px;border-radius:3px;font-weight:800;font-size:8px;">Yes (100%)</span></td>
+                    <td style="padding:3px 4px;text-align:right;font-weight:900;color:#0284C7;">₹${secAmount.toLocaleString('en-IN')}</td>
+                  </tr>
+                  <tr style="background:#F1F5F9;font-weight:800;">
+                    <td colspan="3" style="padding:3px 4px;text-align:right;color:#475569;font-size:8.5px;text-transform:uppercase;">
+                      Total Stay + Security Deposit:
+                    </td>
+                    <td style="padding:3px 4px;text-align:right;font-weight:900;color:#0F172A;font-size:10.5px;">
+                      ₹${(totalAmount + secAmount).toLocaleString('en-IN')}
+                    </td>
+                  </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Payment Transactions Table -->
+          <div style="padding:5px 8px;">
+            ${payments && payments.length > 0 ? `
+              <table style="width:100%;border-collapse:collapse;font-size:9.5px;margin-bottom:3px;">
+                <thead>
+                  <tr style="background:#F1F5F9;color:#475569;text-align:left;border-bottom:1px solid #CBD5E1;">
+                    <th style="padding:2px 4px;font-weight:800;width:18px;">#</th>
+                    <th style="padding:2px 4px;font-weight:800;">Date</th>
+                    <th style="padding:2px 4px;font-weight:800;">Mode</th>
+                    <th style="padding:2px 4px;font-weight:800;">Notes / Reference</th>
+                    <th style="padding:2px 4px;font-weight:800;">Received By</th>
+                    <th style="padding:2px 4px;font-weight:800;text-align:right;">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${payments.map((p, idx) => `
+                    <tr style="border-bottom:1px solid #E2E8F0;">
+                      <td style="padding:2px 4px;color:#64748B;">${String(idx + 1).padStart(2, '0')}</td>
+                      <td style="padding:2px 4px;font-weight:700;">${(p.paid_at || p.created_at) ? formatDateTime(p.paid_at || p.created_at) : formatDate(p.payment_date)}</td>
+                      <td style="padding:2px 4px;"><span style="background:#E2E8F0;padding:1px 4px;border-radius:3px;font-size:8.5px;font-weight:700;">${escapeHtml(p.payment_mode || 'Direct')}</span></td>
+                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.notes || '-')}</td>
+                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'UHH Team')}</td>
+                      <td style="padding:2px 4px;text-align:right;font-weight:900;color:#059669;">₹${Number(p.amount || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <div style="font-size:9.5px;color:#64748B;font-style:italic;padding:2px 0;">
+                No payment transactions recorded yet. Balance of ₹${totalAmount.toLocaleString('en-IN')} is due on check-in.
+              </div>
+            `}
+
+            <!-- Words Summary -->
+            <div style="padding:3px 6px;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:4px;font-size:9px;color:#334155;line-height:1.4;">
+              <strong>Advance Paid in Words:</strong> ${wordsPaid} &nbsp;|&nbsp;
+              ${secAmount > 0 ? `<strong>Security Deposit:</strong> <span style="color:#0284C7;font-weight:700;">${numToWords(secAmount)}</span> (${secStatus === 'collected' ? 'Held' : 'Pending'}) &nbsp;|&nbsp; ` : ''}
+              ${balanceDue > 0 ? `<strong>Remaining Balance:</strong> <span style="color:#DC2626;font-weight:700;">${wordsBalance}</span> (Due at Check-in)` : '<strong>Status:</strong> <span style="color:#059669;font-weight:700;">Full payment received with thanks!</span>'}
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 📞 Management & Support Contacts Strip -->
+        <div style="border:1px solid #E2E8F0;border-radius:5px;padding:3px 8px;background:#F8FAFC;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;flex-wrap:wrap;gap:4px;">
+          <div>
+            👑 <strong>Company Owners &amp; Directors:</strong>
+          </div>
+          <div>
+            ${CO.owners.map(o => `<strong>${o.name}:</strong> 📞 <a href="tel:${o.phone.replace(/[^0-9+]/g,'')}" style="color:#0F172A;text-decoration:none;font-weight:700;">${o.phone}</a>`).join(' &nbsp;|&nbsp; ')}
+          </div>
+        </div>
+
+        ${customNotes ? `
+          <!-- Special Notes & Guest Requests -->
+          <div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:5px;padding:5px 9px;margin-bottom:5px;font-size:9.5px;color:#92400E;line-height:1.4;">
+            <strong style="color:#78350F;font-size:10px;">📝 Special Request / Guest Notes:</strong> <span style="font-weight:700;color:#0F172A;">${escapeHtml(customNotes)}</span>
+          </div>
+        ` : ''}
+
+        <!-- 📜 Terms & House Rules -->
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:5px;padding:4px 8px;margin-bottom:5px;font-size:8px;color:#64748B;line-height:1.35;">
+          <strong style="color:#0F172A;font-size:8.5px;">📋 Stay Guidelines &amp; Important Terms:</strong>
+          1. <strong>Govt ID Mandatory:</strong> Original government photo ID required for all adult guests at check-in. &nbsp;•&nbsp;
+          2. <strong>Timings:</strong> Check-in: 02:00 PM | Check-out: 11:00 AM (early/late subject to availability). &nbsp;•&nbsp;
+          3. <strong>Peaceful Neighbourhood:</strong> Loud music/noise prohibited after 11:00 PM. &nbsp;•&nbsp;
+          4. <strong>Balance Settlement:</strong> Outstanding balance must be settled upon arrival before room handover. &nbsp;•&nbsp;
+          ${secAmount > 0 ? `5. <strong>Security Deposit:</strong> Refundable deposit of ₹${secAmount.toLocaleString('en-IN')} is returned promptly at check-out via UPI/Cash post room inspection. &nbsp;•&nbsp;` : ''}
+          ${secAmount > 0 ? '6' : '5'}. <strong>Non-GST Slip:</strong> Official booking voucher &amp; payment confirmation without GST output tax credit.
+        </div>
+
+        <!-- Signature & Seal -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:3px;border-top:1px solid #CBD5E1;">
+          <div style="font-size:8px;color:#94A3B8;line-height:1.35;">
+            <strong style="color:#475569;">${CO.name}</strong><br>
+            CIN: ${CO.cin} · PAN: ${CO.pan} · Website: <a href="https://${CO.web}" style="color:#64748B;text-decoration:none;">${CO.web}</a>
+          </div>
+
+          <div style="text-align:right;">
+            <div style="display:inline-block;text-align:right;">
+              <img src="${getSignatureStampSrc()}" alt="Stamp & Signature" style="height:34px;max-width:140px;object-fit:contain;margin-bottom:-4px;display:block;margin-left:auto;" />
+              <div style="height:1px;border-bottom:1px dashed #CBD5E1;width:120px;margin-left:auto;"></div>
+              <div style="font-size:8px;color:#64748B;margin-top:1px;">Authorised Signatory</div>
+              <div style="font-size:9px;font-weight:800;color:#0F172A;">For ${CO.name}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  // 3. Build Formatted WhatsApp Text
+  function buildReceiptWhatsAppText(data, options = {}) {
+    const { booking, payments, totalAmount, paidAmount, balanceDue, nights } = data;
+    const room = booking.rooms || {};
+    const propName = room.nickname || room.property_name || booking.room_id || 'Homestay Property';
+    const unitNo = room.unit_no ? ` (${room.unit_no})` : '';
+    const address = room.address || 'Lucknow, Uttar Pradesh';
+    const mapStr = room.map_link ? `\n📍 *Map:* ${room.map_link}` : '';
+
+    const secDep = getSecurityDepositData(booking, options);
+    const secAmount = secDep.amount || 0;
+    const secStatus = secDep.status || 'none';
+
+    const checkInDate = formatDate(booking.check_in);
+    const checkOutDate = formatDate(booking.check_out);
+    const checkInTime = formatTime(booking.check_in_time || '14:00');
+    const checkOutTime = formatTime(booking.check_out_time || '11:00');
+
+    const liveNotesInput = (typeof document !== 'undefined') ? document.getElementById('receiptCustomNotesInput') : null;
+    const rawNotes = (options.customNotes !== undefined) ? options.customNotes : (liveNotesInput ? liveNotesInput.value : (booking.notes || ''));
+    const customNotes = cleanNotes(rawNotes);
+
+    let payHistoryText = '';
+    if (payments && payments.length > 0) {
+      payHistoryText = '\n*Payment Log:*\n' + payments.map(p => 
+        `• ₹${Number(p.amount || 0).toLocaleString('en-IN')} via ${p.payment_mode || 'Direct'} on ${formatDate(p.payment_date || p.paid_at)}`
+      ).join('\n');
+    }
+
+    return `🏨 *THE UNIQUE HAVEN HOMES*
+*BOOKING CONFIRMATION & ADVANCE RECEIPT*
+Namaste *${booking.guest_name || 'Guest'}* ji 🙏
+
+Thank you for choosing *The Unique Haven Homes*. Your direct reservation has been confirmed:
+
+📋 *Booking ID:* ${booking.booking_id}
+🏠 *Property:* ${propName}${unitNo}
+📍 *Address:* ${address}${mapStr}
+
+📅 *Check-in:* ${checkInDate} at ${checkInTime}
+📅 *Check-out:* ${checkOutDate} at ${checkOutTime}
+🌙 *Duration:* ${nights} Night(s) · ${booking.guests || 1} Guest(s)
+
+💰 *PAYMENT BREAKDOWN:*
+━━━━━━━━━━━━━━━━━━━━
+▪️ *Stay / Booking Rent:* ₹${totalAmount.toLocaleString('en-IN')}
+${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocaleString('en-IN')} (${secStatus === 'collected' ? '✅ Held / जमा है' : (secStatus === 'refunded' ? '🟢 Refunded' : '🟡 Due at Check-in')})
+▪️ *Total Payable:* ₹${(totalAmount + secAmount).toLocaleString('en-IN')}
+` : ''}▪️ *Advance Paid:* ₹${paidAmount.toLocaleString('en-IN')} ✅
+▪️ *Balance Due:* ₹${balanceDue.toLocaleString('en-IN')} ${balanceDue > 0 ? '⚠️ (Payable at Check-in)' : '✅ (Fully Cleared)'}
+━━━━━━━━━━━━━━━━━━━━${secAmount > 0 ? `\n🛡️ *Security Deposit Policy:* ₹${secAmount.toLocaleString('en-IN')} is 100% refundable at check-out post room & inventory inspection.\n` : ''}${payHistoryText}${customNotes ? `\n\n📝 *Special Request & Notes:* ${customNotes}` : ''}
+
+👑 *Company Owners / Directors:*
+• Mr. Shahanshah: +91 94500 55554
+• Mr. Firoz Khan: +91 82996 00709
+
+📋 *Key Check-in Instructions:*
+• Valid Govt ID (Aadhaar / DL / Passport) mandatory for all guests.
+• Check-in: 02:00 PM | Check-out: 11:00 AM.
+• Quiet hours post 11:00 PM.
+
+🌐 https://${CO.web}`;
+  }
+
+  // Helper: Sanitize string for clean cross-platform filenames (Mobile/iOS/Android/Windows/Mac)
+  function sanitizeFilename(str) {
+    return String(str || '')
+      .trim()
+      .replace(/[\/\\:*?"<>|]/g, '-')
+      .replace(/\s+/g, '_')
+      .replace(/-+/g, '-')
+      .replace(/_+/g, '_')
+      .replace(/^[_\-]+|[_\-]+$/g, '');
+  }
+
+  // Helper: PDF / Document title as requested: UHHS Receipt — Guest — Room (Date)
+  function getReceiptDocTitle(booking) {
+    const guest = (booking?.guest_name || 'Guest').trim();
+    const room = (booking?.rooms?.nickname || booking?.rooms?.unit_no || booking?.room_id || '').trim();
+    let datePart = '';
+    if (booking?.check_in) {
+      try {
+        const d = new Date(booking.check_in + (booking.check_in.length === 10 ? 'T00:00:00' : ''));
+        datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      } catch(e) {
+        datePart = booking.check_in;
+      }
+    }
+    const roomPart = room ? ` — ${room}` : '';
+    const dateStr = datePart ? ` (${datePart})` : '';
+    return `TUHH Receipt — ${guest}${roomPart}${dateStr}`;
+  }
+
+  function getReceiptFilename(booking) {
+    const guest = sanitizeFilename(booking?.guest_name || 'Guest');
+    const room = sanitizeFilename(booking?.rooms?.nickname || booking?.rooms?.unit_no || booking?.room_id || '');
+    const checkIn = sanitizeFilename(booking?.check_in || '');
+    const bId = sanitizeFilename(booking?.booking_id || 'Booking');
+    const parts = ['TUHH_Receipt', guest];
+    if (room) parts.push(room);
+    if (checkIn) parts.push(checkIn);
+    parts.push(bId);
+    return parts.join('_') + '.pdf';
+  }
+
+  // 4. Print Booking Receipt Function (Zero-margin @page to completely suppress 'about:blank' footer/header)
+  function printBookingReceipt(elementId, customTitle) {
+    const el = document.getElementById(elementId);
+    if (!el) {
+      alert('Receipt content not found');
+      return;
+    }
+
+    const title = customTitle || 'TUHH Receipt — The Unique Haven Homes';
+    const origDocTitle = document.title;
+    try { document.title = title; } catch(e) {}
+
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ||
+      (window.innerWidth <= 768);
+
+    if (isMobile && typeof window.printDocumentHTML === 'function') {
+      window.printDocumentHTML(el.innerHTML, title);
+      return;
+    }
+
+    // Remove any previous print iframe
+    let old = document.getElementById('uhhReceiptPrintFrame');
+    if (old) old.remove();
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'uhhReceiptPrintFrame';
+    // Position offscreen with exact dimensions, NO visibility:hidden or display:none (prevents blank output in WebKit/Safari/Mac)
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '-9999px';
+    iframe.style.width = '210mm';
+    iframe.style.height = '297mm';
+    iframe.style.border = '0';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    iframe.style.zIndex = '-9999';
+    document.body.appendChild(iframe);
+
+    const baseUrl = window.location.href.split('?')[0].split('#')[0].replace(/\/[^\/]*$/, '/');
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <base href="${baseUrl}">
+        <title>${title.replace(/"/g, '&quot;')}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+        <style>
+          @page {
+            size: A4 portrait;
+            margin: 0 !important; /* Suppresses browser default URL/headers/footers */
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #0F172A !important;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            width: 210mm !important;
+            min-height: 297mm !important;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: geometricPrecision;
+          }
+          
+          /* Master Container for A4 Fit */
+          .uhh-receipt-container, .invoice-doc {
+            width: 210mm !important;
+            max-width: 210mm !important;
+            min-height: 295mm !important;
+            max-height: 297mm !important;
+            box-sizing: border-box !important;
+            margin: 0 auto !important;
+            padding: 12mm 14mm 10mm 14mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            background: #ffffff !important;
+            page-break-inside: avoid !important;
+            page-break-after: avoid !important;
+            break-inside: avoid !important;
+            break-after: avoid !important;
+            overflow: hidden !important;
+          }
+
+          /* Proportional A4 Letterhead Scaling */
+          .uhh-receipt-container img {
+            max-width: 100%;
+          }
+
+          /* Ensure comfortable line heights & font scale on A4 print */
+          .uhh-receipt-container div, 
+          .uhh-receipt-container p, 
+          .uhh-receipt-container span, 
+          .uhh-receipt-container td {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Proportional expansion for sections on A4 */
+          .uhh-receipt-container > div:first-child {
+            padding-bottom: 10px !important;
+            margin-bottom: 12px !important;
+            border-bottom: 2px solid #0F172A !important;
+          }
+
+          /* Status Banner Spacing */
+          .uhh-receipt-container > div[style*="statusBg"],
+          .uhh-receipt-container > div:nth-child(2) {
+            padding: 8px 14px !important;
+            margin-bottom: 12px !important;
+            border-radius: 8px !important;
+          }
+
+          /* Security Deposit Strip if present */
+          .uhh-receipt-container > div[style*="EFF6FF"],
+          .uhh-receipt-container > div[style*="3B82F6"] {
+            padding: 8px 14px !important;
+            margin-bottom: 12px !important;
+            border-radius: 8px !important;
+          }
+
+          /* 2 Column Overview (Guest & Stay Cards) */
+          .uhh-receipt-container > div[style*="grid-template-columns:1fr 1fr"],
+          .uhh-receipt-container > div[style*="grid-template-columns: 1fr 1fr"] {
+            gap: 14px !important;
+            margin-bottom: 14px !important;
+          }
+
+          .uhh-receipt-container > div[style*="grid-template-columns:1fr 1fr"] > div,
+          .uhh-receipt-container > div[style*="grid-template-columns: 1fr 1fr"] > div {
+            padding: 12px 14px !important;
+            border-radius: 8px !important;
+            font-size: 11.5px !important;
+          }
+
+          /* Financial Breakdown Table & Hero Metrics */
+          .uhh-receipt-container > div[style*="border:1px solid #0F172A"],
+          .uhh-receipt-container > div[style*="border: 1px solid #0F172A"],
+          .uhh-receipt-container > div[style*="border:1.5px solid #0F172A"] {
+            margin-bottom: 14px !important;
+            border-radius: 8px !important;
+            border-width: 1.5px !important;
+          }
+
+          /* Hero Metric Metric Stat Boxes (Accommodation, Deposit, Advance, Balance) */
+          .uhh-receipt-container div[style*="grid-template-columns:1fr 1fr 1fr"],
+          .uhh-receipt-container div[style*="grid-template-columns: 1fr 1fr 1fr"],
+          .uhh-receipt-container div[style*="grid-template-columns:1fr 1fr 1fr 1fr"] {
+            padding: 4px 0 !important;
+          }
+
+          .uhh-receipt-container div[style*="grid-template-columns:1fr 1fr 1fr"] > div,
+          .uhh-receipt-container div[style*="grid-template-columns: 1fr 1fr 1fr"] > div,
+          .uhh-receipt-container div[style*="grid-template-columns:1fr 1fr 1fr 1fr"] > div {
+            padding: 10px 8px !important;
+          }
+
+          /* Particulars Table & Payment Transaction Table */
+          .uhh-receipt-container table {
+            font-size: 11px !important;
+          }
+
+          .uhh-receipt-container table th {
+            padding: 6px 8px !important;
+            font-size: 10px !important;
+          }
+
+          .uhh-receipt-container table td {
+            padding: 6px 8px !important;
+            font-size: 11px !important;
+          }
+
+          /* Amount In Words Summary Strip */
+          .uhh-receipt-container div[style*="border:1px dashed"],
+          .uhh-receipt-container div[style*="border: 1px dashed"] {
+            padding: 7px 10px !important;
+            margin-top: 6px !important;
+            font-size: 10.5px !important;
+            line-height: 1.5 !important;
+          }
+
+          /* Support & Contacts Strip */
+          .uhh-receipt-container div[style*="👑 Company Owners"],
+          .uhh-receipt-container div[style*="👑"] {
+            padding: 7px 12px !important;
+            margin-bottom: 10px !important;
+            font-size: 10.5px !important;
+          }
+
+          /* Custom Notes / Guest Requests Strip */
+          .uhh-receipt-container div[style*="FFFBEB"] {
+            padding: 9px 12px !important;
+            margin-bottom: 12px !important;
+            font-size: 11px !important;
+            border-radius: 8px !important;
+          }
+
+          /* Terms & Stay Guidelines Box */
+          .uhh-receipt-container div[style*="Stay Guidelines"],
+          .uhh-receipt-container div[style*="📋"] {
+            padding: 8px 12px !important;
+            margin-bottom: 12px !important;
+            font-size: 9.5px !important;
+            line-height: 1.5 !important;
+            border-radius: 8px !important;
+          }
+
+          /* Footer Signature & Seal Area - Anchored neatly to bottom of A4 */
+          .uhh-receipt-container > div:last-child {
+            padding-top: 10px !important;
+            margin-top: auto !important;
+            border-top: 1.5px solid #CBD5E1 !important;
+          }
+
+          @media print {
+            @page {
+              size: A4 portrait;
+              margin: 0 !important;
+            }
+            html, body {
+              width: 210mm !important;
+              height: 297mm !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+            }
+            .uhh-receipt-container {
+              width: 210mm !important;
+              height: 297mm !important;
+              max-height: 297mm !important;
+              overflow: hidden !important;
+              page-break-after: avoid !important;
+              break-after: avoid !important;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        ${el.innerHTML}
+      </body>
+      </html>
+    `);
+    doc.close();
+
+    const cleanup = () => {
+      try {
+        if (iframe && iframe.parentNode) iframe.remove();
+      } catch(e) {}
+      try { document.title = origDocTitle; } catch(e) {}
+    };
+
+    // Safely remove iframe ONLY after printing completes, never on an aggressive 2-second timer
+    iframe.contentWindow.onafterprint = () => {
+      setTimeout(cleanup, 500);
+    };
+    setTimeout(cleanup, 120000); // 2 minute safety fallback
+
+    const doPrint = () => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch(err) {
+        console.warn('Iframe print error, falling back:', err);
+        window.print();
+      }
+    };
+
+    // Wait for images to be ready before calling print
+    const imgs = doc.images;
+    if (imgs && imgs.length > 0) {
+      let pending = 0;
+      for (let i = 0; i < imgs.length; i++) {
+        if (!imgs[i].complete) pending++;
+      }
+      if (pending === 0) {
+        setTimeout(doPrint, 200);
+      } else {
+        let doneCount = 0;
+        const onImgReady = () => {
+          doneCount++;
+          if (doneCount >= pending) setTimeout(doPrint, 150);
+        };
+        for (let i = 0; i < imgs.length; i++) {
+          if (!imgs[i].complete) {
+            imgs[i].onload = onImgReady;
+            imgs[i].onerror = onImgReady;
+          }
+        }
+        setTimeout(doPrint, 800); // Safety timeout
+      }
+    } else {
+      setTimeout(doPrint, 250);
+    }
+  }
+
+  // 4B. Ensure html2canvas is loaded (local bundled script first, then CDN fallback)
+  async function ensureHtml2Canvas() {
+    if (window.html2canvas) return window.html2canvas;
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[src*="html2canvas"]');
+      if (existing) {
+        existing.addEventListener('load', () => resolve(window.html2canvas));
+        existing.addEventListener('error', () => tryCdn());
+        if (window.html2canvas) return resolve(window.html2canvas);
+      } else {
+        tryLocal();
+      }
+
+      function tryLocal() {
+        const s = document.createElement('script');
+        s.src = 'js/html2canvas.min.js';
+        s.onload = () => {
+          if (window.html2canvas) resolve(window.html2canvas);
+          else tryCdn();
+        };
+        s.onerror = () => tryCdn();
+        document.head.appendChild(s);
+      }
+
+      function tryCdn() {
+        const cdn = document.createElement('script');
+        cdn.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+        cdn.onload = () => {
+          if (window.html2canvas) resolve(window.html2canvas);
+          else reject(new Error('html2canvas failed to initialize.'));
+        };
+        cdn.onerror = () => reject(new Error('Failed to load html2canvas from both local and CDN.'));
+        document.head.appendChild(cdn);
+      }
+    });
+  }
+
+  // 4C. Direct & Reliable WhatsApp Receipt Sharing (Instant, 100% working, never blank)
+  function sendReceiptWhatsApp(phone, message) {
+    const cleanP = phone ? String(phone).replace(/\D/g, '') : '';
+    const fullPhone = cleanP.length === 10 ? '91' + cleanP : cleanP;
+    const msg = message || 'Namaste! Please find your booking receipt details from The Unique Haven Homes.';
+    const waUrl = fullPhone 
+      ? `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  }
+
+  // Backward compatibility alias
+  function sharePdfViaWhatsApp(containerOrId, options = {}) {
+    sendReceiptWhatsApp(options.phone, options.message);
+  }
+
+  // 4D-1. Dedicated Mobile-First Voucher Card Builder (Optimized for WhatsApp & Phone Screens)
+  function buildMobileSlipCardHTML(data, options = {}) {
+    const isMulti = !!data.isMulti;
+
+    const guestName = isMulti ? (data.guestName || 'Guest') : (data.booking?.guest_name || 'Guest');
+    const phone = isMulti ? (data.phone || '') : (data.booking?.phone || '');
+    const cleanP = cleanPhone(phone);
+    const totalAmount = Number(data.totalAmount || 0);
+    const paidAmount = Number(data.paidAmount || 0);
+    const balanceDue = Number(data.balanceDue || 0);
+    const payments = data.payments || [];
+
+    // Security Deposit Extraction (Check options / data / active modal)
+    const secDep = isMulti ? { amount: 0, status: 'none' } : getSecurityDepositData(data.booking, options);
+    const secAmount = secDep.amount || 0;
+    const secStatus = secDep.status || 'none';
+
+    const multiNotes = isMulti
+      ? Array.from(new Set((data.bookings || []).map(b => cleanNotes(b.notes)).filter(Boolean))).join(' · ')
+      : '';
+    const liveNotesInput = (typeof document !== 'undefined') ? document.getElementById('receiptCustomNotesInput') : null;
+    const rawNotes = (options && options.customNotes !== undefined) 
+      ? options.customNotes 
+      : (liveNotesInput ? liveNotesInput.value : (data.customNotes || (isMulti ? (multiNotes || data.primaryBooking?.notes || '') : data.booking?.notes || '')));
+    const customNotes = cleanNotes(rawNotes);
+    const bookedBy = isMulti ? (data.primaryBooking?.booked_by || '') : (data.booking?.booked_by || '');
+
+    const receiptNo = isMulti ? `UHH-GRP/${data.stayGroupId || 'GROUP'}` : `UHH-REC/${data.booking?.booking_id || 'SLIP'}`;
+    const todayStr = formatDate(new Date().toISOString().slice(0, 10));
+
+    let logoSrc = 'assets/logo.png';
+    try { logoSrc = new URL('assets/logo.png', window.location.href).href; } catch(e) {}
+
+    // Status Styling
+    let statusText = 'FULL PAYMENT SETTLED';
+    let statusBg = '#ECFDF5';
+    let statusBorder = '#10B981';
+    let statusColor = '#065F46';
+    let statusIcon = '✅';
+
+    if (totalAmount <= 0) {
+      statusText = 'COMPLIMENTARY GUEST STAY';
+      statusBg = '#F3F4F6';
+      statusBorder = '#9CA3AF';
+      statusColor = '#374151';
+      statusIcon = '🎁';
+    } else if (paidAmount === 0) {
+      statusText = `PAYMENT DUE AT CHECK-IN: ₹${balanceDue.toLocaleString('en-IN')}`;
+      statusBg = '#FEF2F2';
+      statusBorder = '#EF4444';
+      statusColor = '#991B1B';
+      statusIcon = '🔴';
+    } else if (balanceDue > 0) {
+      statusText = `ADVANCE PAID · ₹${balanceDue.toLocaleString('en-IN')} DUE AT CHECK-IN`;
+      statusBg = '#FEF9C3';
+      statusBorder = '#F59E0B';
+      statusColor = '#854D0E';
+      statusIcon = '⚠️';
+    }
+
+    // Properties Cards HTML
+    let propertiesHTML = '';
+    if (isMulti) {
+      const bList = data.bookings || [];
+      propertiesHTML = bList.map((b, idx) => {
+        const room = b.rooms || {};
+        const pName = room.nickname || room.property_name || b.room_id || 'Homestay';
+        const unit = room.unit_no ? ` (${room.unit_no})` : '';
+        const address = room.address || 'Lucknow, Uttar Pradesh';
+        const n = calcNights(b.check_in, b.check_out);
+        const ci = formatDate(b.check_in);
+        const co = formatDate(b.check_out);
+        const cit = formatTime(b.check_in_time || '14:00');
+        const cot = formatTime(b.check_out_time || '11:00');
+        const amt = Number(b.total_amount || 0);
+
+        return `
+          <div style="background:#FFFFFF;border:1.5px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
+              <div>
+                <div style="font-size:10.5px;font-weight:800;color:#B45309;text-transform:uppercase;letter-spacing:0.5px;">Homestay #${idx + 1}</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;line-height:1.2;">${escapeHtml(pName)}${escapeHtml(unit)}</div>
+                <div style="font-size:11.5px;color:#64748B;margin-top:2px;">📍 ${escapeHtml(address)}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${amt.toLocaleString('en-IN')}</div>
+                <div style="font-size:10.5px;color:#64748B;font-family:monospace;">${escapeHtml(b.booking_id)}</div>
+              </div>
+            </div>
+
+            <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+              <div>
+                <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Check-In</div>
+                <div style="font-size:13px;font-weight:800;color:#0F172A;">${ci}</div>
+                <div style="font-size:11px;color:#475569;font-weight:600;">⏰ ${cit}</div>
+              </div>
+              <div style="text-align:center;color:#94A3B8;font-size:15px;font-weight:bold;">→</div>
+              <div>
+                <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Check-Out</div>
+                <div style="font-size:13px;font-weight:800;color:#0F172A;">${co}</div>
+                <div style="font-size:11px;color:#475569;font-weight:600;">⏰ ${cot}</div>
+              </div>
+              <div style="border-left:1px dashed #CBD5E1;padding-left:10px;">
+                <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Stay</div>
+                <div style="font-size:13px;font-weight:800;color:#4F46E5;">${n} Night${n > 1 ? 's' : ''}</div>
+                <div style="font-size:11px;color:#475569;font-weight:600;">👥 ${b.guests || 1} Guests</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      const b = data.booking || {};
+      const room = b.rooms || {};
+      const pName = room.nickname || room.property_name || b.room_id || 'Homestay';
+      const unit = room.unit_no ? ` (${room.unit_no})` : '';
+      const address = room.address || 'Lucknow, Uttar Pradesh';
+      const n = data.nights || calcNights(b.check_in, b.check_out);
+      const ci = formatDate(b.check_in);
+      const co = formatDate(b.check_out);
+      const cit = formatTime(b.check_in_time || '14:00');
+      const cot = formatTime(b.check_out_time || '11:00');
+
+      propertiesHTML = `
+        <div style="background:#FFFFFF;border:1.5px solid #E2E8F0;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px;">
+            <div>
+              <div style="font-size:10.5px;font-weight:800;color:#B45309;text-transform:uppercase;letter-spacing:0.5px;">Booked Property</div>
+              <div style="font-size:16.5px;font-weight:900;color:#0F172A;line-height:1.2;">${escapeHtml(pName)}${escapeHtml(unit)}</div>
+              <div style="font-size:11.5px;color:#64748B;margin-top:2px;">📍 ${escapeHtml(address)}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:17px;font-weight:900;color:#0F172A;">₹${totalAmount.toLocaleString('en-IN')}</div>
+              <div style="font-size:10.5px;color:#64748B;font-family:monospace;">${escapeHtml(b.booking_id)}</div>
+            </div>
+          </div>
+
+          <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <div>
+              <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Check-In</div>
+              <div style="font-size:13px;font-weight:800;color:#0F172A;">${ci}</div>
+              <div style="font-size:11px;color:#475569;font-weight:600;">⏰ ${cit}</div>
+            </div>
+            <div style="text-align:center;color:#94A3B8;font-size:15px;font-weight:bold;">→</div>
+            <div>
+              <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Check-Out</div>
+              <div style="font-size:13px;font-weight:800;color:#0F172A;">${co}</div>
+              <div style="font-size:11px;color:#475569;font-weight:600;">⏰ ${cot}</div>
+            </div>
+            <div style="border-left:1px dashed #CBD5E1;padding-left:10px;">
+              <div style="font-size:10px;color:#64748B;font-weight:700;text-transform:uppercase;">Stay</div>
+              <div style="font-size:13px;font-weight:800;color:#4F46E5;">${n} Night${n > 1 ? 's' : ''}</div>
+              <div style="font-size:11px;color:#475569;font-weight:600;">👥 ${b.guests || 1} Guests</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div id="uhhMobileSlipCard" style="width:480px;max-width:480px;background:#FFFFFF;color:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:20px 18px;border-radius:14px;box-sizing:border-box;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision;font-variant-numeric:tabular-nums;border:2px solid #0F172A;margin:0 auto;">
+        
+        <!-- Header Strip -->
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #E2E8F0;padding-bottom:12px;margin-bottom:10px;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img src="${logoSrc}" alt="Logo" style="width:46px;height:46px;object-fit:contain;border-radius:10px;background:#FAF8F5;border:1.5px solid #CBD5E1;padding:2px;" />
+            <div>
+              <div style="font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;color:#B45309;">The Unique Haven Homes</div>
+              <div style="font-size:15px;font-weight:900;color:#0F172A;line-height:1.2;">${CO.name}</div>
+              <div style="font-size:11px;color:#475569;margin-top:2px;font-weight:600;">📞 ${CO.phone} · Lucknow, UP</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="background:#0F172A;color:#FFFFFF;padding:3px 9px;border-radius:6px;font-size:10.5px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;display:inline-block;">
+              Official Pass
+            </div>
+            <div style="font-size:10px;color:#64748B;margin-top:3px;font-weight:700;">
+              ${todayStr}
+            </div>
+          </div>
+        </div>
+
+        <!-- 🎫 IRCTC-Style High-Visibility PNR / Booking Reference Bar -->
+        <div style="background:#0F172A;color:#FFFFFF;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:0.8px;color:#94A3B8;text-transform:uppercase;">BOOKING REFERENCE / PNR</div>
+            <div style="font-size:16px;font-weight:900;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;letter-spacing:0.6px;color:#38BDF8;">
+              ${escapeHtml(isMulti ? data.stayGroupId : data.booking?.booking_id)}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="background:#4F46E5;color:#fff;font-size:10.5px;padding:3px 8px;border-radius:10px;font-weight:800;text-transform:uppercase;">
+              ${isMulti ? `${data.bookings.length} Homestays` : 'Single Homestay'}
+            </span>
+          </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div style="background:${statusBg};border:1.5px solid ${statusBorder};color:${statusColor};border-radius:10px;padding:9px 12px;margin-bottom:10px;text-align:center;">
+          <div style="font-size:13.5px;font-weight:900;letter-spacing:0.3px;">
+            ${statusIcon} ${statusText}
+          </div>
+        </div>
+
+        <!-- Primary Guest Card -->
+        <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:900;color:#B45309;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px;">Primary Guest Details</div>
+          <div style="font-size:17.5px;font-weight:900;color:#0F172A;">${escapeHtml(guestName)}</div>
+          <div style="font-size:13px;color:#1E293B;margin-top:4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <span>📱 <strong>${phone ? escapeHtml(phone) : 'N/A'}</strong></span>
+            <span>👥 <strong>${isMulti ? data.totalGuests : (data.booking?.guests || 1)} Guests Total</strong></span>
+            ${bookedBy ? `<span>✍️ Booked By: <strong>${escapeHtml(bookedBy)}</strong></span>` : ''}
+          </div>
+        </div>
+
+        <!-- Properties Section -->
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:900;color:#0F172A;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>🏠 Reserved Homestay(s)</span>
+            <span style="font-size:11px;color:#475569;font-weight:800;">${isMulti ? `${data.bookings.length} Properties` : '1 Property'}</span>
+          </div>
+          ${propertiesHTML}
+        </div>
+
+        ${secAmount > 0 ? `
+          <!-- Security Deposit Highlight Strip -->
+          <div style="background:#EFF6FF;border:1.5px solid #3B82F6;border-radius:10px;padding:9px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:16px;">🛡️</span>
+              <div>
+                <div style="font-size:10px;font-weight:800;color:#1E40AF;text-transform:uppercase;letter-spacing:0.5px;">Refundable Security Deposit</div>
+                <div style="font-size:15px;font-weight:900;color:#0F172A;">
+                  ₹${secAmount.toLocaleString('en-IN')} 
+                  <span style="font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;background:${secStatus === 'collected' ? '#DEF7EC' : (secStatus === 'refunded' ? '#F0FDF4' : '#FEF3C7')};color:${secStatus === 'collected' ? '#03543F' : (secStatus === 'refunded' ? '#15803D' : '#854D0E')};margin-left:4px;">
+                    ${secStatus === 'collected' ? '✅ DEPOSIT HELD (जमा है)' : (secStatus === 'refunded' ? '🟢 REFUNDED' : '🟡 PENDING COLLECTION')}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div style="font-size:9.5px;color:#2563EB;font-weight:700;">
+              *100% Refundable at check-out
+            </div>
+          </div>
+        ` : ''}
+
+        <!-- Financial Statement (Highlight Hero Metric Boxes) -->
+        <div style="border:1.5px solid #0F172A;border-radius:10px;overflow:hidden;margin-bottom:10px;">
+          <div style="display:grid;grid-template-columns:${secAmount > 0 ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr'};background:#F8FAFC;text-align:center;">
+            <div style="padding:10px 4px;border-right:1px solid #CBD5E1;">
+              <div style="font-size:9.5px;font-weight:900;color:#475569;text-transform:uppercase;">Stay Total</div>
+              <div style="font-size:16px;font-weight:900;color:#0F172A;margin-top:2px;">₹${totalAmount.toLocaleString('en-IN')}</div>
+            </div>
+            ${secAmount > 0 ? `
+              <div style="padding:10px 4px;border-right:1px solid #CBD5E1;background:#F0F9FF;">
+                <div style="font-size:9.5px;font-weight:900;color:#0369A1;text-transform:uppercase;">🛡️ Deposit</div>
+                <div style="font-size:16px;font-weight:900;color:#0284C7;margin-top:2px;">₹${secAmount.toLocaleString('en-IN')}</div>
+              </div>
+            ` : ''}
+            <div style="padding:10px 4px;border-right:1px solid #CBD5E1;background:#F0FDF4;">
+              <div style="font-size:9.5px;font-weight:900;color:#15803D;text-transform:uppercase;">Advance Paid</div>
+              <div style="font-size:16px;font-weight:900;color:#059669;margin-top:2px;">₹${paidAmount.toLocaleString('en-IN')}</div>
+            </div>
+            <div style="padding:10px 4px;background:${balanceDue > 0 ? '#FEF2F2' : '#F0FDF4'};">
+              <div style="font-size:9.5px;font-weight:900;color:${balanceDue > 0 ? '#DC2626' : '#15803D'};text-transform:uppercase;">${balanceDue > 0 ? 'Due' : 'Cleared'}</div>
+              <div style="font-size:16px;font-weight:900;color:${balanceDue > 0 ? '#DC2626' : '#059669'};margin-top:2px;">₹${balanceDue.toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+
+          ${payments && payments.length > 0 ? `
+            <div style="padding:10px 12px;background:#FFFFFF;border-top:1.5px solid #CBD5E1;">
+              <div style="font-size:10.5px;font-weight:900;color:#0F172A;text-transform:uppercase;margin-bottom:6px;">💳 Payment Log (${payments.length} Transaction${payments.length > 1 ? 's' : ''})</div>
+              ${payments.map((p, idx) => `
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;padding:5px 0;border-bottom:1px solid #E2E8F0;gap:8px;">
+                  <div>
+                    <span style="font-weight:800;color:#0F172A;">${(p.paid_at || p.created_at) ? formatDateTime(p.paid_at || p.created_at) : formatDate(p.payment_date)}</span>
+                    <span style="color:#475569;font-size:11px;"> · via <strong>${escapeHtml(p.payment_mode || 'UPI')}</strong></span>
+                    ${p.received_by ? `<span style="color:#64748B;font-size:11px;"> (Recv by: <strong>${escapeHtml(p.received_by)}</strong>)</span>` : ''}
+                    ${p.notes ? `
+                      <div style="font-size:11px;color:#475569;margin-top:2px;">
+                        📝 <strong>Note:</strong> <em>${escapeHtml(p.notes)}</em>
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div style="font-weight:900;color:#059669;font-size:12.5px;text-align:right;white-space:nowrap;">
+                    ₹${Number(p.amount || 0).toLocaleString('en-IN')}
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+          ${secAmount > 0 ? `
+            <div style="padding:7px 12px;background:#F0F9FF;border-top:1px dashed #BAE6FD;font-size:11px;display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:#0369A1;font-weight:700;">Total Stay + Security Deposit:</span>
+              <strong style="color:#0284C7;font-size:12.5px;">₹${(totalAmount + secAmount).toLocaleString('en-IN')}</strong>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Custom Notes Banner (If any) -->
+        ${customNotes ? `
+          <div style="background:#FFFBEB;border:1.5px solid #F59E0B;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:12.5px;color:#92400E;line-height:1.4;">
+            <strong style="font-size:12.5px;color:#78350F;">📝 Special Note:</strong> <span style="font-weight:700;color:#0F172A;">${escapeHtml(customNotes)}</span>
+          </div>
+        ` : ''}
+
+        <!-- Support Strip -->
+        <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+          <div>
+            👑 <strong>Director / Owner:</strong> Shahanshah<br>
+            📞 <a href="tel:+919450055554" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 94500 55554</a>
+          </div>
+          <div>
+            👑 <strong>Director / Owner:</strong> Firoz Khan<br>
+            📞 <a href="tel:+918299600709" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
+          </div>
+        </div>
+
+        <!-- Compact Guidelines -->
+        <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:10.5px;color:#334155;line-height:1.4;">
+          <div style="font-weight:900;color:#0F172A;margin-bottom:3px;text-transform:uppercase;">📋 Important Stay Guidelines:</div>
+          • Original Govt Photo ID (Aadhaar / Passport / DL) mandatory at check-in.<br>
+          • Check-in: 02:00 PM | Check-out: 11:00 AM.<br>
+          • Quiet hours post 11:00 PM. No loud music.<br>
+          • Remaining balance must be settled before key handover.<br>
+          ${secAmount > 0 ? `• <strong>Security Deposit:</strong> Refundable deposit of ₹${secAmount.toLocaleString('en-IN')} is returned promptly at check-out via UPI/Cash post room inspection.<br>` : ''}
+        </div>
+
+        <!-- Footer Signature & Stamp -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1.5px solid #0F172A;padding-top:8px;">
+          <div style="font-size:10px;color:#64748B;line-height:1.35;">
+            <strong style="color:#0F172A;">${CO.name}</strong><br>
+            CIN: ${CO.cin} · PAN: ${CO.pan}<br>
+            Website: ${CO.web}
+          </div>
+          <div style="text-align:right;">
+            <img src="${getSignatureStampSrc()}" alt="Signature" style="height:36px;max-width:130px;object-fit:contain;margin-bottom:-4px;margin-left:auto;display:block;" />
+            <div style="border-bottom:1px dashed #CBD5E1;width:120px;margin-left:auto;height:1px;"></div>
+            <div style="font-size:9.5px;color:#475569;margin-top:2px;font-weight:700;">Authorised Signatory</div>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  // 4D. Convert payment slip to crisp high-res image and show rich visual preview modal
+  // Default: 'mobile' (Ultra-crisp 480px WhatsApp mobile vertical pass - fits mobile screen perfectly with 300 DPI)
+  // Optional: 'official' (Full A4 desktop voucher layout)
+  async function shareSlipAsImage(elementId, filename = 'Payment_Slip', receiptData = null, mode = 'mobile') {
+    const el = document.getElementById(elementId);
+    if (!el && !receiptData && !window._activeReceiptData && !window._activeSingleReceiptData) {
+      alert('Receipt content not found.');
+      return;
+    }
+
+    try {
+      if (!window.html2canvas) {
+        await ensureHtml2Canvas();
+      }
+    } catch(e) {
+      console.warn('ensureHtml2Canvas warning:', e);
+    }
+
+    if (!window.html2canvas) {
+      alert('Could not initialize image renderer. Please reload the page.');
+      return;
+    }
+
+    if (window.fsn?.info) {
+      fsn.info('Processing Image', mode === 'mobile' ? '📸 Generating ultra-crisp WhatsApp mobile vertical pass...' : '📸 Generating official receipt PNG...');
+    }
+
+    const data = receiptData || window._activeReceiptData || window._activeSingleReceiptData || null;
+
+    let tempWrapper = null;
+    try {
+      let captureEl = null;
+      let captureWidth = 480;
+
+      // 🌟 MODE 1: MOBILE PASS (Default) - Vertical 480px, perfect for smartphones & WhatsApp!
+      if (mode === 'mobile') {
+        if (data) {
+          tempWrapper = document.createElement('div');
+          tempWrapper.id = 'uhh_mobile_slip_render_wrapper';
+          tempWrapper.style.position = 'fixed';
+          tempWrapper.style.left = '-9999px';
+          tempWrapper.style.top = '0';
+          tempWrapper.style.width = '480px';
+          tempWrapper.style.maxWidth = '480px';
+          tempWrapper.style.boxSizing = 'border-box';
+          tempWrapper.style.zIndex = '-99999';
+          tempWrapper.style.background = '#ffffff';
+          tempWrapper.innerHTML = buildMobileSlipCardHTML(data);
+          document.body.appendChild(tempWrapper);
+          captureEl = tempWrapper.firstElementChild || tempWrapper;
+          captureWidth = 480;
+        } else if (el) {
+          const target = el.querySelector('.uhh-receipt-container') || el;
+          tempWrapper = target.cloneNode(true);
+          tempWrapper.style.position = 'fixed';
+          tempWrapper.style.left = '-9999px';
+          tempWrapper.style.top = '0';
+          tempWrapper.style.width = '760px';
+          tempWrapper.style.zIndex = '-99999';
+          document.body.appendChild(tempWrapper);
+          captureEl = tempWrapper;
+          captureWidth = 760;
+        }
+      } else {
+        // 🌟 MODE 2: OFFICIAL RECEIPT (Full A4 / Desktop layout)
+        const target = el ? (el.querySelector('.uhh-receipt-container') || el) : null;
+        if (target) {
+          tempWrapper = target.cloneNode(true);
+          tempWrapper.id = 'uhh_official_receipt_render_wrapper';
+          tempWrapper.style.position = 'fixed';
+          tempWrapper.style.left = '-9999px';
+          tempWrapper.style.top = '0';
+          tempWrapper.style.width = '760px';
+          tempWrapper.style.maxWidth = '760px';
+          tempWrapper.style.boxSizing = 'border-box';
+          tempWrapper.style.zIndex = '-99999';
+          tempWrapper.style.background = '#ffffff';
+          document.body.appendChild(tempWrapper);
+          captureEl = tempWrapper;
+          captureWidth = 760;
+        } else if (data) {
+          tempWrapper = document.createElement('div');
+          tempWrapper.id = 'uhh_official_receipt_render_wrapper';
+          tempWrapper.style.position = 'fixed';
+          tempWrapper.style.left = '-9999px';
+          tempWrapper.style.top = '0';
+          tempWrapper.style.width = '760px';
+          tempWrapper.style.maxWidth = '760px';
+          tempWrapper.style.boxSizing = 'border-box';
+          tempWrapper.style.zIndex = '-99999';
+          tempWrapper.style.background = '#ffffff';
+          tempWrapper.innerHTML = data.isMulti ? buildMultiPropertyReceiptHTML(data) : buildReceiptHTML(data);
+          document.body.appendChild(tempWrapper);
+          captureEl = tempWrapper.firstElementChild || tempWrapper;
+          captureWidth = 760;
+        }
+      }
+
+      if (!captureEl) throw new Error('Target receipt element not found.');
+
+      // Wait for all images in captureEl to be ready
+      const imgs = Array.from(captureEl.querySelectorAll('img'));
+      await Promise.all(imgs.map(img => {
+        if (img.complete && img.naturalHeight !== 0) return Promise.resolve();
+        return new Promise(res => {
+          img.onload = res;
+          img.onerror = res;
+          setTimeout(res, 300);
+        });
+      }));
+
+      // Give browser layout engine a short beat to calculate full height
+      await new Promise(r => setTimeout(r, 60));
+
+      const fullHeight = Math.max(captureEl.scrollHeight, captureEl.offsetHeight, 600);
+      const fullWidth = captureEl.offsetWidth || captureWidth;
+
+      // 🌟 ULTRA-CRISP 3X DPI RETINA CAPTURE (IRCTC Screenshot Grade Clarity)
+      const canvas = await window.html2canvas(captureEl, {
+        scale: 3, // 300+ DPI Crisp Retina Resolution
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        scrollY: 0,
+        scrollX: 0,
+        x: 0,
+        y: 0,
+        width: fullWidth,
+        height: fullHeight,
+        windowWidth: 1024,
+        windowHeight: fullHeight + 100
+      });
+
+      if (tempWrapper && tempWrapper.parentNode) {
+        tempWrapper.remove();
+        tempWrapper = null;
+      }
+
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          alert('Could not generate receipt image blob.');
+          return;
+        }
+
+        const file = new File([blob], `${filename}.png`, { type: 'image/png' });
+
+        // Auto copy to clipboard in background if supported
+        if (navigator.clipboard && window.ClipboardItem) {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ 'image/png': blob })
+            ]);
+            if (window.fsn?.success) {
+              fsn.success('Mobile Pass Copied', '📸 Mobile vertical slip copied to clipboard! Preview shown below.');
+            }
+          } catch(e) {
+            console.warn('Silent clipboard copy failed:', e);
+          }
+        }
+
+        // Show rich interactive preview modal with mode switcher
+        showSlipImagePreviewModal(blob, filename, file, {
+          elementId,
+          data,
+          currentMode: mode
+        });
+      }, 'image/png');
+    } catch(err) {
+      if (tempWrapper && tempWrapper.parentNode) tempWrapper.remove();
+      console.error('Canvas capture error:', err);
+      alert('Error creating receipt image: ' + err.message);
+    }
+  }
+
+  // 4E. Visual Preview Modal for rendered receipt image with format switcher
+  function showSlipImagePreviewModal(blob, filename, file, ctx = {}) {
+    const old = document.getElementById('slipImagePreviewModal');
+    if (old) old.remove();
+
+    const imgUrl = URL.createObjectURL(blob);
+    const prevModal = document.createElement('div');
+    prevModal.className = 'modal-overlay';
+    prevModal.id = 'slipImagePreviewModal';
+    prevModal.style.zIndex = '999999';
+
+    const currentMode = ctx.currentMode || 'mobile';
+    const isMobile = currentMode === 'mobile';
+
+    // Reliable teardown function
+    let isClosed = false;
+    function closeSlipPreview() {
+      if (isClosed) return;
+      isClosed = true;
+      try { URL.revokeObjectURL(imgUrl); } catch(e) {}
+      window.removeEventListener('keydown', handleKeyDown, true);
+      if (prevModal && prevModal.parentNode) {
+        prevModal.remove();
+      }
+    }
+
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' || e.key === 'Esc' || e.keyCode === 27) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSlipPreview();
+      }
+    }
+    // High-priority ESC capture listener
+    window.addEventListener('keydown', handleKeyDown, true);
+
+    prevModal.innerHTML = `
+      <div class="modal-box" style="max-width:820px;width:95%;max-height:92vh;display:flex;flex-direction:column;padding:18px 20px;border-radius:16px;background:#0F172A;color:#fff;box-shadow:0 25px 60px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08);position:relative;">
+        
+        <!-- Header with Sleek Integrated Close Button -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.1);">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+            <div style="width:42px;height:42px;border-radius:10px;background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📸</div>
+            <div style="min-width:0;">
+              <div style="font-weight:900;font-size:15.5px;color:#F8FAFC;letter-spacing:-0.2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span>${isMobile ? 'Mobile Voucher Slip Preview' : 'Official Receipt Image Preview'}</span>
+                <span style="background:#10B981;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:6px;letter-spacing:0.3px;text-transform:uppercase;">${isMobile ? 'WhatsApp HD (300 DPI Vertical)' : 'Full Receipt (300 DPI)'}</span>
+              </div>
+              <div style="font-size:11.5px;color:#94A3B8;margin-top:2px;">
+                ${isMobile ? 'Ultra-crisp 5-star mobile vertical pass · Zero zoom needed on smartphones' : 'Full voucher with itemized billing, security deposit table, notes &amp; terms.'}
+              </div>
+            </div>
+          </div>
+
+          <!-- 🌟 BEST MODERN CLOSE BUTTON -->
+          <button type="button" id="btnCloseSlipModal" title="Close Preview (ESC or Click)" aria-label="Close Preview" style="width:36px;height:36px;min-width:36px;border-radius:50%;background:#EF4444;border:2px solid #DC2626;color:#ffffff;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s cubic-bezier(0.16,1,0.3,1);box-shadow:0 4px 12px rgba(239,68,68,0.4);flex-shrink:0;outline:none;padding:0;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Format Switcher Pill Tabs -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="display:inline-flex;align-items:center;gap:4px;background:#1E293B;padding:4px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);">
+            <button type="button" id="btnTabMobile" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;${isMobile ? 'background:#0284C7;color:#fff;box-shadow:0 2px 8px rgba(2,132,199,0.4);' : 'background:transparent;color:#94A3B8;'}">
+              📱 WhatsApp Mobile Pass (Vertical)
+            </button>
+            <button type="button" id="btnTabOfficial" style="padding:6px 14px;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s;${!isMobile ? 'background:#0284C7;color:#fff;box-shadow:0 2px 8px rgba(2,132,199,0.4);' : 'background:transparent;color:#94A3B8;'}">
+              📄 Full Official Receipt (PDF Format)
+            </button>
+          </div>
+          <span style="font-size:11px;color:#94A3B8;">💡 Smartphone screens ke liye Vertical Pass recommended hai.</span>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;background:#1E293B;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);">
+          <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;font-weight:800;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="btnCopySlipImg">
+            📋 Copy Image (for WhatsApp Ctrl+V)
+          </button>
+          <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:800;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="btnDownloadSlipImg">
+            📥 Download PNG
+          </button>
+          ${navigator.canShare && navigator.canShare({ files: [file] }) ? `
+            <button type="button" class="btn-sm" style="background:#25D366;color:#fff;font-weight:800;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" id="btnShareSlipImg">
+              📱 WhatsApp Share Sheet
+            </button>
+          ` : ''}
+          <button type="button" class="btn-sm" id="btnCloseSlipModalBar" style="background:#334155;color:#F8FAFC;font-weight:800;padding:8px 14px;border:1px solid #475569;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all 0.2s;" title="Close Preview">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Close
+          </button>
+          <span style="font-size:11px;color:#94A3B8;margin-left:auto;">💡 WhatsApp Web me seedha <strong>Ctrl+V</strong> karein.</span>
+        </div>
+
+        <!-- Scrollable Image Preview -->
+        <div style="flex:1;overflow-y:auto;background:#1E293B;padding:16px;border-radius:8px;text-align:center;">
+          <img src="${imgUrl}" alt="Slip Preview" style="${isMobile ? 'width:480px;max-width:100%;' : 'width:100%;max-width:720px;'}height:auto;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,0.45);background:#fff;display:inline-block;image-rendering:-webkit-optimize-contrast;image-rendering:crisp-edges;" />
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(prevModal);
+
+    // Format Tab Click Handlers
+    const btnOfficial = prevModal.querySelector('#btnTabOfficial');
+    const btnMobile = prevModal.querySelector('#btnTabMobile');
+    if (btnOfficial && isMobile) {
+      btnOfficial.onclick = () => {
+        closeSlipPreview();
+        shareSlipAsImage(ctx.elementId, filename, ctx.data, 'official');
+      };
+    }
+    if (btnMobile && !isMobile) {
+      btnMobile.onclick = () => {
+        closeSlipPreview();
+        shareSlipAsImage(ctx.elementId, filename, ctx.data, 'mobile');
+      };
+    }
+
+    // Close button interactions & hover animations
+    const btnClose = prevModal.querySelector('#btnCloseSlipModal');
+    if (btnClose) {
+      btnClose.onmouseenter = () => {
+        btnClose.style.transform = 'scale(1.1) rotate(90deg)';
+        btnClose.style.background = '#DC2626';
+        btnClose.style.boxShadow = '0 6px 18px rgba(239,68,68,0.6)';
+      };
+      btnClose.onmouseleave = () => {
+        btnClose.style.transform = 'scale(1) rotate(0deg)';
+        btnClose.style.background = '#EF4444';
+        btnClose.style.boxShadow = '0 4px 12px rgba(239,68,68,0.4)';
+      };
+      btnClose.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSlipPreview();
+      });
+    }
+
+    const btnCloseBar = prevModal.querySelector('#btnCloseSlipModalBar');
+    if (btnCloseBar) {
+      btnCloseBar.onmouseenter = () => {
+        btnCloseBar.style.background = '#EF4444';
+        btnCloseBar.style.borderColor = '#EF4444';
+      };
+      btnCloseBar.onmouseleave = () => {
+        btnCloseBar.style.background = '#334155';
+        btnCloseBar.style.borderColor = '#475569';
+      };
+      btnCloseBar.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSlipPreview();
+      });
+    }
+
+    // Backdrop click
+    prevModal.addEventListener('click', (e) => {
+      if (e.target === prevModal || e.target.classList.contains('modal-overlay')) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSlipPreview();
+      }
+    });
+
+    // Copy Button Handler
+    const btnCopy = prevModal.querySelector('#btnCopySlipImg');
+    if (btnCopy) {
+      btnCopy.onclick = async () => {
+        try {
+          if (navigator.clipboard && window.ClipboardItem) {
+            await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+            btnCopy.textContent = '✅ Copied to Clipboard!';
+            btnCopy.style.background = '#059669';
+            if (window.fsn?.success) fsn.success('Copied', 'Slip image copy ho gayi! WhatsApp Web me Ctrl+V paste karein.');
+            setTimeout(() => {
+              btnCopy.textContent = '📋 Copy Image (for WhatsApp Ctrl+V)';
+              btnCopy.style.background = '#4F46E5';
+            }, 3000);
+          } else {
+            alert('Direct clipboard copy unsupported. Please use Download PNG button.');
+          }
+        } catch(e) {
+          alert('Clipboard copy failed. Please use Download PNG button.');
+        }
+      };
+    }
+
+    // Download Button Handler
+    const btnDl = prevModal.querySelector('#btnDownloadSlipImg');
+    if (btnDl) {
+      btnDl.onclick = () => {
+        const a = document.createElement('a');
+        a.href = imgUrl;
+        a.download = `${filename}.png`;
+        a.click();
+      };
+    }
+
+    // Native Share Button Handler
+    const btnShare = prevModal.querySelector('#btnShareSlipImg');
+    if (btnShare) {
+      btnShare.onclick = async () => {
+        try {
+          await navigator.share({
+            files: [file],
+            title: 'Payment Receipt',
+            text: 'Payment Slip from The Unique Haven Homes'
+          });
+        } catch(e) {}
+      };
+    }
+  }
+
+  // 5. Open Booking Receipt Interactive Modal
+  async function openBookingReceiptModal(bookingIdOrPhone) {
+    if (!bookingIdOrPhone) {
+      alert('Please specify a Booking ID or Phone number.');
+      return;
+    }
+
+    // Show loading indicator
+    let loadingEl = document.createElement('div');
+    loadingEl.className = 'modal-overlay';
+    loadingEl.id = 'uhhReceiptLoadingOverlay';
+    loadingEl.innerHTML = `
+      <div class="modal-box" style="text-align:center;padding:30px;max-width:320px;">
+        <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+        <div style="font-weight:700;">Loading Booking Details…</div>
+        <div style="font-size:12px;color:#64748B;margin-top:4px;">Fetching payments &amp; reservation data</div>
+      </div>
+    `;
+    document.body.appendChild(loadingEl);
+
+    try {
+      const res = await fetchBookingReceiptData(bookingIdOrPhone);
+      loadingEl.remove();
+
+      if (!res) {
+        alert('No booking found for: ' + bookingIdOrPhone);
+        return;
+      }
+
+      if (res.isMultiGroup) {
+        renderMultiPropertyReceiptModal(res.multiData);
+        return;
+      }
+
+      // If multiple bookings found for phone
+      if (res.isMultiple) {
+        showBookingPickerModal(res.bookings);
+        return;
+      }
+
+      renderReceiptModal(res);
+    } catch(err) {
+      loadingEl.remove();
+      alert('Error fetching booking: ' + err.message);
+    }
+  }
+
+  // 1B. Fetch Multi-Property / Group Booking Data for Combined Receipt
+  async function fetchMultiBookingReceiptData(identifier) {
+    let client = window.sb;
+    if (!client && typeof supabase !== 'undefined') {
+      const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : window.SUPABASE_URL;
+      const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : window.SUPABASE_ANON_KEY;
+      if (url && key) client = supabase.createClient(url, key);
+    }
+    if (!client) throw new Error('Supabase connection not initialized.');
+
+    let bookings = [];
+
+    if (Array.isArray(identifier)) {
+      const { data, error } = await client.from('guest_register')
+        .select('*, rooms(*)')
+        .in('booking_id', identifier)
+        .order('check_in', { ascending: true });
+      if (error) throw error;
+      bookings = data || [];
+    } else {
+      const str = String(identifier).trim();
+      const isGroup = str.startsWith('GRP-') || str.includes('GRP');
+      const isBookingId = str.startsWith('B') && str.length > 10;
+      const digits = cleanPhone(str);
+
+      if (isGroup) {
+        const { data, error } = await client.from('guest_register')
+          .select('*, rooms(*)')
+          .eq('stay_group_id', str)
+          .order('check_in', { ascending: true });
+        if (error) throw error;
+        bookings = data || [];
+      } else if (isBookingId) {
+        // First check if this booking has a stay_group_id
+        const { data: singleBk } = await client.from('guest_register')
+          .select('booking_id, stay_group_id, phone, guest_name, check_in')
+          .eq('booking_id', str)
+          .maybeSingle();
+
+        if (singleBk?.stay_group_id) {
+          const { data, error } = await client.from('guest_register')
+            .select('*, rooms(*)')
+            .eq('stay_group_id', singleBk.stay_group_id)
+            .order('check_in', { ascending: true });
+          if (error) throw error;
+          bookings = data || [];
+        } else if (singleBk?.phone) {
+          const pDigits = cleanPhone(singleBk.phone);
+          const last10 = pDigits.slice(-10);
+          const { data, error } = await client.from('guest_register')
+            .select('*, rooms(*)')
+            .or(`phone.eq.${singleBk.phone},phone.eq.${pDigits},phone.ilike.%${last10}%`)
+            .order('check_in', { ascending: true });
+          if (error) throw error;
+          bookings = data || [];
+        } else {
+          const { data } = await client.from('guest_register')
+            .select('*, rooms(*)')
+            .eq('booking_id', str);
+          bookings = data || [];
+        }
+      } else if (digits.length >= 10) {
+        // Query by phone
+        const last10 = digits.slice(-10);
+        const { data, error } = await client.from('guest_register')
+          .select('*, rooms(*)')
+          .or(`phone.ilike.%${last10}%,phone.eq.${digits}`)
+          .order('check_in', { ascending: false })
+          .limit(30);
+        if (error) throw error;
+        bookings = data || [];
+      }
+    }
+
+    if (!bookings || bookings.length === 0) return null;
+
+    // Filter out rejected / cancelled bookings if any
+    bookings = bookings.filter(b => !b.is_cancelled && b.verification_status !== 'rejected');
+    if (!bookings.length) return null;
+
+    // Fetch payments for all bookings
+    const bIds = bookings.map(b => b.booking_id);
+    const { data: allPayments } = await client.from('payment_history')
+      .select('*')
+      .in('booking_id', bIds)
+      .neq('verification_status', 'rejected')
+      .order('payment_date', { ascending: true });
+
+    const totalAmount = bookings.reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+    const paidAmount = (allPayments || []).reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const balanceDue = Math.max(0, totalAmount - paidAmount);
+
+    // Group info
+    const primaryBooking = bookings[0];
+    const guestName = primaryBooking.guest_name || 'Valued Guest';
+    const phone = primaryBooking.phone || '';
+    const anyGroupId = bookings.find(b => b.stay_group_id)?.stay_group_id;
+    const stayGroupId = anyGroupId || primaryBooking.stay_group_id || `GRP-${cleanPhone(phone)}-${Date.now().toString().slice(-4)}`;
+
+    // Total guests
+    const totalGuests = bookings.reduce((sum, b) => sum + Number(b.guests || 1), 0);
+
+    // Dates range
+    const checkIns = bookings.map(b => b.check_in).filter(Boolean).sort();
+    const checkOuts = bookings.map(b => b.check_out).filter(Boolean).sort();
+    const minCheckIn = checkIns[0] || primaryBooking.check_in;
+    const maxCheckOut = checkOuts[checkOuts.length - 1] || primaryBooking.check_out;
+    const totalNights = calcNights(minCheckIn, maxCheckOut);
+
+    return {
+      isMulti: true,
+      stayGroupId,
+      guestName,
+      phone,
+      totalGuests,
+      minCheckIn,
+      maxCheckOut,
+      totalNights,
+      bookings,
+      payments: allPayments || [],
+      totalAmount,
+      paidAmount,
+      balanceDue,
+      primaryBooking,
+      customNotes: Array.from(new Set((bookings || []).map(b => cleanNotes(b.notes)).filter(Boolean))).join(' · ')
+    };
+  }
+
+  // 2B. Build Print-Ready Combined Multi-Property Receipt HTML (Compact Single-Page A4)
+  function buildMultiPropertyReceiptHTML(data, options = {}) {
+    const {
+      stayGroupId,
+      guestName,
+      phone,
+      totalGuests,
+      minCheckIn,
+      maxCheckOut,
+      totalNights,
+      bookings,
+      payments,
+      totalAmount,
+      paidAmount,
+      balanceDue,
+      primaryBooking
+    } = data;
+
+    const todayStr = formatDate(new Date().toISOString().slice(0, 10));
+    const receiptNo = options.receiptNo || `UHH-GRP/${stayGroupId || 'RECEIPT'}`;
+    const groupNotes = data.customNotes || Array.from(new Set((bookings || []).map(b => cleanNotes(b.notes)).filter(Boolean))).join(' · ');
+    const rawMulti = options.customNotes !== undefined ? options.customNotes : (groupNotes || primaryBooking?.notes || '');
+    const customNotes = cleanNotes(rawMulti);
+
+    let statusBadgeText = '✅ FULLY PAID';
+    let statusBg = '#DEF7EC';
+    let statusColor = '#03543F';
+
+    if (totalAmount <= 0) {
+      statusBadgeText = 'COMPLIMENTARY GROUP STAY';
+      statusBg = '#F3F4F6';
+      statusColor = '#374151';
+    } else if (paidAmount === 0) {
+      statusBadgeText = '🔴 PAYMENT DUE AT CHECK-IN';
+      statusBg = '#FDE8E8';
+      statusColor = '#9B1C1C';
+    } else if (balanceDue > 0) {
+      statusBadgeText = `⚠️ ADVANCE PAID · ₹${balanceDue.toLocaleString('en-IN')} DUE AT CHECK-IN`;
+      statusBg = '#FEF08A';
+      statusColor = '#854D0E';
+    }
+
+    const wordsTotal = numToWords(totalAmount);
+    const wordsPaid = numToWords(paidAmount);
+    const wordsBalance = balanceDue > 0 ? numToWords(balanceDue) : '';
+
+    let logoSrc = 'assets/logo.png';
+    try {
+      logoSrc = new URL('assets/logo.png', window.location.href).href;
+    } catch(e) {}
+
+    return `
+      <div class="uhh-receipt-container" style="background:#fff;color:#0F172A;font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,sans-serif;padding:12px 16px;max-width:760px;margin:0 auto;box-sizing:border-box;page-break-inside:avoid;break-inside:avoid;line-height:1.35;font-size:10.5px;">
+        
+        <!-- Header Strip -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #0F172A;padding-bottom:6px;margin-bottom:6px;gap:12px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <img src="${logoSrc}" alt="UHH Logo" style="width:40px;height:40px;object-fit:contain;border-radius:8px;background:#FAF8F5;border:1px solid #E2E8F0;padding:2px;flex-shrink:0;" />
+            <div>
+              <div style="font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#B45309;margin-bottom:1px;">
+                The Unique Haven Homes Homestays
+              </div>
+              <div style="font-size:14px;font-weight:900;color:#0F172A;line-height:1.15;">
+                ${CO.name}
+              </div>
+              <div style="font-size:9px;color:#64748B;margin-top:2px;line-height:1.35;">
+                📍 ${CO.address} &nbsp;|&nbsp; 📞 ${CO.phone} &nbsp;|&nbsp; ✉️ ${CO.email}
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="display:inline-block;background:#0F172A;color:#fff;padding:2px 8px;border-radius:4px;font-size:9.5px;font-weight:800;letter-spacing:0.6px;text-transform:uppercase;margin-bottom:2px;">
+              🏢 Consolidated Multi-Property Voucher
+            </div>
+            <div style="font-size:8.5px;font-weight:700;color:#64748B;letter-spacing:0.3px;text-transform:uppercase;">
+              Official Combined Guest Receipt (Without GST)
+            </div>
+            <div style="margin-top:3px;font-size:9.5px;line-height:1.4;">
+              <span style="color:#64748B;">Receipt No:</span> <strong style="color:#0F172A;">${escapeHtml(receiptNo)}</strong> &nbsp;|&nbsp;
+              <span style="color:#64748B;">Date:</span> <strong>${todayStr}</strong><br>
+              <span style="color:#64748B;">Group Ref:</span> <strong style="color:#4F46E5;">${escapeHtml(stayGroupId)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status & Stay Overview Banner -->
+        <div style="background:${statusBg};border:1px solid ${statusColor};color:${statusColor};border-radius:6px;padding:4px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px;">
+          <div style="font-weight:800;font-size:11px;letter-spacing:0.3px;text-transform:uppercase;">
+            ${statusBadgeText}
+          </div>
+          <div style="font-size:10px;font-weight:600;">
+            Properties: <strong>${bookings.length} Homestays</strong> · Schedule: <strong>${formatDate(minCheckIn)} → ${formatDate(maxCheckOut)} (${totalNights} Night${totalNights > 1 ? 's' : ''})</strong>
+          </div>
+        </div>
+
+        <!-- 2 Column Overview Grid: Guest & Group Schedule -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+          
+          <!-- Guest Details Card -->
+          <div style="border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;background:#F8FAFC;">
+            <div style="font-size:9px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#B45309;margin-bottom:2px;">
+              👤 Primary Guest &amp; Group
+            </div>
+            <div style="font-size:13px;font-weight:900;color:#0F172A;margin-bottom:2px;">
+              ${escapeHtml(guestName)}
+            </div>
+            <div style="font-size:10px;color:#334155;line-height:1.5;">
+              📱 Phone: <strong>${escapeHtml(phone || 'N/A')}</strong> &nbsp;|&nbsp; 👥 Total Guests: <strong>${totalGuests}</strong><br>
+              🏢 Total Homestays: <strong>${bookings.length} Properties</strong>
+              ${primaryBooking?.booked_by ? ` &nbsp;|&nbsp; ✍️ Booked By: <strong>${escapeHtml(primaryBooking.booked_by)}</strong>` : ''}
+              ${primaryBooking?.created_at ? ` &nbsp;|&nbsp; 🕒 Booked On: <strong>${formatDateTime(primaryBooking.created_at)}</strong>` : ''}
+            </div>
+          </div>
+
+          <!-- Schedule & Group Reference Card -->
+          <div style="border:1px solid #E2E8F0;border-radius:6px;padding:6px 10px;background:#F8FAFC;">
+            <div style="font-size:9px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;color:#B45309;margin-bottom:2px;">
+              📅 Reservation Timeline
+            </div>
+            <div style="font-size:13px;font-weight:900;color:#4F46E5;margin-bottom:2px;">
+              ${bookings.length} Homestays Booked Together
+            </div>
+            <div style="font-size:10px;color:#334155;line-height:1.5;">
+              📅 Check-in From: <strong>${formatDate(minCheckIn)}</strong> → Check-out: <strong>${formatDate(maxCheckOut)}</strong><br>
+              🌙 Duration: <strong>${totalNights} Night${totalNights > 1 ? 's' : ''}</strong> &nbsp;|&nbsp; 🏷️ Group Ref: <strong style="font-family:monospace;color:#0F172A;">${escapeHtml(stayGroupId)}</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 🏠 ALL BOOKED PROPERTIES BREAKDOWN TABLE (Centerpiece) -->
+        <div style="border:1px solid #0F172A;border-radius:6px;overflow:hidden;margin-bottom:6px;">
+          <div style="background:#0F172A;color:#fff;padding:4px 10px;display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:10px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;">
+              🏠 Booked Properties &amp; Allocation Details (${bookings.length} Homestays)
+            </div>
+            <div style="font-size:9px;color:#94A3B8;">
+              All rates in Indian Rupees (INR)
+            </div>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;font-size:10px;">
+            <thead>
+              <tr style="background:#F1F5F9;color:#475569;text-align:left;border-bottom:1px solid #CBD5E1;">
+                <th style="padding:4px 6px;font-weight:800;width:20px;text-align:center;">#</th>
+                <th style="padding:4px 6px;font-weight:800;">Property &amp; Location</th>
+                <th style="padding:4px 6px;font-weight:800;">Stay Dates &amp; Timings</th>
+                <th style="padding:4px 6px;font-weight:800;text-align:center;">Nights</th>
+                <th style="padding:4px 6px;font-weight:800;text-align:center;">Guests</th>
+                <th style="padding:4px 8px;font-weight:800;text-align:right;">Amount (₹)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bookings.map((b, idx) => {
+                const room = b.rooms || {};
+                const prop = room.nickname || room.property_name || b.room_id || 'Homestay Property';
+                const unit = room.unit_no ? ` (${room.unit_no})` : '';
+                const mapLink = room.map_link ? ` <a href="${room.map_link}" target="_blank" style="color:#0284C7;text-decoration:none;font-weight:700;">[📍 Map]</a>` : '';
+                const n = calcNights(b.check_in, b.check_out);
+                const ciTime = formatTime(b.check_in_time || '14:00');
+                const coTime = formatTime(b.check_out_time || '11:00');
+                const amt = Number(b.total_amount || 0);
+
+                return `
+                  <tr style="border-bottom:1px solid #E2E8F0;background:${idx % 2 === 0 ? '#fff' : '#F8FAFC'};">
+                    <td style="padding:4px 6px;color:#64748B;font-weight:700;text-align:center;">${String(idx + 1).padStart(2, '0')}</td>
+                    <td style="padding:4px 6px;">
+                      <strong style="color:#0F172A;font-size:10.5px;">${escapeHtml(prop)}${escapeHtml(unit)}</strong>${mapLink}
+                      <span style="font-size:9px;color:#64748B;"> · ID: ${escapeHtml(b.booking_id)} · ${escapeHtml(room.address || 'Lucknow')}</span>
+                      ${cleanNotes(b.notes) ? `<div style="font-size:8.5px;color:#B45309;font-weight:700;margin-top:2px;">📝 ${escapeHtml(cleanNotes(b.notes))}</div>` : ''}
+                    </td>
+                    <td style="padding:4px 6px;">
+                      <strong>${formatDate(b.check_in)}</strong> (${ciTime}) → <strong>${formatDate(b.check_out)}</strong> (${coTime})
+                    </td>
+                    <td style="padding:4px 6px;text-align:center;font-weight:700;">${n}N</td>
+                    <td style="padding:4px 6px;text-align:center;">👥 ${b.guests || 1}</td>
+                    <td style="padding:4px 8px;text-align:right;font-weight:900;font-size:11px;color:#0F172A;">₹${amt.toLocaleString('en-IN')}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background:#F1F5F9;border-top:1.5px solid #0F172A;font-weight:900;">
+                <td colspan="5" style="padding:5px 6px;text-align:right;text-transform:uppercase;letter-spacing:0.4px;font-size:10px;">
+                  Grand Combined Stay Total (${bookings.length} Homestays):
+                </td>
+                <td style="padding:5px 8px;text-align:right;font-size:12.5px;color:#0F172A;">
+                  ₹${totalAmount.toLocaleString('en-IN')}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- 💰 Financial & Advance Payment Tracker -->
+        <div style="border:1px solid #0F172A;border-radius:6px;overflow:hidden;margin-bottom:6px;">
+          
+          <!-- 3 Highlight Stat Boxes -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;background:#F8FAFC;border-bottom:1px solid #E2E8F0;text-align:center;">
+            
+            <div style="padding:6px;border-right:1px solid #E2E8F0;">
+              <div style="font-size:9px;font-weight:700;color:#64748B;text-transform:uppercase;margin-bottom:1px;">
+                Total Group Bill (${bookings.length} Stays)
+              </div>
+              <div style="font-size:15px;font-weight:900;color:#0F172A;">
+                ₹${totalAmount.toLocaleString('en-IN')}
+              </div>
+            </div>
+
+            <div style="padding:6px;border-right:1px solid #E2E8F0;background:#F0FDF4;">
+              <div style="font-size:9px;font-weight:800;color:#15803D;text-transform:uppercase;margin-bottom:1px;">
+                ✔ Advance / Amount Paid
+              </div>
+              <div style="font-size:15px;font-weight:900;color:#059669;">
+                ₹${paidAmount.toLocaleString('en-IN')}
+              </div>
+            </div>
+
+            <div style="padding:6px;background:${balanceDue > 0 ? '#FEF2F2' : '#F0FDF4'};">
+              <div style="font-size:9px;font-weight:800;color:${balanceDue > 0 ? '#DC2626' : '#15803D'};text-transform:uppercase;margin-bottom:1px;">
+                ${balanceDue > 0 ? '⚠️ Balance Due at Check-in' : '✅ Balance Remaining'}
+              </div>
+              <div style="font-size:15px;font-weight:900;color:${balanceDue > 0 ? '#DC2626' : '#059669'};">
+                ₹${balanceDue.toLocaleString('en-IN')}
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Payment Transactions Table (if any) -->
+          <div style="padding:5px 8px;">
+            ${payments && payments.length > 0 ? `
+              <table style="width:100%;border-collapse:collapse;font-size:9.5px;margin-bottom:3px;">
+                <thead>
+                  <tr style="background:#F1F5F9;color:#475569;text-align:left;border-bottom:1px solid #CBD5E1;">
+                    <th style="padding:2px 4px;font-weight:800;width:18px;">#</th>
+                    <th style="padding:2px 4px;font-weight:800;">Date</th>
+                    <th style="padding:2px 4px;font-weight:800;">Ref Booking ID</th>
+                    <th style="padding:2px 4px;font-weight:800;">Mode</th>
+                    <th style="padding:2px 4px;font-weight:800;">Notes</th>
+                    <th style="padding:2px 4px;font-weight:800;">Received By</th>
+                    <th style="padding:2px 4px;font-weight:800;text-align:right;">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${payments.map((p, idx) => `
+                    <tr style="border-bottom:1px solid #E2E8F0;">
+                      <td style="padding:2px 4px;color:#64748B;">${String(idx + 1).padStart(2, '0')}</td>
+                      <td style="padding:2px 4px;font-weight:700;">${(p.paid_at || p.created_at) ? formatDateTime(p.paid_at || p.created_at) : formatDate(p.payment_date)}</td>
+                      <td style="padding:2px 4px;font-family:monospace;font-size:9px;color:#0284C7;">${escapeHtml(p.booking_id)}</td>
+                      <td style="padding:2px 4px;"><span style="background:#E2E8F0;padding:1px 4px;border-radius:3px;font-size:8.5px;font-weight:700;">${escapeHtml(p.payment_mode || 'Direct')}</span></td>
+                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.notes || '-')}</td>
+                      <td style="padding:2px 4px;color:#475569;">${escapeHtml(p.received_by || 'UHH Team')}</td>
+                      <td style="padding:2px 4px;text-align:right;font-weight:900;color:#059669;">₹${Number(p.amount || 0).toLocaleString('en-IN')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `
+              <div style="font-size:9.5px;color:#64748B;font-style:italic;padding:2px 0;">
+                No advance transactions recorded yet. Balance of ₹${totalAmount.toLocaleString('en-IN')} is due on check-in.
+              </div>
+            `}
+
+            <!-- Words Summary -->
+            <div style="padding:3px 6px;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:4px;font-size:9px;color:#334155;line-height:1.4;">
+              <strong>Advance Paid in Words:</strong> ${wordsPaid} &nbsp;|&nbsp;
+              ${balanceDue > 0 ? `<strong>Remaining Balance:</strong> <span style="color:#DC2626;font-weight:700;">${wordsBalance}</span> (Due at Check-in)` : '<strong>Status:</strong> <span style="color:#059669;font-weight:700;">Full combined payment settled with thanks!</span>'}
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- 📞 Management & Support Contacts Strip -->
+        <div style="border:1px solid #E2E8F0;border-radius:5px;padding:3px 8px;background:#F8FAFC;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;flex-wrap:wrap;gap:4px;">
+          <div>
+            👑 <strong>Company Owners &amp; Directors:</strong>
+          </div>
+          <div>
+            ${CO.owners.map(o => `<strong>${o.name}:</strong> 📞 <a href="tel:${o.phone.replace(/[^0-9+]/g,'')}" style="color:#0F172A;text-decoration:none;font-weight:700;">${o.phone}</a>`).join(' &nbsp;|&nbsp; ')}
+          </div>
+        </div>
+
+        ${customNotes ? `
+          <!-- Special Notes -->
+          <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:4px;padding:3px 8px;margin-bottom:5px;font-size:9px;color:#92400E;">
+            <strong>📝 Note:</strong> ${escapeHtml(customNotes)}
+          </div>
+        ` : ''}
+
+        <!-- 📜 Terms & House Rules (Compact) -->
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:5px;padding:4px 8px;margin-bottom:5px;font-size:8px;color:#64748B;line-height:1.35;">
+          <strong style="color:#0F172A;font-size:8.5px;">📋 Stay Guidelines &amp; Important Terms:</strong>
+          1. <strong>Govt ID Mandatory:</strong> Original government photo ID required for all adult guests at check-in. &nbsp;•&nbsp;
+          2. <strong>Timings:</strong> Check-in: 02:00 PM | Check-out: 11:00 AM (early/late subject to availability). &nbsp;•&nbsp;
+          3. <strong>Peaceful Neighbourhood:</strong> Loud music/noise prohibited after 11:00 PM. &nbsp;•&nbsp;
+          4. <strong>Balance Settlement:</strong> Outstanding balance must be settled upon arrival before key handover. &nbsp;•&nbsp;
+          5. <strong>Non-GST Slip:</strong> Official booking voucher &amp; payment confirmation without GST output tax credit.
+        </div>
+
+        <!-- Signature & Seal -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:3px;border-top:1px solid #CBD5E1;">
+          <div style="font-size:8px;color:#94A3B8;line-height:1.35;">
+            <strong style="color:#475569;">${CO.name}</strong><br>
+            CIN: ${CO.cin} · PAN: ${CO.pan} · Website: <a href="https://${CO.web}" style="color:#64748B;text-decoration:none;">${CO.web}</a>
+          </div>
+
+          <div style="text-align:right;">
+            <div style="display:inline-block;text-align:right;">
+              <img src="${getSignatureStampSrc()}" alt="Stamp & Signature" style="height:34px;max-width:140px;object-fit:contain;margin-bottom:-4px;display:block;margin-left:auto;" />
+              <div style="height:1px;border-bottom:1px dashed #CBD5E1;width:120px;margin-left:auto;"></div>
+              <div style="font-size:8px;color:#64748B;margin-top:1px;">Authorised Signatory</div>
+              <div style="font-size:9px;font-weight:800;color:#0F172A;">For ${CO.name}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  // 3B. Build Formatted WhatsApp Text for Multi-Property Booking
+  function buildMultiPropertyWhatsAppText(data) {
+    const {
+      stayGroupId,
+      guestName,
+      phone,
+      totalGuests,
+      minCheckIn,
+      maxCheckOut,
+      totalNights,
+      bookings,
+      payments,
+      totalAmount,
+      paidAmount,
+      balanceDue
+    } = data;
+
+    let payHistoryText = '';
+    if (payments && payments.length > 0) {
+      payHistoryText = '\n*Payment Log:*\n' + payments.map(p => 
+        `• ₹${Number(p.amount || 0).toLocaleString('en-IN')} via ${p.payment_mode || 'Direct'} on ${formatDate(p.payment_date || p.paid_at)}`
+      ).join('\n');
+    }
+
+    const propertiesList = bookings.map((b, idx) => {
+      const room = b.rooms || {};
+      const propName = room.nickname || room.property_name || b.room_id || 'Homestay';
+      const unit = room.unit_no ? ` (${room.unit_no})` : '';
+      const n = calcNights(b.check_in, b.check_out);
+      const mapStr = room.map_link ? `\n   📍 *Map:* ${room.map_link}` : '';
+      const address = room.address ? `\n   📍 *Address:* ${room.address}` : '';
+      return `${idx + 1}️⃣ *${propName}${unit}*
+   📅 *Check-in:* ${formatDate(b.check_in)} at ${formatTime(b.check_in_time || '14:00')}
+   📅 *Check-out:* ${formatDate(b.check_out)} at ${formatTime(b.check_out_time || '11:00')}
+   🌙 ${n} Night(s) · 👥 ${b.guests || 1} Guest(s) · ₹${Number(b.total_amount || 0).toLocaleString('en-IN')}${address}${mapStr}`;
+    }).join('\n\n');
+
+    const groupNotes = data.customNotes || Array.from(new Set((bookings || []).map(b => cleanNotes(b.notes)).filter(Boolean))).join(' · ');
+
+    return `🏨 *THE UNIQUE HAVEN HOMES*
+*CONSOLIDATED MULTI-PROPERTY BOOKING CONFIRMATION & ADVANCE RECEIPT*
+Namaste *${guestName || 'Guest'}* ji 🙏
+
+Thank you for choosing *The Unique Haven Homes*. Your multi-property reservation for *${bookings.length} homestays* has been confirmed:
+
+📋 *Group Reference:* ${stayGroupId}
+👥 *Total Guests:* ${totalGuests} Person(s)
+📅 *Overall Stay:* ${formatDate(minCheckIn)} → ${formatDate(maxCheckOut)} (${totalNights} Night${totalNights > 1 ? 's' : ''})
+
+🏠 *RESERVED PROPERTIES (${bookings.length}):*
+━━━━━━━━━━━━━━━━━━━━
+${propertiesList}
+━━━━━━━━━━━━━━━━━━━━
+
+💰 *COMBINED PAYMENT STATEMENT:*
+━━━━━━━━━━━━━━━━━━━━
+▪️ *Total Booking Amount:* ₹${totalAmount.toLocaleString('en-IN')}
+▪️ *Advance Paid:* ₹${paidAmount.toLocaleString('en-IN')} ✅
+▪️ *Balance Due at Check-in:* ₹${balanceDue.toLocaleString('en-IN')} ${balanceDue > 0 ? '⚠️ (Payable upon arrival)' : '✅ (Fully Cleared)'}
+━━━━━━━━━━━━━━━━━━━━${payHistoryText}${groupNotes ? `\n\n📝 *Special Note:* ${groupNotes}` : ''}
+
+👑 *Company Owners / Directors:*
+• Mr. Shahanshah: +91 94500 55554
+• Mr. Firoz Khan: +91 82996 00709
+
+📋 *Key Check-in Instructions:*
+• Original Govt ID (Aadhaar / DL / Passport) mandatory for all adult guests.
+• Standard Check-in: 02:00 PM | Check-out: 11:00 AM.
+• Quiet hours post 11:00 PM.
+
+🌐 https://${CO.web}`;
+  }
+
+  function getMultiReceiptDocTitle(data) {
+    const guest = (data?.guestName || 'Guest').trim();
+    const count = data?.bookings?.length || 1;
+    let datePart = '';
+    if (data?.minCheckIn && data?.maxCheckOut) {
+      datePart = `${formatDate(data.minCheckIn)} to ${formatDate(data.maxCheckOut)}`;
+    } else if (data?.minCheckIn) {
+      datePart = formatDate(data.minCheckIn);
+    }
+    return `TUHH Group Receipt — ${guest} (${count} Homestays)${datePart ? ' — ' + datePart : ''}`;
+  }
+
+  function getMultiReceiptFilename(data) {
+    const guest = sanitizeFilename(data?.guestName || 'Guest');
+    const count = data?.bookings?.length || 1;
+    const minD = sanitizeFilename(data?.minCheckIn || '');
+    const maxD = sanitizeFilename(data?.maxCheckOut || '');
+    const dateRange = (minD && maxD) ? `${minD}_to_${maxD}` : (minD || '');
+    const grpId = sanitizeFilename(data?.stayGroupId || 'Group');
+    const parts = ['TUHH_Group_Receipt', guest, `${count}Properties`];
+    if (dateRange) parts.push(dateRange);
+    parts.push(grpId);
+    return parts.join('_') + '.pdf';
+  }
+
+  // 5B. Open Multi-Property Receipt Interactive Modal
+  async function openMultiPropertyReceiptModal(identifier) {
+    if (!identifier) {
+      alert('Please specify a Stay Group ID, Booking ID, or Phone number.');
+      return;
+    }
+
+    // Show loading indicator
+    let loadingEl = document.createElement('div');
+    loadingEl.className = 'modal-overlay';
+    loadingEl.id = 'uhhMultiReceiptLoadingOverlay';
+    loadingEl.innerHTML = `
+      <div class="modal-box" style="text-align:center;padding:30px;max-width:320px;">
+        <div style="font-size:32px;margin-bottom:10px;">⏳</div>
+        <div style="font-weight:700;">Loading Multi-Property Details…</div>
+        <div style="font-size:12px;color:#64748B;margin-top:4px;">Aggregating all properties &amp; payments</div>
+      </div>
+    `;
+    document.body.appendChild(loadingEl);
+
+    try {
+      const res = await fetchMultiBookingReceiptData(identifier);
+      loadingEl.remove();
+
+      if (!res || !res.bookings || !res.bookings.length) {
+        alert('No multi-property bookings found for: ' + (typeof identifier === 'object' ? 'selected bookings' : identifier));
+        return;
+      }
+
+      renderMultiPropertyReceiptModal(res);
+    } catch(err) {
+      loadingEl.remove();
+      alert('Error fetching multi-property receipt: ' + err.message);
+    }
+  }
+
+  function renderMultiPropertyReceiptModal(data) {
+    window._activeReceiptData = data;
+    window._activeMultiReceiptData = data;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'uhhMultiBookingReceiptModal';
+    modal.style.zIndex = '99998';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    const waText = buildMultiPropertyWhatsAppText(data);
+    const guestPhone = cleanPhone(data.phone);
+    const fullPhone = guestPhone.length === 10 ? '91' + guestPhone : guestPhone;
+    const docTitle = getMultiReceiptDocTitle(data);
+    const pdfFilename = getMultiReceiptFilename(data);
+
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:960px;width:96%;max-height:94vh;display:flex;flex-direction:column;padding:20px;border-radius:14px;background:#F1F5F9;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);position:relative;">
+        
+        <!-- Sticky Prominent Floating Close Button -->
+        <button type="button" class="modal-close-prominent" onclick="this.closest('.modal-overlay').remove()" title="Close (ESC)" style="position:absolute;top:10px;right:10px;background:#EF4444;border:2px solid #DC2626;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(239,68,68,0.35);z-index:10000;transition:all 0.2s cubic-bezier(0.16,1,0.3,1);outline:none;padding:0;" onmouseenter="this.style.transform='scale(1.1) rotate(90deg)';this.style.background='#DC2626'" onmouseleave="this.style.transform='scale(1) rotate(0deg)';this.style.background='#EF4444'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Modal Topbar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#0F172A;color:#fff;padding:12px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);flex-wrap:wrap;gap:10px;padding-right:45px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:22px;">🏢</span>
+            <div>
+              <div style="font-weight:900;font-size:15px;display:flex;align-items:center;gap:8px;">
+                <span>Consolidated Multi-Property Receipt</span>
+                <span style="background:#4F46E5;color:#fff;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:800;">${data.bookings.length} Homestays</span>
+              </div>
+              <div style="font-size:11px;color:#94A3B8;">
+                Ref: <strong>${escapeHtml(data.stayGroupId)}</strong> · Guest: <strong>${escapeHtml(data.guestName)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn-sm" style="background:#B45309;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.printBookingReceipt('multiReceiptPrintArea', '${escapeHtml(docTitle).replace(/'/g, "\\'")}')">
+              🖨️ Print / Save PDF
+            </button>
+            <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.shareSlipAsImage('multiReceiptPrintArea', 'Payment_Slip_Combined', window._activeMultiReceiptData)">
+              📸 Share as Image (Preview)
+            </button>
+            <button type="button" class="btn-sm" style="background:#25D366;color:#fff;font-weight:800;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.sendReceiptWhatsApp('${escapeHtml(data.phone || '')}', document.getElementById('multiReceiptWaHidden').value)">
+              💬 Send on WhatsApp
+            </button>
+            ${data.phone ? `
+              <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;font-weight:700;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="this.closest('.modal-overlay').remove();window.openMultiPropertyReceiptModal('${escapeHtml(cleanPhone(data.phone))}')" title="Combine all bookings for this guest phone across all dates">
+                📱 All Stays of Guest
+              </button>
+            ` : ''}
+            <button type="button" class="btn-sm" style="background:#334155;color:#fff;font-weight:700;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;" onclick="navigator.clipboard.writeText(document.getElementById('multiReceiptWaHidden').value);if(window.fsn?.success) fsn.success('Copied','Consolidated receipt text copied to clipboard!'); else alert('Receipt text copied!');">
+              📋 Copy Text
+            </button>
+          </div>
+        </div>
+
+        <textarea id="multiReceiptWaHidden" style="display:none;">${escapeHtml(waText)}</textarea>
+
+        <!-- Printable Document View Wrapper -->
+        <div style="flex:1;overflow-y:auto;background:#fff;border-radius:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border:1px solid #E2E8F0;" id="multiReceiptPrintArea">
+          ${buildMultiPropertyReceiptHTML(data)}
+        </div>
+
+      </div>
+    `;
+
+    // ESC key listener
+    const escMulti = (e) => {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        modal.remove();
+        window.removeEventListener('keydown', escMulti);
+      }
+    };
+    window.addEventListener('keydown', escMulti);
+
+    document.body.appendChild(modal);
+  }
+
+  // Helper when phone has multiple bookings (e.g. 9560172711 has multiple bookings!)
+  function showBookingPickerModal(bookings) {
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.style.zIndex = '99999';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    const bIds = bookings.map(b => b.booking_id);
+    const guestName = bookings[0]?.guest_name || 'Guest';
+
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:620px;padding:24px;border-radius:14px;background:#fff;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #E2E8F0;padding-bottom:10px;">
+          <div>
+            <h3 style="margin:0;font-size:17px;font-weight:900;color:#0F172A;">Multiple Bookings Found</h3>
+            <div style="font-size:12px;color:#64748B;">Found ${bookings.length} reservations for <strong>${escapeHtml(guestName)}</strong>:</div>
+          </div>
+          <button class="modal-close" onclick="this.closest('.modal-overlay').remove()" style="font-size:20px;background:none;border:none;cursor:pointer;">✕</button>
+        </div>
+
+        <!-- 🌟 PROMINENT COMBINED MULTI-PROPERTY RECEIPT BANNER -->
+        <div style="background:linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);color:#fff;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 4px 14px rgba(49,46,129,0.25);">
+          <div>
+            <div style="font-weight:900;font-size:14.5px;letter-spacing:0.3px;display:flex;align-items:center;gap:6px;">
+              <span>📑 Consolidated Multi-Property Receipt</span>
+              <span style="background:#4F46E5;color:#fff;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700;">${bookings.length} Properties</span>
+            </div>
+            <div style="font-size:11.5px;color:#C7D2FE;margin-top:3px;">
+              Combine all ${bookings.length} properties of this guest into one single grand receipt with unified WhatsApp text
+            </div>
+          </div>
+          <button type="button" class="btn-sm" style="background:#F59E0B;color:#0F172A;font-weight:800;border:none;padding:9px 16px;border-radius:8px;cursor:pointer;white-space:nowrap;font-size:12px;"
+            onclick="this.closest('.modal-overlay').remove();window.openMultiPropertyReceiptModal(${JSON.stringify(bIds).replace(/"/g, '&quot;')})">
+            Open Combined Receipt →
+          </button>
+        </div>
+
+        <div style="font-size:11.5px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+          Or Select An Individual Property Receipt:
+        </div>
+
+        <div style="max-height:360px;overflow-y:auto;">
+          ${bookings.map(b => {
+            const prop = b.rooms?.nickname || b.rooms?.property_name || b.room_id || 'Property';
+            const unit = b.rooms?.unit_no ? ` (${b.rooms.unit_no})` : '';
+            const n = calcNights(b.check_in, b.check_out);
+            return `
+              <div style="border:1.5px solid #CBD5E1;border-radius:10px;padding:12px 14px;margin-bottom:10px;cursor:pointer;transition:all 0.15s;display:flex;justify-content:space-between;align-items:center;"
+                onmouseover="this.style.borderColor='#0F172A';this.style.background='#F8FAFC';"
+                onmouseout="this.style.borderColor='#CBD5E1';this.style.background='#fff';"
+                onclick="this.closest('.modal-overlay').remove();window.openBookingReceiptModal('${b.booking_id}')">
+                <div>
+                  <div style="font-weight:800;font-size:14px;color:#0F172A;">
+                    ${escapeHtml(b.guest_name)} · <span style="color:#0284C7;">${escapeHtml(prop)}${escapeHtml(unit)}</span>
+                  </div>
+                  <div style="font-size:12px;color:#64748B;margin-top:2px;">
+                    📅 ${formatDate(b.check_in)} → ${formatDate(b.check_out)} (${n} night${n > 1 ? 's' : ''})
+                  </div>
+                  <div style="font-size:11px;color:#94A3B8;margin-top:2px;">
+                    ID: ${b.booking_id} ${b.stay_group_id ? `· <span style="color:#6366F1;font-weight:700;">Group: ${escapeHtml(b.stay_group_id)}</span>` : ''} · Phone: ${b.phone || '-'}
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <div style="font-weight:900;font-size:15px;color:#059669;">
+                    ₹${Number(b.total_amount || 0).toLocaleString('en-IN')}
+                  </div>
+                  <button class="btn-sm" style="background:#0F172A;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;margin-top:4px;">
+                    Single Receipt →
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  }
+
+  // Render the Full Interactive Receipt Modal
+  function renderReceiptModal(data) {
+    window._activeReceiptData = data;
+    window._activeSingleReceiptData = data;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'uhhBookingReceiptModal';
+    modal.style.zIndex = '99998';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    const waText = buildReceiptWhatsAppText(data);
+    const guestPhone = cleanPhone(data.booking.phone);
+    const fullPhone = guestPhone.length === 10 ? '91' + guestPhone : guestPhone;
+
+    const docTitle = getReceiptDocTitle(data.booking);
+    const pdfFilename = getReceiptFilename(data.booking);
+
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:920px;width:96%;max-height:94vh;display:flex;flex-direction:column;padding:20px;border-radius:14px;background:#F1F5F9;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);position:relative;">
+        
+        <!-- Sticky Prominent Floating Close Button -->
+        <button type="button" class="modal-close-prominent" onclick="this.closest('.modal-overlay').remove()" title="Close (ESC)" style="position:absolute;top:10px;right:10px;background:#EF4444;border:2px solid #DC2626;color:#fff;border-radius:50%;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(239,68,68,0.35);z-index:10000;transition:all 0.2s cubic-bezier(0.16,1,0.3,1);outline:none;padding:0;" onmouseenter="this.style.transform='scale(1.1) rotate(90deg)';this.style.background='#DC2626'" onmouseleave="this.style.transform='scale(1) rotate(0deg)';this.style.background='#EF4444'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;display:block;">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <!-- Modal Topbar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#0F172A;color:#fff;padding:12px 18px;border-radius:10px;margin-bottom:14px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);flex-wrap:wrap;gap:8px;padding-right:45px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:20px;">📄</span>
+            <div>
+              <div style="font-weight:900;font-size:15px;">
+                Booking Confirmation &amp; Advance Receipt
+              </div>
+              <div style="font-size:11px;color:#94A3B8;">
+                Guest Receipt (Without GST) · Ref: <strong>${escapeHtml(data.booking.booking_id)}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons -->
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="btn-sm" style="background:#B45309;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.printBookingReceipt('receiptPrintArea', '${escapeHtml(docTitle).replace(/'/g, "\\'")}')">
+              🖨️ Print / Save PDF
+            </button>
+            <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:700;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.shareSlipAsImage('receiptPrintArea', 'Payment_Slip_${escapeHtml(data.booking.booking_id)}', window._activeSingleReceiptData)">
+              📸 Share as Image (Preview)
+            </button>
+            <button type="button" class="btn-sm" style="background:#25D366;color:#fff;font-weight:800;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="window.sendReceiptWhatsApp('${escapeHtml(data.booking.phone || '')}', document.getElementById('receiptWaHidden').value)">
+              💬 Send on WhatsApp
+            </button>
+            <button type="button" class="btn-sm" style="background:#334155;color:#fff;font-weight:700;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;" onclick="navigator.clipboard.writeText(document.getElementById('receiptWaHidden').value);if(window.fsn?.success) fsn.success('Copied','Receipt text copied to clipboard!'); else alert('Receipt text copied!');">
+              📋 Copy Text
+            </button>
+            <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;font-weight:700;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;" onclick="this.closest('.modal-overlay').remove();window.openMultiPropertyReceiptModal('${data.booking.stay_group_id || data.booking.phone || data.booking.booking_id}')" title="View Combined Multi-Property Receipt for this guest / group">
+              🏢 Combined Group Receipt
+            </button>
+            <button type="button" class="btn-sm outline" style="background:transparent;color:#38BDF8;border:1px solid #0284C7;padding:7px 10px;font-size:11.5px;font-weight:700;" onclick="const m=this.closest('.modal-overlay');if(m)m.remove();if(window.openWithoutGSTInvoiceModal){window.openWithoutGSTInvoiceModal('${data.booking.booking_id}');}">
+              📄 Without GST Invoice
+            </button>
+            <button type="button" class="btn-sm outline" style="background:transparent;color:#FDE047;border:1px solid #B45309;padding:7px 10px;font-size:11.5px;font-weight:700;" onclick="const m=this.closest('.modal-overlay');if(m)m.remove();if(window.openGSTInvoiceModal){window.openGSTInvoiceModal('${data.booking.booking_id}');}">
+              🧾 GST Tax Invoice
+            </button>
+          </div>
+        </div>
+
+        ${data.booking.stay_group_id ? `
+          <div style="background:#EEF2FF;border:1.5px solid #818CF8;border-radius:8px;padding:8px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:12px;color:#3730A3;font-weight:700;">
+              🏢 This booking belongs to Multi-Property Group: <code>${escapeHtml(data.booking.stay_group_id)}</code>
+            </div>
+            <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;" onclick="this.closest('.modal-overlay').remove();window.openMultiPropertyReceiptModal('${escapeHtml(data.booking.stay_group_id)}')">
+              📑 View Consolidated Multi-Property Receipt →
+            </button>
+          </div>
+        ` : (data.booking.phone ? `
+          <div style="background:#F5F3FF;border:1.5px solid #C4B5FD;border-radius:8px;padding:8px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+            <div style="font-size:12px;color:#5B21B6;font-weight:700;">
+              🏢 View All / Combined Properties for Guest (${escapeHtml(data.booking.guest_name || 'Guest')})
+            </div>
+            <button type="button" class="btn-sm" style="background:#4F46E5;color:#fff;border:none;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;" onclick="this.closest('.modal-overlay').remove();window.openMultiPropertyReceiptModal('${escapeHtml(data.booking.phone)}')">
+              📑 Consolidated Multi-Property Receipt →
+            </button>
+          </div>
+        ` : '')}
+
+        <!-- 🛡️ & 📝 Interactive Security Deposit & Guest Notes Control Bar -->
+        ${(() => {
+          const initSec = getSecurityDepositData(data.booking);
+          const initAmt = initSec.amount || 0;
+          const initSt = initSec.status || (initAmt > 0 ? 'collected' : 'none');
+          const totalStay = Number(data.totalAmount || data.booking.total_amount || 0);
+          const initNotes = cleanNotes(data.booking.notes || '');
+          return `
+            <div style="background:#EFF6FF;border:1.5px solid #3B82F6;border-radius:10px;padding:12px 16px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;box-shadow:0 2px 4px rgba(59,130,246,0.08);">
+              
+              <!-- Row 1: Security Deposit & Save Button -->
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                  <div style="font-weight:800;font-size:13px;color:#1E3A8A;display:flex;align-items:center;gap:5px;">
+                    🛡️ <span>Security Deposit:</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:5px;">
+                    <span style="font-size:13px;font-weight:800;color:#1E3A8A;">₹</span>
+                    <input type="number" id="receiptSecAmtInput" value="${initAmt}" placeholder="0" min="0" step="500" style="width:105px;padding:6px 10px;border:1.5px solid #3B82F6;border-radius:6px;font-size:13px;font-weight:800;color:#0F172A;background:#fff;" oninput="window.updateReceiptSecurityDepositLive()" />
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <select id="receiptSecStatusSelect" style="padding:6px 10px;border:1.5px solid #3B82F6;border-radius:6px;font-size:12px;font-weight:700;color:#0F172A;background:#fff;" onchange="window.updateReceiptSecurityDepositLive()">
+                      <option value="collected" ${initSt === 'collected' ? 'selected' : ''}>✅ Deposit Held (जमा है)</option>
+                      <option value="pending" ${initSt === 'pending' || (initAmt > 0 && initSt === 'none') ? 'selected' : ''}>🟡 Pending Collection (लेना बाकी)</option>
+                      <option value="refunded" ${initSt === 'refunded' ? 'selected' : ''}>🟢 Refunded (वापस किया)</option>
+                      <option value="none" ${initSt === 'none' && !initAmt ? 'selected' : ''}>⚪ No Deposit</option>
+                    </select>
+                  </div>
+                  <div style="font-size:11.5px;color:#334155;">
+                    (Booking: <strong>₹${totalStay.toLocaleString('en-IN')}</strong> + Security: <strong id="receiptSecAmtBadge" style="color:#2563EB;">₹${initAmt.toLocaleString('en-IN')}</strong>)
+                  </div>
+                </div>
+
+                <button type="button" class="btn-sm" style="background:#059669;color:#fff;font-weight:800;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;box-shadow:0 2px 4px rgba(5,150,105,0.25);" onclick="window.saveReceiptSecurityDepositToDB('${data.booking.booking_id}')">
+                  💾 Save Notes &amp; Deposit to Booking
+                </button>
+              </div>
+
+              <!-- Row 2: Special Notes & Extra Guest Requests (Gadda, etc.) -->
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-top:1px dashed #BFDBFE;padding-top:8px;">
+                <div style="font-weight:800;font-size:12.5px;color:#1E3A8A;display:flex;align-items:center;gap:5px;flex-shrink:0;">
+                  📝 <span>Guest Requests / Notes:</span>
+                </div>
+                <div style="flex:1;min-width:260px;">
+                  <input type="text" id="receiptCustomNotesInput" value="${escapeHtml(initNotes)}" placeholder="e.g. Extra mattress (gadda) provided, Early check-in requested, etc." style="width:100%;box-sizing:border-box;padding:7px 12px;border:1.5px solid #3B82F6;border-radius:6px;font-size:12.5px;font-weight:600;color:#0F172A;background:#fff;" oninput="window.updateReceiptSecurityDepositLive()" />
+                </div>
+                <!-- Quick Preset Request Chips -->
+                <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+                  <span style="font-size:10.5px;color:#475569;font-weight:700;">Quick add:</span>
+                  <button type="button" class="btn-chip" style="background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE;border-radius:12px;font-size:10.5px;font-weight:700;padding:3px 9px;cursor:pointer;" onclick="window.appendReceiptCustomNote('Extra mattress (gadda) provided')">+ Gadda / Mattress</button>
+                  <button type="button" class="btn-chip" style="background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE;border-radius:12px;font-size:10.5px;font-weight:700;padding:3px 9px;cursor:pointer;" onclick="window.appendReceiptCustomNote('Extra bedsheets &amp; blanket provided')">+ Blanket/Sheets</button>
+                  <button type="button" class="btn-chip" style="background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE;border-radius:12px;font-size:10.5px;font-weight:700;padding:3px 9px;cursor:pointer;" onclick="window.appendReceiptCustomNote('Early check-in approved')">+ Early Check-in</button>
+                  <button type="button" class="btn-chip" style="background:#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE;border-radius:12px;font-size:10.5px;font-weight:700;padding:3px 9px;cursor:pointer;" onclick="window.appendReceiptCustomNote('Late check-out approved')">+ Late Check-out</button>
+                </div>
+              </div>
+
+            </div>
+          `;
+        })()}
+
+        <textarea id="receiptWaHidden" style="display:none;">${escapeHtml(waText)}</textarea>
+
+        <!-- Printable Document View Wrapper -->
+        <div style="flex:1;overflow-y:auto;background:#fff;border-radius:10px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.05);border:1px solid #E2E8F0;" id="receiptPrintArea">
+          ${buildReceiptHTML(data)}
+        </div>
+
+      </div>
+    `;
+
+    // ESC key listener
+    const escReceipt = (e) => {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        modal.remove();
+        window.removeEventListener('keydown', escReceipt);
+      }
+    };
+    window.addEventListener('keydown', escReceipt);
+
+    document.body.appendChild(modal);
+  }
+
+  // Quick Preset Helper for Notes
+  window.appendReceiptCustomNote = function(text) {
+    const input = document.getElementById('receiptCustomNotesInput');
+    if (!input) return;
+    const curr = input.value.trim();
+    if (curr) {
+      if (!curr.toLowerCase().includes(text.toLowerCase())) {
+        input.value = curr + ' · ' + text;
+      }
+    } else {
+      input.value = text;
+    }
+    window.updateReceiptSecurityDepositLive();
+  };
+
+  // Interactive Live Updater for Security Deposit & Notes in Receipt
+  window.updateReceiptSecurityDepositLive = function() {
+    const data = window._activeReceiptData || window._activeSingleReceiptData;
+    if (!data) return;
+    const amtInput = document.getElementById('receiptSecAmtInput');
+    const stSelect = document.getElementById('receiptSecStatusSelect');
+    const notesInput = document.getElementById('receiptCustomNotesInput');
+
+    const amt = parseFloat(amtInput?.value) || 0;
+    const st = stSelect?.value || (amt > 0 ? 'collected' : 'none');
+    const customNotes = notesInput ? notesInput.value.trim() : (data.customNotes || '');
+
+    const badge = document.getElementById('receiptSecAmtBadge');
+    if (badge) badge.textContent = '₹' + amt.toLocaleString('en-IN');
+
+    const options = {
+      securityDepositAmount: amt,
+      securityDepositStatus: st,
+      customNotes: customNotes
+    };
+
+    // Keep active data updated with live state
+    data.securityDepositAmount = amt;
+    data.securityDepositStatus = st;
+    data.customNotes = customNotes;
+    if (window._activeSingleReceiptData) {
+      window._activeSingleReceiptData.securityDepositAmount = amt;
+      window._activeSingleReceiptData.securityDepositStatus = st;
+      window._activeSingleReceiptData.customNotes = customNotes;
+    }
+    if (window._activeReceiptData) {
+      window._activeReceiptData.securityDepositAmount = amt;
+      window._activeReceiptData.securityDepositStatus = st;
+      window._activeReceiptData.customNotes = customNotes;
+    }
+
+    const newHtml = buildReceiptHTML(data, options);
+    const printEl = document.getElementById('receiptPrintArea');
+    if (printEl) printEl.innerHTML = newHtml;
+
+    const newWa = buildReceiptWhatsAppText(data, options);
+    const waEl = document.getElementById('receiptWaHidden');
+    if (waEl) waEl.value = newWa;
+  };
+
+  // Save Security Deposit & Custom Notes directly from Receipt Modal
+  window.saveReceiptSecurityDepositToDB = async function(bkId) {
+    const amtInput = document.getElementById('receiptSecAmtInput');
+    const stSelect = document.getElementById('receiptSecStatusSelect');
+    const notesInput = document.getElementById('receiptCustomNotesInput');
+
+    const amt = parseFloat(amtInput?.value) || 0;
+    const st = stSelect?.value || (amt > 0 ? 'collected' : 'none');
+    const userNotes = notesInput ? notesInput.value.trim() : '';
+
+    const secData = {
+      amount: amt,
+      status: st,
+      mode: 'UPI',
+      receivedDate: new Date().toISOString().slice(0, 10),
+      notes: `Security deposit ₹${amt}`
+    };
+
+    let client = window.sb;
+    if (!client && typeof supabase !== 'undefined') {
+      const url = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : window.SUPABASE_URL;
+      const key = typeof SUPABASE_ANON_KEY !== 'undefined' ? SUPABASE_ANON_KEY : window.SUPABASE_ANON_KEY;
+      if (url && key) client = supabase.createClient(url, key);
+    }
+    if (!client) {
+      alert('Database connection not available');
+      return;
+    }
+
+    try {
+      const { data: currBk } = await client.from('guest_register').select('notes').eq('booking_id', bkId).single();
+      const rawNotes = currBk?.notes || '';
+      const preservedComments = (rawNotes.match(/<!--[\s\S]*?-->/g) || []).join(' ');
+
+      let finalNotes = userNotes;
+      if (amt > 0 || st !== 'none') {
+        finalNotes = (finalNotes ? finalNotes + ' ' : '') + `[SECURITY_DEPOSIT:${JSON.stringify(secData)}]`;
+      }
+      if (preservedComments) {
+        finalNotes = (finalNotes ? finalNotes + ' ' : '') + ' ' + preservedComments;
+      }
+      finalNotes = finalNotes.trim();
+
+      const { error } = await client.from('guest_register').update({ notes: finalNotes }).eq('booking_id', bkId);
+      if (error) throw error;
+
+      if (window._activeReceiptData?.booking) {
+        window._activeReceiptData.booking.notes = finalNotes;
+        window._activeReceiptData.booking.security_deposit_amount = amt;
+        window._activeReceiptData.booking.security_deposit_status = st;
+      }
+      if (window._activeSingleReceiptData?.booking) {
+        window._activeSingleReceiptData.booking.notes = finalNotes;
+        window._activeSingleReceiptData.booking.security_deposit_amount = amt;
+        window._activeSingleReceiptData.booking.security_deposit_status = st;
+      }
+
+      if (window.fsn?.success) {
+        fsn.success('Saved to Booking', `✅ Notes & Security Deposit successfully saved to booking!`);
+      } else {
+        alert(`Notes & Security Deposit successfully saved to booking!`);
+      }
+    } catch(err) {
+      alert('Error saving notes/deposit: ' + err.message);
+    }
+  };
+
+  // Public API
+  return {
+    sanitizeFilename,
+    openBookingReceiptModal,
+    openMultiPropertyReceiptModal,
+    fetchBookingReceiptData,
+    fetchMultiBookingReceiptData,
+    buildReceiptHTML,
+    buildMultiPropertyReceiptHTML,
+    buildReceiptWhatsAppText,
+    buildMultiPropertyWhatsAppText,
+    getReceiptDocTitle,
+    getReceiptFilename,
+    getMultiReceiptDocTitle,
+    getMultiReceiptFilename,
+    printBookingReceipt,
+    sendReceiptWhatsApp,
+    sharePdfViaWhatsApp,
+    shareSlipAsImage
+  };
+
+})();
+
+// Global aliases
+window.sanitizeFilename = window.BOOKING_RECEIPT_ENGINE.sanitizeFilename;
+window.openBookingReceiptModal = window.BOOKING_RECEIPT_ENGINE.openBookingReceiptModal;
+window.openMultiPropertyReceiptModal = window.BOOKING_RECEIPT_ENGINE.openMultiPropertyReceiptModal;
+window.buildMultiPropertyReceiptHTML = window.BOOKING_RECEIPT_ENGINE.buildMultiPropertyReceiptHTML;
+window.buildMultiPropertyWhatsAppText = window.BOOKING_RECEIPT_ENGINE.buildMultiPropertyWhatsAppText;
+window.fetchMultiBookingReceiptData = window.BOOKING_RECEIPT_ENGINE.fetchMultiBookingReceiptData;
+window.printBookingReceipt = window.BOOKING_RECEIPT_ENGINE.printBookingReceipt;
+window.getReceiptDocTitle = window.BOOKING_RECEIPT_ENGINE.getReceiptDocTitle;
+window.getReceiptFilename = window.BOOKING_RECEIPT_ENGINE.getReceiptFilename;
+window.getMultiReceiptDocTitle = window.BOOKING_RECEIPT_ENGINE.getMultiReceiptDocTitle;
+window.getMultiReceiptFilename = window.BOOKING_RECEIPT_ENGINE.getMultiReceiptFilename;
+window.sendReceiptWhatsApp = window.BOOKING_RECEIPT_ENGINE.sendReceiptWhatsApp;
+window.sharePdfViaWhatsApp = window.BOOKING_RECEIPT_ENGINE.sharePdfViaWhatsApp;
+window.shareSlipAsImage = window.BOOKING_RECEIPT_ENGINE.shareSlipAsImage;

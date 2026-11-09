@@ -1,0 +1,6503 @@
+/**
+ * ===================================
+ * THE UNIQUE HAVEN HOMES PRIVATE LIMITED — Core Module
+ * Developer: Praveen Singh
+ * ===================================
+ */
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+window.escapeHtml = escapeHtml;
+
+// ============ PROPERTY DISPLAY HELPER ============
+// Shows: "The Red (101)" instead of just "The Red"
+// Use everywhere: dashboards, filters, dropdowns, reports
+function propLabel(r) {
+  if (!r) return '-';
+  const nick = r.nickname || '';
+  const unit = r.unit_no || '';
+  if (nick && unit) return nick + ' (' + unit + ')';
+  return nick || unit || r.room_id || '-';
+}
+window.propLabel = propLabel;
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 EXECUTIVE THEME SYSTEM (LIGHT FIRST / DEFAULT)
+// ═══════════════════════════════════════════════════════════
+window.initHorillaTheme = function() {
+  let saved = localStorage.getItem('uhhs_theme');
+  // Auto-migrate any stale forced dark setting to light mode
+  if (!saved || saved === 'dark' || saved === 'midnight') {
+    localStorage.setItem('uhhs_theme', 'light');
+    localStorage.setItem('uh_theme', 'light');
+    saved = 'light';
+  }
+  const isDark = (saved === 'dark' || saved === 'midnight');
+  if (isDark) {
+    document.documentElement.classList.add('horilla-dark');
+    document.documentElement.setAttribute('data-theme', 'dark');
+    if (document.body) {
+      document.body.classList.add('horilla-dark');
+      document.body.setAttribute('data-theme', 'dark');
+    }
+  } else {
+    document.documentElement.classList.remove('horilla-dark');
+    document.documentElement.setAttribute('data-theme', 'light');
+    if (document.body) {
+      document.body.classList.remove('horilla-dark');
+      document.body.setAttribute('data-theme', 'light');
+    }
+  }
+};
+
+window.toggleHorillaTheme = function() {
+  const cur = localStorage.getItem('uhhs_theme') || 'light';
+  const isNowDark = (cur === 'light');
+  const themeMode = isNowDark ? 'dark' : 'light';
+  
+  if (isNowDark) {
+    document.documentElement.classList.add('horilla-dark');
+    if (document.body) document.body.classList.add('horilla-dark');
+  } else {
+    document.documentElement.classList.remove('horilla-dark');
+    if (document.body) document.body.classList.remove('horilla-dark');
+  }
+
+  document.documentElement.setAttribute('data-theme', themeMode);
+  if (document.body) document.body.setAttribute('data-theme', themeMode);
+  localStorage.setItem('uhhs_theme', themeMode);
+  localStorage.setItem('uh_theme', themeMode);
+  
+  const btn = document.getElementById('topbarThemeToggleBtn');
+  if (btn) btn.innerHTML = isNowDark ? '☀️' : '🌙';
+  if (window.fsn?.info) {
+    window.fsn.info('Theme', isNowDark ? '🌙 Dark Mode' : '☀️ Modern Light Mode');
+  }
+};
+
+// Auto-run theme initializer
+window.initHorillaTheme();
+
+// ═══════════════════════════════════════════════════════════
+// 🏛️ GLOBAL PROPERTY & CLUSTER SELECTOR (SALON ERP INSPIRED)
+// ═══════════════════════════════════════════════════════════
+window._globalRoomsList = window._globalRoomsList || [];
+
+window.getGlobalSelectedProperty = function() {
+  try {
+    return localStorage.getItem('uhhs_global_prop_filter') || '';
+  } catch(e) {
+    return '';
+  }
+};
+
+window.handleGlobalPropertyFilterChange = function(roomId) {
+  const cleanId = (roomId || '').trim();
+  try {
+    localStorage.setItem('uhhs_global_prop_filter', cleanId);
+  } catch(e) {}
+
+  if (window.SESSION) {
+    window.SESSION.bookingPropFilter = cleanId;
+  }
+  if (window._sbkState) {
+    window._sbkState.propertyFilter = cleanId;
+  }
+  if (window._guestCRMState) {
+    window._guestCRMState.propertyFilter = cleanId;
+  }
+  window._calRoom = cleanId || 'all';
+  window._taskPropFilter = cleanId || 'All';
+  window._maintProp = cleanId || 'All';
+  window._laundryProp = cleanId || 'All';
+
+  window.syncTopbarPropertySelect();
+
+  // Refresh current view if applicable
+  const curHash = (window.location.hash || '').replace('#', '').trim();
+  const curPage = curHash || window.SESSION?.currentPage || 'dashboard';
+
+  if (curPage === 'bookings' && typeof window.renderSmartManageBookings === 'function') {
+    window.renderSmartManageBookings(false);
+  } else if (curPage === 'guest-crm' && typeof window.renderGuestCRM === 'function') {
+    window.renderGuestCRM(true);
+  } else if (curPage === 'calendar' || curPage === 'reports') {
+    if (typeof window.renderReports === 'function') window.renderReports();
+  } else if (curPage === 'dashboard' && typeof window.renderDashboard === 'function') {
+    window.renderDashboard();
+  } else if ((curPage === 'daily-report' || curPage === 'dailyReport') && typeof window.renderDailyReport === 'function') {
+    window.renderDailyReport(window._dailyReportDate);
+  } else if (curPage === 'analytics' && typeof window.renderAnalytics === 'function') {
+    window.renderAnalytics();
+  } else if (curPage === 'flats' && typeof window.renderFlatsStatus === 'function') {
+    window.renderFlatsStatus();
+  } else if (curPage === 'rooms' && typeof window.renderManageRooms === 'function') {
+    window.renderManageRooms();
+  } else if (curPage === 'tasks' && typeof window.renderEmployeeTasks === 'function') {
+    window.renderEmployeeTasks();
+  } else if (curPage === 'investors' && typeof window.renderManageInvestors === 'function') {
+    window.renderManageInvestors();
+  } else if (curPage === 'expenses' && typeof window.renderExpenses === 'function') {
+    window.renderExpenses();
+  } else if (curPage === 'attendance' && typeof window.renderAttendance === 'function') {
+    window.renderAttendance();
+  } else if (curPage === 'advance' && typeof window.renderAdvanceTracker === 'function') {
+    window.renderAdvanceTracker();
+  } else if (curPage === 'maintenance' && typeof window.renderMaintenanceLog === 'function') {
+    window.renderMaintenanceLog();
+  } else if (curPage === 'laundry' && typeof window.renderLaundry === 'function') {
+    window.renderLaundry();
+  }
+
+  const roomObj = (window._globalRoomsList || []).find(r => (r.room_id || '').toUpperCase() === cleanId.toUpperCase());
+  const label = roomObj ? (roomObj.nickname || roomObj.room_id) : 'All Properties';
+  if (window.fsn?.info) {
+    window.fsn.info('Property Filter', cleanId ? `Filtered by ${label}` : 'Showing all properties');
+  }
+};
+
+window.loadGlobalRoomsCache = async function() {
+  if (window._globalRoomsList && window._globalRoomsList.length) {
+    window.syncTopbarPropertySelect();
+    return window._globalRoomsList;
+  }
+  try {
+    if (typeof sb === 'undefined') return [];
+    const { data } = await sb.from('rooms').select('room_id, unit_no, nickname, property_name').order('unit_no');
+    if (data && data.length) {
+      window._globalRoomsList = data;
+      window.syncTopbarPropertySelect();
+    }
+    return data || [];
+  } catch(e) {
+    console.warn('Global rooms cache load failed:', e);
+    return [];
+  }
+};
+
+window.syncTopbarPropertySelect = function() {
+  const sel = document.getElementById('topbarPropertySelect');
+  if (!sel) return;
+  const data = window._globalRoomsList || [];
+  const selected = (window.getGlobalSelectedProperty() || '').trim().toUpperCase();
+  sel.innerHTML = `<option value="">All Properties (${data.length || 18})</option>` +
+    data.map(r => {
+      const isSel = (r.room_id || '').trim().toUpperCase() === selected;
+      return `<option value="${r.room_id}" ${isSel ? 'selected' : ''}>${escapeHtml(r.nickname || r.room_id)} (${r.unit_no || '-'})</option>`;
+    }).join('');
+  
+  const selWrap = document.getElementById('topbarPropSelector');
+  if (selWrap) {
+    if (selected) {
+      selWrap.classList.add('has-filter');
+      if (!selWrap.querySelector('.topbar-prop-clear-btn')) {
+        const clrBtn = document.createElement('button');
+        clrBtn.type = 'button';
+        clrBtn.className = 'topbar-prop-clear-btn';
+        clrBtn.title = 'Clear property filter';
+        clrBtn.style.cssText = 'background:transparent;border:none;color:#DC2626;font-weight:900;cursor:pointer;padding:0 4px;font-size:13px;line-height:1;display:inline-flex;align-items:center;';
+        clrBtn.textContent = '✕';
+        clrBtn.onclick = (e) => { e.stopPropagation(); window.handleGlobalPropertyFilterChange(''); };
+        selWrap.appendChild(clrBtn);
+      }
+    } else {
+      selWrap.classList.remove('has-filter');
+      selWrap.querySelector('.topbar-prop-clear-btn')?.remove();
+    }
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🔐 ROLE PERMISSION HELPERS
+// ═══════════════════════════════════════════════════════════
+window.canDelete = function() {
+  return SESSION.role === 'developer';
+};
+
+window.canEdit = function() {
+  return ['developer', 'admin', 'moderator'].includes(SESSION.role);
+};
+
+window.canView = function() {
+  return ['developer', 'owner', 'admin', 'moderator', 'subowner', 'booking_staff', 'viewer'].includes(SESSION.role);
+};
+
+window.isReadOnly = function() {
+  return ['subowner', 'viewer'].includes(SESSION.role);
+};
+
+window.canModerate = function() {
+  // Booking, ID upload, attendance, WhatsApp
+  return ['developer', 'admin', 'moderator'].includes(SESSION.role);
+};
+
+window.canManageUsers = function() {
+  return ['developer', 'admin'].includes(SESSION.role);
+};
+
+window.canManageFinance = function() {
+  return ['developer', 'owner', 'admin'].includes(SESSION.role);
+};
+
+window.canManageStaff = function() {
+  return ['developer', 'owner', 'admin'].includes(SESSION.role);
+};
+
+// 👑 IDENTIFY DEVELOPER (Developer Group / Master System Recipient)
+window.isDeveloperUser = function(userId, email, displayName, role) {
+  const r = role || window.SESSION?.role;
+  if (r === 'developer') return true;
+  const uid = (userId || window.SESSION?.userId || '').toLowerCase();
+  const em = (email || window.SESSION?.email || '').toLowerCase();
+  const name = (displayName || window.SESSION?.displayName || '').toLowerCase();
+  if (uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa') return true;
+  if (em === 'praveensinghaws@gmail.com' || em.includes('praveensingh')) return true;
+  if (name.includes('praveen')) return true;
+  return false;
+};
+
+window.isPraveenUser = window.isDeveloperUser;
+
+window.isCurrentSessionPraveen = function() {
+  if (!window.SESSION) return false;
+  return window.isDeveloperUser(SESSION.userId, SESSION.email, SESSION.displayName, SESSION.role);
+};
+
+
+
+// ═══════════════════════════════════════════════════════════
+// 📊 PAGE VISIT TRACKER — for smart bottom nav
+// ═══════════════════════════════════════════════════════════
+window.trackPageVisit = function(page) {
+  if (!page) return;
+  const skip = ['dashboard']; // don't track dashboard (always in nav)
+  if (skip.includes(page)) return;
+  try {
+    const visits = JSON.parse(localStorage.getItem('uh_page_visits') || '{}');
+    visits[page] = (visits[page] || 0) + 1;
+    localStorage.setItem('uh_page_visits', JSON.stringify(visits));
+  } catch(e) {}
+};
+
+window.getRecentPages = function(limit) {
+  limit = limit || 3;
+  try {
+    const visits = JSON.parse(localStorage.getItem('uh_page_visits') || '{}');
+    const sorted = Object.entries(visits)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, limit)
+      .map(([page]) => page);
+    return sorted;
+  } catch(e) { return []; }
+};
+
+
+
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window.sb = sb;
+
+// ============ SCHEMA-RESILIENT DATABASE AUTO-HEALING HELPERS ============
+// Automatically catches and auto-heals any missing column / schema cache errors
+window.safeDbInsert = async function(table, payload) {
+  if (!window.sb) throw new Error('Supabase client not initialized');
+  let p = Array.isArray(payload) ? payload.map(x => ({ ...x })) : { ...payload };
+  let attempts = 0;
+  while (attempts < 8) {
+    attempts++;
+    const res = await window.sb.from(table).insert(p);
+    if (!res || !res.error) return res || { data: null, error: null };
+    
+    const errMsg = res.error.message || '';
+    const match = errMsg.match(/Could not find the '([^']+)' column/i) ||
+                  errMsg.match(/column '([^']+)' does not exist/i) ||
+                  errMsg.match(/column "([^"]+)" does not exist/i) ||
+                  errMsg.match(/column "([^"]+)" of relation/i);
+                  
+    if (match && match[1]) {
+      const badCol = match[1];
+      console.warn(`[safeDbInsert] Auto-stripped missing column '${badCol}' from table '${table}':`, errMsg);
+      if (Array.isArray(p)) {
+        p.forEach(row => { if (row && typeof row === 'object') delete row[badCol]; });
+      } else if (p && typeof p === 'object') {
+        delete p[badCol];
+      }
+      continue;
+    }
+    return res;
+  }
+};
+
+window.safeDbUpdate = async function(table, payload, matchCol, matchVal) {
+  if (!window.sb) throw new Error('Supabase client not initialized');
+  let p = { ...payload };
+  let attempts = 0;
+  while (attempts < 8) {
+    attempts++;
+    const res = await window.sb.from(table).update(p).eq(matchCol, matchVal);
+    if (!res || !res.error) return res || { data: null, error: null };
+    
+    const errMsg = res.error.message || '';
+    const match = errMsg.match(/Could not find the '([^']+)' column/i) ||
+                  errMsg.match(/column '([^']+)' does not exist/i) ||
+                  errMsg.match(/column "([^"]+)" does not exist/i) ||
+                  errMsg.match(/column "([^"]+)" of relation/i);
+                  
+    if (match && match[1]) {
+      const badCol = match[1];
+      console.warn(`[safeDbUpdate] Auto-stripped missing column '${badCol}' from table '${table}':`, errMsg);
+      delete p[badCol];
+      continue;
+    }
+    return res;
+  }
+};
+
+const appEl = document.getElementById("app");
+const BRAND = window.BRAND_NAME || "ROOST AND REST";
+const COMPANY_LEGAL_NAME = window.COMPANY_NAME || "ROOST AND REST STAYS";
+const COMPANY_CIN = "ROOST-REST-LUCKNOW-2026";
+const COMPANY_ROC = "Lucknow";
+const COMPANY_REG_ADDRESS = "Lucknow, Uttar Pradesh - India";
+window.BRAND = BRAND;
+window.COMPANY_LEGAL_NAME = COMPANY_LEGAL_NAME;
+window.COMPANY_CIN = COMPANY_CIN;
+window.COMPANY_ROC = COMPANY_ROC;
+window.COMPANY_REG_ADDRESS = COMPANY_REG_ADDRESS;
+const APP_VERSION = "v1.0";
+
+// ============ OFFICIAL REPORT & EXPORT FOOTER HELPERS ============
+window.getOfficialReportFooterHTML = function(dateStr) {
+  const dt = dateStr || new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return `
+    <div class="report-official-footer" style="margin-top:28px;padding-top:14px;border-top:1.5px solid #CBD5E1;text-align:center;font-size:11px;color:#64748B;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;page-break-inside:avoid;">
+      <div style="font-weight:800;color:#1E293B;font-size:12px;letter-spacing:0.5px;">ROOST AND REST STAYS</div>
+      <div style="font-size:10px;color:#64748B;margin-top:3px;line-height:1.4;">
+        Boutique Homestays &bull; Lucknow, Uttar Pradesh &bull; Contact: +91 9807486555
+      </div>
+      <div style="font-size:11px;color:#475569;margin-top:6px;font-weight:600;">
+        Report Generated: ${dt} &bull; 📧 roostandrestlucknow@gmail.com
+      </div>
+      <div style="font-size:11.5px;color:#0F172A;font-weight:800;margin-top:4px;letter-spacing:0.3px;">
+        ⚡ Enterprise CRM Developed by Praveen Singh
+      </div>
+    </div>`;
+};
+
+window.getOfficialReportFooterText = function() {
+  const NL = String.fromCharCode(10);
+  return '━━━━━━━━━━━━━━━━━' + NL +
+    'ROOST AND REST STAYS' + NL +
+    'Boutique Homestays • Lucknow' + NL +
+    'Developed by Praveen Singh';
+};
+
+let SESSION = {
+  userId: null,
+  role: null,
+  empId: null,
+  investorId: null,
+  displayName: null,
+  currentPage: 'dashboard',
+  bookingFilter: 'All',
+  bookingPropFilter: '',
+  bookingDateFilter: '',
+  bookingDateFrom: '',
+  bookingDateTo: '',
+  bookingSearch: ''
+};
+window.SESSION = SESSION;
+
+
+// ============ INIT ============
+async function init() {
+  try {
+    await swUpdateCheck();
+    versionNotice();
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { renderLogin(); return; }
+    await loadProfile(session.user.id);
+  } catch (err) {
+    showError("Setup incomplete. config.js check karo.", err);
+  }
+}
+
+async function swUpdateCheck() {
+  try {
+    if ('serviceWorker' in navigator) {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) await reg.update();
+    }
+  } catch (e) { console.warn('SW update failed', e); }
+}
+
+function versionNotice() {
+  try {
+    const old = localStorage.getItem('uh_ver');
+    if (old && old !== APP_VERSION) window._showUpdate = true;
+    localStorage.setItem('uh_ver', APP_VERSION);
+  } catch (e) {}
+}
+
+function updateNoticeHTML() {
+  if (!window._showUpdate) return '';
+  return `
+    <div class="card" style="border-left:4px solid var(--primary);">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div><strong>🔄 New update available</strong><br><small style="color:var(--muted);">Refresh for latest version</small></div>
+        <button class="btn-sm" onclick="window._showUpdate=false;location.reload();">Refresh</button>
+      </div>
+    </div>`;
+}
+
+function syncInfoHTML() {
+  const last = window._lastSync || '';
+  return `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div><strong>🔄 Room Status Sync</strong>
+          <div style="font-size:11px;color:var(--muted);">${last ? 'Last: ' + last : 'Sync after booking changes'}</div>
+        </div>
+        <button class="btn-sm" onclick="manualSync()">Run Sync</button>
+      </div>
+    </div>`;
+}
+
+async function manualSync() {
+  if (!confirm('Room status sync karna hai?')) return;
+  try {
+    await autoCheckout();
+    window._lastSync = new Date().toLocaleString('en-IN');
+    fsn.success('Success', '✅ Synced!');
+    if (SESSION.currentPage === 'dashboard') renderDashboard();
+    else if (SESSION.currentPage === 'flats') renderFlatsStatus();
+  } catch (e) { fsn.error('Error', '❌ Failed: ' + e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ⏱️ USER ACTIVITY & SCREEN TIME TRACKER
+// ═══════════════════════════════════════════════════════════
+window.UserActivityTracker = {
+  _currentDateStr() {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  },
+
+  _formatDuration(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    const hrs = Math.floor(sec / 3600);
+    const mins = Math.floor((sec % 3600) / 60);
+    const secs = sec % 60;
+    if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
+    if (mins > 0) return `${mins}m ${secs}s`;
+    return `${secs}s`;
+  },
+
+  _formatTime(isoStr) {
+    if (!isoStr) return '-';
+    try {
+      const d = new Date(isoStr);
+      return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch(e) { return '-'; }
+  },
+
+  _getLocalLogs() {
+    try {
+      return JSON.parse(localStorage.getItem('uh_user_activity_logs') || '{}');
+    } catch(e) { return {}; }
+  },
+
+  _saveLocalLogs(logs) {
+    try {
+      localStorage.setItem('uh_user_activity_logs', JSON.stringify(logs));
+    } catch(e) {}
+  },
+
+  async recordLogin(userId, displayName, role) {
+    if (!userId) return;
+    const today = this._currentDateStr();
+    const sessKey = `uh_sess_logged_${today}_${userId}`;
+    const isNewBrowserSession = !sessionStorage.getItem(sessKey);
+
+    const allLogs = this._getLocalLogs();
+    if (!allLogs[today]) allLogs[today] = {};
+    if (!allLogs[today][userId]) {
+      allLogs[today][userId] = {
+        userId,
+        displayName: displayName || 'User',
+        role: role || 'staff',
+        logDate: today,
+        loginCount: 1,
+        activeSeconds: 30,
+        firstLoginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
+      };
+      sessionStorage.setItem(sessKey, '1');
+    } else {
+      allLogs[today][userId].lastActiveAt = new Date().toISOString();
+      if (displayName) allLogs[today][userId].displayName = displayName;
+      if (role) allLogs[today][userId].role = role;
+      if (isNewBrowserSession) {
+        allLogs[today][userId].loginCount = (allLogs[today][userId].loginCount || 1) + 1;
+        sessionStorage.setItem(sessKey, '1');
+      }
+    }
+    this._saveLocalLogs(allLogs);
+    this._syncRecord(allLogs[today][userId]);
+  },
+
+  async pulseActivity(userId, displayName, role) {
+    if (!userId) return;
+    if (document.visibilityState !== 'visible') return;
+
+    const today = this._currentDateStr();
+    const allLogs = this._getLocalLogs();
+    if (!allLogs[today]) allLogs[today] = {};
+    if (!allLogs[today][userId]) {
+      allLogs[today][userId] = {
+        userId,
+        displayName: displayName || 'User',
+        role: role || 'staff',
+        logDate: today,
+        loginCount: 1,
+        activeSeconds: 30,
+        firstLoginAt: new Date().toISOString(),
+        lastActiveAt: new Date().toISOString()
+      };
+    } else {
+      allLogs[today][userId].activeSeconds = (allLogs[today][userId].activeSeconds || 0) + 30;
+      allLogs[today][userId].lastActiveAt = new Date().toISOString();
+      if (displayName) allLogs[today][userId].displayName = displayName;
+      if (role) allLogs[today][userId].role = role;
+    }
+    this._saveLocalLogs(allLogs);
+    this._syncRecord(allLogs[today][userId]);
+  },
+
+  _tableAvailable: (typeof localStorage !== 'undefined' && localStorage.getItem('uh_user_act_tbl_avail') === 'false') ? false : null,
+  _appSettingsAvailable: true,
+
+  async _syncRecord(rec) {
+    if (!rec || !rec.userId) return;
+
+    try {
+      if (window.sb && this._tableAvailable !== false) {
+        const { error } = await sb.from('user_activity_logs').upsert({
+          user_id: rec.userId,
+          display_name: rec.displayName,
+          role: rec.role,
+          log_date: rec.logDate,
+          login_count: rec.loginCount,
+          active_seconds: rec.activeSeconds,
+          first_login_at: rec.firstLoginAt,
+          last_active_at: rec.lastActiveAt,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id,log_date' });
+
+        if (error) {
+          // If table does not exist or unauthorized (404 / 401 / 42P01), remember in localStorage and stop querying it
+          if (error.code === '42P01' || error.status === 404 || error.status === 401 || error.code === '404' || error.message?.includes('does not exist')) {
+            this._tableAvailable = false;
+            try { localStorage.setItem('uh_user_act_tbl_avail', 'false'); } catch(e) {}
+          }
+          if (this._appSettingsAvailable !== false) {
+            this._syncToAppSettings(rec);
+          }
+        } else {
+          this._tableAvailable = true;
+          return;
+        }
+      } else if (this._appSettingsAvailable !== false) {
+        this._syncToAppSettings(rec);
+      }
+    } catch(e) {
+      this._tableAvailable = false;
+      try { localStorage.setItem('uh_user_act_tbl_avail', 'false'); } catch(err) {}
+      if (this._appSettingsAvailable !== false) {
+        this._syncToAppSettings(rec);
+      }
+    }
+  },
+
+  async _syncToAppSettings(rec) {
+    if (this._appSettingsAvailable === false) return;
+    try {
+      if (!window.sb) return;
+      // Use standard select without .single() to prevent 406 (Not Acceptable) when empty
+      const { data: setRows, error: selErr } = await sb.from('app_settings')
+        .select('value')
+        .eq('key', 'user_daily_activity_logs')
+        .limit(1);
+
+      if (selErr) {
+        if (selErr.status === 403 || selErr.status === 401 || selErr.code === '42501' || selErr.status === 404) {
+          this._appSettingsAvailable = false;
+          try { localStorage.setItem('uh_app_set_avail', 'false'); } catch(e) {}
+          return;
+        }
+      }
+
+      const setRow = setRows && setRows[0];
+      let remoteMap = {};
+      try { remoteMap = JSON.parse(setRow?.value || '{}'); } catch(e) {}
+      if (!remoteMap[rec.logDate]) remoteMap[rec.logDate] = {};
+      remoteMap[rec.logDate][rec.userId] = rec;
+
+      const dates = Object.keys(remoteMap).sort().reverse();
+      if (dates.length > 30) {
+        dates.slice(30).forEach(d => delete remoteMap[d]);
+      }
+
+      const { error: upErr } = await sb.from('app_settings').upsert({
+        key: 'user_daily_activity_logs',
+        value: JSON.stringify(remoteMap),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+
+      if (upErr) {
+        // If app_settings upsert forbidden or unauthorized (401 / 403), stop querying it
+        if (upErr.status === 403 || upErr.status === 401 || upErr.code === '42501' || upErr.status === 404) {
+          this._appSettingsAvailable = false;
+          try { localStorage.setItem('uh_app_set_avail', 'false'); } catch(e) {}
+        }
+      } else {
+        this._appSettingsAvailable = true;
+      }
+    } catch(e) {
+      this._appSettingsAvailable = false;
+      try { localStorage.setItem('uh_app_set_avail', 'false'); } catch(err) {}
+    }
+  },
+
+  async fetchLogsForDate(dateStr) {
+    dateStr = dateStr || this._currentDateStr();
+    const userMap = {}; // key: userId -> unified log record
+
+    // 1. Fetch dedicated table user_activity_logs
+    try {
+      if (window.sb) {
+        const { data, error } = await sb.from('user_activity_logs')
+          .select('*')
+          .eq('log_date', dateStr);
+        if (!error && data && data.length > 0) {
+          data.forEach(d => {
+            const uid = d.user_id;
+            userMap[uid] = {
+              userId: uid,
+              displayName: d.display_name,
+              role: d.role,
+              logDate: d.log_date,
+              loginCount: d.login_count || 1,
+              activeSeconds: d.active_seconds || 0,
+              firstLoginAt: d.first_login_at,
+              lastActiveAt: d.last_active_at
+            };
+          });
+        }
+      }
+    } catch(e) {}
+
+    // 2. MERGE app_settings central fallback (user_daily_activity_logs) — captures all remote users!
+    try {
+      if (window.sb) {
+        const { data: setRows } = await sb.from('app_settings')
+          .select('value')
+          .eq('key', 'user_daily_activity_logs')
+          .limit(1);
+        if (setRows?.[0]?.value) {
+          const remoteMap = JSON.parse(setRows[0].value);
+          if (remoteMap[dateStr]) {
+            Object.values(remoteMap[dateStr]).forEach(r => {
+              const uid = r.userId || r.user_id;
+              if (uid) {
+                const prev = userMap[uid] || {};
+                userMap[uid] = {
+                  userId: uid,
+                  displayName: r.displayName || r.display_name || prev.displayName || 'Staff',
+                  role: r.role || prev.role || 'staff',
+                  logDate: dateStr,
+                  loginCount: Math.max(prev.loginCount || 0, r.loginCount || r.login_count || 1),
+                  activeSeconds: Math.max(prev.activeSeconds || 0, r.activeSeconds || r.active_seconds || 0),
+                  firstLoginAt: prev.firstLoginAt || r.firstLoginAt || r.first_login_at,
+                  lastActiveAt: r.lastActiveAt || r.last_active_at || prev.lastActiveAt
+                };
+              }
+            });
+          }
+        }
+      }
+    } catch(e) {}
+
+    // 3. MERGE developer login alerts for today
+    try {
+      if (window.DevLoginAlert) {
+        const alerts = await window.DevLoginAlert.fetchAlerts(80);
+        alerts.forEach(a => {
+          const aDate = a.timestamp ? a.timestamp.slice(0, 10) : '';
+          if (aDate === dateStr && a.user_id) {
+            const uid = a.user_id;
+            const prev = userMap[uid] || {};
+            userMap[uid] = {
+              userId: uid,
+              displayName: a.user_name || prev.displayName || 'Staff',
+              role: a.user_role || prev.role || 'staff',
+              logDate: dateStr,
+              loginCount: Math.max(prev.loginCount || 0, 1),
+              activeSeconds: Math.max(prev.activeSeconds || 0, 180),
+              firstLoginAt: prev.firstLoginAt || a.timestamp,
+              lastActiveAt: (a.timestamp && (!prev.lastActiveAt || new Date(a.timestamp) > new Date(prev.lastActiveAt))) ? a.timestamp : (prev.lastActiveAt || a.timestamp)
+            };
+          }
+        });
+      }
+    } catch(e) {}
+
+    // 4. MERGE active users from profiles table (who has last_seen today)
+    try {
+      if (window.sb) {
+        const { data: profs } = await sb.from('profiles')
+          .select('user_id, display_name, role, last_seen')
+          .not('last_seen', 'is', null);
+
+        if (profs && profs.length) {
+          profs.forEach(p => {
+            const seenDate = p.last_seen ? p.last_seen.slice(0, 10) : '';
+            if (seenDate === dateStr) {
+              const uid = p.user_id;
+              const prev = userMap[uid] || {};
+              userMap[uid] = {
+                userId: uid,
+                displayName: p.display_name || prev.displayName || 'Staff',
+                role: p.role || prev.role || 'staff',
+                logDate: dateStr,
+                loginCount: Math.max(prev.loginCount || 0, 1),
+                activeSeconds: Math.max(prev.activeSeconds || 0, 180),
+                firstLoginAt: prev.firstLoginAt || p.last_seen,
+                lastActiveAt: p.last_seen
+              };
+            }
+          });
+        }
+      }
+    } catch(e) {}
+
+    // 5. MERGE localStorage
+    try {
+      const local = this._getLocalLogs();
+      if (local[dateStr]) {
+        Object.values(local[dateStr]).forEach(r => {
+          const uid = r.userId || r.user_id;
+          if (uid) {
+            const prev = userMap[uid] || {};
+            userMap[uid] = {
+              userId: uid,
+              displayName: r.displayName || prev.displayName || 'Staff',
+              role: r.role || prev.role || 'staff',
+              logDate: dateStr,
+              loginCount: Math.max(prev.loginCount || 0, r.loginCount || 1),
+              activeSeconds: Math.max(prev.activeSeconds || 0, r.activeSeconds || 0),
+              firstLoginAt: prev.firstLoginAt || r.firstLoginAt,
+              lastActiveAt: r.lastActiveAt || prev.lastActiveAt
+            };
+          }
+        });
+      }
+    } catch(e) {}
+
+    // Finalize duration based on true session span
+    const records = Object.values(userMap);
+    records.forEach(r => {
+      let sec = r.activeSeconds || 0;
+      if (r.firstLoginAt && r.lastActiveAt) {
+        const diff = Math.round((new Date(r.lastActiveAt).getTime() - new Date(r.firstLoginAt).getTime()) / 1000);
+        if (diff > 0 && diff < 86400) {
+          sec = Math.max(sec, diff);
+        }
+      }
+      r.activeSeconds = Math.max(sec, (r.loginCount || 1) * 120);
+    });
+
+    return records.sort((a, b) => new Date(b.lastActiveAt || 0) - new Date(a.lastActiveAt || 0));
+  }
+};
+
+// ============ AUTH ============
+async function loadProfile(userId) {
+  const { data: { user } } = await sb.auth.getUser();
+  const userEmail = user?.email || '';
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || userEmail.split('@')[0] || 'User';
+  const userAvatar = user?.user_metadata?.avatar_url || '';
+
+  const { data: p, error } = await sb.from("profiles")
+    .select("role, emp_id, investor_id, display_name, is_approved")
+    .eq("user_id", userId).single();
+
+  if (error || !p) {
+    // Check if pending user (Google login first time)
+    if (user) {
+      await handleNewGoogleUser(user);
+      return;
+    }
+    showError("Profile nahi mila. Admin se contact karo.");
+    return;
+  }
+
+  // 🔒 STRICT SECURITY CHECK: User MUST be explicitly approved (is_approved === true)
+  if (p.is_approved !== true) {
+    const { data: pendingEntry } = await sb.from('pending_users').select('status').eq('user_id', userId).single();
+    
+    // If explicitly rejected or suspended
+    if (pendingEntry?.status === 'Rejected') {
+      renderAccessSuspendedScreen(p.display_name || userName, userEmail);
+      return;
+    }
+
+    // Otherwise show Pending Approval screen
+    renderPendingApprovalScreen(p.display_name || userName, userEmail, userAvatar);
+    return;
+  }
+
+  // 🚫 DOUBLE LOCK: Even if is_approved=true, block suspended/banned/fired roles
+  if (p.role === 'suspended' || p.role === 'banned' || p.role === 'fired' || p.role === 'terminated' || p.role === 'revoked') {
+    renderAccessSuspendedScreen(p.display_name || userName, userEmail);
+    return;
+  }
+
+  SESSION.userId = userId;
+  SESSION.role = p.role;
+  SESSION.empId = p.emp_id;
+  SESSION.investorId = p.investor_id;
+  SESSION.loginTimestamp = parseInt(sessionStorage.getItem('uh_session_start_ts') || '0', 10);
+  if (!SESSION.loginTimestamp) {
+    SESSION.loginTimestamp = Date.now();
+    try { sessionStorage.setItem('uh_session_start_ts', String(SESSION.loginTimestamp)); } catch(e) {}
+  }
+
+  try {
+    const { data: { user } } = await sb.auth.getUser();
+    if (user) {
+      SESSION.email = user.email || '';
+      const emailPrefix = user.email ? user.email.split('@')[0] : '';
+      const metaName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+      SESSION.displayName = p.display_name || metaName || emailPrefix || p.role;
+      SESSION.auditUser = p.display_name || emailPrefix || p.role;
+    } else {
+      SESSION.displayName = p.display_name || p.role;
+      SESSION.auditUser = p.display_name || p.role;
+    }
+  } catch (e) {
+    SESSION.displayName = p.display_name || p.role;
+    SESSION.auditUser = p.display_name || p.role;
+  }
+
+  window._userNameCache = window._userNameCache || {};
+  if (SESSION.userId) {
+    window._userNameCache[SESSION.userId] = SESSION.displayName;
+  }
+  if (typeof window.preloadUserNames === 'function') {
+    window.preloadUserNames();
+  }
+
+  startHeartbeat();
+
+  if (window.UserActivityTracker) {
+    window.UserActivityTracker.recordLogin(userId, SESSION.displayName, p.role);
+  }
+  // 🔔 DYNAMIC LOGIN NOTIFICATION: Send alert whenever ANY user logs in (ANY ROLE: admin, owner, manager, staff, etc.) who is not Praveen
+  const isPraveenLoggingIn = window.isPraveenUser
+    ? window.isPraveenUser(userId, SESSION.email, SESSION.displayName, p.role)
+    : ((SESSION.displayName || '').toLowerCase().includes('praveen') || (SESSION.email || '').toLowerCase().includes('praveensingh'));
+  if (!isPraveenLoggingIn) {
+    if (window.DevLoginAlert && typeof window.DevLoginAlert.notifyDevOnLogin === 'function') {
+      window.DevLoginAlert.notifyDevOnLogin(userId, SESSION.displayName, p.role, SESSION.email);
+    } else {
+      window._pendingLoginAlert = { userId, displayName: SESSION.displayName, role: p.role, email: SESSION.email };
+    }
+  }
+
+  if (p.role === 'employee') {
+    renderEmployeeView();
+    try { window.UserPageAudit?.trackVisit(userId, SESSION.displayName, p.role, 'employee-portal'); } catch(e) {}
+  } else if (p.role === 'investor' || (p.role === 'viewer' && p.investor_id)) {
+    renderInvestorView();
+    try { window.UserPageAudit?.trackVisit(userId, SESSION.displayName, p.role, 'investors'); } catch(e) {}
+  } else if (p.role === 'ca') {
+    renderFYSummary();
+    try { window.UserPageAudit?.trackVisit(userId, SESSION.displayName, p.role, 'ca-audit'); } catch(e) {}
+  } else if (p.role === 'checkin_manager' || p.role === 'caretaker') {
+    renderCheckinManagerViewNew();
+    try { window.UserPageAudit?.trackVisit(userId, SESSION.displayName, p.role, 'checkin'); } catch(e) {}
+  } else {
+    const hashPage = (window.location.hash || '').replace('#', '').trim();
+    const lastPage = localStorage.getItem('uh_last_page');
+    const cleanHash = (hashPage && hashPage !== 'dashboard' && hashPage !== 'today') ? hashPage : '';
+    const cleanLast = (lastPage && lastPage !== 'dashboard' && lastPage !== 'today') ? lastPage : '';
+    const targetPage = cleanHash || cleanLast || 'bookings';
+    navigate(targetPage);
+    try { window.UserPageAudit?.trackVisit(userId, SESSION.displayName, p.role, targetPage); } catch(e) {}
+  }
+}
+
+function renderPendingApprovalScreen(name, email, avatar = '') {
+  appEl.innerHTML = `
+    <div class="wrap">
+      <div class="card" style="text-align:center;max-width:460px;margin:40px auto;padding:32px 24px;box-shadow:0 10px 25px rgba(0,0,0,0.08);border-radius:16px;">
+        <img src="assets/logo.png" alt="" style="width:68px;height:68px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
+        <h2 style="margin:0 0 8px;font-size:20px;color:var(--dark);">${BRAND}</h2>
+        ${avatar ? `<img src="${avatar}" style="width:52px;height:52px;border-radius:50%;margin:10px auto;border:2px solid #F59E0B;" />` : ''}
+        <div style="margin:16px 0;padding:18px;background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:12px;text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">⏳</div>
+          <strong style="color:#92400E;font-size:16px;">Access Request Pending Approval</strong>
+          <div style="color:#78350F;font-size:13px;margin-top:8px;line-height:1.5;">
+            Hello <strong>${name}</strong>!<br>
+            Aapka request admin approval ke liye queued hai.<br>
+            Admin ke <strong>User Management ➔ Pending Access Requests</strong> se approve aur role assign hone ke baad hi CRM access activate hoga.
+          </div>
+        </div>
+        <div class="sub" style="font-size:13px;color:var(--muted);margin-bottom:18px;">
+          Account: <strong>${email}</strong>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button onclick="location.reload()" style="flex:1;background:#2563EB;color:#fff;border:none;padding:11px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">
+            🔄 Refresh Status
+          </button>
+          <button onclick="logout()" style="flex:1;background:#DC2626;color:#fff;border:none;padding:11px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">
+            🚪 Logout
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderAccessSuspendedScreen(name, email) {
+  appEl.innerHTML = `
+    <div class="wrap">
+      <div class="card" style="text-align:center;max-width:460px;margin:40px auto;padding:32px 24px;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+        <img src="assets/logo.png" alt="" style="width:68px;height:68px;border-radius:16px;margin-bottom:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08);" />
+        <h2 style="margin:0 0 8px;font-size:20px;color:var(--dark);">${BRAND}</h2>
+        <div style="margin:16px 0;padding:18px;background:#FEF2F2;border:1.5px solid #FCA5A5;border-radius:12px;">
+          <div style="font-size:32px;margin-bottom:6px;">🚫</div>
+          <strong style="color:#991B1B;font-size:16px;">Access Suspended / Terminated</strong><br>
+          <small style="color:#7F1D1D;display:block;margin-top:6px;line-height:1.4;">
+            Aapka CRM login access band kar diya gaya hai. Kripya Company Management se sampark karein.
+          </small>
+        </div>
+        <div class="sub" style="font-size:13px;color:var(--muted);margin-bottom:18px;">Account: <strong>${name || email || 'User'}</strong></div>
+        <button onclick="logout()" style="width:100%;background:#DC2626;color:#fff;border:none;padding:11px;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">🚪 Logout</button>
+      </div>
+    </div>`;
+}
+
+async function handleNewGoogleUser(user) {
+  const email = user.email || '';
+  const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || 'New User';
+  const avatar = user.user_metadata?.avatar_url || '';
+
+  try {
+    // Check if already in pending
+    const { data: existing } = await sb.from('pending_users').select('id, status').eq('user_id', user.id).single();
+    if (!existing) {
+      await sb.from('pending_users').insert({
+        user_id: user.id,
+        email: email,
+        full_name: name,
+        auth_provider: 'google',
+        status: 'Pending'
+      });
+    }
+
+    // Also create profile with is_approved = false
+    const { data: profExists } = await sb.from('profiles').select('user_id, is_approved').eq('user_id', user.id).single();
+    if (!profExists) {
+      await sb.from('profiles').insert({
+        user_id: user.id,
+        role: 'viewer',
+        display_name: name,
+        auth_provider: 'google',
+        avatar_url: avatar,
+        is_approved: false
+      });
+    } else if (profExists.is_approved !== true) {
+      await sb.from('profiles').update({ is_approved: false }).eq('user_id', user.id);
+    }
+  } catch (err) {
+    console.warn('handleNewGoogleUser DB sync error:', err);
+  }
+
+  renderPendingApprovalScreen(name, email, avatar);
+}
+
+function showError(msg, err = null) {
+  appEl.innerHTML = `<div class="wrap"><div class="card">
+    <h1>⚠️ Error</h1>
+    <div class="error">${msg}${err ? '<br>' + err.message : ''}</div>
+    <button onclick="logout()" style="margin-top:10px;">🚪 Logout</button>
+  </div></div>`;
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  SESSION = {
+    userId: null, role: null, empId: null, investorId: null,
+    displayName: null, currentPage: 'dashboard',
+    bookingFilter: 'All', bookingPropFilter: '', bookingDateFilter: '',
+    bookingDateFrom: '', bookingDateTo: '', bookingSearch: ''
+  };
+  renderLogin();
+}
+
+// ============ LOGIN ============
+function renderLogin() {
+  // Hide mobile bottom nav and install bar on login screen
+  const botNav = document.getElementById('pwa-bottom-nav');
+  if (botNav) botNav.style.display = 'none';
+  const installBar = document.getElementById('pwa-install-bar');
+  if (installBar) installBar.style.display = 'none';
+
+  appEl.innerHTML = `
+    <style>
+      .uhh-login-wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        position: relative;
+        background: #F1F5F9;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      /* Clean subtle geometric backdrop */
+      .uhh-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          radial-gradient(#CBD5E1 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      .uhh-card {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 420px;
+        animation: uhh-fadeup 0.5s cubic-bezier(.16, 1, .3, 1) both;
+      }
+
+      .uhh-card-inner {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 24px;
+        padding: 36px 30px 28px;
+        box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 20px 40px -15px rgba(2, 132, 199, 0.07);
+        text-align: center;
+      }
+
+      /* Logo ring matching CRM Sky-Blue theme */
+      .uhh-logo-ring {
+        width: 76px;
+        height: 76px;
+        margin: 0 auto 16px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #0284C7 0%, #38BDF8 100%);
+        padding: 3px;
+        box-shadow: 0 8px 24px rgba(2, 132, 199, 0.28);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .uhh-logo-inner {
+        width: 100%;
+        height: 100%;
+        border-radius: 18px;
+        background: #FFFFFF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      .uhh-logo-inner img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      /* Titles */
+      .uhh-brand-name {
+        font-size: 21px;
+        font-weight: 800;
+        letter-spacing: -0.4px;
+        color: #0F172A;
+        margin-bottom: 4px;
+        line-height: 1.25;
+      }
+
+      .uhh-brand-sub {
+        font-size: 13px;
+        color: #64748B;
+        margin-bottom: 18px;
+        font-weight: 500;
+      }
+
+      /* Status badge */
+      .uhh-badge-divider {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #F0FDF4;
+        border: 1px solid #BBF7D0;
+        border-radius: 999px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #16A34A;
+        letter-spacing: 0.4px;
+      }
+
+      /* Google Button */
+      .uhh-google-btn {
+        width: 100%;
+        padding: 12px 18px;
+        background: #FFFFFF;
+        color: #1E293B;
+        border: 1.5px solid #E2E8F0;
+        font-size: 13.5px;
+        font-weight: 700;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      }
+      .uhh-google-btn:hover {
+        background: #F8FAFC;
+        border-color: #CBD5E1;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        transform: translateY(-1px);
+      }
+
+      /* Separator */
+      .uhh-sep {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 20px 0;
+      }
+      .uhh-sep-line {
+        flex: 1;
+        height: 1px;
+        background: #E2E8F0;
+      }
+      .uhh-sep-text {
+        font-size: 11px;
+        font-weight: 600;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      /* Input fields */
+      .uhh-field {
+        text-align: left;
+        margin-bottom: 14px;
+      }
+      .uhh-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #475569;
+        display: block;
+        margin-bottom: 6px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+      }
+      .uhh-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: #F8FAFC;
+        border: 1.5px solid #E2E8F0;
+        border-radius: 12px;
+        color: #0F172A;
+        font-size: 14px;
+        font-weight: 600;
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+      }
+      .uhh-input::placeholder { color: #94A3B8; font-weight: 400; }
+      .uhh-input:focus {
+        border-color: #0284C7;
+        background: #FFFFFF;
+        box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+      }
+
+      /* Sign In Button */
+      .uhh-signin-btn {
+        width: 100%;
+        padding: 13px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 800;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 0.3px;
+        background: linear-gradient(135deg, #0284C7 0%, #0EA5E9 100%);
+        color: #FFFFFF;
+        box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35);
+        transition: all 0.2s ease;
+        margin-top: 6px;
+      }
+      .uhh-signin-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+        background: linear-gradient(135deg, #0369A1 0%, #0284C7 100%);
+      }
+      .uhh-signin-btn:active:not(:disabled) { transform: translateY(0); }
+      .uhh-signin-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+      /* Footer */
+      .uhh-footer {
+        margin-top: 24px;
+        padding-top: 18px;
+        border-top: 1px solid #F1F5F9;
+        font-size: 10.5px;
+        color: #64748B;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      @keyframes uhh-fadeup {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+
+    <div class="uhh-login-wrap">
+      <div class="uhh-grid"></div>
+
+      <!-- Main card -->
+      <div class="uhh-card">
+        <div class="uhh-card-inner">
+
+          <!-- Logo with fresh Sky-Blue Theme & Cache Buster -->
+          <div class="uhh-logo-ring">
+            <div class="uhh-logo-inner">
+              <img src="assets/logo-emblem.png?v=393" alt="The Unique Haven Homes Logo" />
+            </div>
+          </div>
+
+          <!-- Brand -->
+          <div class="uhh-brand-name">The Unique Haven Homes</div>
+          <div class="uhh-brand-sub">Hospitality Management &amp; Booking CRM</div>
+
+          <!-- Status badge -->
+          <div style="margin-bottom:20px;">
+            <span class="uhh-badge-divider">
+              <span style="width:6px;height:6px;background:#16A34A;border-radius:50%;display:inline-block;box-shadow:0 0 6px rgba(22,163,74,0.4);"></span>
+              SECURE STAFF PORTAL
+            </span>
+          </div>
+
+          <!-- Google Button -->
+          <button class="uhh-google-btn" onclick="loginWithGoogle()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px;height:18px;" />
+            Continue with Google
+          </button>
+
+          <!-- Separator -->
+          <div class="uhh-sep">
+            <div class="uhh-sep-line"></div>
+            <span class="uhh-sep-text">or sign in with email</span>
+            <div class="uhh-sep-line"></div>
+          </div>
+
+          <!-- Email -->
+          <div class="uhh-field">
+            <label class="uhh-label">Email Address</label>
+            <input id="email" type="email" class="uhh-input" placeholder="admin@uniquehavenhomesstay.com" autocomplete="email" />
+          </div>
+
+          <!-- Password -->
+          <div class="uhh-field" style="margin-bottom:18px;">
+            <label class="uhh-label">Password</label>
+            <input id="password" type="password" class="uhh-input" placeholder="••••••••" autocomplete="current-password"
+              onkeydown="if(event.key==='Enter'){loginWithEmail();}" />
+          </div>
+
+          <!-- Sign In Button -->
+          <button id="loginBtn" class="uhh-signin-btn" onclick="loginWithEmail()">
+            ✦ &nbsp;Sign In to CRM
+          </button>
+
+          <div id="loginErr" style="margin-top:10px;font-size:13px;color:#EF4444;font-weight:600;"></div>
+
+          <!-- Footer -->
+          <div class="uhh-footer">
+            <strong style="color:#0F172A;font-size:10px;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong><br>
+            <span style="color:#64748B;font-size:9.5px;">CIN: U55101UP2026PTC244637</span>
+            &nbsp;&bull;&nbsp;
+            <span style="color:#0284C7;font-size:9.5px;font-weight:700;">Build ${APP_VERSION}</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function loginWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: 'https://uniquehavenhomesstay.com/admin.html'
+    }
+  });
+  if (error) {
+    document.getElementById('loginErr').innerHTML = `<div class="error">${error.message}</div>`;
+  }
+}
+
+async function loginWithEmail() {
+  const btn = document.getElementById("loginBtn");
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    document.getElementById("loginErr").innerHTML = `<div class="error">${error.message}</div>`;
+    btn.disabled = false;
+    btn.textContent = 'Login with Email';
+    return;
+  }
+  await loadProfile(data.user.id);
+}
+
+// ============ SHELL ============
+// ============ TABLER VECTOR ICONS HELPER ============
+function getTablerIcon(key) {
+  const map = {
+    dashboard: 'ti-calendar-event',
+    bookings: 'ti-bed',
+    reports: 'ti-calendar-event',
+    calendar: 'ti-calendar',
+    'guest-crm': 'ti-users',
+    flats: 'ti-home',
+    shifts: 'ti-arrows-left-right',
+    pendingApprovals: 'ti-clock-check',
+    cashbook: 'ti-cash',
+    reimbursements: 'ti-receipt-2',
+    expenses: 'ti-chart-pie',
+    claims: 'ti-credit-card',
+    finance: 'ti-wallet',
+    investors: 'ti-briefcase',
+    dailyReport: 'ti-chart-line',
+    analytics: 'ti-chart-bar',
+    reminders: 'ti-bell',
+    employees: 'ti-id-badge-2',
+    attendance: 'ti-calendar-check',
+    advance: 'ti-wallet',
+    'employee-ledger': 'ti-book',
+    tasks: 'ti-checklist',
+    maintenance: 'ti-tools',
+    laundry: 'ti-wash-machine',
+    store: 'ti-box',
+    'airbnb-sync': 'ti-refresh',
+    rooms: 'ti-building-community',
+    'showcase-admin': 'ti-world',
+    'property-setup': 'ti-home-cog',
+    'whatsapp-hub': 'ti-brand-whatsapp',
+    whatsapp: 'ti-brand-whatsapp',
+    sop: 'ti-file-certificate',
+    'user-mgmt': 'ti-user-circle',
+    help: 'ti-help-circle',
+    settings: 'ti-settings',
+    menu: 'ti-menu-2'
+  };
+  return map[key] || 'ti-file-text';
+}
+window.getTablerIcon = getTablerIcon;
+
+function renderShell(content, activePage = 'dashboard') {
+  window.renderShell = renderShell;
+  if (SESSION.investorId) { appEl.innerHTML = content; return; }
+  const show = ['developer', 'admin', 'owner', 'moderator', 'subowner', 'viewer', 'booking_staff', 'manager', 'checkin_manager', 'caretaker'].includes(SESSION.role);
+  const isCheckinMgr = SESSION.role === 'checkin_manager' || SESSION.role === 'caretaker';
+  if (!show) { appEl.innerHTML = content; return; }
+
+  const isAdmin = SESSION.role === 'admin' || SESSION.role === 'developer';
+  const isOwner = SESSION.role === 'owner' || isAdmin;
+  const isPureOwner = SESSION.role === 'owner'; // owner only — NOT admin/developer
+  const isBookingStaff = SESSION.role === 'booking_staff';
+  const isViewer = (SESSION.role === 'viewer' || SESSION.role === 'subowner') && !SESSION.investorId;
+  const isCheckin = SESSION.role === 'checkin_manager';
+
+  let nav;
+
+  // Settings visible to admin and developer only (NOT plain owner)
+  const showSettings = isAdmin;
+
+  // ═══════════════════════════════════════════════════════════
+  // 🏛️ UHHS CRM POWER HUBS CONFIGURATION (Hub & Tab Architecture)
+  // ═══════════════════════════════════════════════════════════
+  const UHHS_HUBS = [
+    {
+      id: 'dashboard',
+      label: '🏠 Today · Operations',
+      page: 'dashboard',
+      pages: ['dashboard', 'dailyReport'],
+      tabs: []
+    },
+    {
+      id: 'bookings',
+      label: '📅 Bookings / Calendar',
+      page: 'bookings',
+      pages: ['bookings', 'calendar', 'reports', 'pendingApprovals', 'shifts', 'guest-crm'],
+      tabs: [
+        { id: 'bookings', label: '📅 Today' },
+        { id: 'calendar', label: '🗓️ Calendar' },
+        { id: 'pendingApprovals', label: '🟡 Approvals' }
+      ]
+    },
+    {
+      id: 'rooms',
+      label: '🏢 Properties',
+      page: 'rooms',
+      pages: ['rooms', 'flats', 'showcase-admin', 'airbnb-sync', 'property-setup', 'ical-sync', 'property-report'],
+      tabs: [
+        { id: 'rooms', label: '🏢 Units & Pricing' },
+        { id: 'flats', label: '🛏️ Flat Status' },
+        { id: 'showcase-admin', label: '🌐 Website Showcase' },
+        { id: 'airbnb-sync', label: '🔄 Airbnb Sync' }
+      ]
+    },
+    {
+      id: 'expenses',
+      label: '🧾 Expenses',
+      page: 'expenses',
+      pages: ['expenses', 'claims', 'reimbursements', 'laundry', 'maintenance', 'store', 'cashbook'],
+      tabs: [
+        { id: 'expenses', label: '📊 Expenses & P&L' },
+        { id: 'claims', label: '🏦 TUHH-OD & Claims' },
+        { id: 'laundry', label: '🧺 Laundry' },
+        { id: 'maintenance', label: '🔧 Maintenance' }
+      ]
+    },
+    {
+      id: 'finances',
+      label: '💰 Finances',
+      page: 'analytics',
+      pages: ['analytics', 'ca-audit', 'investors', 'financial', 'financial-sheet'],
+      tabs: [
+        { id: 'analytics', label: '📊 Executive Dashboard' },
+        { id: 'ca-audit', label: '💼 CA & Tax Audit' },
+        { id: 'investors', label: '🧑‍💼 Investors' }
+      ]
+    },
+    {
+      id: 'employees',
+      label: '👥 HRMS & Tasks',
+      page: 'employees',
+      pages: ['employees', 'attendance', 'att-summary', 'tasks', 'employee-ledger', 'advance', 'sop', 'company-advances', 'my-ledger', 'task-and-housekeeping', 'housekeeping'],
+      tabs: [
+        { id: 'employees', label: '👥 Staff Roster' },
+        { id: 'attendance', label: '📋 Attendance' },
+        { id: 'tasks', label: '🧰 Tasks' },
+        { id: 'employee-ledger', label: '📒 Ledgers & Advance' }
+      ]
+    },
+    {
+      id: 'whatsapp-hub',
+      label: '📱 WhatsApp Hub',
+      page: 'whatsapp-hub',
+      pages: ['whatsapp-hub', 'whatsapp', 'reviews-followup'],
+      tabs: []
+    },
+    {
+      id: 'user-mgmt',
+      label: '👤 User Management',
+      page: 'user-mgmt',
+      pages: ['user-mgmt'],
+      tabs: []
+    },
+    {
+      id: 'settings',
+      label: '⚙️ Global Settings',
+      page: 'settings',
+      pages: ['settings'],
+      tabs: []
+    },
+    {
+      id: 'help',
+      label: '❓ Help & Guide',
+      page: 'help',
+      pages: ['help'],
+      tabs: []
+    }
+  ];
+  window._UHHS_HUBS = UHHS_HUBS;
+
+  // Single Source of Truth for mapping every page/sub-tab to its parent sidebar key
+  const PAGE_TO_SIDEBAR_MAP = {
+    dashboard: 'dashboard',
+    dailyReport: 'dashboard',
+
+    bookings: 'bookings',
+    calendar: 'bookings',
+    reports: 'bookings',
+    pendingApprovals: 'bookings',
+    shifts: 'bookings',
+    'guest-crm': 'bookings',
+
+    rooms: 'rooms',
+    flats: 'rooms',
+    'showcase-admin': 'rooms',
+    'airbnb-sync': 'rooms',
+    'property-setup': 'rooms',
+    'ical-sync': 'rooms',
+    'property-report': 'rooms',
+
+    expenses: 'expenses',
+    claims: 'expenses',
+    reimbursements: 'expenses',
+    laundry: 'expenses',
+    maintenance: 'expenses',
+    store: 'expenses',
+    cashbook: 'expenses',
+
+    analytics: 'analytics',
+    'ca-audit': 'analytics',
+    investors: 'analytics',
+    financial: 'analytics',
+    'financial-sheet': 'analytics',
+    finances: 'analytics',
+
+    employees: 'employees',
+    attendance: 'employees',
+    'att-summary': 'employees',
+    tasks: 'employees',
+    'employee-ledger': 'employees',
+    advance: 'employees',
+    sop: 'employees',
+    'company-advances': 'employees',
+    'my-ledger': 'employees',
+    'task-and-housekeeping': 'employees',
+    housekeeping: 'employees',
+
+    'whatsapp-hub': 'whatsapp-hub',
+    whatsapp: 'whatsapp-hub',
+    'reviews-followup': 'whatsapp-hub',
+
+    'user-mgmt': 'user-mgmt',
+    settings: 'settings',
+    help: 'help',
+    menu: 'menu'
+  };
+  window.PAGE_TO_SIDEBAR_MAP = PAGE_TO_SIDEBAR_MAP;
+
+  // 👑 OWNER ROLE: Filter out restricted tabs from hub definitions
+  if (isPureOwner) {
+    // Remove Laundry tab from Expenses hub
+    const expHub = UHHS_HUBS.find(h => h.id === 'expenses');
+    if (expHub) expHub.tabs = expHub.tabs.filter(t => t.id !== 'laundry');
+  }
+
+  // Minimal, uncluttered left drawer list as requested by user
+  if (isPureOwner) {
+    // 👑 OWNER ROLE (Firoz, Shanshah) — Full business access, restricted admin pages
+    // Hidden: User Management, Laundry, HRMS & Tasks, WhatsApp Hub, Help & Guide
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['expenses', 'Expenses'],
+      ['analytics', 'Finances'],
+      ['settings', 'Global Settings'],
+    ];
+  } else if (isAdmin) {
+    // 🛠️ DEVELOPER / ADMIN — Full access to everything
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['expenses', 'Expenses'],
+      ['analytics', 'Finances'],
+      ['employees', 'HRMS & Tasks'],
+      ['whatsapp-hub', 'WhatsApp Hub'],
+      ['user-mgmt', 'User Management'],
+      ['settings', 'Global Settings'],
+      ['help', 'Help & Guide'],
+    ];
+  } else if (SESSION.role === 'moderator') {
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['employees', 'HRMS & Tasks'],
+      ['whatsapp-hub', 'WhatsApp Hub'],
+      ['help', 'Help & Guide'],
+    ];
+  } else if (isCheckinMgr || isCheckin) {
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['whatsapp-hub', 'WhatsApp Hub'],
+      ['help', 'Help & Guide'],
+    ];
+  } else if (isBookingStaff) {
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['whatsapp-hub', 'WhatsApp Hub'],
+      ['help', 'Help & Guide'],
+    ];
+  } else if (isViewer) {
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['help', 'Help & Guide'],
+    ];
+  } else {
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['expenses', 'Expenses'],
+      ['analytics', 'Finances'],
+      ['employees', 'HRMS & Tasks'],
+      ['whatsapp-hub', 'WhatsApp Hub'],
+      ['help', 'Help & Guide'],
+      ...(showSettings ? [['settings', 'Global Settings']] : []),
+    ];
+  }
+
+  const roleLabel = ({
+    'developer': 'Developer',
+    'admin': 'Admin',
+    'owner': 'Owner',
+    'moderator': 'Moderator',
+    'viewer': 'Viewer',
+    'subowner': 'Sub-owner',
+    'booking_staff': 'Staff',
+    'caretaker': 'Caretaker',
+    'checkin_manager': 'Check-in Mgr',
+    'investor': 'Investor',
+    'employee': 'Employee',
+    'ca': 'CA'
+  })[SESSION.role] || SESSION.role;
+  const shortName = (SESSION.displayName || '').split('(')[0].trim().split(' ')[0] || 'User';
+
+  // Custom badge overrides (per user)
+  const CUSTOM_BADGES = {
+    'c6343844-a307-4668-9b16-1947a0c0f8fa': 'Manager',      // praveensinghaws@gmail.com
+    'e3717cbd-da9a-495e-a940-2995021e8ca2': 'Developer',    // admin@uniquehavenhomesstay.com
+  };
+  const displayBadge = CUSTOM_BADGES[SESSION.userId] || roleLabel;
+
+  // Strict Praveen-Only Authorization Guard for sensitive operations (Restore deleted bookings, master audit)
+  window.isPraveenUser = function() {
+    const s = window.SESSION || {};
+    const email = (s.email || '').toLowerCase().trim();
+    const uid = (s.userId || '').toLowerCase().trim();
+    const name = (s.displayName || '').toLowerCase().trim();
+    return email === 'praveensinghaws@gmail.com' ||
+           uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa' ||
+           s.role === 'developer' ||
+           name.includes('praveen');
+  };
+
+  const PAGE_TITLES = {
+    dashboard: { title: "Today's Operations Hub", sub: 'Guest check-ins, check-outs & in-house stays', icon: '🏠' },
+    reports: { title: 'Reservations Calendar', sub: 'Room availability & bookings calendar', icon: '📅' },
+    calendar: { title: 'Reservations Calendar', sub: 'Room availability & bookings calendar', icon: '📅' },
+    bookings: { title: 'Bookings Management', sub: 'Guest check-ins, check-outs & payments', icon: '🛎' },
+    'guest-crm': { title: 'Guest CRM & Client Profiles', sub: 'Lifetime stays, VIP loyalty tiers, spend analytics & guest khata', icon: '👤' },
+    flats: { title: 'Flats & Housekeeping', sub: 'Room readiness, cleaning & maintenance', icon: '🛏️' },
+    shifts: { title: 'Property Shifts', sub: 'Extended stays & room changeovers', icon: '🔄' },
+    pendingApprovals: { title: 'Pending Approvals', sub: 'Verification queue for bookings & payments', icon: '🟡' },
+    cashbook: { title: 'Cash Book', sub: 'Cash flow, handovers & safe balance', icon: '💰' },
+    reimbursements: { title: 'Daily Expenses', sub: 'Staff reimbursements & operational spends', icon: '💸' },
+    expenses: { title: 'Monthly Expenses & P&L', sub: 'Property-wise profit & loss reporting', icon: '📊' },
+    claims: { title: 'TUHH-OD & Universal Claims', sub: 'TUHH-OD Overdraft balance, daily closing statement & vendor settlements', icon: '🏦' },
+    'ca-audit': { title: 'CA Payout & Tax Audit (Section 194-O TDS)', sub: 'Audited Airbnb payouts, 1% Section 194-O TDS, gross earnings & 1-click CA export', icon: '💼' },
+    investors: { title: 'Investors Ledger', sub: 'Property investor shares & payouts', icon: '🧑‍💼' },
+    dailyReport: { title: 'Daily Operations Report', sub: 'End-of-day revenue, checkins & summaries', icon: '📈' },
+    analytics: { title: 'Executive Financial Dashboard', sub: 'Net revenue, ADR, RevPAR, NOI & property performance', icon: '📊' },
+    reminders: { title: 'Reminders & Follow-ups', sub: 'Checkout alarms & upcoming tasks', icon: '🔔' },
+    employees: { title: 'Team & Staff', sub: 'Employee profiles, roles & contacts', icon: '👥' },
+    attendance: { title: 'Staff Attendance', sub: 'Daily check-in logs & monthly summaries', icon: '📋' },
+    advance: { title: 'Salary Advances', sub: 'Staff advance tracking & deductions', icon: '🎁' },
+    'employee-ledger': { title: 'Employee Ledger', sub: 'Detailed salary & transaction history', icon: '📒' },
+    tasks: { title: 'Tasks Management', sub: 'Maintenance & staff assignments', icon: '🧰' },
+    maintenance: { title: 'Maintenance & Repairs', sub: 'Property repair tickets & status', icon: '🔧' },
+    laundry: { title: 'Laundry Management', sub: 'Linen dispatches & vendor tracking', icon: '🧺' },
+    store: { title: 'Inventory & Store', sub: 'Supplies, toiletries & stock levels', icon: '📦' },
+    'airbnb-sync': { title: 'Airbnb Sync & Financial Audit', sub: 'Monthly payouts reconciliation, exact earnings & calendar sync', icon: '🔄' },
+    rooms: { title: 'Properties & Units', sub: '19 homestays details & amenities', icon: '🏢' },
+    'showcase-admin': { title: 'Website Showcase & Media CMS', sub: 'Airbnb-style room photos, videos, pricing & maps', icon: '🌐' },
+    'property-setup': { title: 'Property Setup', sub: 'Configure rooms, units & pricing', icon: '🏗️' },
+    'whatsapp-hub': { title: 'WhatsApp Communications', sub: 'Guest templates & automated messaging', icon: '📱' },
+    sop: { title: 'SOP Operational Guide', sub: 'Standard operating procedures for staff', icon: '📘' },
+    menu: { title: 'Account & Operations', sub: 'The Unique Haven Homes Pvt. Ltd.', icon: '☰' },
+    'user-mgmt': { title: 'User Management', sub: 'System users, roles & permissions', icon: '👤' },
+    help: { title: 'Help & Operating Guide', sub: 'Interactive software manual, daily workflows & fast shortcut keys', icon: '❓' },
+    settings: { title: 'System Settings', sub: 'Global configuration & preferences', icon: '⚙️' },
+  };
+
+  const pageMeta = PAGE_TITLES[activePage] || { title: activePage, sub: 'The Unique Haven Homes CRM', icon: '📋' };
+
+  // Find which Hub the activePage belongs to
+  const currentHub = (UHHS_HUBS || []).find(h => h.pages.includes(activePage));
+
+  let hubSubNavHtml = '';
+  if (activePage !== 'dashboard' && currentHub && currentHub.tabs && currentHub.tabs.length > 1) {
+    let visibleTabs = currentHub.tabs;
+    if (isViewer) {
+      visibleTabs = visibleTabs.filter(t => ['bookings', 'reports', 'calendar', 'flats'].includes(t.id));
+    }
+    if (visibleTabs.length > 1) {
+      hubSubNavHtml = `
+        <div class="hub-subnav-strip">
+          <div class="hub-subnav-scroll">
+            ${visibleTabs.map(tab => {
+              const isTabActive = (activePage === tab.id) || (tab.id === 'calendar' && (activePage === 'calendar' || activePage === 'reports')) || (tab.id === 'reports' && (activePage === 'calendar' || activePage === 'reports'));
+              let badgeHtml = '';
+              if (tab.id === 'bookings' && window._sbkTodayCount != null) {
+                badgeHtml = ` <span class="hub-tab-badge" style="background:${isTabActive ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.06)'};color:${isTabActive ? '#ffffff' : '#0F172A'};font-size:11px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700;">${window._sbkTodayCount}</span>`;
+              } else if (tab.id === 'pendingApprovals') {
+                const pCnt = (window._sbkPendingCount != null) ? window._sbkPendingCount : ((window._allBookings || []).filter(b => b.verification_status === 'pending').length);
+                if (pCnt > 0) {
+                  badgeHtml = ` <span class="hub-tab-badge" style="background:#F59E0B;color:#ffffff;font-size:11px;padding:1px 6px;border-radius:10px;margin-left:4px;font-weight:700;">${pCnt}</span>`;
+                }
+              }
+              return `
+              <button type="button" class="hub-subnav-tab ${isTabActive ? 'active' : ''}" onclick="${tab.externalUrl ? 'window.open(\'' + tab.externalUrl + '\',\'_blank\')' : 'navigate(\'' + tab.id + '\')'}">
+                ${tab.label}${badgeHtml}
+              </button>
+            `;}).join('')}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  const footerHtml = (activePage === 'bookings' || activePage === 'reports' || activePage === 'calendar' || activePage === 'expenses' || activePage === 'laundry' || activePage === 'maintenance' || activePage === 'airbnb-sync' || activePage === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin' || activePage === 'employees' || activePage === 'attendance' || activePage === 'tasks' || activePage === 'employee-ledger' || activePage === 'att-summary' || (typeof content === 'string' && (content.includes('Developed by Praveen Singh') || content.includes('report-doc') || content.includes('report-official-footer')))) ? '' : `
+    <footer class="app-official-system-footer">
+      <div class="footer-legal">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+      <div class="footer-meta">
+        <span>CIN: U55101UP2026PTC244637</span> &bull; 
+        <a href="https://uniquehavenhomesstay.com" target="_blank" rel="noopener">uniquehavenhomesstay.com</a>
+      </div>
+      <div class="footer-credit">⚡ Developed by <strong>Praveen Singh</strong></div>
+    </footer>`;
+
+  const existingMain = document.getElementById('mainContent');
+  if (existingMain && document.getElementById('sidebarEl')) {
+    if (typeof window.closeBookingDrawer === 'function') {
+      window.closeBookingDrawer();
+    }
+    // 1. In-place content update (Instant SPA transition, ZERO flicker/reload)
+    existingMain.innerHTML = `${hubSubNavHtml}${content}${footerHtml}`;
+
+    // Silky smooth native page transition animation
+    existingMain.classList.remove('page-entrance');
+    void existingMain.offsetWidth;
+    existingMain.classList.add('page-entrance');
+
+    // 2. Update page header info in topbar
+    const pageIconEl = document.querySelector('.page-icon');
+    const pageTitleEl = document.querySelector('.page-title');
+    const pageSubEl = document.querySelector('.page-sub');
+    if (pageIconEl) pageIconEl.textContent = pageMeta.icon;
+    if (pageTitleEl) pageTitleEl.textContent = pageMeta.title;
+    if (pageSubEl) pageSubEl.textContent = pageMeta.sub;
+
+    // 3. Update sidebar active links (Strict Single Selection - HomeyIndia Standard)
+    const targetSidebarKey = PAGE_TO_SIDEBAR_MAP[activePage] || (activePage === 'reports' ? 'bookings' : activePage);
+
+    // Auto-heal any stale legacy data-page attributes in cached DOM
+    const staleClaimsLink = document.querySelector('.sidebar-nav a[data-page="claims"]');
+    if (staleClaimsLink) {
+      staleClaimsLink.dataset.page = 'analytics';
+      staleClaimsLink.onclick = e => {
+        e.preventDefault();
+        closeMobileDrawer();
+        navigate('analytics');
+      };
+    }
+
+    const sidebarLinks = Array.from(document.querySelectorAll('.sidebar-nav a[data-page]'));
+    sidebarLinks.forEach(a => {
+      const k = a.dataset.page;
+      const isItemActive = (k === targetSidebarKey);
+      if (isItemActive) a.classList.add('active', 'active-hub');
+      else a.classList.remove('active', 'active-hub');
+    });
+
+    // 4. Update desktop topbar navigation links
+    document.querySelectorAll('.topbar-desktop-nav a').forEach(a => {
+      const onclickAttr = a.getAttribute('onclick') || '';
+      const isAct = 
+        (targetSidebarKey === 'dashboard' && onclickAttr.includes('dashboard')) ||
+        (targetSidebarKey === 'bookings' && onclickAttr.includes('bookings')) ||
+        (targetSidebarKey === 'rooms' && onclickAttr.includes('rooms')) ||
+        (targetSidebarKey === 'expenses' && onclickAttr.includes('expenses')) ||
+        (targetSidebarKey === 'analytics' && onclickAttr.includes('analytics')) ||
+        (targetSidebarKey === 'employees' && onclickAttr.includes('employees'));
+      if (isAct) a.classList.add('active');
+      else a.classList.remove('active');
+    });
+
+    // 5. Update mobile bottom nav (HomeyHuts / Airbnb 5-tab capsule pill)
+    document.querySelectorAll('#pwa-bottom-nav .pwa-nav-item, .bottom-nav a').forEach(btn => {
+      const p = btn.dataset.page;
+      const isAct = (p === targetSidebarKey) ||
+        (p === 'calendar' && targetSidebarKey === 'bookings') ||
+        (p === 'flats' && targetSidebarKey === 'rooms');
+      if (isAct) btn.classList.add('active');
+      else btn.classList.remove('active');
+    });
+
+    // 5. Update URL hash without causing page reload
+    try {
+      if (window.location.hash !== '#' + activePage) {
+        history.replaceState(null, '', '#' + activePage);
+      }
+    } catch (e) {}
+
+    // 6. Close mobile drawer if open
+    const sidebarEl = document.getElementById('sidebarEl');
+    const backdropEl = document.getElementById('sidebarBackdrop');
+    if (sidebarEl) sidebarEl.classList.remove('mobile-drawer-open');
+    if (backdropEl) backdropEl.classList.remove('active');
+
+    return;
+  }
+
+  if (typeof window.closeBookingDrawer === 'function') {
+    window.closeBookingDrawer();
+  }
+
+  appEl.innerHTML = `
+    <div class="app-container">
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+      <!-- ─── SIDEBAR ─── -->
+      <aside class="sidebar" id="sidebarEl">
+        <div class="sidebar-top">
+          <div class="sidebar-brand" onclick="navigate('dashboard')" title="THE UNIQUE HAVEN HOMES PRIVATE LIMITED">
+            <div class="brand-logo-wrap">
+              <img src="assets/logo-emblem.png?v=393" alt="THE UNIQUE HAVEN HOMES" class="brand-logo" />
+            </div>
+            <div class="brand-text">
+              <span class="brand-name">THE UNIQUE HAVEN HOMES</span>
+              <span class="brand-sub">PVT. LTD. · CRM</span>
+            </div>
+          </div>
+          <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close Sidebar"><i class="ti ti-chevron-left"></i></button>
+        </div>
+
+        <div class="sidebar-user-card">
+          <div class="user-avatar">${shortName.charAt(0).toUpperCase()}</div>
+          <div class="user-info">
+            <span class="user-name">${shortName}</span>
+            <span class="user-role-badge">${displayBadge}</span>
+          </div>
+          <button class="user-notif-btn" id="notifBellBtn" onclick="event.stopPropagation();window.notifications&&window.notifications.openPanel();" title="Notifications">
+            <i class="ti ti-bell"></i><span class="notif-bell-badge" style="display:none;"></span>
+          </button>
+        </div>
+
+        
+
+        <nav class="sidebar-nav">
+          ${(() => {
+            const targetSidebarKey = PAGE_TO_SIDEBAR_MAP[activePage] || (activePage === 'reports' ? 'bookings' : activePage);
+            return nav.map(item => {
+              if (item.section) {
+                return `<div class="nav-section-heading">${item.section}</div>`;
+              }
+              const [k, l] = item;
+              const isItemActive = (k === targetSidebarKey);
+              const badgeHtml = (k === 'bookings' && (window._pendingCount || 0) > 0)
+                ? `<span style="background:#F59E0B;color:#fff;border-radius:12px;padding:1px 7px;font-size:11px;font-weight:800;margin-left:auto;">${window._pendingCount}</span>`
+                : '';
+              const cleanLabel = l.replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
+              const iconClass = getTablerIcon(k);
+              return `<a href="javascript:void(0)" data-page="${k}" class="${isItemActive ? 'active active-hub' : ''}" style="display:flex;align-items:center;"><i class="ti ${iconClass} nav-icon"></i><span class="nav-label">${cleanLabel}</span>${badgeHtml}</a>`;
+            }).join('');
+          })()}
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="sidebar-action-btn help-btn" onclick="navigate('help')"><i class="ti ti-help-circle"></i> Help & Guide</button>
+          <button class="sidebar-action-btn pref-btn" onclick="window.openPreferences && window.openPreferences()"><i class="ti ti-adjustments-horizontal"></i> Preferences</button>
+          <button class="sidebar-action-btn logout-btn" id="logoutBtn"><i class="ti ti-logout"></i> Logout</button>
+        </div>
+      </aside>
+
+      <!-- ─── MAIN WRAPPER ─── -->
+      <div class="app-main-wrapper">
+        <!-- Top App Bar — HomeyHuts / Airbnb Style Horizontal Header -->
+        <header class="app-topbar">
+          <div class="topbar-left">
+            <button type="button" class="sidebar-toggle-btn" id="hamburgerBtn" aria-label="Toggle Navigation" title="Toggle Navigation"><i class="ti ti-menu-2"></i></button>
+            <div class="topbar-brand-group" onclick="navigate('dashboard')" style="display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0;">
+              <img src="assets/logo-emblem.png?v=393" alt="TUHH" style="width:34px;height:34px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.1);flex-shrink:0;" />
+              <div class="topbar-brand-titles" style="display:flex;flex-direction:column;">
+                <span class="topbar-brand-main" style="font-weight:900;font-size:13px;color:#222222;letter-spacing:0.2px;white-space:nowrap;line-height:1.2;">UNIQUE HAVEN</span>
+                <span class="topbar-brand-sub" style="font-size:9px;color:var(--primary);font-weight:800;letter-spacing:0.5px;white-space:nowrap;">HOMES OPS</span>
+              </div>
+            </div>
+            <!-- Search Menu in Topbar Left on Desktop (Matching YBT CRM) -->
+            
+          </div>
+
+          <!-- Desktop Center Navigation Links (HomeyHuts Style) -->
+          <nav class="topbar-desktop-nav">
+            ${(() => {
+              const topKey = PAGE_TO_SIDEBAR_MAP[activePage] || (activePage === 'reports' ? 'bookings' : activePage);
+              return `
+                <a href="javascript:void(0)" onclick="navigate('dashboard')" class="${topKey==='dashboard'?'active':''}"><i class="ti ti-calendar-event"></i> Today</a>
+                <a href="javascript:void(0)" onclick="navigate('bookings')" class="${topKey==='bookings'?'active':''}"><i class="ti ti-calendar-check"></i> Bookings &amp; Calendar</a>
+                <a href="javascript:void(0)" onclick="navigate('rooms')" class="${topKey==='rooms'?'active':''}"><i class="ti ti-building-community"></i> Properties</a>
+                <a href="javascript:void(0)" onclick="navigate('expenses')" class="${topKey==='expenses'?'active':''}"><i class="ti ti-receipt-2"></i> Expenses</a>
+                <a href="javascript:void(0)" onclick="navigate('analytics')" class="${topKey==='analytics'?'active':''}"><i class="ti ti-wallet"></i> Finances</a>
+                <a href="javascript:void(0)" onclick="navigate('employees')" class="${topKey==='employees'?'active':''}"><i class="ti ti-id-badge-2"></i> HRMS &amp; Tasks</a>
+              `;
+            })()}
+          </nav>
+
+          <div class="topbar-right">
+            <!-- Global Command / Ctrl+K Search Pill (Single Unified Search) -->
+            <button type="button" class="topbar-search-menu-btn" onclick="window.openCommandPalette ? window.openCommandPalette() : (window.openMobileSearch && window.openMobileSearch())" title="Search Menu, Features & Actions (Press Ctrl+K or /)">
+              <span class="search-btn-icon"><i class="ti ti-search"></i></span>
+              <span class="search-btn-text">Search customers, bookings, units...</span>
+              <kbd class="search-btn-kbd">Ctrl+K</kbd>
+            </button>
+
+            <!-- Global Property Switcher -->
+            <div class="topbar-property-selector ${window.getGlobalSelectedProperty ? (window.getGlobalSelectedProperty() ? 'has-filter' : '') : ''}" id="topbarPropSelector" title="Switch property view">
+              <span class="topbar-prop-icon"><i class="ti ti-building" style="color:var(--crm-primary);font-size:1.1rem;"></i></span>
+              <select id="topbarPropertySelect" onchange="window.handleGlobalPropertyFilterChange && window.handleGlobalPropertyFilterChange(this.value)">
+                <option value="">All Properties (${(window._globalRoomsList || []).length || 18})</option>
+                ${(window._globalRoomsList || []).map(r => {
+                  const isSel = (window.getGlobalSelectedProperty ? (window.getGlobalSelectedProperty() || '').trim().toUpperCase() : '') === (r.room_id || '').trim().toUpperCase();
+                  return `<option value="${r.room_id}" ${isSel ? 'selected' : ''}>
+                    ${escapeHtml(r.nickname || r.room_id)} (${r.unit_no || '-'})
+                  </option>`;
+                }).join('')}
+              </select>
+              ${(window.getGlobalSelectedProperty && window.getGlobalSelectedProperty()) ? `
+                <button type="button" class="topbar-prop-clear-btn" onclick="event.stopPropagation(); window.handleGlobalPropertyFilterChange('');" title="Clear property filter" style="background:transparent;border:none;color:#DC2626;font-weight:900;cursor:pointer;padding:0 4px;font-size:13px;line-height:1;display:inline-flex;align-items:center;">✕</button>
+              ` : ''}
+            </div>
+
+            <!-- 1-Click WhatsApp Status Generator (Blossom Skyline) -->
+            <button type="button" class="topbar-wa-status-btn" onclick="typeof window.openBlossomSkylineDailyStatusModal === 'function' ? window.openBlossomSkylineDailyStatusModal() : (window.navigate('daily-report'), setTimeout(() => window.openBlossomSkylineDailyStatusModal?.(), 500))" title="1-Click WhatsApp Booking Data Status (Flats 101–501)" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg, #25D366 0%, #128C7E 100%);color:#ffffff;border:none;border-radius:10px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(37,211,102,0.3);white-space:nowrap;transition:all 0.15s ease;">
+              <i class="ti ti-brand-whatsapp" style="font-size:15px;"></i>
+              <span class="topbar-wa-status-text">📋 WA Status</span>
+            </button>
+
+            <!-- Primary Action Button: HomeyHuts Style Coral Red + New Booking -->
+            <button type="button" class="topbar-new-booking-btn" onclick="if(window.renderAddBooking) renderAddBooking();" title="Create New Reservation">
+              <span class="topbar-new-booking-icon"><i class="ti ti-plus"></i></span> <span class="topbar-new-booking-text">New Booking</span>
+            </button>
+
+            <!-- Help Center Button -->
+            <button class="topbar-icon-btn" onclick="navigate('help')" title="Help & User Operating Guide (Press ? or F1)" aria-label="Help & Guide">
+              <span><i class="ti ti-help-circle" style="font-size:1.18rem;color:#0284C7;"></i></span>
+            </button>
+
+            <!-- Notifications Bell -->
+            <button class="topbar-icon-btn" id="topbarNotifBtn" onclick="window.notifications&&window.notifications.openPanel();" title="Notifications" aria-label="Notifications">
+              <span><i class="ti ti-bell" style="font-size:1.15rem;"></i></span><span class="notif-bell-badge" style="display:none;"></span>
+            </button>
+
+            <!-- User Avatar Pill (Unified Account & Profile) -->
+            <div class="topbar-avatar-pill" onclick="navigate('menu')" title="Account, Role &amp; Preferences" style="display:inline-flex;align-items:center;gap:8px;padding:4px 10px 4px 6px;background:#F8FAFC;border:1px solid var(--crm-border);border-radius:999px;cursor:pointer;">
+              <div class="user-avatar-mini" style="width:28px;height:28px;border-radius:50%;background:var(--crm-primary);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;">${shortName.charAt(0).toUpperCase()}</div>
+              <div style="display:flex;flex-direction:column;line-height:1.15;text-align:left;">
+                <span class="user-name-mini" style="font-size:12px;font-weight:700;color:#0F172A;">${escapeHtml(shortName)}</span>
+                <span class="user-role-mini" style="font-size:9.5px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:0.3px;">${escapeHtml(displayBadge || SESSION.role || 'Admin')}</span>
+              </div>
+              <span class="avatar-caret" style="font-size:11px;color:#94A3B8;margin-left:2px;"><i class="ti ti-chevron-down"></i></span>
+            </div>
+          </div>
+        </header>
+
+        <!-- Main Content View -->
+        <main class="main-content page-entrance" id="mainContent">
+          ${hubSubNavHtml}
+          ${content}
+          ${footerHtml}
+        </main>
+      </div>
+    </div>`;
+
+  // Attach nav handlers
+  document.querySelectorAll('.sidebar-nav a[data-page]').forEach(a => {
+    a.onclick = e => {
+      e.preventDefault();
+      closeMobileDrawer();
+      navigate(a.dataset.page);
+    };
+  });
+
+  // Logout handler
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.onclick = logout;
+
+  // Drawer helpers
+  const sidebarEl = document.getElementById('sidebarEl');
+  const backdropEl = document.getElementById('sidebarBackdrop');
+
+  function openMobileDrawer() {
+    if (sidebarEl) sidebarEl.classList.add('mobile-drawer-open');
+    if (backdropEl) backdropEl.classList.add('active');
+    setTimeout(() => {
+      if (typeof initDrawerSearch === 'function') initDrawerSearch();
+      const inp = document.getElementById('drawerSearchInput');
+      if (inp) {
+        inp.value = '';
+        inp.dispatchEvent(new Event('input'));
+        inp.focus();
+      }
+    }, 100);
+  }
+
+  function closeMobileDrawer() {
+    if (sidebarEl) sidebarEl.classList.remove('mobile-drawer-open');
+    if (backdropEl) backdropEl.classList.remove('active');
+  }
+
+  const hamburgerBtn = document.getElementById('hamburgerBtn');
+  if (hamburgerBtn) hamburgerBtn.onclick = openMobileDrawer;
+
+  const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+  if (sidebarCloseBtn) sidebarCloseBtn.onclick = closeMobileDrawer;
+
+  if (backdropEl) backdropEl.onclick = closeMobileDrawer;
+
+  // Bottom Nav handlers (mobile)
+  document.querySelectorAll('.bottom-nav a[data-page]').forEach(a => {
+    a.onclick = e => {
+      e.preventDefault();
+      closeMobileDrawer();
+      navigate(a.dataset.page);
+    };
+  });
+
+  const moreBtn = document.getElementById('bottomNavMore');
+  if (moreBtn) {
+    moreBtn.onclick = e => {
+      e.preventDefault();
+      if (sidebarEl && sidebarEl.classList.contains('mobile-drawer-open')) {
+        closeMobileDrawer();
+      } else {
+        openMobileDrawer();
+      }
+    };
+  }
+
+  // Populate & sync Topbar Property Switcher
+  if (typeof window.loadGlobalRoomsCache === 'function') {
+    window.loadGlobalRoomsCache();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📞 ULTRA-ROBUST PHONE NORMALIZATION & LOOKUP ENGINE
+  // Handles +91, 91, 0, spaces, dashes, parentheses & partials
+  // ═══════════════════════════════════════════════════════════
+  window.normalizePhone = function(raw) {
+    if (!raw) return { raw: '', digits: '', core10: '', formatted: '' };
+    const str = String(raw).trim();
+    const digits = str.replace(/\D/g, '');
+    let core10 = digits;
+    if (digits.length >= 12 && digits.startsWith('91')) {
+      core10 = digits.slice(2);
+    } else if (digits.length >= 13 && digits.startsWith('091')) {
+      core10 = digits.slice(3);
+    } else if (digits.length >= 11 && digits.startsWith('0')) {
+      core10 = digits.slice(1);
+    }
+    if (core10.length > 10) {
+      core10 = core10.slice(-10);
+    }
+    const formatted = core10.length === 10 ? `+91 ${core10.slice(0, 5)} ${core10.slice(5)}` : str;
+    return { raw: str, digits, core10, formatted };
+  };
+
+  window.matchPhoneSearch = function(query, targetPhone) {
+    if (!query || !targetPhone) return false;
+    const qStr = String(query).trim().toLowerCase();
+    const tStr = String(targetPhone).trim().toLowerCase();
+    if (tStr.includes(qStr)) return true;
+
+    const qNorm = window.normalizePhone(query);
+    const tNorm = window.normalizePhone(targetPhone);
+
+    // Exact 10-digit match (with or without +91 / 91 / 0 prefix)
+    if (qNorm.core10 && tNorm.core10 && qNorm.core10.length === 10 && tNorm.core10.length === 10) {
+      if (qNorm.core10 === tNorm.core10) return true;
+    }
+
+    // Substring match on normalized 10 digits or cleaned digits
+    if (qNorm.core10 && qNorm.core10.length >= 3) {
+      if (tNorm.core10 && tNorm.core10.includes(qNorm.core10)) return true;
+      if (tNorm.digits && tNorm.digits.includes(qNorm.core10)) return true;
+    }
+    if (qNorm.digits && qNorm.digits.length >= 3) {
+      if (tNorm.digits && tNorm.digits.includes(qNorm.digits)) return true;
+      if (tNorm.core10 && tNorm.core10.includes(qNorm.digits)) return true;
+    }
+    if (tNorm.core10 && tNorm.core10.length >= 4 && qNorm.digits && qNorm.digits.includes(tNorm.core10)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // 🕒 USER AUDIT & TIMESTAMP FORMATTING ENGINE
+  // Accurately logs & formats booking/payment creators & exact times
+  // ═══════════════════════════════════════════════════════════
+  window._userNameCache = window._userNameCache || {};
+
+  window.getCurrentUserAuditName = function() {
+    const s = window.SESSION || {};
+    const dName = (s.displayName || '').trim();
+    const email = (s.email || '').trim();
+    const emailHandle = email ? email.split('@')[0] : '';
+    const role = (s.role || '').trim();
+
+    // If user has a valid display name
+    if (dName && dName !== 'User' && dName !== 'Staff') {
+      return dName;
+    }
+    // If user has email username (e.g. praveensinghaws)
+    if (emailHandle) {
+      return emailHandle;
+    }
+    // Fallback to role
+    if (role) {
+      return role.charAt(0).toUpperCase() + role.slice(1);
+    }
+    return 'Admin';
+  };
+
+  window.getBookingTimestamp = function(b) {
+    if (!b) return '';
+    if (typeof b === 'string') return b;
+    if (b.created_at) return b.created_at;
+    const bId = b.booking_id || b.id || '';
+    const match = String(bId).match(/^B(\d{10,14})/);
+    if (match) {
+      const epoch = parseInt(match[1], 10);
+      if (!isNaN(epoch) && epoch > 1500000000000 && epoch < 2500000000000) {
+        return new Date(epoch).toISOString();
+      }
+    }
+    return b.paid_at || b.payment_date || b.check_in || '';
+  };
+
+  window.formatDateTimeStamp = function(isoOrDate, opts = {}) {
+    if (!isoOrDate) return '';
+    try {
+      const raw = (typeof isoOrDate === 'object' && isoOrDate !== null && !(isoOrDate instanceof Date))
+        ? window.getBookingTimestamp(isoOrDate)
+        : isoOrDate;
+      if (!raw) return '';
+      const d = new Date(raw);
+      if (isNaN(d.getTime())) return String(isoOrDate);
+
+      // Check if it's purely a date string without time component (e.g. '2026-10-16')
+      const isDateOnly = (typeof isoOrDate === 'string' && isoOrDate.length === 10 && !isoOrDate.includes('T') && !isoOrDate.includes(' '));
+      if (isDateOnly) {
+        return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+
+      // Format date
+      const datePart = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      // Format 12-hour time with AM/PM (e.g., 09:15 AM or 09:15:30 AM)
+      const timePart = d.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: opts.withSeconds ? '2-digit' : undefined,
+        hour12: true
+      });
+
+      if (opts.timeOnly) return timePart;
+      if (opts.dateOnly) return datePart;
+      return `${datePart}, ${timePart}`;
+    } catch (e) {
+      return String(isoOrDate);
+    }
+  };
+
+  window.preloadUserNames = async function() {
+    try {
+      if (!window.sb) return;
+      const { data } = await window.sb.from('profiles').select('user_id, display_name, role');
+      if (data && data.length) {
+        data.forEach(p => {
+          if (p.user_id) {
+            window._userNameCache[p.user_id] = p.display_name || (p.role ? p.role.charAt(0).toUpperCase() + p.role.slice(1) : 'User');
+          }
+        });
+      }
+    } catch (e) {
+      console.warn('Preload user names warn:', e);
+    }
+  };
+
+  // Global search input handling — manual trigger on Enter or 🔍 click
+  window.triggerGlobalSearch = function(customQuery) {
+    const q = (customQuery !== undefined) 
+      ? customQuery 
+      : (document.getElementById('topbarGlobalSearch')?.value || document.getElementById('mobileSearchInput')?.value || '');
+    const query = (q || '').trim();
+    SESSION.bookingSearch = query;
+    if (window._sbkState) {
+      window._sbkState.searchQuery = query;
+    }
+    const liveInput = document.getElementById('sbkLiveSearch');
+    if (liveInput) liveInput.value = query;
+
+    if (SESSION.currentPage !== 'bookings') {
+      navigate('bookings');
+    } else {
+      if (typeof window.renderSmartBookingsResultsOnly === 'function' && document.getElementById('sbkReservationsContainer')) {
+        window.renderSmartBookingsResultsOnly();
+      } else if (typeof window.renderSmartManageBookings === 'function') {
+        window.renderSmartManageBookings(false);
+      } else if (typeof renderManageBookings === 'function') {
+        renderManageBookings();
+      }
+    }
+  };
+
+  const globalSearch = document.getElementById('topbarGlobalSearch');
+  if (globalSearch) {
+    globalSearch.onkeydown = e => {
+      if (e.key === 'Enter') {
+        window.triggerGlobalSearch();
+      }
+    };
+  }
+
+  // 📱 Mobile Spotlight Search Overlay & Real-Time Lookup
+  window.openMobileSearch = function() {
+    let overlay = document.getElementById('mobileSearchOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'mobileSearchOverlay';
+      overlay.className = 'mobile-search-overlay';
+      overlay.innerHTML = `
+        <div class="mobile-search-card">
+          <div class="mobile-search-top">
+            <span class="mobile-search-icon">🔍</span>
+            <input type="text" id="mobileSearchInput" class="mobile-search-input" placeholder="Search guests, phone (+91/0), ID, room..." autocomplete="off" />
+            <button type="button" class="mobile-search-close" onclick="window.closeMobileSearch()" title="Close (ESC)">✕</button>
+          </div>
+          <div id="mobileSearchResults" class="mobile-search-results">
+            <div class="mobile-search-placeholder">Type guest name, phone number (+91/0), flat, or ID...</div>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      overlay.onclick = e => { if (e.target === overlay) window.closeMobileSearch(); };
+    }
+    overlay.classList.add('show');
+    const inp = document.getElementById('mobileSearchInput');
+    if (inp) {
+      inp.value = SESSION.bookingSearch || '';
+      setTimeout(() => { inp.focus(); inp.select(); }, 120);
+      inp.oninput = () => window.handleMobileSearchQuery(inp.value);
+      inp.onkeydown = e => {
+        if (e.key === 'Enter') {
+          window.triggerGlobalSearch(inp.value);
+          window.closeMobileSearch();
+        } else if (e.key === 'Escape') {
+          window.closeMobileSearch();
+        }
+      };
+    }
+    window.handleMobileSearchQuery(inp ? inp.value : '');
+  };
+
+  window.closeMobileSearch = function() {
+    const overlay = document.getElementById('mobileSearchOverlay');
+    if (overlay) overlay.classList.remove('show');
+  };
+
+  let _mobileSearchDebounce = null;
+  window.handleMobileSearchQuery = async function(query) {
+    const q = (query || '').toLowerCase().trim();
+    const resBox = document.getElementById('mobileSearchResults');
+    if (!resBox) return;
+
+    if (!q) {
+      resBox.innerHTML = '<div class="mobile-search-placeholder">Type guest name, phone (+91/0), flat, or ID...</div>';
+      return;
+    }
+
+    clearTimeout(_mobileSearchDebounce);
+    _mobileSearchDebounce = setTimeout(async () => {
+      let matches = [];
+      const qNorm = window.normalizePhone(q);
+      const cached = window._sbkState?.cachedBookings || [];
+      if (cached.length) {
+        matches = cached.filter(b => 
+          (b.guest_name && b.guest_name.toLowerCase().includes(q)) ||
+          window.matchPhoneSearch(q, b.phone) ||
+          (b.booking_id && String(b.booking_id).toLowerCase().includes(q)) ||
+          (b.rooms?.nickname && b.rooms.nickname.toLowerCase().includes(q)) ||
+          (b.room_id && b.room_id.toLowerCase().includes(q))
+        ).slice(0, 8);
+      }
+
+      // If no cached matches or not loaded yet, query Supabase directly
+      if (!matches.length && window.sb) {
+        try {
+          const phoneSearchTerm = qNorm.core10 && qNorm.core10.length >= 3 ? qNorm.core10 : q;
+          const { data } = await sb.from('guest_register')
+            .select('booking_id, guest_name, phone, room_id, check_in, check_out, total_amount')
+            .or(`guest_name.ilike.%${q}%,phone.ilike.%${phoneSearchTerm}%,booking_id.ilike.%${q}%`)
+            .limit(8);
+          if (data) matches = data;
+        } catch(e) {}
+      }
+
+      if (!matches.length) {
+        resBox.innerHTML = `
+          <div class="mobile-search-empty">
+            No matches found for "<strong>${escapeHtml(q)}</strong>"
+            <div style="margin-top:10px;">
+              <button type="button" class="btn-sm" onclick="window.triggerGlobalSearch('${escapeHtml(q)}');window.closeMobileSearch();" style="padding:6px 12px;background:#0F172A;color:#fff;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;">
+                Search all Bookings Register ➔
+              </button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      resBox.innerHTML = `
+        <div style="padding:8px 12px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;">
+          <span>Found ${matches.length} matching stays</span>
+          <a href="#" onclick="event.preventDefault();window.triggerGlobalSearch('${escapeHtml(q)}');window.closeMobileSearch();" style="color:#4F46E5;font-weight:700;text-decoration:none;">View all ➔</a>
+        </div>
+        ${matches.map(b => `
+          <div class="mobile-search-item" onclick="if(window.openBookingDrawer){window.openBookingDrawer('${b.booking_id}');window.closeMobileSearch();}else{window.triggerGlobalSearch('${b.booking_id}');window.closeMobileSearch();}">
+            <div class="ms-avatar">${(b.guest_name || 'G').charAt(0).toUpperCase()}</div>
+            <div class="ms-info">
+              <div class="ms-name">${escapeHtml(b.guest_name || 'Guest')} <span class="ms-id">(${escapeHtml(b.booking_id)})</span></div>
+              <div class="ms-sub">🛏️ ${escapeHtml(b.rooms?.nickname || b.room_id || 'Unit')} · 📅 ${escapeHtml(b.check_in || '-')} to ${escapeHtml(b.check_out || '-')}</div>
+              ${b.phone ? `<div class="ms-phone">📞 ${escapeHtml(b.phone)}</div>` : ''}
+            </div>
+            <div class="ms-arrow">➔</div>
+          </div>
+        `).join('')}
+      `;
+    }, 200);
+  };
+
+  // Init drawer search if drawer input present
+  if (typeof initDrawerSearch === 'function') {
+    initDrawerSearch();
+  }
+}
+
+function navigate(page) {
+  // 🔒 OWNER ROLE PAGE GUARD — block restricted pages for 'owner' role
+  if (SESSION.role === 'owner') {
+    const OWNER_BLOCKED = ['user-mgmt', 'employees', 'attendance', 'att-summary', 'tasks', 'employee-ledger', 'advance', 'sop', 'whatsapp-hub', 'whatsapp', 'help', 'laundry'];
+    if (OWNER_BLOCKED.includes(page)) {
+      if (window.fsn) fsn.error('Access Restricted', 'This page is not available for your role.');
+      else alert('Access Restricted: This page is not available for your role.');
+      return;
+    }
+  }
+  SESSION.currentPage = page;
+  try { localStorage.setItem('uh_last_page', page); } catch(e) {}
+  if (window.trackPageVisit) window.trackPageVisit(page);
+  // 🧭 USER AUDIT PAGE TRACKER — Instant per-user page visit recording
+  try {
+    if (window.SESSION?.userId) {
+      if (window.UserPageAudit && typeof window.UserPageAudit.trackVisit === 'function') {
+        window.UserPageAudit.trackVisit(window.SESSION.userId, window.SESSION.displayName, window.SESSION.role, page);
+      }
+      if (window.UserActivityTracker && typeof window.UserActivityTracker.pulseActivity === 'function') {
+        window.UserActivityTracker.pulseActivity(window.SESSION.userId, window.SESSION.displayName, window.SESSION.role);
+      }
+    }
+  } catch(e) {}
+  try {
+    if (window.location.hash !== '#' + page) {
+      window.location.hash = '#' + page;
+    }
+  } catch(e) {}
+
+  // Auto-close mobile drawer, backdrop & any open modal overlays on navigation
+  const sidebarEl = document.getElementById('sidebarEl');
+  const backdropEl = document.getElementById('sidebarBackdrop');
+  if (sidebarEl) sidebarEl.classList.remove('mobile-drawer-open');
+  if (backdropEl) backdropEl.classList.remove('active');
+  document.getElementById('guest360ModalOverlay')?.remove();
+  if (typeof window.closeBookingDrawer === 'function') window.closeBookingDrawer();
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    if (m.id !== 'authOverlay' && m.id !== 'lockModal') m.remove();
+  });
+
+  // Update active state on bottom navigation
+  const targetBottomKey = (typeof PAGE_TO_SIDEBAR_MAP !== 'undefined' && PAGE_TO_SIDEBAR_MAP[page]) ? PAGE_TO_SIDEBAR_MAP[page] : page;
+  document.querySelectorAll('.bottom-nav a[data-page], .pwa-bottom-nav .pwa-nav-item[data-page]').forEach(a => {
+    const isAct = (a.dataset.page === targetBottomKey) ||
+      (a.dataset.page === 'calendar' && targetBottomKey === 'bookings') ||
+      (a.dataset.page === 'flats' && targetBottomKey === 'rooms');
+    if (isAct) a.classList.add('active');
+    else a.classList.remove('active');
+  });
+
+  // Scroll page to top
+  try { window.scrollTo({ top: 0, behavior: 'instant' }); } catch(e) {}
+
+  // ─── Force Global Property Filter onto target tab state ───
+  const globalProp = (typeof window.getGlobalSelectedProperty === 'function') ? window.getGlobalSelectedProperty() : '';
+  if (window.SESSION) {
+    window.SESSION.bookingPropFilter = globalProp || '';
+  }
+  if (window._sbkState) {
+    window._sbkState.propertyFilter = globalProp || '';
+  }
+  if (window._guestCRMState) {
+    window._guestCRMState.propertyFilter = globalProp || '';
+  }
+  window._calRoom = globalProp ? globalProp : 'all';
+  window._taskPropFilter = globalProp ? globalProp : 'All';
+  window._maintProp = globalProp ? globalProp : 'All';
+  window._laundryProp = globalProp ? globalProp : 'All';
+
+  const map = {
+    menu: () => (window.renderAppMenu || renderAppMenu)(),
+    investors: () => (window.renderManageInvestors || renderManageInvestors)(),
+    dashboard: () => (window.renderFullDashboardAnalytics || window.renderDashboard || renderDashboard)(),
+    reports: () => (window.renderReports || window.renderCalendar || (() => {}))(),
+    calendar: () => (window.renderCalendar || window.renderReports || (() => {}))(),
+    rooms: () => (window.renderManageRooms || renderManageRooms)(),
+    flats: () => (window.renderFlatsStatus || renderFlatsStatus)(),
+    properties: () => (window.renderFlatsStatus || renderFlatsStatus)(),
+    'task-and-housekeeping': () => (window.renderEmployeeTasks || renderEmployeeTasks)(),
+    'tasks-and-housekeeping': () => (window.renderEmployeeTasks || renderEmployeeTasks)(),
+    housekeeping: () => (window.renderEmployeeTasks || renderEmployeeTasks)(),
+    'daily-report': () => (window.renderDailyReport || renderDailyReport)(),
+    reminders: () => (window.renderReminders || renderReminders)(),
+    bookings: () => (window.renderSmartManageBookings || window.renderManageBookings || renderManageBookings)(),
+    'guest-crm': () => navigate('bookings'),
+    employees: () => (window.renderManageEmployees || renderManageEmployees)(),
+    tasks: () => {
+      window._taskStatusFilter = 'ALL';
+      window._taskStaffFilter = 'ALL';
+      window._taskPropFilter = 'ALL';
+      window._taskViewMode = 'list';
+      return (window.renderEmployeeTasks || renderEmployeeTasks)('list');
+    },
+    attendance: () => (window.renderAttendance || renderAttendance)(),
+    'att-summary': () => (window.renderAttendanceSummary || renderAttendanceSummary)(),
+    salary: () => (window.renderSalaryTracker || renderSalaryTracker)(),
+    advance: () => (window.renderAdvanceTracker || renderAdvanceTracker)(),
+    'emp-expenses': () => (window.renderEmpExpenses || renderEmpExpenses)(),
+    'monthly-expenses': () => (window.renderMonthlyExpenses || renderMonthlyExpenses)(),
+    store: () => (window.renderStore || renderStore)(),
+    expenses: () => (window.renderExpenses || renderExpenses)(),
+    'ca-audit': () => (window.renderCAAuditPack || renderCAAuditPack)(),
+    'property-report': () => (window.renderPropertyReport || renderPropertyReport)(),
+    shifts: () => (window.renderPropertyShifts || renderPropertyShifts)(),
+    pendingApprovals: () => (window.renderPendingApprovals || window.renderApprovals || (() => {}))(),
+    financial: () => (window.renderFYSummary ? window.renderFYSummary('Month') : (window.renderExpenses && window.renderExpenses())),
+    'financial-sheet': () => (window.renderFinancialSheet || renderFinancialSheet)(),
+    'airbnb-sync': () => (window.renderAirbnbSync || renderAirbnbSync)(),
+    'ical-sync': () => (window.renderIcalSync || renderIcalSync)(),
+    laundry: () => (window.renderLaundry || renderLaundry)(),
+    dailyReport: () => (window.renderDailyReport || renderDailyReport)(),
+    finances: () => navigate('analytics'),
+    claims: () => (window.renderClaims || renderClaims)(),
+    reimbursements: () => (window.renderClaims || renderClaims)(),
+    'property-setup': () => (window.renderPropertySetup || renderPropertySetup)(),
+    'showcase-admin': () => (window.renderShowcaseAdmin || renderShowcaseAdmin)(),
+    'company-advances': () => (window.renderCompanyAdvances || renderCompanyAdvances)(),
+    cashbook: () => navigate('claims'),
+    'my-ledger': () => (window.renderMyLedger || renderMyLedger)(),
+    'employee-ledger': () => (window.renderEmployeeLedger || renderEmployeeLedger)(),
+    analytics: () => (window.renderFullDashboardAnalytics || window.renderAnalytics || renderAnalytics)(),
+    'whatsapp-hub': () => (window.renderWhatsAppHub || renderWhatsAppHub)(),
+    settings: () => (window.renderSettings || renderSettings)(),
+    investors: () => (window.renderManageInvestors || renderManageInvestors)(),
+    maintenance: () => (window.renderMaintenanceLog || renderMaintenanceLog)(),
+    'user-mgmt': () => (window.renderUserManagement || renderUserManagement)(),
+    'reviews-followup': () => (window.renderReviewFollowupHub || renderReviewFollowupHub)(),
+    sop: () => (window.renderSOPPage || renderSOPPage)(),
+    help: () => (window.renderHelpAndGuide || renderHelpAndGuide)(),
+  };
+
+  const runner = map[page] || map['bookings'] || map['dashboard'];
+  try {
+    runner();
+  } catch (err) {
+    console.error('Navigation error for page:', page, err);
+    if (window.fsn) {
+      fsn.error('Page Error', 'Error loading ' + page + ': ' + err.message);
+    }
+  }
+}
+
+// Single Page App Hash Router
+window.addEventListener('hashchange', () => {
+  const hashPage = (window.location.hash || '').replace('#', '').trim();
+  if (hashPage && hashPage !== SESSION.currentPage) {
+    navigate(hashPage);
+  }
+});
+
+// 🔄 Manual Universal Refresh Function (Zero Browser Reload)
+window.manualRefreshCurrentPage = function() {
+  const btn = document.getElementById('globalRefreshBtn');
+  if (btn) {
+    btn.classList.add('spinning');
+    btn.disabled = true;
+  }
+  const cur = SESSION.currentPage || 'dashboard';
+  console.log('🔄 Manually refreshing page data:', cur);
+  try {
+    navigate(cur);
+  } catch(e) {
+    console.error('Manual refresh error:', e);
+  }
+  setTimeout(() => {
+    if (btn) {
+      btn.classList.remove('spinning');
+      btn.disabled = false;
+    }
+    if (window.fsn) fsn.info('Refreshed', '✅ Current view data updated');
+  }, 450);
+};
+
+// ============ BOOKING CHANNELS & COLOR CODING ============
+window.getBookingSource = function(b) {
+  if (!b) return {
+    type: 'unknown',
+    key: 'direct',
+    label: 'Direct Booking',
+    badge: '🏠 Direct',
+    badgeClass: 'channel-direct',
+    chipClass: 'direct',
+    color: '#0284C7',
+    bgColor: '#E0F2FE',
+    borderColor: '#BAE6FD',
+    pillGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+    isOnline: false
+  };
+
+  const mode = String(b.booking_mode || '').trim().toLowerCase();
+  const code = String(b.airbnb_confirmation_code || '').trim();
+  const name = String(b.guest_name || '').toLowerCase();
+  const idStr = String(b.booking_id || '');
+
+
+  if (idStr.startsWith('BLK_') || name.includes('blocked') || mode === 'offline-blocked') {
+    return {
+      type: 'blocked',
+      key: 'blocked',
+      label: 'Blocked Slot',
+      badge: '🔒 Blocked',
+      badgeClass: 'channel-blocked',
+      chipClass: 'blocked',
+      color: '#475569',
+      bgColor: '#F1F5F9',
+      borderColor: '#CBD5E1',
+      pillGradient: 'linear-gradient(135deg, #475569 0%, #334155 100%)',
+      isOnline: false
+    };
+  }
+
+  // 2. Booking.com
+  if (mode.includes('booking.com') || mode === 'online-booking.com' || (b.notes && String(b.notes).toLowerCase().includes('booking.com'))) {
+    return {
+      type: 'booking_com',
+      key: 'booking_com',
+      label: 'Booking.com',
+      badge: '🏨 Booking.com',
+      badgeClass: 'channel-bookingcom',
+      chipClass: 'bookingcom',
+      color: '#003580',
+      bgColor: '#EFF6FF',
+      borderColor: '#BFDBFE',
+      pillGradient: 'linear-gradient(135deg, #003580 0%, #002244 100%)',
+      isOnline: true
+    };
+  }
+
+  // 2b. Agoda
+  if (mode.includes('agoda') || (b.notes && String(b.notes).toLowerCase().includes('agoda'))) {
+    return {
+      type: 'agoda',
+      key: 'agoda',
+      label: 'Agoda',
+      badge: '🟣 Agoda',
+      badgeClass: 'channel-agoda',
+      chipClass: 'agoda',
+      color: '#7C3AED',
+      bgColor: '#F5F3FF',
+      borderColor: '#DDD6FE',
+      pillGradient: 'linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%)',
+      isOnline: true
+    };
+  }
+
+  // 3. Airbnb (Online-Airbnb or has Airbnb confirmation code or mentions airbnb)
+  if (mode.includes('airbnb') || mode === 'online-airbnb' || code.length > 0) {
+    return {
+      type: 'airbnb',
+      key: 'airbnb',
+      label: 'Airbnb',
+      badge: code ? `🌐 Airbnb · ${code}` : '🌐 Airbnb',
+      badgeClass: 'channel-airbnb',
+      chipClass: 'airbnb',
+      color: '#FF385C',
+      bgColor: '#FFF1F2',
+      borderColor: '#FECDD3',
+      pillGradient: 'linear-gradient(135deg, #FF385C 0%, #E00B41 100%)',
+      isOnline: true
+    };
+  }
+
+  // 4. Other Online OTA
+  if (mode.startsWith('online')) {
+    return {
+      type: 'online_other',
+      key: 'online_other',
+      label: 'Online OTA',
+      badge: '🌐 Online',
+      badgeClass: 'channel-airbnb',
+      chipClass: 'airbnb',
+      color: '#2563EB',
+      bgColor: '#EFF6FF',
+      borderColor: '#BFDBFE',
+      pillGradient: 'linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%)',
+      isOnline: true
+    };
+  }
+
+  // 5. Direct / Offline
+  return {
+    type: 'direct',
+    key: 'direct',
+    label: 'Direct Booking',
+    badge: '🏠 Direct',
+    badgeClass: 'channel-direct',
+    chipClass: 'direct',
+    color: '#0284C7',
+    bgColor: '#E0F2FE',
+    borderColor: '#BAE6FD',
+    pillGradient: 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+    isOnline: false
+  };
+};
+
+// ============ HELPERS ============
+async function getPaidMap(ids) {
+  if (!ids || !ids.length) return {};
+  const m = {};
+  try {
+    const uniqueIds = [...new Set(ids.filter(Boolean))];
+    const chunkSize = 100;
+    for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      const chunk = uniqueIds.slice(i, i + chunkSize);
+      const { data, error } = await sb.from('payment_history').select('booking_id, amount').in('booking_id', chunk);
+      if (error) {
+        console.warn('getPaidMap chunk error:', error);
+        continue;
+      }
+      (data || []).forEach(p => { m[p.booking_id] = (m[p.booking_id] || 0) + (Number(p.amount) || 0); });
+    }
+  } catch (err) {
+    console.error('getPaidMap error:', err);
+  }
+  return m;
+}
+
+function dateAdd(s, n) {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+function calcNights(checkIn, checkOut) {
+  if (!checkIn || !checkOut) return 0;
+  return Math.max(Math.round((new Date(checkOut) - new Date(checkIn)) / 864e5), 0);
+}
+
+function compressImage(file, maxDim = 800, quality = 0.5) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; };
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+        else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+      }
+      const c = document.createElement('canvas');
+      c.width = width; c.height = height;
+      c.getContext('2d').drawImage(img, 0, 0, width, height);
+      c.toBlob(blob => resolve(blob || file), 'image/jpeg', quality);
+    };
+    img.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+function parseLocalDateTime(dateStr, hour = 0, minute = 0) {
+  if (!dateStr) return null;
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d, hour, minute, 0, 0);
+}
+
+function getBookingWindow(booking) {
+  if (!booking?.check_in || !booking?.check_out) return null;
+  const inTime = booking.check_in_time || '14:00';
+  const outTime = booking.check_out_time || '11:00';
+  const [inH, inM] = inTime.split(':').map(Number);
+  const [outH, outM] = outTime.split(':').map(Number);
+  return {
+    start: parseLocalDateTime(booking.check_in, inH || 14, inM || 0),
+    end: parseLocalDateTime(booking.check_out, outH || 11, outM || 0),
+  };
+}
+
+function isBookingActiveNow(booking, now = new Date()) {
+  const w = getBookingWindow(booking);
+  if (!w) return false;
+  return now >= w.start && now < w.end;
+}
+
+function hasBookingEnded(booking, now = new Date()) {
+  const w = getBookingWindow(booking);
+  if (!w) return false;
+  return now >= w.end;
+}
+
+function findOverlappingBookings(bookings) {
+  const grouped = {};
+  (bookings || []).forEach(b => {
+    if (!b.room_id || !b.check_in || !b.check_out) return;
+    if (b.is_review_booking) return; // Skip ghost/review bookings
+    if (!grouped[b.room_id]) grouped[b.room_id] = [];
+    grouped[b.room_id].push(b);
+  });
+  const overlaps = [];
+  Object.keys(grouped).forEach(roomId => {
+    const list = grouped[roomId].sort((a, b) => (a.check_in || '').localeCompare(b.check_in || ''));
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b2 = list[j];
+        const aS = parseLocalDateTime(a.check_in, 14, 0);
+        const aE = parseLocalDateTime(a.check_out, 11, 0);
+        const bS = parseLocalDateTime(b2.check_in, 14, 0);
+        const bE = parseLocalDateTime(b2.check_out, 11, 0);
+        if (aS < bE && aE > bS) overlaps.push({ roomId, a, b: b2 });
+      }
+    }
+  });
+  return overlaps;
+}
+
+// ============ AUTO ROOM STATUS ============
+async function autoCheckout() {
+  const now = new Date();
+  const [{ data: allRooms }, { data: flats }, { data: bookings }] = await Promise.all([
+    sb.from('rooms').select('room_id'),
+    sb.from('flats_status').select('room_id, status, cleaning_status, last_cleaned'),
+    sb.from('guest_register').select('booking_id, room_id, guest_name, check_in, check_out, check_in_time, check_out_time')
+  ]);
+  const flatMap = {};
+  (flats || []).forEach(f => { flatMap[f.room_id] = f; });
+  const roomIds = (allRooms || []).map(r => r.room_id);
+
+  for (const roomId of roomIds) {
+    const cf = flatMap[roomId] || {};
+    const rb = (bookings || []).filter(b => b.room_id === roomId);
+    if (cf.status === 'Blocked-Maintenance') continue;
+
+    const activeNow = rb.some(b => isBookingActiveNow(b, now));
+    const ended = rb.filter(b => hasBookingEnded(b, now)).sort((a, b) => (b.check_out || '').localeCompare(a.check_out || ''));
+    const latest = ended[0] || null;
+
+    let newS = cf.status || 'Free';
+    let newC = cf.cleaning_status || 'Clean';
+
+    if (activeNow) {
+      newS = 'Booked';
+      // Don't change cleaning if it's already Dirty (guest may have complained)
+      if (newC !== 'Dirty' && newC !== 'In Progress') newC = 'Clean';
+    } else {
+      newS = 'Free';
+      if (latest) {
+        const lc = cf.last_cleaned || null;
+        const co = latest.check_out || null;
+        // Mark dirty if cleaned before last checkout
+        if (!(lc && co && lc >= co) && newC !== 'In Progress') {
+          newC = 'Dirty';
+        }
+      }
+    }
+
+    const needsInsert = !flatMap[roomId];
+    const changed = cf.status !== newS || cf.cleaning_status !== newC;
+
+    if (needsInsert) {
+      await sb.from('flats_status').insert({ room_id: roomId, status: newS, cleaning_status: newC });
+    } else if (changed) {
+      await sb.from('flats_status').update({ status: newS, cleaning_status: newC }).eq('room_id', roomId);
+    }
+  }
+}
+
+// ============ PHOTO VIEWER ============
+async function dlIdPhoto(path) {
+  const { data } = await sb.storage.from('id-proofs').createSignedUrl(path, 600);
+  if (!data?.signedUrl) { fsn.error('Error', '⚠️ Photo load failed'); return; }
+  showPhotoViewer(data.signedUrl, path);
+}
+
+function showPhotoViewer(url, path) {
+  document.querySelectorAll('.photo-viewer-overlay').forEach(el => el.remove());
+  const fileName = path ? path.split('/').pop() : 'Photo';
+  const overlay = document.createElement('div');
+  overlay.className = 'photo-viewer-overlay';
+  overlay.style.zIndex = '2147483647';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+  
+  const escHandler = (e) => {
+    if (e.key === 'Escape') {
+      overlay.remove();
+      window.removeEventListener('keydown', escHandler);
+    }
+  };
+  window.addEventListener('keydown', escHandler);
+
+  overlay.innerHTML = `
+    <button class="photo-viewer-close" onclick="this.closest('.photo-viewer-overlay').remove()">✕</button>
+    <img src="${url}" alt="Photo" onerror="this.style.display='none';" />
+    <div class="photo-viewer-info">📄 ${fileName}</div>
+    <div class="photo-viewer-nav">
+      <button onclick="const a=document.createElement('a');a.href='${url}';a.download='${fileName}';a.target='_blank';document.body.appendChild(a);a.click();a.remove();">📥 Download</button>
+      <button onclick="window.open('${url}','_blank')">🔗 New Tab</button>
+      <button onclick="this.closest('.photo-viewer-overlay').remove()">✕ Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+// ============ USER MANAGEMENT (Admin Only) ============
+window.getRoleBadgeHTML = function(role) {
+  const map = {
+    developer: { label: '🔴 Developer', bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5' },
+    admin: { label: '🔵 Admin', bg: '#EDE9FE', color: '#5B21B6', border: '#C4B5FD' },
+    owner: { label: '👑 Owner', bg: '#FEF3C7', color: '#92400E', border: '#FCD34D' },
+    manager: { label: '👔 Manager', bg: '#DBEAFE', color: '#1E40AF', border: '#93C5FD' },
+    moderator: { label: '🟡 Moderator', bg: '#FEF9C3', color: '#854D0E', border: '#FDE047' },
+    booking_staff: { label: '📋 Booking Staff', bg: '#E0E7FF', color: '#3730A3', border: '#A5B4FC' },
+    caretaker: { label: '🏠 Caretaker', bg: '#D1FAE5', color: '#065F46', border: '#6EE7B7' },
+    checkin_manager: { label: '🏠 Caretaker', bg: '#D1FAE5', color: '#065F46', border: '#6EE7B7' },
+    investor: { label: '📈 Investor', bg: '#ECFCCB', color: '#365314', border: '#BEF264' },
+    employee: { label: '👷 Employee', bg: '#F3E8FF', color: '#6B21A8', border: '#D8B4FE' },
+    ca: { label: '📑 CA / Audit', bg: '#CCFBF1', color: '#115E59', border: '#5EEAD4' },
+    viewer: { label: '👁️ Viewer', bg: '#F3F4F6', color: '#374151', border: '#D1D5DB' }
+  };
+  const r = map[role] || { label: role || 'Unknown', bg: '#F3F4F6', color: '#374151', border: '#D1D5DB' };
+  return `<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;background:${r.bg};color:${r.color};border:1px solid ${r.border};">${r.label}</span>`;
+};
+
+window.setUserViewMode = function(mode) {
+  window._userViewMode = mode;
+  localStorage.setItem('user_mgmt_view_mode', mode);
+  renderUserManagement();
+};
+
+window.setUserFilter = function(filter) {
+  window._userFilter = filter;
+  renderUserManagement();
+};
+
+window.setUserMgmtTab = function(tab) {
+  window._userMgmtTab = tab;
+  renderUserManagement();
+};
+
+window.setActivityLogDate = function(dateStr) {
+  window._activityLogDate = dateStr;
+  renderUserManagement();
+};
+
+// ============ USER MANAGEMENT & ACTIVITY LOGS ============
+async function renderUserManagement() {
+  renderShell(`<div class="loading">Loading users & staff activity...</div>`, 'user-mgmt');
+
+  const currentTab = window._userMgmtTab || 'users';
+
+  const [{ data: profiles }, { data: allPending }, { data: allEmployees }] = await Promise.all([
+    sb.from('profiles').select('*').order('display_name'),
+    sb.from('pending_users').select('*').order('requested_at', { ascending: false }),
+    sb.from('employees').select('emp_id, name, phone, role, is_active')
+  ]);
+
+  const userList = profiles || [];
+  const pendingRequests = (allPending || []).filter(p => p.status === 'Pending');
+  const employees = allEmployees || [];
+
+  // Build user email map from pending_users and auth metadata
+  const emailMap = {};
+  (allPending || []).forEach(p => {
+    if (p.user_id && p.email) emailMap[p.user_id] = p.email;
+  });
+
+  // Cross-reference with HRMS Employees to identify former/fired staff
+  const inactiveEmployees = employees.filter(e => e.is_active === false);
+  const inactiveNameSet = new Set(inactiveEmployees.map(e => (e.name || '').trim().toLowerCase()));
+  const inactiveEmpIdSet = new Set(inactiveEmployees.map(e => e.emp_id).filter(Boolean));
+
+  // Explicit known fired former employees
+  const knownFiredUids = new Set([
+    '75c2d099-adcd-4441-b66b-7604540d949a', // Amit Kumar
+    '9fb4e445-6651-45d0-bc70-34e59f258a1f'  // Mohammad Iesa
+  ]);
+
+  userList.forEach(u => {
+    const uName = (u.display_name || '').toLowerCase();
+    const isMatchName = inactiveEmployees.some(e => {
+      const eName = (e.name || '').trim().toLowerCase();
+      if (!eName) return false;
+      return uName.includes(eName) || 
+        (eName.includes('iesa') && uName.includes('iesa')) || 
+        (eName.includes('esha') && (uName.includes('iesa') || uName.includes('esha'))) ||
+        (eName.includes('amit') && uName.includes('amit'));
+    });
+    const isMatchEmpId = u.emp_id && inactiveEmpIdSet.has(u.emp_id);
+    const isKnown = knownFiredUids.has(u.user_id);
+
+    if (isMatchName || isMatchEmpId || isKnown) {
+      u.isFiredStaff = true;
+      if (u.is_approved) {
+        u.needsRevocation = true;
+      }
+    }
+  });
+
+  const firedStaffNeedingRevocation = userList.filter(u => u.needsRevocation);
+  window._firedStaffNeedsRevocationIds = firedStaffNeedingRevocation.map(u => u.user_id);
+
+  // Auto-surface any unapproved profiles in Pending Requests queue so admin never misses them
+  const pendingUids = new Set(pendingRequests.map(p => p.user_id));
+  userList.forEach(u => {
+    if (u.is_approved !== true && !u.isFiredStaff && !pendingUids.has(u.user_id)) {
+      pendingRequests.push({
+        user_id: u.user_id,
+        full_name: u.display_name || 'New User',
+        email: emailMap[u.user_id] || u.email || 'Google User',
+        auth_provider: u.auth_provider || 'google',
+        requested_at: u.created_at || new Date().toISOString(),
+        status: 'Pending'
+      });
+      pendingUids.add(u.user_id);
+    }
+  });
+
+  // Calculate metrics
+  const totalUsers = userList.length;
+  const activeCount = userList.filter(u => u.is_approved).length;
+  const suspendedCount = userList.filter(u => !u.is_approved).length;
+  const pendingCount = pendingRequests.length;
+  const adminCount = userList.filter(u => ['developer', 'admin'].includes(u.role)).length;
+  const managerCount = userList.filter(u => ['manager', 'owner'].includes(u.role)).length;
+  const firedCount = userList.filter(u => u.isFiredStaff).length;
+
+  const viewMode = window._userViewMode || localStorage.getItem('user_mgmt_view_mode') || (window.innerWidth <= 768 ? 'cards' : 'table');
+  const activeFilter = window._userFilter || 'all';
+  const sq = (window._userSearchQuery || '').toLowerCase().trim();
+
+  // If in Activity tab, prepare activity records
+  const selectedDate = window._activityLogDate || (window.UserActivityTracker ? window.UserActivityTracker._currentDateStr() : new Date().toISOString().slice(0, 10));
+  let activityLogs = [];
+  if (currentTab === 'activity') {
+    activityLogs = await (window.UserActivityTracker ? window.UserActivityTracker.fetchLogsForDate(selectedDate) : []);
+  }
+
+  renderShell(`
+    <!-- HEADER -->
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
+      <div>
+        <h1 style="margin:0;font-size:22px;display:flex;align-items:center;gap:8px;">
+          <span>👤 User Management & Staff Activity</span>
+        </h1>
+        <div class="sub" style="margin:4px 0 0;">
+          System users, permissions, former staff access termination & daily screen time tracking.
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-sm outline" onclick="renderUserManagement()">
+          🔁 Refresh
+        </button>
+        ${currentTab === 'users' ? `
+          <div style="display:inline-flex;background:var(--border);padding:2px;border-radius:8px;">
+            <button type="button" class="btn-sm" onclick="setUserViewMode('cards')"
+              style="min-height:28px;padding:4px 10px;font-size:12px;border-radius:6px;${viewMode === 'cards' ? 'background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);font-weight:700;' : 'background:transparent;color:var(--muted);border:none;'}">
+              📱 Cards
+            </button>
+            <button type="button" class="btn-sm" onclick="setUserViewMode('table')"
+              style="min-height:28px;padding:4px 10px;font-size:12px;border-radius:6px;${viewMode === 'table' ? 'background:#fff;color:var(--dark);box-shadow:0 1px 3px rgba(0,0,0,0.1);font-weight:700;' : 'background:transparent;color:var(--muted);border:none;'}">
+              📋 Table
+            </button>
+          </div>
+        ` : `
+          <button class="btn-sm" onclick="exportActivityLogsCSV('${selectedDate}')" style="background:#059669;color:#fff;font-weight:700;">
+            📥 Export Log CSV
+          </button>
+        `}
+        ${window.canDelete && window.canDelete() ? `
+          <button class="btn-sm danger" onclick="forceLogoutAll()" style="background:#dc2626;color:#fff;" title="Force logout all other users">
+            🚪 Logout All
+          </button>
+        ` : ''}
+      </div>
+    </div>
+
+    <!-- PRIMARY TAB SWITCHER -->
+    <div style="display:flex;gap:10px;margin-bottom:14px;border-bottom:2px solid #E5E7EB;padding-bottom:10px;">
+      <button type="button" class="btn-sm" onclick="setUserMgmtTab('users')"
+        style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;${currentTab === 'users' ? 'background:var(--primary);color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);' : 'background:#F3F4F6;color:#4B5563;border:1px solid #D1D5DB;'}">
+        👥 System Users & Roles (${totalUsers})
+      </button>
+      <button type="button" class="btn-sm" onclick="setUserMgmtTab('activity')"
+        style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;${currentTab === 'activity' ? 'background:var(--primary);color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);' : 'background:#F3F4F6;color:#4B5563;border:1px solid #D1D5DB;'}">
+        ⏱️ Daily Logins & Screen Time Logs
+      </button>
+      ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
+        <button type="button" class="btn-sm" onclick="setUserMgmtTab('alerts')"
+          style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;${currentTab === 'alerts' ? 'background:#DC2626;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);' : 'background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;'}">
+          🔔 Developer Login Alerts
+        </button>
+        <button type="button" class="btn-sm" onclick="setUserMgmtTab('work')"
+          style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;${currentTab === 'work' ? 'background:#059669;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);' : 'background:#ECFDF5;color:#065F46;border:1px solid #A7F3D0;'}">
+          🛠️ Staff Daily Work &amp; Actions
+        </button>
+      ` : ''}
+    </div>
+
+    ${currentTab === 'users' ? renderUsersTabContent() : currentTab === 'activity' ? renderActivityTabContent() : currentTab === 'work' ? ((window.isDeveloperUser && window.isDeveloperUser()) ? '<div id="workAuditTabContainer" style="margin-top:8px;"><div style="text-align:center;padding:24px;color:#64748B;">⏳ Loading staff work actions...</div></div>' : renderUsersTabContent()) : ((window.isDeveloperUser && window.isDeveloperUser()) ? '<div id="alertsTabContainer" style="margin-top:8px;"><div style="text-align:center;padding:24px;color:#64748B;">⏳ Loading login alerts...</div></div>' : renderUsersTabContent())}
+  `, 'user-mgmt');
+
+  if (currentTab === 'alerts' && typeof window.renderAlertsTabContent === 'function') {
+    window.renderAlertsTabContent();
+  }
+  if (currentTab === 'work' && typeof window.renderWorkAuditTabContent === 'function') {
+    window.renderWorkAuditTabContent();
+  }
+
+  // -------------------------------------------------------------
+  // TAB 1: USERS & ROLES CONTENT
+  // -------------------------------------------------------------
+  function renderUsersTabContent() {
+    // Apply filters
+    let filtered = userList.filter(u => {
+      if (activeFilter === 'active') return u.is_approved && !u.isFiredStaff;
+      if (activeFilter === 'fired') return u.isFiredStaff;
+      if (activeFilter === 'suspended') return !u.is_approved;
+      if (activeFilter === 'admin') return ['developer', 'admin'].includes(u.role);
+      if (activeFilter === 'manager') return ['manager', 'owner'].includes(u.role);
+      if (activeFilter === 'staff') return ['booking_staff', 'caretaker', 'checkin_manager', 'moderator'].includes(u.role);
+      if (activeFilter === 'viewer') return u.role === 'viewer';
+      return true;
+    });
+
+    if (sq) {
+      filtered = filtered.filter(u => {
+        const name = (u.display_name || '').toLowerCase();
+        const email = (emailMap[u.user_id] || '').toLowerCase();
+        const role = (u.role || '').toLowerCase();
+        return name.includes(sq) || email.includes(sq) || role.includes(sq);
+      });
+    }
+
+    return `
+      <!-- FIRED STAFF REVOCATION WARNING BANNER -->
+      ${firedStaffNeedingRevocation.length > 0 ? `
+        <div class="card" style="border-left:5px solid #EF4444;background:#FEF2F2;margin-bottom:14px;padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(239,68,68,0.1);">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+              <div style="font-weight:800;font-size:15px;color:#991B1B;display:flex;align-items:center;gap:6px;">
+                <span>⚠️</span> <span>Action Needed: Former / Fired Staff with Active Login (${firedStaffNeedingRevocation.length})</span>
+              </div>
+              <div style="font-size:13px;color:#7F1D1D;margin-top:4px;line-height:1.4;">
+                Ye staff HRMS me inactive hain par unka login access active tha: <strong>${firedStaffNeedingRevocation.map(u => u.display_name).join(', ')}</strong>.<br>
+                <span style="color:#B91C1C;">Inka login band karein. <strong>Unka pura purana data (advances, expenses, bookings) 100% PRESERVE rahega.</strong></span>
+              </div>
+            </div>
+            <button class="btn-sm" onclick="window.revokeAllFiredStaffAccess()"
+              style="background:#DC2626;color:#fff;border:none;font-weight:700;padding:9px 18px;border-radius:8px;cursor:pointer;box-shadow:0 2px 6px rgba(220,38,38,0.25);">
+              🛡️ Revoke Fired Staff Access (Keep Data Safe)
+            </button>
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- Quick Filter KPI Ribbon -->
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:12px;">
+        <div class="stat-card" onclick="setUserFilter('all')" style="cursor:pointer;border-left:4px solid #3B82F6;${activeFilter === 'all' ? 'background:#EFF6FF;box-shadow:0 0 0 2px #3B82F6;' : ''}">
+          <div class="stat-num" style="color:#1D4ED8;">${totalUsers}</div>
+          <div class="stat-label">👥 Total Users</div>
+        </div>
+        <div class="stat-card" onclick="setUserFilter('active')" style="cursor:pointer;border-left:4px solid #10B981;${activeFilter === 'active' ? 'background:#ECFDF5;box-shadow:0 0 0 2px #10B981;' : ''}">
+          <div class="stat-num" style="color:#047857;">${activeCount}</div>
+          <div class="stat-label">✅ Active Access</div>
+        </div>
+        ${firedCount > 0 ? `
+          <div class="stat-card" onclick="setUserFilter('fired')" style="cursor:pointer;border-left:4px solid #DC2626;${activeFilter === 'fired' ? 'background:#FEF2F2;box-shadow:0 0 0 2px #DC2626;' : ''}">
+            <div class="stat-num" style="color:#B91C1C;">${firedCount}</div>
+            <div class="stat-label">🚫 Former Staff</div>
+          </div>
+        ` : ''}
+        ${pendingCount > 0 ? `
+          <div class="stat-card" onclick="setUserFilter('pending')" style="cursor:pointer;border-left:4px solid #F59E0B;background:#FFFBEB;box-shadow:0 0 0 2px #F59E0B;animation:pulse 2s infinite;">
+            <div class="stat-num" style="color:#B45309;">${pendingCount}</div>
+            <div class="stat-label">⏳ Pending Approvals</div>
+          </div>
+        ` : ''}
+        <div class="stat-card" onclick="setUserFilter('admin')" style="cursor:pointer;border-left:4px solid #8B5CF6;${activeFilter === 'admin' ? 'background:#F5F3FF;box-shadow:0 0 0 2px #8B5CF6;' : ''}">
+          <div class="stat-num" style="color:#6D28D9;">${adminCount}</div>
+          <div class="stat-label">🛡️ Admins & Devs</div>
+        </div>
+        <div class="stat-card" onclick="setUserFilter('manager')" style="cursor:pointer;border-left:4px solid #0EA5E9;${activeFilter === 'manager' ? 'background:#F0F9FF;box-shadow:0 0 0 2px #0EA5E9;' : ''}">
+          <div class="stat-num" style="color:#0369A1;">${managerCount}</div>
+          <div class="stat-label">👑 Owners & Mgrs</div>
+        </div>
+        <div class="stat-card" onclick="setUserFilter('suspended')" style="cursor:pointer;border-left:4px solid #EF4444;${activeFilter === 'suspended' ? 'background:#FEF2F2;box-shadow:0 0 0 2px #EF4444;' : ''}">
+          <div class="stat-num" style="color:#B91C1C;">${suspendedCount}</div>
+          <div class="stat-label">⏸️ Suspended</div>
+        </div>
+      </div>
+
+      <!-- PENDING APPROVAL SECTION -->
+      ${pendingRequests.length ? `
+        <div class="card" style="border-left:4px solid #F59E0B;background:#FFFDF7;margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div style="font-weight:800;font-size:16px;color:#92400E;display:flex;align-items:center;gap:6px;">
+              <span>⏳</span> <span>Pending Access Requests (${pendingRequests.length})</span>
+            </div>
+            <span style="font-size:12px;color:#B45309;font-weight:600;">Assign role to grant access</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:10px;">
+            ${pendingRequests.map(p => `
+              <div style="background:#fff;border:1px solid #FDE68A;border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div>
+                  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <div style="width:38px;height:38px;border-radius:50%;background:#F3F4F6;color:#4B5563;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;border:1px solid #E5E7EB;">
+                      ${(p.full_name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div style="min-width:0;">
+                      <div style="font-weight:700;font-size:14px;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${p.full_name || 'New User'}
+                      </div>
+                      <div style="font-size:12px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                        ${p.email || 'No email'}
+                      </div>
+                    </div>
+                  </div>
+                  <div style="font-size:11px;color:#9CA3AF;margin-bottom:10px;">
+                    Provider: <strong>${p.auth_provider || 'google'}</strong> · Requested: ${p.requested_at ? new Date(p.requested_at).toLocaleDateString('en-IN') : 'Recent'}
+                  </div>
+                </div>
+                <div style="display:flex;gap:8px;">
+                  <button class="btn-sm" onclick="approveUser('${p.user_id}','${(p.full_name || '').replace(/'/g, "\\'")}')" style="flex:1;background:#10B981;color:#fff;border:none;font-weight:700;">
+                    ✅ Approve & Role
+                  </button>
+                  <button class="btn-sm danger" onclick="rejectUser('${p.user_id}')" style="flex:1;">
+                    ❌ Reject
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- SEARCH & FILTER CONTROLS -->
+      <div class="card" style="margin-bottom:14px;padding:12px 14px;">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+          <div style="position:relative;flex:1;min-width:220px;">
+            <input type="text" id="userSearchInput" value="${sq}" placeholder="🔍 Search user by name, email or role..."
+              oninput="window._userSearchQuery = this.value; renderUserManagement();"
+              style="width:100%;padding:8px 12px;border:1px solid #D1D5DB;border-radius:8px;font-size:14px;box-sizing:border-box;" />
+            ${sq ? `<span onclick="window._userSearchQuery='';renderUserManagement();" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-weight:bold;">✕</span>` : ''}
+          </div>
+          <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;">
+            <button type="button" class="btn-sm" onclick="setUserFilter('all')" style="${activeFilter === 'all' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">All</button>
+            <button type="button" class="btn-sm" onclick="setUserFilter('active')" style="${activeFilter === 'active' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Active</button>
+            ${firedCount > 0 ? `<button type="button" class="btn-sm" onclick="setUserFilter('fired')" style="${activeFilter === 'fired' ? 'background:#DC2626;color:#fff;' : 'background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;'}">Former Staff (${firedCount})</button>` : ''}
+            <button type="button" class="btn-sm" onclick="setUserFilter('admin')" style="${activeFilter === 'admin' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Admin/Dev</button>
+            <button type="button" class="btn-sm" onclick="setUserFilter('manager')" style="${activeFilter === 'manager' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Owner/Mgr</button>
+            <button type="button" class="btn-sm" onclick="setUserFilter('staff')" style="${activeFilter === 'staff' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Staff</button>
+            <button type="button" class="btn-sm" onclick="setUserFilter('suspended')" style="${activeFilter === 'suspended' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Suspended</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS CONTENT: CARDS OR TABLE -->
+      ${filtered.length === 0 ? `
+        <div class="card" style="text-align:center;padding:40px 20px;color:var(--muted);">
+          <div style="font-size:36px;margin-bottom:8px;">🔍</div>
+          <div style="font-size:16px;font-weight:700;color:#374151;">No users match your criteria</div>
+          <div style="font-size:13px;margin-top:4px;">Try clearing search or changing the filter chip.</div>
+          <button class="btn-sm" onclick="window._userSearchQuery='';window._userFilter='all';renderUserManagement();" style="margin-top:12px;">Reset Filters</button>
+        </div>
+      ` : viewMode === 'cards' ? `
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:12px;">
+          ${filtered.map(u => {
+            const userEmail = emailMap[u.user_id] || (u.auth_provider === 'google' ? 'Google Account' : 'Direct Email');
+            const isCurrentUser = u.user_id === SESSION.userId;
+            return `
+              <div class="card" style="margin-bottom:0;display:flex;flex-direction:column;justify-content:space-between;gap:12px;border:1px solid ${u.isFiredStaff ? '#FCA5A5' : u.is_approved ? '#E5E7EB' : '#FCA5A5'};background:${u.isFiredStaff ? '#FEF2F2' : u.is_approved ? '#fff' : '#FFFDF7'};border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                <div>
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      ${u.avatar_url ? `
+                        <img src="${u.avatar_url}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid #E5E7EB;" />
+                      ` : `
+                        <div style="width:42px;height:42px;border-radius:50%;background:#E0E7FF;color:#4338CA;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;border:1px solid #C7D2FE;">
+                          ${(u.display_name || 'U').charAt(0).toUpperCase()}
+                        </div>
+                      `}
+                      <div>
+                        <div style="font-weight:700;font-size:15px;color:#111827;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                          <span>${escapeHtml(u.display_name || 'User')}</span>
+                          ${isCurrentUser ? `<span style="background:#EFF6FF;color:#1D4ED8;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:700;">YOU</span>` : ''}
+                          ${u.isFiredStaff ? `<span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:2px 6px;border-radius:6px;font-weight:800;border:1px solid #FCA5A5;">🚫 FORMER STAFF</span>` : ''}
+                        </div>
+                        <div style="font-size:12px;color:#6B7280;margin-top:2px;">
+                          ${userEmail}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      ${window.getRoleBadgeHTML(u.role)}
+                    </div>
+                  </div>
+
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #F3F4F6;font-size:12px;">
+                    <div style="color:#6B7280;">
+                      Provider: <strong>${u.auth_provider || 'google'}</strong>
+                    </div>
+                    <div>
+                      ${u.isFiredStaff ? `
+                        <span class="badge ${u.is_approved ? 'red' : 'green'}" style="font-size:11px;">
+                          ${u.is_approved ? '⚠️ Access Active (Revoke)' : '🔒 Access Blocked (Data Safe)'}
+                        </span>
+                      ` : `
+                        <span class="badge ${u.is_approved ? 'green' : 'red'}" style="font-size:11px;">
+                          ${u.is_approved ? '● Active' : '✕ Suspended'}
+                        </span>
+                      `}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ACTIONS -->
+                <div style="display:flex;gap:6px;align-items:center;padding-top:8px;border-top:1px solid #F3F4F6;">
+                  <button class="btn-sm" onclick="changeUserRole('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" style="flex:1;background:#F3F4F6;color:#374151;border:1px solid #D1D5DB;font-weight:600;">
+                    🔧 Role
+                  </button>
+                  ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
+                    <button class="btn-sm" onclick="window.openUserAuditModal('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}', '${u.role}')" style="flex:1;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-weight:700;" title="View Monthly Audit & Pages Visited">
+                      📊 Audit
+                    </button>
+                  ` : ''}
+                  ${!isCurrentUser ? `
+                    ${u.isFiredStaff && u.is_approved ? `
+                      <button class="btn-sm danger" onclick="window.terminateStaffAccess('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')"
+                        style="flex:1.4;background:#DC2626;color:#fff;font-weight:700;" title="Terminate login access while preserving all records">
+                        🚫 Block Access
+                      </button>
+                    ` : `
+                      <button class="btn-sm" onclick="toggleUserActive('${u.user_id}', ${u.is_approved ? 'true' : 'false'}, '${(u.display_name || '').replace(/'/g, "\\'")}')"
+                        style="flex:1;background:${u.is_approved ? '#FFFBEB;color:#B45309;border:1px solid #FCD34D;' : '#ECFDF5;color:#047857;border:1px solid #6EE7B7;'}font-weight:600;"
+                        title="${u.is_approved ? 'Suspend User' : 'Activate User'}">
+                        ${u.is_approved ? '⏸️ Suspend' : '▶️ Activate'}
+                      </button>
+                    `}
+                    ${window.canDelete && window.canDelete() ? `
+                      <button class="btn-sm" style="background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;padding:6px 10px;" onclick="forceLogoutUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" title="Force Logout">
+                        🚪
+                      </button>
+                      <button class="btn-sm danger" onclick="deleteUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" style="padding:6px 10px;" title="Delete User">
+                        🗑️
+                      </button>
+                    ` : ''}
+                  ` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User / Name</th>
+                  <th>Role</th>
+                  <th>Email / Provider</th>
+                  <th>Access Status</th>
+                  <th style="text-align:right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(u => {
+                  const userEmail = emailMap[u.user_id] || (u.auth_provider === 'google' ? 'Google Account' : 'Direct Email');
+                  const isCurrentUser = u.user_id === SESSION.userId;
+                  return `
+                    <tr style="${u.isFiredStaff ? 'background:#FEF2F2;' : ''}">
+                      <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          ${u.avatar_url ? `
+                            <img src="${u.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" />
+                          ` : `
+                            <div style="width:32px;height:32px;border-radius:50%;background:#E0E7FF;color:#4338CA;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;">
+                              ${(u.display_name || 'U').charAt(0).toUpperCase()}
+                            </div>
+                          `}
+                          <div>
+                            <div style="font-weight:700;display:flex;align-items:center;gap:6px;">
+                              <span>${escapeHtml(u.display_name || 'User')}</span>
+                              ${isCurrentUser ? ` <span style="background:#EFF6FF;color:#1D4ED8;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:700;">YOU</span>` : ''}
+                              ${u.isFiredStaff ? ` <span style="background:#FEE2E2;color:#991B1B;font-size:10px;padding:1px 5px;border-radius:4px;font-weight:800;border:1px solid #FCA5A5;">🚫 FORMER</span>` : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>${window.getRoleBadgeHTML(u.role)}</td>
+                      <td>
+                        <div style="font-size:13px;">${userEmail}</div>
+                        <div style="font-size:11px;color:#9CA3AF;">${u.auth_provider || 'google'}</div>
+                      </td>
+                      <td>
+                        ${u.isFiredStaff ? `
+                          <span class="badge ${u.is_approved ? 'red' : 'green'}" style="font-size:11px;font-weight:700;">
+                            ${u.is_approved ? '⚠️ Active (Revoke Needed)' : '🔒 Access Blocked'}
+                          </span>
+                        ` : `
+                          <span class="badge ${u.is_approved ? 'green' : 'red'}" style="cursor:pointer;" onclick="toggleUserActive('${u.user_id}', ${u.is_approved ? 'true' : 'false'}, '${(u.display_name || '').replace(/'/g, "\\'")}')" title="Click to toggle status">
+                            ${u.is_approved ? '● Active' : '✕ Suspended'}
+                          </span>
+                        `}
+                      </td>
+                      <td class="table-actions" style="text-align:right;">
+                        <button class="btn-sm" onclick="changeUserRole('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')">🔧 Role</button>
+                        ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
+                          <button class="btn-sm" onclick="window.openUserAuditModal('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}', '${u.role}')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-weight:700;" title="View Monthly Audit & Pages Visited">📊 Audit</button>
+                        ` : ''}
+                        ${!isCurrentUser ? `
+                          ${u.isFiredStaff && u.is_approved ? `
+                            <button class="btn-sm danger" onclick="window.terminateStaffAccess('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')"
+                              style="background:#DC2626;color:#fff;font-weight:700;" title="Terminate login access while preserving historical data">
+                              🚫 Block
+                            </button>
+                          ` : `
+                            <button class="btn-sm" onclick="toggleUserActive('${u.user_id}', ${u.is_approved ? 'true' : 'false'}, '${(u.display_name || '').replace(/'/g, "\\'")}')"
+                              style="${u.is_approved ? 'background:#FFFBEB;color:#B45309;border:1px solid #FCD34D;' : 'background:#ECFDF5;color:#047857;border:1px solid #6EE7B7;'}"
+                              title="${u.is_approved ? 'Suspend Access' : 'Restore Access'}">
+                              ${u.is_approved ? '⏸️ Suspend' : '▶️ Activate'}
+                            </button>
+                          `}
+                          ${window.canDelete && window.canDelete() ? `
+                            <button class="btn-sm" style="background:#f59e0b;color:#fff;" onclick="forceLogoutUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" title="Force Logout">🚪</button>
+                            <button class="btn-sm danger" onclick="deleteUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" title="Delete User Profile">🗑️</button>
+                          ` : ''}
+                        ` : ''}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `}
+    `;
+  }
+
+  // -------------------------------------------------------------
+  // TAB 2: DAILY LOGINS & SCREEN TIME LOGS CONTENT
+  // -------------------------------------------------------------
+  function renderActivityTabContent() {
+    const todayStr = window.UserActivityTracker ? window.UserActivityTracker._currentDateStr() : new Date().toISOString().slice(0, 10);
+    const yesterdayStr = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return d.toISOString().slice(0, 10);
+    })();
+
+    // Metrics for the selected date
+    const totalActiveUsersOnDate = activityLogs.length;
+    const totalLoginsRecorded = activityLogs.reduce((sum, r) => sum + (r.loginCount || 1), 0);
+    const totalScreenSeconds = activityLogs.reduce((sum, r) => sum + (r.activeSeconds || 0), 0);
+    const totalFormattedScreenTime = window.UserActivityTracker ? window.UserActivityTracker._formatDuration(totalScreenSeconds) : `${Math.floor(totalScreenSeconds/60)}m`;
+
+    const twoMinAgo = Date.now() - 2 * 60 * 1000;
+    const currentlyLiveCount = activityLogs.filter(r => r.lastActiveAt && new Date(r.lastActiveAt).getTime() > twoMinAgo).length;
+
+    let displayLogs = [...activityLogs];
+    if (sq) {
+      displayLogs = displayLogs.filter(r => {
+        const name = (r.displayName || '').toLowerCase();
+        const role = (r.role || '').toLowerCase();
+        return name.includes(sq) || role.includes(sq);
+      });
+    }
+
+    return `
+      <!-- DATE & CONTROLS BAR -->
+      <div class="card" style="margin-bottom:14px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <label style="font-weight:700;font-size:13px;color:#374151;">📅 Select Date:</label>
+            <input type="date" value="${selectedDate}"
+              onchange="setActivityLogDate(this.value)"
+              style="padding:6px 10px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px;font-weight:700;" />
+            <div style="display:inline-flex;gap:4px;">
+              <button class="btn-sm" onclick="setActivityLogDate('${todayStr}')"
+                style="${selectedDate === todayStr ? 'background:var(--primary);color:#fff;font-weight:700;' : 'background:#F3F4F6;color:#374151;border:none;'}padding:5px 10px;font-size:12px;">
+                Today
+              </button>
+              <button class="btn-sm" onclick="setActivityLogDate('${yesterdayStr}')"
+                style="${selectedDate === yesterdayStr ? 'background:var(--primary);color:#fff;font-weight:700;' : 'background:#F3F4F6;color:#374151;border:none;'}padding:5px 10px;font-size:12px;">
+                Yesterday
+              </button>
+            </div>
+          </div>
+          <div style="position:relative;min-width:200px;flex:1;max-width:320px;">
+            <input type="text" value="${sq}" placeholder="🔍 Search staff..."
+              oninput="window._userSearchQuery = this.value; renderUserManagement();"
+              style="width:100%;padding:6px 10px;border:1px solid #D1D5DB;border-radius:8px;font-size:13px;box-sizing:border-box;" />
+            ${sq ? `<span onclick="window._userSearchQuery='';renderUserManagement();" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);cursor:pointer;color:#999;font-weight:bold;">✕</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI METRICS -->
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:14px;">
+        <div class="stat-card" style="border-left:4px solid #3B82F6;">
+          <div class="stat-num" style="color:#1D4ED8;">${totalActiveUsersOnDate}</div>
+          <div class="stat-label">👥 Staff Logged In</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #8B5CF6;">
+          <div class="stat-num" style="color:#6D28D9;">${totalLoginsRecorded}</div>
+          <div class="stat-label">🔑 Total Logins Recorded</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #10B981;">
+          <div class="stat-num" style="color:#047857;font-size:20px;">${totalFormattedScreenTime}</div>
+          <div class="stat-label">⏳ Total CRM Screen Time</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid #059669;background:#ECFDF5;">
+          <div class="stat-num" style="color:#059669;display:flex;align-items:center;gap:6px;">
+            <span>${currentlyLiveCount}</span>
+            ${currentlyLiveCount > 0 ? '<span style="width:8px;height:8px;border-radius:50%;background:#10B981;animation:pulse 1.5s infinite;"></span>' : ''}
+          </div>
+          <div class="stat-label">🟢 Online Live Now</div>
+        </div>
+      </div>
+
+      <!-- ACTIVITY LOGS TABLE / CARDS -->
+      ${displayLogs.length === 0 ? `
+        <div class="card" style="text-align:center;padding:48px 20px;color:var(--muted);">
+          <div style="font-size:42px;margin-bottom:8px;">⏱️</div>
+          <div style="font-size:17px;font-weight:700;color:#374151;">No Activity Recorded for ${selectedDate}</div>
+          <div style="font-size:13px;margin-top:6px;max-width:440px;margin-left:auto;margin-right:auto;">
+            Team members will automatically appear here as they log into the CRM and perform tasks. Active screen duration is measured live every 30 seconds.
+          </div>
+        </div>
+      ` : `
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User / Staff</th>
+                  <th>Role</th>
+                  <th>First Login</th>
+                  <th>Last Active</th>
+                  <th>Total Logins</th>
+                  <th>Screen Time (Active Duration)</th>
+                  <th style="text-align:right;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${displayLogs.map(r => {
+                  const isOnline = r.lastActiveAt && (new Date(r.lastActiveAt).getTime() > twoMinAgo);
+                  const durationStr = window.UserActivityTracker ? window.UserActivityTracker._formatDuration(r.activeSeconds) : `${Math.floor((r.activeSeconds || 0)/60)}m`;
+                  const firstTime = window.UserActivityTracker ? window.UserActivityTracker._formatTime(r.firstLoginAt) : (r.firstLoginAt || '-');
+                  const lastTime = isOnline ? '🟢 Live Now' : (window.UserActivityTracker ? window.UserActivityTracker._formatTime(r.lastActiveAt) : (r.lastActiveAt || '-'));
+                  const pct = Math.min(100, Math.round(((r.activeSeconds || 0) / (8 * 3600)) * 100)); // % of standard 8hr shift
+
+                  return `
+                    <tr>
+                      <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                          <div style="width:34px;height:34px;border-radius:50%;background:#E0E7FF;color:#4338CA;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;">
+                            ${(r.displayName || 'U').charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div style="font-weight:700;font-size:14px;color:#111827;">
+                              ${escapeHtml(r.displayName || 'Staff')}
+                            </div>
+                            <div style="font-size:11px;color:#6B7280;">ID: ${r.userId.slice(0, 8)}...</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>${window.getRoleBadgeHTML(r.role)}</td>
+                      <td>
+                        <div style="font-weight:600;font-size:13px;color:#374151;">${firstTime}</div>
+                      </td>
+                      <td>
+                        <div style="font-weight:700;font-size:13px;color:${isOnline ? '#059669' : '#4B5563'};">
+                          ${lastTime}
+                        </div>
+                      </td>
+                      <td>
+                        <span style="display:inline-block;padding:2px 8px;border-radius:12px;background:#EFF6FF;color:#1D4ED8;font-weight:700;font-size:12px;">
+                          ${r.loginCount || 1} ${(r.loginCount || 1) === 1 ? 'login' : 'logins'}
+                        </span>
+                      </td>
+                      <td style="min-width:180px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;font-size:13px;">
+                          <strong style="color:#111827;">${durationStr}</strong>
+                          <span style="font-size:11px;color:#6B7280;">${pct}% shift</span>
+                        </div>
+                        <div style="width:100%;height:6px;background:#E5E7EB;border-radius:3px;overflow:hidden;">
+                          <div style="width:${pct}%;height:100%;background:#10B981;border-radius:3px;"></div>
+                        </div>
+                      </td>
+                      <td style="text-align:right;">
+                        <span class="badge ${isOnline ? 'green' : 'gray'}" style="font-size:11px;font-weight:700;">
+                          ${isOnline ? '● Online' : '⚪ Offline'}
+                        </span>
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `}
+    `;
+  }
+}
+
+// ============ TERMINATE STAFF ACCESS (SAFE PRESERVE) ============
+window.terminateStaffAccess = async function(userId, name) {
+  if (!confirm(`Are you sure you want to terminate login access for "${name}"?\n\n• Wo CRM me dubara login nahi kar payenge.\n• Unka sabhi past data (bookings, expenses, advances, salaries) 100% PRESERVE rahega.`)) return;
+
+  try {
+    const { error } = await sb.from('profiles').update({ is_approved: false }).eq('user_id', userId);
+    if (error) throw error;
+    if (window.fsn) fsn.success('Access Blocked', `✅ ${name} ka login access block ho gaya. Data safe hai.`);
+    renderUserManagement();
+  } catch(e) {
+    if (window.fsn) fsn.error('Error', e.message);
+  }
+};
+
+// ============ BULK REVOKE ALL FIRED STAFF ACCESS ============
+window.revokeAllFiredStaffAccess = async function() {
+  const ids = window._firedStaffNeedsRevocationIds || [
+    '75c2d099-adcd-4441-b66b-7604540d949a', // Amit Kumar
+    '9fb4e445-6651-45d0-bc70-34e59f258a1f'  // Mohammad Iesa
+  ];
+
+  if (!ids.length) {
+    if (window.fsn) fsn.info('Clean', 'Koi bhi fired staff active nahi hai.');
+    return;
+  }
+
+  if (!confirm(`Kya aap sabhi fired/inactive staff (${ids.length}) ka login access block karna chahte hain?\n\n• Unka login band ho jayega.\n• Unka saara purana data (advances, expenses, bookings) 100% safe rahega.`)) return;
+
+  try {
+    for (const uid of ids) {
+      await sb.from('profiles').update({ is_approved: false, role: 'suspended' }).eq('user_id', uid);
+    }
+    if (window.fsn) fsn.success('Success', `✅ Fired staff access block kar diya gaya hai.`);
+    renderUserManagement();
+  } catch(e) {
+    if (window.fsn) fsn.error('Error', e.message);
+  }
+};
+
+// ============ EXPORT ACTIVITY LOGS CSV ============
+window.exportActivityLogsCSV = async function(dateStr) {
+  try {
+    const logs = await (window.UserActivityTracker ? window.UserActivityTracker.fetchLogsForDate(dateStr) : []);
+    if (!logs.length) {
+      if (window.fsn) fsn.warning('No Data', 'Is date ke liye koi activity log nahi hai.');
+      return;
+    }
+
+    let csv = 'Staff Name,Role,Date,Total Logins,Active Screen Time,Screen Seconds,First Login,Last Active\n';
+    logs.forEach(r => {
+      const duration = window.UserActivityTracker ? window.UserActivityTracker._formatDuration(r.activeSeconds) : `${Math.floor((r.activeSeconds||0)/60)}m`;
+      const firstT = window.UserActivityTracker ? window.UserActivityTracker._formatTime(r.firstLoginAt) : (r.firstLoginAt || '');
+      const lastT = window.UserActivityTracker ? window.UserActivityTracker._formatTime(r.lastActiveAt) : (r.lastActiveAt || '');
+      csv += `"${(r.displayName || '').replace(/"/g, '""')}","${r.role || ''}","${r.logDate || dateStr}","${r.loginCount || 1}","${duration}","${r.activeSeconds || 0}","${firstT}","${lastT}"\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TUHH_User_Activity_Logs_${dateStr}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    if (window.fsn) fsn.success('Exported', `✅ Activity logs downloaded: ${dateStr}`);
+  } catch(e) {
+    if (window.fsn) fsn.error('Export Error', e.message);
+  }
+};
+
+// ============ ROLE PICKER MODAL ============
+function showRolePickerModal(userId, name, callback) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:440px;">
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      <h2 style="margin:0 0 4px;font-size:18px;">🔧 Assign System Role</h2>
+      <div class="sub" style="font-size:13px;color:var(--muted);">${name}</div>
+      <div class="form-group" style="margin-top:14px;">
+        <label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px;">Select Role *</label>
+        <select id="rolePickerSel" style="width:100%;font-size:14px;padding:9px;border:1px solid #D1D5DB;border-radius:8px;background:#fff;">
+          <option value="">-- Choose Access Level --</option>
+          <option value="developer">🔴 Developer (Full Master Access + Delete)</option>
+          <option value="admin">🔵 Admin (Full Operations & Settings)</option>
+          <option value="owner">👑 Owner (Full Properties, Financials, Bookings)</option>
+          <option value="manager">👔 Manager (Operations, Turnarounds & Bookings)</option>
+          <option value="moderator">🟡 Moderator (Bookings, ID Proofs & WhatsApp)</option>
+          <option value="booking_staff">📋 Booking Staff (Guest Register & Check-ins)</option>
+          <option value="caretaker">🏠 Caretaker (Housekeeping & Assigned Flats)</option>
+          <option value="investor">📈 Investor (Assigned Property Occupancy & Share)</option>
+          <option value="employee">👷 Employee (Tasks, Attendance & Salary)</option>
+          <option value="ca">📑 CA / Auditor (Financial Reports & Statements)</option>
+          <option value="viewer">👁️ Viewer (View-Only Restricted Access)</option>
+        </select>
+      </div>
+      <div style="font-size:12px;color:#4B5563;margin-top:8px;padding:10px;background:#F9FAFB;border:1px solid #E5E7EB;border-radius:8px;line-height:1.4;" id="roleDesc">
+        Role select karein to see exact permissions and accessible pages.
+      </div>
+      <button onclick="confirmRolePicker('${userId}','${name.replace(/'/g,"\\'")}',callback_${userId.replace(/-/g,'_')})" style="width:100%;margin-top:14px;background:#10B981;color:#fff;border:none;padding:10px;font-weight:700;border-radius:8px;font-size:14px;cursor:pointer;">
+        ✅ Confirm & Apply Role
+      </button>
+      <div id="rolePickerErr" style="margin-top:8px;"></div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  window[`callback_${userId.replace(/-/g,'_')}`] = callback;
+
+  document.getElementById('rolePickerSel').onchange = function() {
+    const desc = {
+      developer: '🔴 Developer: Master super-admin privileges including database record deletion, user management, and raw data access.',
+      admin: '🔵 Admin: Complete management permissions across bookings, calendars, flats status, staff, expenses, and system settings.',
+      owner: '👑 Owner: High-level property oversight, bookings, cash flow, payouts, WhatsApp dispatch, and full revenue visibility.',
+      manager: '👔 Manager: Daily operational lead: housekeeping turnarounds, booking verification, staff tasks, and guest communications.',
+      moderator: '🟡 Moderator: Bookings management, guest verification, ID proof uploads, and automated WhatsApp messaging.',
+      booking_staff: '📋 Booking Staff: Front-desk operations, adding new bookings, check-in flow, and collecting advance payments.',
+      caretaker: '🏠 Caretaker: Mobile housekeeping dashboard for assigned flats, cleaning checklist, and turnaround scheduling.',
+      investor: '📈 Investor: Restricted portal viewing only their designated investor flats, occupancy stats, and monthly statements.',
+      employee: '👷 Employee: Staff self-service portal for attendance, task logging, and salary advance records.',
+      ca: '📑 CA / Auditor: Read-only access to ledger statements, cashbook reconciliations, and financial CSV exports.',
+      viewer: '👁️ Viewer: Read-only access to today\'s general check-ins, check-outs, and basic occupancy matrix.'
+    };
+    document.getElementById('roleDesc').textContent = desc[this.value] || 'Role select karein to see exact permissions.';
+  };
+}
+
+async function confirmRolePicker(userId, name, callbackFn) {
+  const role = document.getElementById('rolePickerSel').value;
+  if (!role) {
+    document.getElementById('rolePickerErr').innerHTML = '<div class="error" style="color:#DC2626;font-size:12px;font-weight:700;margin-top:4px;">⚠️ Please select a role</div>';
+    return;
+  }
+  document.querySelector('.modal-overlay')?.remove();
+  if (typeof callbackFn === 'function') callbackFn(role);
+}
+
+// ============ APPROVE USER ============
+async function approveUser(userId, name) {
+  showRolePickerModal(userId, name, async (role) => {
+    try {
+      const { data: pending } = await sb.from('pending_users').select('*').eq('user_id', userId).single();
+      const displayName = name || pending?.full_name || 'User';
+      const authProvider = pending?.auth_provider || 'google';
+
+      const { data: existing } = await sb.from('profiles').select('user_id').eq('user_id', userId).single();
+
+      if (existing) {
+        await sb.from('profiles').update({ role, display_name: displayName, is_approved: true, auth_provider: authProvider }).eq('user_id', userId);
+      } else {
+        await sb.from('profiles').insert({ user_id: userId, role, display_name: displayName, is_approved: true, auth_provider: authProvider });
+      }
+
+      await sb.from('pending_users').update({ status: 'Approved' }).eq('user_id', userId);
+      fsn.success('Success', `✅ ${displayName} approved as ${role}`);
+      renderUserManagement();
+    } catch (err) {
+      fsn.error('Error', '❌ Approve failed: ' + (err.message || err));
+    }
+  });
+}
+
+// ============ CHANGE USER ROLE ============
+async function changeUserRole(userId, name) {
+  showRolePickerModal(userId, name, async (role) => {
+    try {
+      const { error: updErr } = await sb.from('profiles').update({ role }).eq('user_id', userId);
+      if (updErr) { fsn.error('Role Change Failed', updErr.message); return; }
+      fsn.success('Success', `✅ Role updated to ${role}`);
+      renderUserManagement();
+    } catch (err) {
+      fsn.error('Error', '❌ Role change failed: ' + (err.message || err));
+    }
+  });
+}
+
+// ============ TOGGLE ACTIVE / SUSPEND ============
+window.toggleUserActive = async function(userId, isCurrentlyApproved, name) {
+  if (userId === SESSION.userId) {
+    if (window.fsn) fsn.warning('Cannot Suspend', 'You cannot suspend your own account.');
+    else alert('You cannot suspend your own account.');
+    return;
+  }
+  const newStatus = !isCurrentlyApproved;
+  const actionText = newStatus ? 'Activate & restore access for' : 'Suspend login access for';
+  if (!confirm(`${actionText} "${name}"?`)) return;
+
+  try {
+    // When suspending: also set role to 'suspended' as double-lock security
+    // When activating: restore role only if it was 'suspended' (don't override a real role)
+    let updatePayload = { is_approved: newStatus };
+    if (!newStatus) {
+      // Suspending — force role to 'suspended' so double-lock in auth blocks them
+      updatePayload.role = 'suspended';
+    } else {
+      // Re-activating — clear suspended role back to 'staff' (admin can then set proper role)
+      const { data: curProfile } = await sb.from('profiles').select('role').eq('user_id', userId).single();
+      if (curProfile?.role === 'suspended') updatePayload.role = 'staff';
+    }
+    const { error } = await sb.from('profiles').update(updatePayload).eq('user_id', userId);
+    if (error) throw error;
+    if (window.fsn) fsn.success('Status Updated', `✅ ${name} is now ${newStatus ? 'Active' : 'Suspended'}`);
+    renderUserManagement();
+  } catch(err) {
+    if (window.fsn) fsn.error('Error', err.message);
+  }
+};
+
+async function rejectUser(userId) {
+  if (!confirm('Reject this access request?')) return;
+  await sb.from('pending_users').update({ status: 'Rejected' }).eq('user_id', userId);
+  await sb.from('profiles').update({ is_approved: false }).eq('user_id', userId);
+  renderUserManagement();
+}
+
+async function deleteUser(userId, name) {
+  if (window.canDelete && !window.canDelete()) { fsn.error('Denied', 'Only Super Admin / Developer can delete users'); return; }
+  if (!confirm(`Delete user "${name}"?\n\nProfile + pending entry delete hogi. Auth user remain karega.`)) return;
+  try {
+    const { error: delErr } = await sb.from('profiles').delete().eq('user_id', userId);
+    if (delErr) { fsn.error('Delete Failed', delErr.message); return; }
+    await sb.from('pending_users').delete().eq('user_id', userId);
+    fsn.success('Success', `✅ ${name} deleted`);
+    renderUserManagement();
+  } catch (err) {
+    fsn.error('Error', '❌ Delete failed: ' + (err.message || err));
+  }
+}
+
+
+// ============ FINANCIAL GOOGLE SHEET ============
+function renderFinancialSheet() {
+  const sheetUrl = 'https://docs.google.com/spreadsheets/d/1eOwfIghwul5W-JObh7SRkA1_xFy97CxUJmsO8b6K3K8/edit?usp=sharing';
+  const embedUrl = 'https://docs.google.com/spreadsheets/d/1eOwfIghwul5W-JObh7SRkA1_xFy97CxUJmsO8b6K3K8/preview';
+
+  renderShell(`
+    <div class="card">
+      <h1>📈 Financial Sheet</h1>
+      <div class="sub">Live Google Sheet — internal financial records</div>
+      <div class="btn-row" style="margin-top:8px;">
+        <a href="${sheetUrl}" target="_blank" class="btn-sm">🔗 Open in Google Sheets</a>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <iframe
+        src="${embedUrl}"
+        style="width:100%;height:80vh;border:none;display:block;"
+        allowfullscreen>
+      </iframe>
+    </div>
+  `, 'financial-sheet');
+}
+// ============ START ============
+init();
+
+// ============ APP SETTINGS ============
+// ============ APP SETTINGS ============
+window._settingsActiveTab = window._settingsActiveTab || 'themes';
+
+window.setSettingsTab = function(tabId) {
+  window._settingsActiveTab = tabId;
+  document.querySelectorAll('.settings-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+  });
+  document.querySelectorAll('.settings-tab-content').forEach(panel => {
+    panel.style.display = panel.getAttribute('data-tab') === tabId ? 'block' : 'none';
+  });
+};
+
+async function renderSettings() {
+  renderShell(`<div class="loading">Loading settings...</div>`, 'settings');
+
+  const { data: rawSettings } = await sb.from('app_settings').select('*').order('key');
+  const settings = rawSettings || [];
+  const setMap = {};
+
+  // Auto-sanitize rogue/incorrect legacy values across BOTH settings array (Tab 4 table) AND setMap (Tab 2 form)
+  settings.forEach(s => {
+    if (s.key === 'brand_name' && (!s.value || s.value.toUpperCase().includes('HOME STAY') || s.value.trim().toLowerCase() === 'the unique haven')) {
+      s.value = 'The Unique Haven Homes';
+      sb.from('app_settings').update({ value: 'The Unique Haven Homes', updated_at: new Date().toISOString() }).eq('key', 'brand_name').then();
+    }
+    if (s.key === 'website_url' && (!s.value || s.value.includes('theuniquehaven.com'))) {
+      s.value = 'https://uniquehavenhomesstay.com';
+      sb.from('app_settings').update({ value: 'https://uniquehavenhomesstay.com', updated_at: new Date().toISOString() }).eq('key', 'website_url').then();
+    }
+    if (s.key === 'google_review_link' && s.value && s.value.includes('YOUR_GOOGLE_ID')) {
+      s.value = '';
+      sb.from('app_settings').update({ value: '', updated_at: new Date().toISOString() }).eq('key', 'google_review_link').then();
+    }
+    if (s.key === 'checkin_time' && (s.value === '2:00 PM' || !s.value)) {
+      s.value = '1:00 PM';
+      sb.from('app_settings').update({ value: '1:00 PM', updated_at: new Date().toISOString() }).eq('key', 'checkin_time').then();
+    }
+    if (s.key === 'checkout_time' && !s.value) {
+      s.value = '11:00 AM';
+      sb.from('app_settings').update({ value: '11:00 AM', updated_at: new Date().toISOString() }).eq('key', 'checkout_time').then();
+    }
+    if (s.key === 'registered_office_map_link' && (!s.value || s.value.includes('Radhikapuri') || !s.value.includes('26.897965'))) {
+      s.value = 'https://www.google.com/maps?q=26.897965,81.010463';
+      sb.from('app_settings').update({ value: 'https://www.google.com/maps?q=26.897965,81.010463', updated_at: new Date().toISOString() }).eq('key', 'registered_office_map_link').then();
+    }
+    setMap[s.key] = s.value;
+  });
+
+  if (!settings.find(s => s.key === 'manager_phone')) {
+    const entry = { key: 'manager_phone', value: '9194109911', description: 'Manager (Mr. Praveen Singh)' };
+    settings.push(entry);
+    sb.from('app_settings').upsert({ ...entry, updated_at: new Date().toISOString() }, { onConflict: 'key' }).then();
+  }
+  if (!settings.find(s => s.key === 'registered_office_map_link')) {
+    const entry = { key: 'registered_office_map_link', value: 'https://www.google.com/maps?q=26.897965,81.010463', description: 'Registered Office Exact Google Maps Pin' };
+    settings.push(entry);
+    sb.from('app_settings').upsert({ ...entry, updated_at: new Date().toISOString() }, { onConflict: 'key' }).then();
+  }
+
+  if (!setMap['brand_name']) setMap['brand_name'] = 'The Unique Haven Homes';
+  if (!setMap['website_url']) setMap['website_url'] = 'https://uniquehavenhomesstay.com';
+  if (!setMap['owner_phone_1']) setMap['owner_phone_1'] = '9450055554';
+  if (!setMap['owner_phone_2']) setMap['owner_phone_2'] = '8299600709';
+  if (!setMap['manager_phone']) setMap['manager_phone'] = '9194109911';
+  if (!setMap['checkin_time']) setMap['checkin_time'] = '1:00 PM';
+  if (!setMap['checkout_time']) setMap['checkout_time'] = '11:00 AM';
+  if (!setMap['registered_office_map_link']) setMap['registered_office_map_link'] = 'https://www.google.com/maps?q=26.897965,81.010463';
+
+  const activeTab = window._settingsActiveTab || 'themes';
+  const currentTheme = window.themeManager?.get() || 'light';
+
+  // 1. Themes Tab Grid
+  const themeCardsHTML = window.THEMES_LIST.map(t => {
+    const isActive = t.id === currentTheme;
+    return `
+      <div class="theme-card ${isActive ? 'active' : ''}" data-theme-id="${t.id}" data-theme-tag="${t.tag}" onclick="window.themeManager.set('${t.id}')">
+        <div class="theme-preview-box" style="background:${t.bg};">
+          <div class="theme-preview-sidebar" style="background:${t.sidebar};border-right:1px solid rgba(255,255,255,0.08);"></div>
+          <div class="theme-preview-content" style="background:${t.card};">
+            <div style="height:6px;width:60%;background:${t.accent};border-radius:3px;"></div>
+            <div style="height:4px;width:90%;background:rgba(128,128,128,0.25);border-radius:2px;"></div>
+            <div style="height:4px;width:45%;background:rgba(128,128,128,0.2);border-radius:2px;"></div>
+          </div>
+        </div>
+        <div class="theme-card-title">
+          <span>${t.icon} ${t.name}</span>
+          <span class="theme-badge">${isActive ? 'Active ✅' : t.tag}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;">${t.desc}</div>
+      </div>
+    `;
+  }).join('');
+
+  renderShell(`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 style="margin:0;font-size:24px;">⚙️ Settings & Customization</h1>
+          <div class="sub">Themes, brand info, review links, automated alerts and database settings</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-sm outline" onclick="renderSettings()">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <!-- Settings Navigation Tabs -->
+      <div class="settings-nav" style="margin-top:18px;">
+        <button class="settings-tab-btn ${activeTab === 'themes' ? 'active' : ''}" data-tab="themes" onclick="setSettingsTab('themes')">
+          🎨 Themes & Appearance
+        </button>
+        <button class="settings-tab-btn ${activeTab === 'brand' ? 'active' : ''}" data-tab="brand" onclick="setSettingsTab('brand')">
+          🏢 Brand & Contacts
+        </button>
+        <button class="settings-tab-btn ${activeTab === 'alerts' ? 'active' : ''}" data-tab="alerts" onclick="setSettingsTab('alerts')">
+          🔔 Alerts & Audio
+        </button>
+        <button class="settings-tab-btn ${activeTab === 'all' ? 'active' : ''}" data-tab="all" onclick="setSettingsTab('all')">
+          🔧 All System Keys (${(settings||[]).length})
+        </button>
+        <button class="settings-tab-btn ${activeTab === 'cache' ? 'active' : ''}" data-tab="cache" onclick="setSettingsTab('cache')">
+          💾 System & Cache
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 1: THEMES & APPEARANCE -->
+    <div class="settings-tab-content" data-tab="themes" style="display:${activeTab === 'themes' ? 'block' : 'none'};">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div class="section-title" style="margin:0;">🎨 App Theme</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">
+              Clean Light is the active theme — modern, high-contrast professional design.
+            </div>
+          </div>
+          <span style="font-size:12px;color:var(--muted);font-weight:600;">Live Preview • Auto Saved</span>
+        </div>
+
+        <div class="theme-grid">
+          ${themeCardsHTML}
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: BRAND & CONTACTS -->
+    <div class="settings-tab-content" data-tab="brand" style="display:${activeTab === 'brand' ? 'block' : 'none'};">
+      <div class="card">
+        <div class="section-title">🏢 Brand Identity & WhatsApp Fallbacks</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">
+          These details are automatically placed in booking confirmation vouchers, invoices, and guest WhatsApp messages.
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Brand Name</label>
+            <input type="text" id="brand_brand_name" value="${(setMap['brand_name'] || 'The Unique Haven Homes').replace(/"/g, '&quot;')}" placeholder="e.g. The Unique Haven Homes" />
+            <small style="color:var(--muted);">Official brand name used in vouchers, receipts &amp; WhatsApp</small>
+          </div>
+          <div class="form-group">
+            <label>Website URL</label>
+            <input type="text" id="brand_website_url" value="${(setMap['website_url'] || 'https://uniquehavenhomesstay.com').replace(/"/g, '&quot;')}" placeholder="https://uniquehavenhomesstay.com" />
+            <small style="color:var(--muted);">Public live website address included in messages</small>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:10px;">
+          <div class="form-group">
+            <label>Co-Founder &amp; Owner Phone (Mr. Shahanshah)</label>
+            <input type="text" id="brand_owner_phone_1" value="${(setMap['owner_phone_1'] || '9450055554').replace(/"/g, '&quot;')}" placeholder="9450055554" />
+            <small style="color:var(--muted);">Director escalation &amp; primary owner contact</small>
+          </div>
+          <div class="form-group">
+            <label>Co-Founder &amp; Owner Phone (Mr. Firoz Khan)</label>
+            <input type="text" id="brand_owner_phone_2" value="${(setMap['owner_phone_2'] || '8299600709').replace(/"/g, '&quot;')}" placeholder="8299600709" />
+            <small style="color:var(--muted);">Director escalation &amp; secondary owner contact</small>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:10px;">
+          <div class="form-group">
+            <label>Manager Phone (Praveen Singh)</label>
+            <input type="text" id="brand_manager_phone" value="${(setMap['manager_phone'] || '9194109911').replace(/"/g, '&quot;')}" placeholder="9194109911" />
+            <small style="color:var(--muted);">24/7 on-ground guest assistance, caretaking supervisor &amp; bookings</small>
+          </div>
+          <div class="form-group">
+            <label>Default Check-in / Check-out Times</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="brand_checkin_time" value="${(setMap['checkin_time'] || '1:00 PM').replace(/"/g, '&quot;')}" placeholder="1:00 PM" style="flex:1;" />
+              <input type="text" id="brand_checkout_time" value="${(setMap['checkout_time'] || '11:00 AM').replace(/"/g, '&quot;')}" placeholder="11:00 AM" style="flex:1;" />
+            </div>
+            <small style="color:var(--muted);">Check-in from 1:00 PM &bull; Check-out strictly by 11:00 AM</small>
+          </div>
+        </div>
+
+        <!-- Registered Company Profile & Address Card -->
+        <div style="background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-weight:800;font-size:13px;color:var(--text);display:flex;align-items:center;gap:6px;">
+              <span>🏛️</span> Registered Corporate Profile (Govt. of India)
+            </div>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#10B981;color:#fff;">Verified ROC</span>
+          </div>
+          <div style="font-size:12px;color:var(--text);font-weight:700;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</div>
+          <div style="font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4;">
+            <strong>CIN:</strong> U55101UP2026PTC244637 &bull; <strong>ROC:</strong> Kanpur<br>
+            <strong>Registered Office:</strong> P NO 39 &amp; 40 RADHIKAPURI, INDIRA NAGAR TAKROHI, Lucknow, UP - 226016
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <a href="review.html" target="_blank" class="btn-sm" style="background:#F59E0B;color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-weight:700;">
+              ⭐ Open Public Review Portal
+            </a>
+            <button type="button" class="btn-sm outline" onclick="navigator.clipboard.writeText('https://uniquehavenhomesstay.com/review.html');if(window.fsn)fsn.success('Copied!','Review portal link copied');">
+              📋 Copy Review Link
+            </button>
+            <a href="https://business.google.com/create" target="_blank" class="btn-sm outline" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;">
+              📍 Setup Google Business Profile
+            </a>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:10px;">
+          <label>⭐ Airbnb Review Link</label>
+          <input type="text" id="brand_airbnb_review_link" value="${(setMap['airbnb_review_link'] || '').replace(/"/g, '&quot;')}" placeholder="https://airbnb.com/..." />
+          <small style="color:var(--muted);">Auto sent in checkout WhatsApp message for Online-Airbnb guests</small>
+        </div>
+
+        <div class="form-group" style="margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <label style="margin:0;">📍 Registered Office Exact Google Maps Pin</label>
+            <button type="button" class="btn-sm" style="background:#2563EB;color:#fff;padding:3px 10px;font-size:11px;font-weight:700;" onclick="captureCurrentLocationForOffice()">
+              📍 Capture My GPS Location
+            </button>
+          </div>
+          <input type="text" id="brand_registered_office_map_link" value="${(setMap['registered_office_map_link'] || 'https://www.google.com/maps?q=26.897965,81.010463').replace(/"/g, '&quot;')}" placeholder="https://www.google.com/maps?q=26.897965,81.010463" />
+          <small style="color:var(--muted);">Jab aap Radhikapuri Takrohi address par hon, tab "Capture My GPS Location" par click karein ya Google Maps se pin link paste karein.</small>
+        </div>
+
+        <div class="form-group">
+          <label>🌟 Google Business Review Short Link</label>
+          <input type="text" id="brand_google_review_link" value="${(setMap['google_review_link'] || '').replace(/"/g, '&quot;')}" placeholder="https://g.page/r/.../review or https://search.google.com/local/writereview?placeid=..." />
+          <small style="color:var(--muted);">Auto sent in checkout WhatsApp messages & plugged into the Review Portal. (If empty, portal links to Google Maps address search).</small>
+        </div>
+
+        <button onclick="saveBrandSettingsGroup()" class="green-btn" style="padding:12px 24px;font-weight:700;margin-top:12px;">
+          💾 Save Brand Details
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 3: ALERTS & NOTIFICATIONS -->
+    <div class="settings-tab-content" data-tab="alerts" style="display:${activeTab === 'alerts' ? 'block' : 'none'};">
+      <div class="card">
+        <div class="section-title">🔔 Alerts, Sounds & Background Sync</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;margin-top:12px;">
+          <div style="padding:16px;background:var(--bg-tertiary);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;">
+              <span>🔔</span> Notification Preferences
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin:8px 0 14px;">
+              Configure which events trigger real-time bell badges and in-app toasts.
+            </div>
+            <button class="btn-sm" onclick="if(window.notifSettings){window.notifSettings.openSettings();}">
+              ⚙️ Open Notification Config
+            </button>
+          </div>
+
+          <div style="padding:16px;background:var(--bg-tertiary);border-radius:10px;border:1px solid var(--border);">
+            <div style="font-weight:700;font-size:14px;display:flex;align-items:center;gap:8px;">
+              <span>⏰</span> Reminders & Overdue Badges
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin:8px 0 14px;">
+              Auto checks for overdue collections & pending room tasks every 60 seconds.
+            </div>
+            <button class="btn-sm outline" onclick="if(window.loadPendingRemindersBadge) window.loadPendingRemindersBadge(); fsn.info('Reminders Checked', 'Bell badge updated');">
+              🔄 Check Reminders Now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: ALL SYSTEM KEYS -->
+    <div class="settings-tab-content" data-tab="all" style="display:${activeTab === 'all' ? 'block' : 'none'};">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+          <div class="section-title" style="margin:0;">🔧 All Key-Value Settings</div>
+          <input type="text" id="settingsSearchInput" placeholder="🔍 Search key..." onkeyup="filterSettingsTable()" style="max-width:240px;padding:6px 10px;font-size:12px;" />
+        </div>
+
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th style="width:200px;">Key</th>
+            <th>Value</th>
+            <th>Description</th>
+            <th style="width:100px;text-align:center;">Action</th>
+          </tr></thead>
+          <tbody id="settingsTableBody">
+            ${(settings || []).map(s => `
+              <tr class="setting-row" data-key="${s.key.toLowerCase()}">
+                <td><strong style="color:var(--text);">${s.key}</strong></td>
+                <td>
+                  <input type="text" id="set_${s.key}" value="${(s.value || '').replace(/"/g, '&quot;')}"
+                    style="width:100%;font-size:12px;padding:6px 8px;" />
+                </td>
+                <td style="font-size:12px;color:var(--muted);">${s.description || '-'}</td>
+                <td style="text-align:center;">
+                  <button class="btn-sm green-btn" onclick="saveSetting('${s.key}')">💾 Save</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">➕ Add New Setting</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Key</label><input id="newSetKey" placeholder="e.g. instagram_url" /></div>
+          <div class="form-group"><label>Value</label><input id="newSetValue" placeholder="e.g. https://..." /></div>
+        </div>
+        <div class="form-group"><label>Description</label><input id="newSetDesc" placeholder="Optional brief description" /></div>
+        <button onclick="addSetting()" style="width:100%;margin-top:10px;padding:12px;font-weight:700;">💾 Add Setting</button>
+        <div id="settingErr"></div>
+      </div>
+    </div>
+
+    <!-- TAB 5: SYSTEM & CACHE -->
+    <div class="settings-tab-content" data-tab="cache" style="display:${activeTab === 'cache' ? 'block' : 'none'};">
+      <div class="card">
+        <div class="section-title">💾 Local Cache & Performance</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          Cached properties, app settings, and booking history are stored locally for ultra-fast instant loading. If you updated database entries or iCal links, you can force refresh here.
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button onclick="clearAppCacheAndReload()" style="background:#EF4444;color:#fff;padding:12px 20px;font-weight:700;border:none;border-radius:8px;cursor:pointer;">
+            🧹 Clear Cache & Hard Reload
+          </button>
+          <button onclick="if(window.hybridSync){window.hybridSync.syncAll();fsn.info('iCal Sync', 'Syncing all calendars...');}" class="btn-sm outline" style="padding:12px 20px;">
+            🔄 Force iCal Resync
+          </button>
+        </div>
+      </div>
+    </div>
+  `, 'settings');
+}
+
+window.filterSettingsTable = function() {
+  const query = (document.getElementById('settingsSearchInput')?.value || '').toLowerCase().trim();
+  document.querySelectorAll('.setting-row').forEach(row => {
+    const key = row.getAttribute('data-key') || '';
+    row.style.display = key.includes(query) ? '' : 'none';
+  });
+};
+
+window.saveBrandSettingsGroup = async function() {
+  const keys = ['brand_name', 'website_url', 'owner_phone_1', 'owner_phone_2', 'manager_phone', 'checkin_time', 'checkout_time', 'airbnb_review_link', 'google_review_link', 'registered_office_map_link'];
+  let savedCount = 0;
+  for (const key of keys) {
+    const el = document.getElementById('brand_' + key);
+    if (!el) continue;
+    let value = el.value.trim();
+    if (key === 'brand_name' && (!value || value.toUpperCase().includes('HOME STAY'))) {
+      value = 'The Unique Haven Homes';
+      el.value = value;
+    }
+    if (key === 'registered_office_map_link' && !value) {
+      value = 'https://www.google.com/maps?q=26.897965,81.010463';
+      el.value = value;
+    }
+    const { error } = await sb.from('app_settings').upsert({
+      key, value, updated_at: new Date().toISOString()
+    }, { onConflict: 'key' });
+    if (!error) savedCount++;
+  }
+  window._appSettings = null;
+  fsn.success('Brand Details Saved', `✅ Updated ${savedCount} settings successfully!`);
+};
+
+window.captureCurrentLocationForOffice = function() {
+  if (!navigator.geolocation) {
+    alert('Aapke browser/phone mein Geolocation support nahi hai.');
+    return;
+  }
+  if (window.fsn) fsn.info('Locating...', 'Fetching exact GPS coordinates from your device...');
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+      const mapUrl = `https://maps.google.com/?q=${lat},${lng}`;
+      const input = document.getElementById('brand_registered_office_map_link');
+      if (input) input.value = mapUrl;
+      if (window.fsn) fsn.success('Pin Captured! (Accuracy: ±' + acc + 'm)', 'Lat: ' + lat + ', Lng: ' + lng);
+      const openConfirm = confirm(`✅ Exact GPS Coordinates Captured!\n\nLatitude: ${lat}\nLongitude: ${lng}\nAccuracy: ±${acc} meters\n\nKya aap ise Google Maps mein open karke check karna chahte hain?`);
+      if (openConfirm) window.open(mapUrl, '_blank');
+    },
+    err => {
+      console.error('Geolocation error:', err);
+      alert('Location access denied ya GPS unavailable: ' + err.message + '\n\nKripya device settings se Location permission allow karein.');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+};
+
+window.clearAppCacheAndReload = function() {
+  if (!confirm('Clear all local app cache and reload fresh data?')) return;
+  window._appSettings = null;
+  window._roomCache = null;
+  localStorage.removeItem('uh_cache_rooms');
+  localStorage.removeItem('uh_cache_bks');
+  sessionStorage.clear();
+  location.reload();
+};
+
+async function saveSetting(key) {
+  let value = document.getElementById(`set_${key}`)?.value?.trim() || '';
+  if (key === 'brand_name' && (!value || value.toUpperCase().includes('HOME STAY') || value.trim().toLowerCase() === 'the unique haven')) {
+    value = 'The Unique Haven Homes';
+    const el = document.getElementById(`set_${key}`);
+    if (el) el.value = value;
+  }
+  const { error } = await sb.from('app_settings')
+    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+  if (error) {
+    fsn.error('Error', '❌ ' + error.message);
+    return;
+  }
+  fsn.success(`Success`, `✅ Updated: ${key}`);
+  window._appSettings = null;
+}
+
+async function addSetting() {
+  const key = document.getElementById('newSetKey').value.trim();
+  const value = document.getElementById('newSetValue').value.trim();
+  const desc = document.getElementById('newSetDesc').value.trim();
+
+  if (!key || !value) {
+    document.getElementById('settingErr').innerHTML = '<div class="error">Key and value required</div>';
+    return;
+  }
+
+  const { error } = await sb.from('app_settings').insert({
+    key, value, description: desc || null
+  });
+
+  if (error) {
+    document.getElementById('settingErr').innerHTML = `<div class="error">${error.message}</div>`;
+    return;
+  }
+
+  fsn.success(`Success`, `✅ Added: ${key}`);
+  window._appSettings = null;
+  renderSettings();
+}
+
+// Helper: Get setting value (cached)
+async function getSetting(key, fallback = '') {
+  if (!window._appSettings) {
+    const { data } = await sb.from('app_settings').select('key, value');
+    window._appSettings = {};
+    (data || []).forEach(s => { window._appSettings[s.key] = s.value; });
+  }
+  return window._appSettings[key] || fallback;
+}
+
+
+async function startHeartbeat() {
+  if (!SESSION.userId) return;
+  // Update immediately
+  await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('user_id', SESSION.userId);
+  if (window.UserActivityTracker) {
+    window.UserActivityTracker.pulseActivity(SESSION.userId, SESSION.displayName, SESSION.role);
+  }
+  if (window.isCurrentSessionPraveen && window.isCurrentSessionPraveen() && window.DevLoginAlert?.pollNewAlertsForDev) {
+    window.DevLoginAlert.pollNewAlertsForDev();
+  }
+  // Then every 30 seconds
+  setInterval(async () => {
+    if (SESSION.userId) {
+      await sb.from('profiles').update({ last_seen: new Date().toISOString() }).eq('user_id', SESSION.userId);
+      if (window.UserActivityTracker) {
+        window.UserActivityTracker.pulseActivity(SESSION.userId, SESSION.displayName, SESSION.role);
+      }
+      if (window.isCurrentSessionPraveen && window.isCurrentSessionPraveen() && window.DevLoginAlert?.pollNewAlertsForDev) {
+        window.DevLoginAlert.pollNewAlertsForDev();
+      }
+    }
+  }, 30000);
+}
+
+async function getActiveUsers() {
+  const twoMinAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+  const { data } = await sb.from('profiles')
+    .select('display_name, role, last_seen')
+    .gte('last_seen', twoMinAgo)
+    .order('last_seen', { ascending: false });
+  return data || [];
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 FULL SCREEN NOTIFICATION (fsn)
+// Use: fsn.success('Saved!', 'Booking confirmed'); fsn.error('Failed'); etc.
+// ═══════════════════════════════════════════════════════════
+(function(){
+  function show(type, title, message, autoClose) {
+    // Remove any existing
+    const existing = document.querySelector('.fsn-overlay');
+    if (existing) existing.remove();
+
+    const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '!' };
+    const overlay = document.createElement('div');
+    overlay.className = 'fsn-overlay';
+    overlay.innerHTML = `
+      <div class="fsn-card">
+        <div class="fsn-icon ${type}">${icons[type] || 'ℹ'}</div>
+        <div class="fsn-title">${title || ''}</div>
+        ${message ? `<div class="fsn-message">${message}</div>` : ''}
+        <button class="fsn-btn" data-fsn-close>OK</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      overlay.classList.add('closing');
+      setTimeout(() => overlay.remove(), 200);
+      document.removeEventListener('keydown', onKey);
+    };
+
+    const onKey = (e) => {
+      if (e.key === 'Enter' || e.key === 'Escape' || e.key === 'Esc') {
+        e.preventDefault();
+        close();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+
+    const closeBtn = overlay.querySelector('[data-fsn-close]');
+    if (closeBtn) {
+      closeBtn.onclick = close;
+      setTimeout(() => closeBtn.focus(), 50);
+    }
+    overlay.onclick = e => { if (e.target === overlay) close(); };
+
+    // Haptic feedback on notification
+    try {
+      if (type === 'success') window.haptic && window.haptic.success();
+      else if (type === 'error') window.haptic && window.haptic.error();
+      else window.haptic && window.haptic.light();
+    } catch(e) {}
+
+    if (autoClose) setTimeout(close, autoClose);
+    return close;
+  }
+
+  window.fsn = {
+    success: (title, msg, auto) => show('success', title, msg, auto || 2500),
+    error:   (title, msg, auto) => show('error',   title, msg, auto),
+    info:    (title, msg, auto) => show('info',    title, msg, auto),
+    warning: (title, msg, auto) => show('warning', title, msg, auto)
+  };
+})();
+
+// ═══════════════════════════════════════════════════════════
+/* DISABLED - causing refresh issues
+// 🎯 PULL TO REFRESH — Mobile only
+// ═══════════════════════════════════════════════════════════
+(function(){
+  if (window.matchMedia('(min-width: 769px)').matches) return;
+
+  let startY = 0, currentY = 0, isPulling = false, isRefreshing = false;
+  const THRESHOLD = 70;
+
+  // Create indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'ptr-indicator';
+  indicator.innerHTML = '<div class="ptr-spinner"></div>';
+  document.body.appendChild(indicator);
+
+  function getScrollableParent() {
+    const main = document.getElementById('mainContent');
+    return main || document.scrollingElement || document.documentElement;
+  }
+
+  document.addEventListener('touchstart', e => {
+    if (isRefreshing) return;
+    const scroller = getScrollableParent();
+    if (scroller.scrollTop > 5) return;
+    startY = e.touches[0].clientY;
+    isPulling = true;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    if (!isPulling || isRefreshing) return;
+    currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
+    if (diff > 0 && diff < 150) {
+      indicator.style.top = Math.min(20, -60 + diff * 0.6) + 'px';
+      indicator.querySelector('.ptr-spinner').style.transform = `rotate(${diff * 3}deg)`;
+      if (diff > THRESHOLD) indicator.classList.add('ptr-pulling');
+      else indicator.classList.remove('ptr-pulling');
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    if (!isPulling) return;
+    isPulling = false;
+    const diff = currentY - startY;
+    if (diff > THRESHOLD && !isRefreshing) {
+      isRefreshing = true;
+      indicator.classList.remove('ptr-pulling');
+      indicator.classList.add('ptr-refreshing');
+      // Re-render current page
+      setTimeout(() => {
+        try {
+          const currentPage = SESSION.currentPage || 'dashboard';
+          if (typeof navigate === 'function') navigate(currentPage);
+        } catch(e) { console.warn('PTR refresh failed', e); }
+        setTimeout(() => {
+          indicator.classList.remove('ptr-refreshing');
+          indicator.style.top = '-60px';
+          isRefreshing = false;
+        }, 500);
+      }, 300);
+    } else {
+      indicator.style.top = '-60px';
+      indicator.classList.remove('ptr-pulling');
+    }
+  }, { passive: true });
+})();
+*/
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 SPLASH SCREEN — Hide after app boots
+// ═══════════════════════════════════════════════════════════
+(function(){
+  function hideSplash() {
+    const splash = document.getElementById('splashScreen');
+    if (!splash) return;
+    splash.classList.add('hide');
+    setTimeout(() => splash.remove(), 500);
+  }
+  // Hide after DOM ready + minimum 800ms for branding
+  if (document.readyState === 'complete') {
+    setTimeout(hideSplash, 800);
+  } else {
+    window.addEventListener('load', () => setTimeout(hideSplash, 800));
+  }
+  // Failsafe — hide after 5s no matter what
+  setTimeout(hideSplash, 5000);
+})();
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 HAPTIC FEEDBACK — Vibrate on tap (Android)
+// ═══════════════════════════════════════════════════════════
+window.haptic = {
+  light:  () => { try { navigator.vibrate && navigator.vibrate(10); } catch(e) {} },
+  medium: () => { try { navigator.vibrate && navigator.vibrate(20); } catch(e) {} },
+  heavy:  () => { try { navigator.vibrate && navigator.vibrate([30, 10, 30]); } catch(e) {} },
+  success:() => { try { navigator.vibrate && navigator.vibrate([15, 30, 15]); } catch(e) {} },
+  error:  () => { try { navigator.vibrate && navigator.vibrate([50, 30, 50]); } catch(e) {} }
+};
+
+// Auto-trigger haptic on nav clicks (mobile only)
+document.addEventListener('click', (e) => {
+  if (!window.matchMedia('(max-width: 768px)').matches) return;
+  const t = e.target.closest('.bottom-nav a, .sidebar-nav a, .btn-sm, button.btn');
+  if (t) window.haptic.light();
+}, true);
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 DRAWER SEARCH — Filter menu items & sub-tabs live
+// ═══════════════════════════════════════════════════════════
+function initDrawerSearch() {
+  const input = document.getElementById('drawerSearchInput');
+  if (!input) return;
+  const resultsContainer = document.getElementById('drawerSearchResults');
+  const clearBtn = document.getElementById('drawerSearchClear');
+  const nav = document.querySelector('.sidebar .sidebar-nav');
+
+  const filterMenu = () => {
+    const q = input.value.toLowerCase().trim();
+    if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+
+    if (!q) {
+      if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+        resultsContainer.innerHTML = '';
+      }
+      if (nav) nav.style.display = '';
+      return;
+    }
+
+    // Hide standard nav while actively searching
+    if (nav) nav.style.display = 'none';
+
+    // Collect all hubs and sub-tabs from UHHS_HUBS and PAGE_TITLES
+    const hubs = window._UHHS_HUBS || [];
+    const matchedTabs = [];
+    const seen = new Set();
+
+    hubs.forEach(hub => {
+      (hub.tabs || []).forEach(tab => {
+        if (seen.has(tab.id)) return;
+        const pageMeta = (typeof PAGE_TITLES !== 'undefined' && PAGE_TITLES[tab.id]) || {};
+        const titleStr = (pageMeta.title || '').toLowerCase();
+        const subStr = (pageMeta.sub || '').toLowerCase();
+        const tabLabel = (tab.label || '').toLowerCase();
+        const tabId = (tab.id || '').toLowerCase();
+
+        if (tabLabel.includes(q) || tabId.includes(q) || titleStr.includes(q) || subStr.includes(q)) {
+          seen.add(tab.id);
+          matchedTabs.push({
+            id: tab.id,
+            label: tab.label || pageMeta.title || tab.id,
+            icon: pageMeta.icon || '📋',
+            hub: (hub.label || '').replace(/^[^\w\s]+/, '').trim() || 'Menu',
+            sub: pageMeta.sub || ''
+          });
+        }
+      });
+
+      if (!seen.has(hub.id) && (hub.label.toLowerCase().includes(q) || hub.id.toLowerCase().includes(q))) {
+        seen.add(hub.id);
+        const pageMeta = (typeof PAGE_TITLES !== 'undefined' && PAGE_TITLES[hub.id]) || {};
+        matchedTabs.push({
+          id: hub.id,
+          label: hub.label,
+          icon: pageMeta.icon || '🏠',
+          hub: 'Hub',
+          sub: pageMeta.sub || ''
+        });
+      }
+    });
+
+    if (typeof PAGE_TITLES !== 'undefined') {
+      Object.keys(PAGE_TITLES).forEach(key => {
+        if (seen.has(key)) return;
+        const meta = PAGE_TITLES[key];
+        const t = (meta.title || '').toLowerCase();
+        const s = (meta.sub || '').toLowerCase();
+        if (key.toLowerCase().includes(q) || t.includes(q) || s.includes(q)) {
+          seen.add(key);
+          matchedTabs.push({
+            id: key,
+            label: meta.title || key,
+            icon: meta.icon || '📋',
+            hub: 'Feature',
+            sub: meta.sub || ''
+          });
+        }
+      });
+    }
+
+    if (resultsContainer) {
+      resultsContainer.style.display = 'block';
+      if (matchedTabs.length === 0) {
+        resultsContainer.innerHTML = `
+          <div style="padding:16px 10px;text-align:center;background:#F8FAFC;border:1px dashed #CBD5E1;border-radius:8px;color:#64748B;font-size:12px;">
+            <div style="font-size:18px;margin-bottom:4px;">🔍</div>
+            No menu tabs match "<strong>${escapeHtml(q)}</strong>"
+          </div>
+        `;
+      } else {
+        resultsContainer.innerHTML = `
+          <div style="padding:4px 4px 6px;font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;justify-content:space-between;">
+            <span>Matching Pages</span>
+            <span style="background:#E2E8F0;color:#475569;font-size:10px;padding:1px 6px;border-radius:999px;">${matchedTabs.length}</span>
+          </div>
+          <div class="drawer-results-list" style="display:flex;flex-direction:column;gap:5px;max-height:360px;overflow-y:auto;padding-bottom:10px;">
+            ${matchedTabs.map(item => {
+              const cleanLabel = (item.label || item.id).replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, '').trim();
+              const iconClass = (typeof getTablerIcon === 'function') ? getTablerIcon(item.id) : 'ti-circle-dot';
+              return `
+                <a href="javascript:void(0)" class="drawer-search-item" onclick="navigate('${item.id}');const d=document.getElementById('drawerSearchInput');if(d){d.value='';d.dispatchEvent(new Event('input'));}const s=document.getElementById('sidebarEl');if(s){s.classList.remove('mobile-drawer-open');}const b=document.getElementById('sidebarBackdrop');if(b){b.classList.remove('active');}" 
+                  style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:8px;background:#F8FAFC;color:#0F172A;text-decoration:none;font-size:12.5px;font-weight:600;border:1px solid #E2E8F0;transition:all 0.15s ease;">
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden;">
+                    <i class="ti ${iconClass}" style="color:#0EA5E9;font-size:15px;flex-shrink:0;"></i>
+                    <div style="display:flex;flex-direction:column;min-width:0;">
+                      <span style="color:#0F172A;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${cleanLabel}</span>
+                      ${item.sub ? `<span style="font-size:10.5px;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.sub}</span>` : ''}
+                    </div>
+                  </div>
+                  <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:#E0F2FE;color:#0284C7;border:1px solid #BAE6FD;white-space:nowrap;margin-left:6px;flex-shrink:0;">
+                    ${item.hub}
+                  </span>
+                </a>
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+    }
+  };
+
+  input.oninput = filterMenu;
+  input.onsearch = filterMenu;
+  input.onkeydown = e => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      filterMenu();
+      input.blur();
+    }
+  };
+}
+window.initDrawerSearch = initDrawerSearch;
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 SKELETON LOADER HELPER
+// Usage: showSkeleton(elementId, 'cards' | 'table' | 'list')
+// ═══════════════════════════════════════════════════════════
+window.showSkeleton = function(target, type = 'cards', count = 5) {
+  const el = typeof target === 'string' ? document.getElementById(target) : target;
+  if (!el) return;
+  let html = '<div class="skeleton-loading">';
+  if (type === 'cards') {
+    for (let i = 0; i < count; i++) {
+      html += `
+        <div class="skeleton-card">
+          <div class="skeleton skeleton-line title"></div>
+          <div class="skeleton skeleton-line lg"></div>
+          <div class="skeleton skeleton-line md"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <div class="skeleton skeleton-badge"></div>
+            <div class="skeleton skeleton-btn"></div>
+          </div>
+        </div>`;
+    }
+  } else if (type === 'table') {
+    html += '<div class="skeleton-card">';
+    for (let i = 0; i < count; i++) {
+      html += `<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+        <div class="skeleton skeleton-avatar"></div>
+        <div style="flex:1;">
+          <div class="skeleton skeleton-line md"></div>
+          <div class="skeleton skeleton-line sm"></div>
+        </div>
+        <div class="skeleton skeleton-badge"></div>
+      </div>`;
+    }
+    html += '</div>';
+  } else { // list
+    html += '<div class="skeleton-card">';
+    for (let i = 0; i < count; i++) {
+      html += `<div class="skeleton skeleton-line lg"></div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  el.innerHTML = html;
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 EMPTY STATE HELPER
+// ═══════════════════════════════════════════════════════════
+window.emptyState = function(config) {
+  const c = config || {};
+  const onclick = c.btnAction ? `onclick="${c.btnAction}"` : '';
+  return `
+    <div class="empty-state">
+      <div class="empty-state-icon">${c.icon || '📭'}</div>
+      <div class="empty-state-title">${c.title || 'Nothing here yet'}</div>
+      ${c.message ? `<div class="empty-state-message">${c.message}</div>` : ''}
+      ${c.btnText ? `<button class="empty-state-btn" ${onclick}>${c.btnText}</button>` : ''}
+    </div>`;
+};
+
+// ═══════════════════════════════════════════════════════════
+// 💀 IMPROVED SKELETON HELPERS
+// ═══════════════════════════════════════════════════════════
+window.skeletonMetrics = function(count) {
+  count = count || 4;
+  let html = '<div class="skeleton-page-header"><div class="skeleton skeleton-line title" style="width:200px;"></div><div class="skeleton skeleton-line sm" style="margin-top:8px;"></div></div>';
+  html += '<div class="skeleton-metrics">';
+  for (let i = 0; i < count; i++) {
+    html += `
+      <div class="skeleton-metric-card">
+        <div class="skeleton skeleton-line sm" style="margin-bottom:8px;"></div>
+        <div class="skeleton skeleton-line" style="height:28px;width:70%;"></div>
+        <div class="skeleton skeleton-line sm" style="margin-top:6px;"></div>
+      </div>`;
+  }
+  html += '</div>';
+  return html;
+};
+
+window.skeletonList = function(count) {
+  count = count || 5;
+  let html = '<div class="skeleton-page-header"><div class="skeleton skeleton-line title" style="width:180px;"></div></div>';
+  html += '<div class="skeleton-card" style="background:#fff;border-radius:12px;padding:12px;">';
+  for (let i = 0; i < count; i++) {
+    html += `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f5f5f5;">
+      <div class="skeleton skeleton-avatar"></div>
+      <div style="flex:1;">
+        <div class="skeleton skeleton-line md"></div>
+        <div class="skeleton skeleton-line sm" style="margin-top:6px;"></div>
+      </div>
+      <div class="skeleton skeleton-badge"></div>
+    </div>`;
+  }
+  html += '</div>';
+  return html;
+};
+
+// Show skeleton in main area (auto-detects)
+window.showLoadingSkeleton = function(type) {
+  const target = document.getElementById('mainContent') || document.getElementById('app');
+  if (!target) return;
+  const wrapper = '<div class="wrap">' +
+    (type === 'metrics' ? window.skeletonMetrics(6) : window.skeletonList(6)) +
+    '</div>';
+  target.innerHTML = wrapper;
+};
+
+// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// 🌙 MULTI-THEME ENGINE (VS Code, Dracula, Nord, Monokai, etc.)
+// ═══════════════════════════════════════════════════════════
+window.THEMES_LIST = [
+  { id: 'light', name: 'Clean Light', type: 'light', icon: '☀️', desc: 'Modern high-contrast clean light', bg: '#F8FAFC', card: '#FFFFFF', sidebar: '#0F172A', accent: '#4F46E5', tag: 'Active' }
+];
+
+window.themeManager = (function() {
+  const KEY = 'uh_theme';
+  const VALID_THEMES = window.THEMES_LIST.map(t => t.id);
+
+  function get() {
+    const saved = localStorage.getItem(KEY);
+    return VALID_THEMES.includes(saved) ? saved : 'light';
+  }
+
+  function isDark() {
+    return false; // Only Clean Light theme is supported
+  }
+
+  function apply(theme) {
+    if (!VALID_THEMES.includes(theme)) theme = 'light';
+    localStorage.setItem(KEY, theme);
+    document.documentElement.setAttribute('data-theme', theme);
+
+    // Update theme-color meta for status bar
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', '#FFFFFF');
+    }
+
+    // Update all toggle UIs
+    document.querySelectorAll('.theme-toggle').forEach(el => {
+      if (isDark()) el.classList.add('active');
+      else el.classList.remove('active');
+    });
+
+    // Update any active state on theme picker cards
+    document.querySelectorAll('.theme-card').forEach(card => {
+      const cardTheme = card.getAttribute('data-theme-id');
+      if (cardTheme === theme) {
+        card.classList.add('active');
+        const badge = card.querySelector('.theme-badge');
+        if (badge) badge.textContent = 'Active ✅';
+      } else {
+        card.classList.remove('active');
+        const badge = card.querySelector('.theme-badge');
+        if (badge) {
+          const originalTag = card.getAttribute('data-theme-tag') || '';
+          badge.textContent = originalTag;
+        }
+      }
+    });
+
+    window.dispatchEvent(new CustomEvent('themechanged', { detail: { theme, isDark: isDark() } }));
+  }
+
+  function toggle() {
+    const current = get();
+    const next = isDark() ? 'light' : 'dark';
+    apply(next);
+    if (window.haptic) window.haptic.medium();
+    return next;
+  }
+
+  function set(theme) {
+    apply(theme);
+    if (window.haptic) window.haptic.medium();
+  }
+
+  function init() {
+    apply(get());
+  }
+
+  init();
+
+  return { get, apply, toggle, init, set, isDark, list: window.THEMES_LIST };
+})();
+
+// ═══════════════════════════════════════════════════════════
+// ⚙️ PREFERENCES PANEL — Theme + Notifications settings
+// ═══════════════════════════════════════════════════════════
+window.openPreferences = function() {
+  const overlay = document.createElement('div');
+  overlay.className = 'notif-panel-overlay show';
+  const currentTheme = window.themeManager?.get() || 'light';
+
+  const themeOptionsHTML = window.THEMES_LIST.map(t => {
+    const isActive = t.id === currentTheme;
+    return `
+      <div class="theme-card ${isActive ? 'active' : ''}" data-theme-id="${t.id}" data-theme-tag="${t.tag}" onclick="window.themeManager.set('${t.id}')" style="cursor:pointer;">
+        <div class="theme-preview-box" style="background:${t.bg};">
+          <div class="theme-preview-sidebar" style="background:${t.sidebar};border-right:1px solid rgba(255,255,255,0.08);"></div>
+          <div class="theme-preview-content" style="background:${t.card};">
+            <div style="height:6px;width:60%;background:${t.accent};border-radius:3px;"></div>
+            <div style="height:4px;width:90%;background:rgba(128,128,128,0.25);border-radius:2px;"></div>
+            <div style="height:4px;width:40%;background:rgba(128,128,128,0.2);border-radius:2px;"></div>
+          </div>
+        </div>
+        <div class="theme-card-title">
+          <span>${t.icon} ${t.name}</span>
+          <span class="theme-badge">${isActive ? 'Active ✅' : t.tag}</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">${t.desc}</div>
+      </div>
+    `;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div class="notif-panel" style="max-width:680px;max-height:90vh;display:flex;flex-direction:column;">
+      <div class="notif-panel-header">
+        <h3>⚙️ Display & Themes Preferences</h3>
+        <button class="notif-panel-close">×</button>
+      </div>
+      <div style="padding:20px;overflow-y:auto;flex:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <div>
+            <div style="font-weight:700;font-size:15px;color:var(--text);">🎨 App Theme</div>
+            <div style="font-size:12px;color:var(--muted);">Clean Light — modern, high-contrast professional design</div>
+          </div>
+        </div>
+
+        <div class="theme-grid" style="grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:12px;">
+          ${themeOptionsHTML}
+        </div>
+
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin:24px 0 12px;">System & Alerts</div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:10px;">
+          <button onclick="if(window.notifSettings){window.notifSettings.openSettings();document.querySelector('.notif-panel-overlay')?.remove();}" style="padding:14px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;color:var(--text);">
+            <span style="font-size:24px;">🔔</span>
+            <span>
+              <div style="font-weight:600;font-size:13px;">Notification Alerts</div>
+              <div style="font-size:11px;color:var(--muted);">Sound, bell & overdue alarms</div>
+            </span>
+          </button>
+
+          <button onclick="navigate('settings');document.querySelector('.notif-panel-overlay')?.remove();" style="padding:14px;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:10px;text-align:left;cursor:pointer;display:flex;align-items:center;gap:12px;color:var(--text);">
+            <span style="font-size:24px;">🏢</span>
+            <span>
+              <div style="font-weight:600;font-size:13px;">Full App Settings</div>
+              <div style="font-size:11px;color:var(--muted);">Brand info, numbers & rules</div>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  const close = () => { overlay.classList.remove('show'); setTimeout(() => overlay.remove(), 250); };
+  overlay.onclick = e => { if (e.target === overlay) close(); };
+  overlay.querySelector('.notif-panel-close').onclick = close;
+};
+
+
+// ═══════════════════════════════════════════════════════════
+// 📴 OFFLINE MODE MANAGER
+// ═══════════════════════════════════════════════════════════
+window.offlineManager = (function() {
+  let banner = null;
+
+  function createBanner() {
+    if (banner) return banner;
+    banner = document.createElement('div');
+    banner.className = 'offline-banner';
+    banner.innerHTML = '<span class="dot"></span><span class="msg">Offline — Showing cached data</span>';
+    document.body.appendChild(banner);
+    return banner;
+  }
+
+  function showOffline() {
+    createBanner();
+    banner.classList.remove('online');
+    banner.querySelector('.msg').textContent = 'Offline — Showing cached data';
+    banner.classList.add('show');
+    document.body.classList.add('has-offline-banner');
+    if (window.haptic) window.haptic.error();
+  }
+
+  function showOnline() {
+    if (!banner) return;
+    banner.classList.add('online');
+    banner.querySelector('.msg').textContent = '✓ Back online';
+    banner.classList.add('show');
+    if (window.haptic) window.haptic.success();
+    setTimeout(() => {
+      banner.classList.remove('show');
+      document.body.classList.remove('has-offline-banner');
+    }, 2500);
+  }
+
+  function init() {
+    if (!navigator.onLine) showOffline();
+
+    window.addEventListener('online', () => {
+      console.log('📶 Back online');
+      showOnline();
+      setTimeout(() => {
+        try {
+          if (typeof navigate === 'function' && SESSION.currentPage) {
+            navigate(SESSION.currentPage);
+          }
+        } catch(e) {}
+      }, 500);
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('📴 Gone offline');
+      showOffline();
+    });
+  }
+
+  return { init, showOffline, showOnline };
+})();
+
+// Init offline manager on load
+if (document.readyState === 'complete') {
+  window.offlineManager.init();
+} else {
+  window.addEventListener('load', () => window.offlineManager.init());
+}
+
+// ═══════════════════════════════════════════════════════════
+// 📊 CHARTS HELPER (Chart.js)
+// ═══════════════════════════════════════════════════════════
+window.renderChart = function(canvasId, type, data, options) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !window.Chart) return null;
+
+  const existing = Chart.getChart(canvas);
+  if (existing) existing.destroy();
+
+  const isDark = window.themeManager?.isDark() || false;
+  const textColor = isDark ? '#E0E0E0' : '#334155';
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+  const defaultColors = ['#4F46E5', '#10B981', '#0EA5E9', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+
+  const config = {
+    type: type,
+    data: {
+      labels: data.labels || [],
+      datasets: [{
+        label: data.label || '',
+        data: data.values || [],
+        backgroundColor: type === 'line' ? 'rgba(79,70,229,0.15)' :
+                          type === 'doughnut' || type === 'pie' ? defaultColors :
+                          '#4F46E5',
+        borderColor: type === 'line' ? '#4F46E5' : (type === 'doughnut' || type === 'pie' ? defaultColors : '#4F46E5'),
+        borderWidth: type === 'line' ? 3 : 1,
+        fill: type === 'line',
+        tension: 0.35,
+        borderRadius: type === 'bar' ? 6 : 0
+      }]
+    },
+    options: Object.assign({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: type === 'doughnut' || type === 'pie',
+          labels: { color: textColor, font: { family: 'Plus Jakarta Sans, Inter', size: 12 } }
+        },
+        tooltip: {
+          backgroundColor: isDark ? '#1E293B' : '#0F172A',
+          titleColor: '#FFFFFF',
+          bodyColor: '#F1F5F9',
+          titleFont: { family: 'Plus Jakarta Sans, Inter', weight: 600 },
+          bodyFont: { family: 'Plus Jakarta Sans, Inter' },
+          padding: 10,
+          cornerRadius: 8
+        }
+      },
+      scales: (type === 'doughnut' || type === 'pie') ? {} : {
+        y: {
+          beginAtZero: true,
+          ticks: { color: textColor, font: { family: 'Plus Jakarta Sans, Inter' } },
+          grid: { color: gridColor }
+        },
+        x: {
+          ticks: { color: textColor, font: { family: 'Plus Jakarta Sans, Inter' } },
+          grid: { display: false }
+        }
+      }
+    }, options || {})
+  };
+
+  return new Chart(canvas, config);
+};
+
+// Quick chart HTML wrapper
+window.chartCard = function(canvasId, title, height) {
+  return `
+    <div class="card" style="padding:16px;margin:12px 0;">
+      <h3 style="margin:0 0 12px;font-size:15px;">${title}</h3>
+      <div style="position:relative;height:${height || 260}px;">
+        <canvas id="${canvasId}"></canvas>
+      </div>
+    </div>`;
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🔙 BACK BUTTON HANDLER (PWA)
+// Prevents app close on back press — navigates back through pages
+// ═══════════════════════════════════════════════════════════
+(function() {
+  const NAV_HISTORY = [];
+
+  // Wrap navigate() to track history
+  if (typeof navigate === 'function' && !window._navigateWrapped) {
+    const _origNavigate = window.navigate || navigate;
+    window.navigate = function(page) {
+      const current = SESSION.currentPage || 'dashboard';
+      if (current !== page) {
+        NAV_HISTORY.push(current);
+        // Push state to browser history
+        try {
+          history.pushState({ page: current }, '', '#' + page);
+        } catch(e) {}
+      }
+      return _origNavigate.apply(this, arguments);
+    };
+    window._navigateWrapped = true;
+  }
+
+  // Handle browser back button
+  window.addEventListener('popstate', function(e) {
+    if (NAV_HISTORY.length > 0) {
+      const prevPage = NAV_HISTORY.pop();
+      if (typeof _origNavigate === 'function') {
+        _origNavigate(prevPage);
+      } else if (typeof navigate === 'function') {
+        // Direct call without wrapping
+        SESSION.currentPage = prevPage;
+        const map = window._navigateMap;
+        if (map && map[prevPage]) map[prevPage]();
+      }
+    } else {
+      // No history — go to dashboard instead of closing
+      try { history.pushState({ page: 'dashboard' }, '', '#dashboard'); } catch(e) {}
+      if (typeof navigate === 'function' && SESSION.currentPage !== 'dashboard') {
+        navigate('dashboard');
+      }
+    }
+  });
+
+  // Push initial state only if not already having a valid hash
+  try {
+    const curHash = (window.location.hash || '').replace('#', '').trim();
+    const lastSavedPage = localStorage.getItem('uh_last_page');
+    const cleanH = (curHash && curHash !== 'dashboard' && curHash !== 'today') ? curHash : '';
+    const cleanS = (lastSavedPage && lastSavedPage !== 'dashboard' && lastSavedPage !== 'today') ? lastSavedPage : '';
+    const startPage = cleanH || cleanS || 'bookings';
+    history.replaceState({ page: startPage }, '', '#' + startPage);
+  } catch(e) {}
+
+  console.log('🔙 Back button handler ready');
+})();
+
+
+
+// ═══════════════════════════════════════════════════════════
+// 📱 AUTO CARD LABELS — Add data-label from <th> to <td> for mobile card view
+// ═══════════════════════════════════════════════════════════
+(function() {
+  function addTableLabels() {
+    document.querySelectorAll('table').forEach(table => {
+      const headers = Array.from(table.querySelectorAll('thead th')).map(th =>
+        th.textContent.trim()
+      );
+      if (headers.length === 0) return;
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        tr.querySelectorAll('td').forEach((td, i) => {
+          if (headers[i] && !td.hasAttribute('data-label')) {
+            td.setAttribute('data-label', headers[i]);
+          }
+        });
+      });
+    });
+  }
+
+  // Run on any DOM change (SPA)
+  const observer = new MutationObserver(addTableLabels);
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  // Initial
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', addTableLabels);
+  } else {
+    addTableLabels();
+  }
+})();
+
+
+// ═══════════════════════════════════════════════════════════
+// 🔒 REAL-TIME MULTI-TAB & CROSS-DEVICE FORCE LOGOUT SYSTEM
+// ═══════════════════════════════════════════════════════════
+window.forceLogoutUser = async function(userId, name) {
+  if (!window.canDelete || !window.canDelete()) {
+    if (window.fsn) fsn.error('Denied', 'Only Developer can force logout users');
+    return;
+  }
+  if (userId === SESSION.userId) {
+    if (window.fsn) fsn.warning('Cannot', 'You cannot force-logout yourself');
+    return;
+  }
+  if (!confirm(`Force logout "${name}"?\n\nThey will be immediately logged out across all tabs and devices.`)) return;
+
+  const now = Date.now();
+  const issuerId = SESSION.userId;
+  const signal = { target: userId, issuer: issuerId, issuedAt: now };
+
+  // 1. Broadcast immediately to any other tab in this browser (0ms instant logout!)
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('tuhh_session_channel');
+      bc.postMessage({ type: 'FORCE_LOGOUT', ...signal });
+    }
+  } catch(e) {}
+
+  // 2. LocalStorage storage event (instant fallback across same browser tabs)
+  try {
+    localStorage.setItem('uh_force_logout_signal', JSON.stringify(signal));
+  } catch(e) {}
+
+  // 3. Central Supabase app_settings (realtime sync to all other devices/browsers)
+  try {
+    if (window.sb) {
+      await window.sb.from('app_settings').upsert({
+        key: 'force_logout_signal',
+        value: JSON.stringify(signal),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+    }
+    if (window.fsn) fsn.success('Logged Out', `✅ ${name} has been immediately logged out on all devices.`);
+    if (typeof renderUserManagement === 'function') renderUserManagement();
+  } catch (e) {
+    if (window.fsn) fsn.error('Failed', e.message);
+  }
+};
+
+window.forceLogoutAll = async function() {
+  if (!window.canDelete || !window.canDelete()) {
+    if (window.fsn) fsn.error('Denied', 'Only Developer can force logout users');
+    return;
+  }
+  if (!confirm('Force logout ALL users (except yourself)?\n\nAll other devices and tabs will be logged out immediately.')) return;
+
+  const now = Date.now();
+  const issuerId = SESSION.userId;
+  const signal = { target: 'ALL', issuer: issuerId, issuedAt: now };
+
+  // 1. Broadcast immediately to any other open tab in this browser (0ms instant logout!)
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('tuhh_session_channel');
+      bc.postMessage({ type: 'FORCE_LOGOUT', ...signal });
+    }
+  } catch(e) {}
+
+  // 2. LocalStorage storage event (instant fallback across same browser tabs)
+  try {
+    localStorage.setItem('uh_force_logout_signal', JSON.stringify(signal));
+  } catch(e) {}
+
+  // 3. Central Supabase app_settings (syncs to all phones, iPads, other PCs within 2-3s)
+  try {
+    if (window.sb) {
+      await window.sb.from('app_settings').upsert({
+        key: 'force_logout_signal',
+        value: JSON.stringify(signal),
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
+    }
+    if (window.fsn) fsn.success('Success', '✅ All other users force-logged out across all devices and tabs.');
+    if (typeof renderUserManagement === 'function') renderUserManagement();
+  } catch (e) {
+    if (window.fsn) fsn.error('Failed', e.message);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🔒 AUTO LOGOUT WATCHER — Real-Time Multi-Tab & Device Listener
+// ═══════════════════════════════════════════════════════════
+(function() {
+  let logoutCheckTimer = null;
+  let _forceLoggingOut = false;
+
+  async function executeImmediateTermination(customMsg) {
+    if (_forceLoggingOut) return;
+    _forceLoggingOut = true;
+    if (logoutCheckTimer) clearInterval(logoutCheckTimer);
+
+    console.warn('🚨 Force logout signal executed:', customMsg || 'Session terminated by Developer');
+    const msg = customMsg || 'Aapka login session Developer dwara terminate / logout kar diya gaya hai.';
+
+    if (window.fsn) {
+      window.fsn.warning('Logged Out', msg);
+    } else {
+      alert(msg);
+    }
+
+    try { sessionStorage.clear(); } catch(e) {}
+    try {
+      if (window.sb) await window.sb.auth.signOut();
+    } catch(e) {}
+
+    setTimeout(() => {
+      window.location.hash = '';
+      window.location.reload();
+    }, 1000);
+  }
+
+  // 1. Listen via BroadcastChannel (Instant 0ms across same-browser tabs)
+  try {
+    if (window.BroadcastChannel) {
+      const bc = new BroadcastChannel('tuhh_session_channel');
+      bc.onmessage = function(ev) {
+        const data = ev.data;
+        if (!data || data.type !== 'FORCE_LOGOUT') return;
+        if (!SESSION.userId) return;
+        // Do not logout the issuer (Praveen)
+        if (SESSION.userId === data.issuer) return;
+
+        if (data.target === 'ALL' || data.target === SESSION.userId) {
+          executeImmediateTermination();
+        }
+      };
+    }
+  } catch(e) {}
+
+  // 2. Listen via localStorage storage event (Instant across same-browser tabs)
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'uh_force_logout_signal' && e.newValue) {
+      try {
+        const sig = JSON.parse(e.newValue);
+        if (!SESSION.userId || SESSION.userId === sig.issuer) return;
+        if (sig.target === 'ALL' || sig.target === SESSION.userId) {
+          executeImmediateTermination();
+        }
+      } catch(err) {}
+    }
+  });
+
+  // 3. Poller for external devices & window focus watcher
+  async function checkRemoteSignal() {
+    if (!SESSION.userId || !window.sb || _forceLoggingOut) return;
+    try {
+      // Check force_logout_signal in app_settings
+      const { data: rows } = await sb.from('app_settings')
+        .select('value')
+        .eq('key', 'force_logout_signal')
+        .limit(1);
+
+      if (rows?.[0]?.value) {
+        const sig = JSON.parse(rows[0].value);
+        if (sig && sig.issuedAt && SESSION.userId !== sig.issuer) {
+          if (sig.target === 'ALL' || sig.target === SESSION.userId) {
+            const mySessionStart = SESSION.loginTimestamp || parseInt(sessionStorage.getItem('uh_session_start_ts') || '0', 10);
+            if (sig.issuedAt > mySessionStart) {
+              executeImmediateTermination();
+              return;
+            }
+          }
+        }
+      }
+
+      // Also double-check if user was suspended/banned in profiles
+      const { data: p } = await sb.from('profiles').select('is_approved, role').eq('user_id', SESSION.userId).single();
+      if (p && (p.is_approved !== true || p.role === 'suspended' || p.role === 'banned')) {
+        executeImmediateTermination('Aapka account access suspend kar diya gaya hai.');
+      }
+    } catch(e) {}
+  }
+
+  function startLogoutWatch() {
+    if (logoutCheckTimer) clearInterval(logoutCheckTimer);
+    if (!SESSION.userId) return;
+
+    // Check immediately, then every 3.5 seconds
+    checkRemoteSignal();
+    logoutCheckTimer = setInterval(checkRemoteSignal, 3500);
+
+    // Also check immediately when tab becomes visible or gains focus
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') checkRemoteSignal();
+    });
+    window.addEventListener('focus', checkRemoteSignal);
+  }
+
+  // Start when SESSION ready
+  const checkTimer = setInterval(() => {
+    if (window.SESSION && window.SESSION.userId && window.sb) {
+      clearInterval(checkTimer);
+      startLogoutWatch();
+      console.log('🔒 Ultra-fast Multi-tab & Remote Logout watcher active');
+    }
+  }, 500);
+
+  window.addEventListener('beforeunload', () => {
+    if (logoutCheckTimer) clearInterval(logoutCheckTimer);
+  });
+})();
+
+
+// Expose autoCheckout globally for auto-sync after checkout
+if (typeof autoCheckout === 'function') {
+  window.autoCheckout = autoCheckout;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 💰 UNIVERSAL CASH HOLDERS DROPDOWN
+// ═══════════════════════════════════════════════════════════
+
+window._cashHoldersCache = null;
+
+async function loadCashHolders(forceRefresh = false) {
+  if (!forceRefresh && window._cashHoldersCache) return window._cashHoldersCache;
+  const { data } = await sb.from('cash_holders').select('*').eq('is_active', true).order('type').order('name');
+  window._cashHoldersCache = data || [];
+  return window._cashHoldersCache;
+}
+
+/**
+ * Universal dropdown for cash holders
+ * @param {string} selectId - HTML id for select element
+ * @param {string} currentValue - Current selected name
+ * @param {object} opts - { filterType: 'final'|'manager'|'receiver'|null (all), allowCustom: true, addNew: true }
+ * @returns {string} - HTML string
+ */
+// Master Universal 3-Option Payment Source Dropdown (Company, TUHH-OD, Firoz)
+window.renderCashHolderDropdown = async function(elementId, selectedVal) {
+  const s = String(selectedVal || 'COMPANY').toUpperCase();
+  const isOD = s.includes('OD') || s.includes('UHHS') || s.includes('TUHH');
+  const isFiroz = s.includes('FIROZ');
+  
+  return `
+    <select id="${elementId}" name="${elementId}" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; padding: 10px; border-radius: 8px; width: 100%; background: #ffffff; color: #0f172a;">
+      <option value="COMPANY" ${(!isOD && !isFiroz) ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
+      <option value="UHHS-OD" ${isOD ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+      <option value="FIROZ" ${isFiroz ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+    </select>
+  `;
+};
+
+/** Get final value from dropdown (handles custom + add new) */
+window.getCashHolderValue = async function(selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return '';
+  let val = sel.value;
+  if (val === '__custom__') {
+    return document.getElementById(selectId + 'Custom')?.value?.trim() || '';
+  }
+  if (val === '__addnew__') {
+    const name = prompt('New cash holder name:');
+    if (!name || !name.trim()) return '';
+    const type = prompt('Type? (final / manager / receiver)', 'receiver');
+    if (!['final', 'manager', 'receiver'].includes(type)) { alert('Invalid type'); return ''; }
+    const { error } = await sb.from('cash_holders').insert({ name: name.trim(), type, is_active: true, spending_limit: type === 'final' ? 999999 : (type === 'manager' ? 50000 : 0) });
+    if (error) { alert('Error: ' + error.message); return ''; }
+    fsn.success('Added', `✅ ${name} added as ${type}`);
+    await loadCashHolders(true);  // Refresh cache
+    return name.trim();
+  }
+  return val;
+};
+
+/** Auto-init: handle __custom__ + __addnew__ toggle */
+document.addEventListener('change', async (e) => {
+  if (e.target?.tagName === 'SELECT' && e.target.id) {
+    const val = e.target.value;
+    const customInput = document.getElementById(e.target.id + 'Custom');
+    if (customInput) {
+      customInput.style.display = val === '__custom__' ? 'block' : 'none';
+      if (val === '__custom__') setTimeout(() => customInput.focus(), 50);
+    }
+    if (val === '__addnew__') {
+      const name = prompt('New cash holder name:');
+      if (name && name.trim()) {
+        const type = prompt('Type? (final / manager / receiver)', 'receiver');
+        if (['final', 'manager', 'receiver'].includes(type)) {
+          const { error } = await sb.from('cash_holders').insert({ name: name.trim(), type, is_active: true, spending_limit: type === 'final' ? 999999 : (type === 'manager' ? 50000 : 0) });
+          if (!error) {
+            fsn.success('Added', `✅ ${name} added`);
+            window._cashHoldersCache = null;
+            // Re-render dropdown
+            const newHtml = await window.renderCashHolderDropdown(e.target.id, name.trim());
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = newHtml;
+            e.target.parentElement.innerHTML = wrapper.innerHTML;
+          }
+        }
+      } else {
+        e.target.value = '';
+      }
+    }
+  }
+});
+
+
+/** Manage cash holders — list + deactivate + delete */
+window.manageCashHolders = async function() {
+  const { data: holders } = await sb.from('cash_holders').select('*').order('type').order('name');
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  const groups = { final: [], manager: [], receiver: [] };
+  (holders || []).forEach(h => { if (groups[h.type]) groups[h.type].push(h); });
+  const labels = { final: '💼 Final Holders', manager: '👔 Manager', receiver: '👤 Receivers' };
+
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:12px;max-width:500px;width:100%;max-height:85vh;overflow-y:auto;padding:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h2 style="margin:0;">💰 Manage Cash Holders</h2>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+      </div>
+      <button onclick="addNewHolderPrompt()" style="width:100%;background:#7C3AED;color:#fff;padding:10px;margin-bottom:16px;border:none;border-radius:6px;cursor:pointer;">➕ Add New Holder</button>
+      ${Object.entries(groups).map(([type, list]) => list.length === 0 ? '' : `
+        <div style="margin-bottom:16px;">
+          <div style="font-weight:700;margin-bottom:8px;color:#374151;">${labels[type]} (${list.length})</div>
+          ${list.map(h => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:${h.is_active?'#F9FAFB':'#FEE2E2'};border-radius:6px;margin-bottom:6px;">
+              <div>
+                <div style="font-weight:600;">${h.name} ${!h.is_active?'<span style="color:#DC2626;font-size:11px;">(inactive)</span>':''}</div>
+                <div style="font-size:11px;color:#666;">Limit: ₹${Number(h.spending_limit||0).toLocaleString('en-IN')}</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                ${h.is_active 
+                  ? `<button onclick="toggleHolder(${h.id},false)" style="background:#F59E0B;color:#fff;padding:5px 10px;border:none;border-radius:4px;font-size:11px;cursor:pointer;">Deactivate</button>`
+                  : `<button onclick="toggleHolder(${h.id},true)" style="background:#10B981;color:#fff;padding:5px 10px;border:none;border-radius:4px;font-size:11px;cursor:pointer;">Activate</button>`}
+                <button onclick="deleteHolder(${h.id},'${h.name.replace(/'/g,"\\'")}')" style="background:#DC2626;color:#fff;padding:5px 10px;border:none;border-radius:4px;font-size:11px;cursor:pointer;">🗑️</button>
+              </div>
+            </div>`).join('')}
+        </div>`).join('')}
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+};
+
+window.toggleHolder = async function(id, active) {
+  await sb.from('cash_holders').update({ is_active: active }).eq('id', id);
+  window._cashHoldersCache = null;
+  fsn.success('Done', active ? '✅ Activated' : '⏸️ Deactivated');
+  document.querySelector('[style*="z-index:9999"]')?.remove();
+  window.manageCashHolders();
+};
+
+window.deleteHolder = async function(id, name) {
+  // Check if used anywhere
+  const [{ count: c1 }, { count: c2 }] = await Promise.all([
+    sb.from('payment_history').select('*', { count: 'exact', head: true }).eq('received_by', name),
+    sb.from('reimbursements').select('*', { count: 'exact', head: true }).eq('paid_by', name)
+  ]);
+  const totalUsed = (c1 || 0) + (c2 || 0);
+  const msg = totalUsed > 0
+    ? `⚠️ "${name}" ${totalUsed} records me use ho raha hai!\n\nDelete karne se data corrupt ho sakta hai.\n\nBetter: "Deactivate" karo.\n\nFir bhi delete karna hai?`
+    : `Delete "${name}"? (Not used anywhere)`;
+  if (!confirm(msg)) return;
+  const { error } = await sb.from('cash_holders').delete().eq('id', id);
+  if (error) { fsn.error('Error', error.message); return; }
+  window._cashHoldersCache = null;
+  fsn.success('Deleted', `🗑️ ${name} removed`);
+  document.querySelector('[style*="z-index:9999"]')?.remove();
+  window.manageCashHolders();
+};
+
+window.addNewHolderPrompt = async function() {
+  const name = prompt('Holder name:');
+  if (!name || !name.trim()) return;
+  const type = prompt('Type? (final / manager / receiver)', 'receiver');
+  if (!['final','manager','receiver'].includes(type)) { alert('Invalid type'); return; }
+  const limit = type === 'final' ? 999999 : (type === 'manager' ? 50000 : 0);
+  const { error } = await sb.from('cash_holders').insert({ name: name.trim(), type, is_active: true, spending_limit: limit });
+  if (error) { fsn.error('Error', error.message); return; }
+  window._cashHoldersCache = null;
+  fsn.success('Added', `✅ ${name} added`);
+  document.querySelector('[style*="z-index:9999"]')?.remove();
+  window.manageCashHolders();
+};
+
+console.log('✅ Universal cash holder dropdown loaded');
+
+
+
+// Client-side Storage restore helper
+window.restoreStoragePhoto = async function(path, fileBlob) {
+  if (!path || !fileBlob) return;
+  try {
+    const { error } = await sb.storage.from('id-proofs').upload(path, fileBlob, { upsert: true });
+    if (!error) console.log('✅ Uploaded to Storage:', path);
+  } catch(e) {}
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🛡️ UNIVERSAL MODAL STACKING & Z-INDEX SENTINEL
+// Prevents modals from ever opening behind drawers or other overlays.
+// ═══════════════════════════════════════════════════════════
+(function() {
+  const BASE_MODAL_ZINDEX = 100000;
+  function updateModalZIndices() {
+    const overlays = document.querySelectorAll('.modal-overlay, .photo-viewer-overlay, .od-deposit-modal-overlay, .od-edit-modal-overlay, .upi-modal-overlay, .luxe-voucher-modal');
+    overlays.forEach((el, idx) => {
+      const targetZ = BASE_MODAL_ZINDEX + (idx * 100);
+      el.style.setProperty('z-index', String(targetZ), 'important');
+    });
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    let shouldUpdate = false;
+    for (const m of mutations) {
+      if (m.addedNodes.length > 0) {
+        for (const n of m.addedNodes) {
+          if (n.nodeType === 1 && (n.classList?.contains('modal-overlay') || n.querySelector?.('.modal-overlay'))) {
+            shouldUpdate = true;
+            break;
+          }
+        }
+      }
+    }
+    if (shouldUpdate) updateModalZIndices();
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => observer.observe(document.body || document.documentElement, { childList: true, subtree: true }));
+  } else {
+    observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+  }
+
+  window.syncModalZIndex = updateModalZIndices;
+})();
+
+// ═══════════════════════════════════════════════════════════
+// 🎯 UNIVERSAL CRM SMART CURSOR POSITIONING ENGINE
+// Ensures that clicking, tapping, or focusing any input/textarea
+// (amounts, rates, guest names, phones, notes, modals)
+// places the cursor at the proper position (end of existing text)
+// rather than being stranded at position 0 (start).
+// ═══════════════════════════════════════════════════════════
+(function initGlobalCursorPlacement() {
+  function placeCursorAtProperPosition(el) {
+    if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA')) return;
+    const type = (el.type || 'text').toLowerCase();
+    const nonTextTypes = ['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'image', 'color', 'range', 'hidden'];
+    if (nonTextTypes.includes(type)) return;
+
+    const val = el.value;
+    if (val === undefined || val === null) return;
+    const len = String(val).length;
+    if (len === 0) return;
+
+    try {
+      el.setSelectionRange(len, len);
+      return;
+    } catch (err) {
+      if (type === 'number') {
+        try {
+          el.type = 'text';
+          el.setSelectionRange(len, len);
+          el.type = 'number';
+          return;
+        } catch (_) {
+          try { el.select(); } catch (__) {}
+        }
+      }
+    }
+  }
+
+  // Handle focus, clicks, and touches across all CRM inputs and dynamic modals
+  ['focusin', 'click', 'touchend'].forEach(evtType => {
+    document.addEventListener(evtType, (e) => {
+      const el = e.target;
+      if (!el || (el.tagName !== 'INPUT' && el.tagName !== 'TEXTAREA')) return;
+      const type = (el.type || 'text').toLowerCase();
+      if (['checkbox', 'radio', 'button', 'submit', 'reset', 'file'].includes(type)) return;
+
+      setTimeout(() => {
+        if (!el.value || el.value.length === 0) return;
+
+        // Is it a numeric/amount/currency field?
+        const isNumericOrAmount = type === 'number' || 
+          el.inputMode === 'numeric' || 
+          el.inputMode === 'decimal' ||
+          /(amount|amt|rate|price|cost|salary|advance|paid|due|total|fee|phone|qty|balance)/i.test(el.id || el.name || el.className || '');
+
+        let isCaretAtStart = false;
+        try {
+          isCaretAtStart = (el.selectionStart === 0 && el.selectionEnd === 0);
+        } catch (_) {
+          isCaretAtStart = true;
+        }
+
+        // If amount field, or caret defaulted to position 0 (start), move to proper place (end)
+        if (isNumericOrAmount || isCaretAtStart) {
+          placeCursorAtProperPosition(el);
+        }
+      }, 20);
+    }, true);
+  });
+
+  // Handle programmatic autofocus on dynamically loaded modals/popups
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.addedNodes.length > 0) {
+        for (const n of m.addedNodes) {
+          if (n.nodeType === 1) {
+            const autoEl = n.matches?.('[autofocus]') ? n : n.querySelector?.('[autofocus]');
+            if (autoEl && autoEl.value) {
+              setTimeout(() => placeCursorAtProperPosition(autoEl), 80);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+    });
+  } else {
+    observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
+  }
+
+  window.placeCursorAtProperPosition = placeCursorAtProperPosition;
+})();
+
+window.renderCalendar = function() {
+  if (typeof window.renderReports === 'function') {
+    window.renderReports();
+  } else if (typeof renderReports === 'function') {
+    renderReports();
+  } else {
+    navigate('reports');
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🌐 UNIVERSAL DEVICE-COMPATIBLE EXPORT & PRINT ENGINE
+// Supports iPad, iPadOS 13+, iPhone, Android, Safari, Tablets, & Desktop
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Universal File Download & Share for all devices (iPad, iPhone, Android, Desktop)
+ */
+window.downloadExportFile = async function(content, fileName, mimeType = 'text/csv;charset=utf-8') {
+  if (!content) {
+    if (window.fsn) fsn.error('Export Error', 'No data to export.');
+    return false;
+  }
+
+  // Prepend UTF-8 BOM for CSV/Excel compatibility (shows Rupee ₹ and Hindi properly)
+  let blobData = content;
+  if (mimeType.includes('csv') && typeof content === 'string' && !content.startsWith('\uFEFF')) {
+    blobData = '\uFEFF' + content;
+  }
+
+  const blob = (blobData instanceof Blob) ? blobData : new Blob([blobData], { type: mimeType });
+  const isAppleTouch = /iPad|iPhone|iPod/i.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  // 1. On iPad / iPhone / Android: Try Web Share API (native "Save to Files", Numbers, AirDrop)
+  if (isAppleTouch && navigator.canShare && window.File) {
+    try {
+      const file = new File([blob], fileName, { type: mimeType });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: fileName,
+          text: `TUHH CRM Export: ${fileName}`
+        });
+        if (window.fsn) fsn.success('Export Ready', `Opened share options for ${fileName}`);
+        return true;
+      }
+    } catch(err) {
+      if (err.name === 'AbortError') return true; // User tapped Cancel in share sheet
+      console.warn('Web Share failed, falling back to direct download:', err);
+    }
+  }
+
+  // 2. Direct Blob anchor download
+  try {
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = objectUrl;
+    a.download = fileName;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+
+    // Keep URL alive for 60s for Safari iOS/iPadOS
+    setTimeout(() => {
+      try { a.remove(); } catch(e) {}
+      try { URL.revokeObjectURL(objectUrl); } catch(e) {}
+    }, 60000);
+
+    if (window.fsn) fsn.success('Export Ready', `Downloaded ${fileName}`);
+    return true;
+  } catch(err) {
+    console.error('Download error:', err);
+    if (window.fsn) fsn.error('Download Failed', err.message || 'Could not save file.');
+    return false;
+  }
+};
+
+/**
+ * Universal CSV Export shortcut
+ */
+window.exportCSV = function(csvContent, fileName) {
+  const safeName = (fileName && fileName.endsWith('.csv')) ? fileName : `${fileName || 'Export'}.csv`;
+  return window.downloadExportFile(csvContent, safeName, 'text/csv;charset=utf-8');
+};
+
+/**
+ * Universal Document Print for iPad, iPhone, Android, and Desktop
+ * Eliminates "Popup blocked!" alerts and iOS iframe blank printing issues
+ */
+window.printDocumentHTML = function(htmlContent, title = 'Document', options = {}) {
+  const cleanTitle = String(title || 'Document').replace(/[\/\\:*?"<>|]/g, '_');
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) || 
+    (window.innerWidth <= 768);
+
+  // Extract body content and preserve all styles if full HTML document was passed
+  let cleanHtml = String(htmlContent || '');
+  let extractedStyles = '';
+  const styleMatches = cleanHtml.match(/<style[^>]*>[\s\S]*?<\/style>/gi);
+  if (styleMatches) {
+    extractedStyles = styleMatches.join('\n');
+  }
+
+  const bodyMatch = cleanHtml.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  if (bodyMatch) {
+    cleanHtml = bodyMatch[1];
+  }
+  cleanHtml = cleanHtml
+    .replace(/<!DOCTYPE[^>]*>/gi, '')
+    .replace(/<\/?html[^>]*>/gi, '')
+    .replace(/<head[\s\S]*?<\/head>/gi, '')
+    .replace(/<title[\s\S]*?<\/title>/gi, '')
+    .replace(/<\/?body[^>]*>/gi, '')
+    .replace(/@page\s*\{[^}]*\}/gi, '')
+    .replace(/<script[\s\S]*?window\.print\(\)[\s\S]*?<\/script>/gi, '');
+
+  // Helper to extract clean text for WhatsApp / Clipboard
+  function extractReportText(htmlStr) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = htmlStr;
+    const txt = tmp.innerText || tmp.textContent || '';
+    return txt.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+  }
+
+  // In-App Print Modal for iPad/Mobile and popup-blocked browsers
+  function showInAppPrintModal(html, docTitle) {
+    const existing = document.getElementById('uhhPrintOverlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'uhhPrintOverlay';
+    overlay.className = 'uhh-print-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(15,23,42,0.92);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:9999999;display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box;';
+
+    overlay.innerHTML = `
+      <style>
+        @media print {
+          body > *:not(#uhhPrintOverlay) {
+            display: none !important;
+          }
+          #uhhPrintOverlay {
+            position: static !important;
+            background: #fff !important;
+            width: 100% !important;
+            height: auto !important;
+            display: block !important;
+          }
+          .no-print, .uhh-print-toolbar, .modal-overlay:not(#uhhPrintOverlay) {
+            display: none !important;
+          }
+          .uhh-print-body {
+            padding: 0 !important;
+            background: #fff !important;
+            overflow: visible !important;
+          }
+          #uhhPrintCardInner {
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+          }
+        }
+      </style>
+      <div class="uhh-print-toolbar no-print" style="position:sticky;top:0;background:#0F172A;color:#FFFFFF;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;z-index:999999;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;">
+          <button type="button" class="uhh-print-btn primary" onclick="window.print()" style="background:#10B981;color:#fff;border:none;padding:7px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            🖨️ Print / AirPrint
+          </button>
+          <button type="button" class="uhh-print-btn" onclick="window.downloadPrintDocAsImage('${escapeHtml(docTitle).replace(/'/g, "\\'")}')" style="background:#0284C7;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            📸 Save Image (PNG)
+          </button>
+          <button type="button" class="uhh-print-btn secondary" onclick="window.downloadExportFile(document.getElementById('uhhPrintCardInner').innerHTML, '${escapeHtml(docTitle).replace(/'/g, "\\'")}.html', 'text/html;charset=utf-8')" style="background:#3B82F6;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            📥 Save HTML
+          </button>
+          <button type="button" class="uhh-print-btn" onclick="const t=document.getElementById('uhhPrintCardInner')?.innerText||'';window.open('https://wa.me/?text=' + encodeURIComponent('*' + '${escapeHtml(docTitle)}' + '*\\n\\n' + t.slice(0, 1500)), '_blank')" style="background:#25D366;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" title="Share summary on WhatsApp">
+            💬 WhatsApp
+          </button>
+          <button type="button" class="uhh-print-btn" onclick="const t=document.getElementById('uhhPrintCardInner')?.innerText||'';navigator.clipboard.writeText(t);if(window.fsn?.success) fsn.success('Copied','Report text copied!'); else alert('Report text copied!');" style="background:#475569;color:#fff;border:none;padding:7px 10px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;" title="Copy report text to clipboard">
+            📋 Copy
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex-shrink:0;">
+          <span style="font-weight:700;font-size:12px;color:#94A3B8;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+            ${escapeHtml(docTitle)}
+          </span>
+          <button type="button" class="uhh-print-close-btn" onclick="document.getElementById('uhhPrintOverlay')?.remove()" style="background:#EF4444;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+      <div class="uhh-print-body" style="padding:16px 12px calc(40px + env(safe-area-inset-bottom, 16px));background:#F1F5F9;flex:1;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <div id="uhhPrintCardInner" class="uhh-report-card" style="max-width:1000px;margin:0 auto;background:#FFFFFF;border-radius:10px;padding:16px;box-shadow:0 4px 15px rgba(0,0,0,0.06);box-sizing:border-box;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          ${extractedStyles}
+          ${html}
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const onEsc = (e) => {
+      if (e.key === 'Escape') {
+        overlay.remove();
+        window.removeEventListener('keydown', onEsc);
+      }
+    };
+    window.addEventListener('keydown', onEsc);
+
+    // Auto-trigger print dialog after short render delay on desktop or when requested
+    if (!isMobile && options.autoPrint !== false) {
+      setTimeout(() => {
+        try { window.print(); } catch(e) { console.warn('Auto print failed:', e); }
+      }, 450);
+    }
+  }
+
+  window.downloadPrintDocAsImage = async function(title) {
+    const el = document.getElementById('uhhPrintCardInner');
+    if (!el) return;
+    if (typeof html2canvas === 'undefined') {
+      alert('Please wait, image renderer is preparing...');
+      return;
+    }
+    try {
+      const canvas = await html2canvas(el, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const filename = `${String(title || 'TUHH_Document').replace(/[\s\/:*?"<>|]/g, '_')}.png`;
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: title || 'TUHH Document'
+          }).catch(() => {});
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        if (window.fsn?.success) fsn.success('Saved', 'Document image saved!');
+      }, 'image/png');
+    } catch(err) {
+      console.error('Image capture error:', err);
+      alert('Could not generate image: ' + err.message);
+    }
+  };
+
+  // Provide public alias for in-app preview
+  window.previewReportModal = function(h, t) {
+    showInAppPrintModal(h, t);
+  };
+
+  // On Mobile / Touch devices: in-app modal is 100% reliable with system AirPrint & Android print
+  if (isMobile || options.forceModal) {
+    showInAppPrintModal(cleanHtml, cleanTitle);
+    return;
+  }
+
+  // On desktop: attempt window.open
+  let win = null;
+  try {
+    win = window.open('', '_blank');
+  } catch(e) {
+    win = null;
+  }
+
+  if (!win) {
+    // If popup blocked on desktop, fallback seamlessly to in-app print overlay
+    showInAppPrintModal(cleanHtml, cleanTitle);
+    return;
+  }
+
+  try {
+    win.document.title = cleanTitle;
+    win.document.open();
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${escapeHtml(cleanTitle)}</title>
+        <style>
+          @page {
+            size: auto;
+            margin: 0 !important; /* Zero margin suppresses about:blank URL footer in Chrome/Edge/Safari */
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #0F172A !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            width: 100% !important;
+          }
+          body {
+            padding: 8mm 10mm !important; /* Safe printable padding inside page */
+          }
+          @media print {
+            @page {
+              size: auto;
+              margin: 0 !important;
+            }
+            html, body {
+              margin: 0 !important;
+              padding: 8mm 10mm !important;
+            }
+            .no-print {
+              display: none !important;
+            }
+          }
+          table { width: 100%; border-collapse: collapse; }
+        </style>
+        ${extractedStyles}
+      </head>
+      <body>
+        <div class="no-print" style="position:sticky;top:0;z-index:999999;padding:12px 18px;background:#0F172A;color:#FFFFFF;display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;box-shadow:0 4px 14px rgba(0,0,0,0.25);border-radius:0 0 10px 10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button onclick="window.print()" style="padding:9px 20px;background:#10B981;color:#fff;border:none;border-radius:7px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">🖨️ Print / Save as PDF</button>
+            <button onclick="window.close()" style="padding:9px 18px;background:#EF4444;color:#fff;border:none;border-radius:7px;font-weight:800;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">✕ Close Window</button>
+          </div>
+          <span style="font-size:12.5px;color:#94A3B8;font-weight:700;">THE UNIQUE HAVEN HOMES PVT. LTD.</span>
+        </div>
+        ${cleanHtml}
+        <!-- Floating Close Button at bottom right for long scrolled pages -->
+        <button type="button" class="no-print" onclick="window.close()"
+          style="position:fixed;bottom:24px;right:24px;z-index:9999999;background:#EF4444;color:#fff;border:2px solid #DC2626;padding:12px 22px;border-radius:50px;font-weight:800;font-size:13.5px;cursor:pointer;box-shadow:0 6px 24px rgba(239,68,68,0.55);display:flex;align-items:center;gap:8px;">
+          ✕ Close Window
+        </button>
+        <script>
+          window.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' || e.key === 'Esc') window.close();
+          });
+          window.onload = function() {
+            setTimeout(function() { window.print(); }, 400);
+          };
+        <\/script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+  } catch(err) {
+    console.warn('Window write failed, falling back to in-app print overlay:', err);
+    showInAppPrintModal(cleanHtml, cleanTitle);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// 🛡️ UNIVERSAL MODAL, POPUP, REPORT & ESCAPE SAFETY SYSTEM
+// Ensures EVERY modal, popup, preview, or report in whole CRM
+// has a working close button, backdrop dismissal, and ESC key listener
+// ═══════════════════════════════════════════════════════════
+(function initUniversalModalManager() {
+  'use strict';
+
+  window.closeTopModal = function() {
+    // 1. In-app print/report overlay
+    const printOverlay = document.getElementById('uhhPrintOverlay');
+    if (printOverlay) {
+      printOverlay.remove();
+      return true;
+    }
+
+    // 2. Booking details drawer
+    const drawerOverlay = document.querySelector('.sbk-drawer-overlay');
+    if (drawerOverlay) {
+      if (typeof window.closeBookingDrawer === 'function') window.closeBookingDrawer();
+      else drawerOverlay.closest('#sbkDrawerContainer')?.remove();
+      return true;
+    }
+
+    // 3. Mobile spotlight search overlay
+    const mobileSearch = document.getElementById('mobileSearchOverlay');
+    if (mobileSearch && mobileSearch.classList.contains('show')) {
+      if (typeof window.closeMobileSearch === 'function') window.closeMobileSearch();
+      else mobileSearch.classList.remove('show');
+      return true;
+    }
+
+    // 4. Command Palette
+    const cmdPalette = document.getElementById('uhhCmdPaletteOverlay');
+    if (cmdPalette) {
+      cmdPalette.remove();
+      return true;
+    }
+
+    // 5. Standard modals (.modal-overlay, .upi-modal-overlay, etc.)
+    const modals = document.querySelectorAll('.modal-overlay, .upi-modal-overlay, .luxe-rev-modal-overlay, .od-deposit-modal-overlay, .od-return-modal-overlay, .od-edit-modal-overlay, .notif-panel-overlay');
+    if (modals && modals.length) {
+      const topModal = modals[modals.length - 1]; // topmost in DOM
+      topModal.remove();
+      return true;
+    }
+
+    // 6. Mobile sidebar drawer
+    const sidebar = document.querySelector('.sidebar.mobile-open');
+    if (sidebar) {
+      sidebar.classList.remove('mobile-open');
+      document.getElementById('mobileDrawerBackdrop')?.remove();
+      return true;
+    }
+
+    return false;
+  };
+
+  // Global Capture-Phase Escape key handler
+  window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      const didClose = window.closeTopModal();
+      if (didClose) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    }
+  }, true);
+
+  // Global Backdrop Click Dismissal
+  document.addEventListener('click', function(e) {
+    if (!e.target) return;
+    const isBackdrop = 
+      e.target.classList.contains('modal-overlay') ||
+      e.target.classList.contains('upi-modal-overlay') ||
+      e.target.classList.contains('luxe-rev-modal-overlay') ||
+      e.target.classList.contains('sbk-drawer-overlay') ||
+      e.target.classList.contains('od-deposit-modal-overlay') ||
+      e.target.classList.contains('od-return-modal-overlay') ||
+      e.target.classList.contains('od-edit-modal-overlay');
+
+    if (isBackdrop) {
+      e.target.remove();
+    }
+  });
+
+  // Automatic Close Button Injector
+  // Ensures any modal that forgets to render a close button gets an immediate, prominent close button!
+  function ensureCloseButtonOnModal(modalNode) {
+    if (!modalNode || !(modalNode instanceof HTMLElement)) return;
+    const isModalOverlay = 
+      modalNode.classList.contains('modal-overlay') ||
+      modalNode.classList.contains('upi-modal-overlay') ||
+      modalNode.classList.contains('luxe-rev-modal-overlay') ||
+      modalNode.classList.contains('od-deposit-modal-overlay') ||
+      modalNode.classList.contains('od-return-modal-overlay') ||
+      modalNode.classList.contains('od-edit-modal-overlay');
+
+    if (!isModalOverlay) return;
+
+    const box = modalNode.querySelector('.modal-box, .modal-content, [class*="modal-box"]') || modalNode.firstElementChild;
+    if (!box) return;
+
+    // Check if a close button already exists
+    const hasCloseBtn = box.querySelector('.modal-close, .modal-close-prominent, [class*="close"], button[aria-label*="close" i], button[aria-label*="dismiss" i]') ||
+      Array.from(box.querySelectorAll('button')).find(b => {
+        const txt = (b.textContent || '').trim();
+        return txt === '✕' || txt === '×' || txt === 'X';
+      });
+    if (!hasCloseBtn) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-close-prominent';
+      btn.title = 'Close (ESC)';
+      btn.setAttribute('aria-label', 'Close');
+      btn.innerHTML = '✕';
+      btn.onclick = function() {
+        modalNode.remove();
+      };
+      if (getComputedStyle(box).position === 'static') {
+        box.style.position = 'relative';
+      }
+      box.insertBefore(btn, box.firstChild);
+    }
+  }
+
+  // Observe newly added modals
+  if (typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver(function(mutations) {
+      for (const mutation of mutations) {
+        for (const node of mutation.addedNodes) {
+          if (node.nodeType === 1) {
+            ensureCloseButtonOnModal(node);
+            node.querySelectorAll?.('.modal-overlay, .upi-modal-overlay, .luxe-rev-modal-overlay').forEach(ensureCloseButtonOnModal);
+          }
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  // Initial pass
+  document.querySelectorAll('.modal-overlay, .upi-modal-overlay, .luxe-rev-modal-overlay').forEach(ensureCloseButtonOnModal);
+})();
+
+// ═══════════════════════════════════════════════════════════
+// 📱 HOMEYHUTS SCREENSHOT 1 — MASTER APP MENU RENDERER
+// ═══════════════════════════════════════════════════════════
+function renderAppMenu() {
+  const shortName = (SESSION.displayName || 'Praveen Singh').split('(')[0].trim();
+  const initial = shortName.charAt(0).toUpperCase() || 'P';
+  const roleLabel = ({
+    'developer': 'Developer',
+    'admin': 'Admin',
+    'owner': 'Owner',
+    'manager': 'Manager'
+  })[SESSION.role] || SESSION.role || 'Host & Administrator';
+
+  const notifCount = window._pendingCount || 0;
+  const totalProps = (window._globalRoomsList || []).length || 18;
+
+  const html = `
+    <div class="tuhh-menu-wrap">
+      <!-- Profile Header Card -->
+      <div class="tuhh-profile-card" onclick="window.openPreferences && window.openPreferences()">
+        <div class="tuhh-avatar-circle">${initial}</div>
+        <div class="tuhh-profile-info">
+          <div class="tuhh-profile-name">${escapeHtml(shortName)}</div>
+          <div class="tuhh-profile-role"><span>●</span> ${roleLabel} · Account &amp; Settings</div>
+        </div>
+        <i class="ti ti-chevron-right tuhh-chevron"></i>
+      </div>
+
+      <!-- Realtime Search Bar (Single Unified Search) -->
+      <div class="tuhh-menu-search-bar">
+        <i class="ti ti-search tuhh-search-icon"></i>
+        <input type="text" id="menuLiveSearch" placeholder="Search pages, features, actions..." oninput="window.filterAppMenuRows(this.value)" autocomplete="off" />
+        <kbd class="tuhh-kbd-pill" onclick="window.openCommandPalette && window.openCommandPalette()" title="Press Ctrl+K">⌘K</kbd>
+      </div>
+
+      <!-- SECTION 1: HOSPITALITY OPERATIONS -->
+      <div class="tuhh-menu-section">
+        <div class="tuhh-section-header">HOSPITALITY OPERATIONS</div>
+        <div class="tuhh-menu-group">
+          <div class="tuhh-menu-row" onclick="navigate('bookings')">
+            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#2563EB;"><i class="ti ti-calendar-check"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Bookings &amp; Reservations</div>
+              <div class="tuhh-row-sub">Guest register, check-ins, checkouts &amp; invoices</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('calendar')">
+            <div class="tuhh-icon-box" style="background:#F0FDF4;color:#16A34A;"><i class="ti ti-calendar"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Calendar &amp; Availability</div>
+              <div class="tuhh-row-sub">Monthly occupancy grid, nightly rates &amp; slot blocks</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('rooms')">
+            <div class="tuhh-icon-box" style="background:#FDF4FF;color:#A855F7;"><i class="ti ti-building"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Properties &amp; Units (${totalProps})</div>
+              <div class="tuhh-row-sub">19 homestays, amenities, pricing &amp; website showcase</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('whatsapp-hub')">
+            <div class="tuhh-icon-box" style="background:#ECFDF5;color:#059669;"><i class="ti ti-brand-whatsapp"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">WhatsApp Communications</div>
+              <div class="tuhh-row-sub">Automated guest check-in, Wi-Fi password &amp; review links</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: FINANCE, CLAIMS & AUDIT -->
+      <div class="tuhh-menu-section">
+        <div class="tuhh-section-header">FINANCE, CLAIMS &amp; AUDIT</div>
+        <div class="tuhh-menu-group">
+          <div class="tuhh-menu-row" onclick="navigate('claims')">
+            <div class="tuhh-icon-box" style="background:#EEF2FF;color:#4F46E5;"><i class="ti ti-building-bank"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">TUHH-OD &amp; Claims Hub</div>
+              <div class="tuhh-row-sub">Overdraft balance, daily closing statement &amp; vendor claims</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('investors')">
+            <div class="tuhh-icon-box" style="background:#FEF3C7;color:#D97706;"><i class="ti ti-chart-pie"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Investor Reports &amp; P&amp;L</div>
+              <div class="tuhh-row-sub">3-page audited statements, 70/30 share &amp; payouts</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('expenses')">
+            <div class="tuhh-icon-box" style="background:#FFF1F2;color:#E11D48;"><i class="ti ti-receipt-2"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Company Expenses &amp; Outflows</div>
+              <div class="tuhh-row-sub">Wi-Fi recharge, maintenance, staff claims &amp; bills</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('laundry')">
+            <div class="tuhh-icon-box" style="background:#F0F9FF;color:#0284C7;"><i class="ti ti-wash-machine"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Laundry &amp; Linen Tracker</div>
+              <div class="tuhh-row-sub">Vendor dispatches, count audit &amp; settlement</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('ca-audit')">
+            <div class="tuhh-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-briefcase"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">CA Audit Pack &amp; GST</div>
+              <div class="tuhh-row-sub">Bank Reconciliation (BRS), GST reports &amp; compliance</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 3: TEAM & FIELD OPERATIONS -->
+      <div class="tuhh-menu-section">
+        <div class="tuhh-section-header">TEAM &amp; FIELD OPERATIONS</div>
+        <div class="tuhh-menu-group">
+          <div class="tuhh-menu-row" onclick="navigate('attendance')">
+            <div class="tuhh-icon-box" style="background:#ECFDF5;color:#059669;"><i class="ti ti-clipboard-check"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Staff Attendance &amp; Shifts</div>
+              <div class="tuhh-row-sub">Daily check-in logs, shifts &amp; monthly reports</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('tasks')">
+            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#3B82F6;"><i class="ti ti-checklist"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Tasks &amp; Housekeeping</div>
+              <div class="tuhh-row-sub">Room cleaning checklists &amp; caretaker tasks</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('advance')">
+            <div class="tuhh-icon-box" style="background:#FEF3C7;color:#B45309;"><i class="ti ti-gift"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Staff Advances &amp; Petrol Claims</div>
+              <div class="tuhh-row-sub">Salary linked advances &amp; field travel claims</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: SUPPORT & SYSTEM -->
+      <div class="tuhh-menu-section">
+        <div class="tuhh-section-header">SUPPORT &amp; SYSTEM</div>
+        <div class="tuhh-menu-group">
+          <div class="tuhh-menu-row" onclick="navigate('help')">
+            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#0284C7;"><i class="ti ti-help-circle"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Help Center &amp; Operating Guide</div>
+              <div class="tuhh-row-sub">Step-by-step CRM manual, workflows &amp; shortcut keys</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="window.notifications && window.notifications.openPanel()">
+            <div class="tuhh-icon-box" style="background:#FFFBEB;color:#F59E0B;"><i class="ti ti-bell"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Notifications &amp; Alerts ${notifCount > 0 ? `<span class="homeyhuts-badge-pill">${notifCount}</span>` : ''}</div>
+              <div class="tuhh-row-sub">Pending approvals, reminders &amp; alerts</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('user-mgmt')">
+            <div class="tuhh-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-users"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">User Management &amp; Permissions</div>
+              <div class="tuhh-row-sub">Staff logins, role-based access &amp; security</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row" onclick="navigate('settings')">
+            <div class="tuhh-icon-box" style="background:#F8FAFC;color:#64748B;"><i class="ti ti-settings"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title">Global Settings &amp; Brand</div>
+              <div class="tuhh-row-sub">System configuration, API keys &amp; company profile</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron"></i>
+          </div>
+
+          <div class="tuhh-menu-row tuhh-logout-row" onclick="document.getElementById('logoutBtn')?.click()">
+            <div class="tuhh-icon-box" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-logout"></i></div>
+            <div class="tuhh-row-content">
+              <div class="tuhh-row-title" style="color:#DC2626;font-weight:700;">Logout Session</div>
+              <div class="tuhh-row-sub">Sign out from this device safely</div>
+            </div>
+            <i class="ti ti-chevron-right tuhh-chevron" style="color:#DC2626;"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  renderShell(html, 'menu');
+}
+window.renderAppMenu = renderAppMenu;
+
+window.filterAppMenuRows = function(query) {
+  const q = (query || '').toLowerCase().trim();
+  const rows = document.querySelectorAll('.tuhh-menu-row, .homeyhuts-menu-row');
+  const sections = document.querySelectorAll('.tuhh-menu-section');
+  let visibleCount = 0;
+  
+  rows.forEach(row => {
+    const text = (row.textContent || '').toLowerCase();
+    const match = !q || text.includes(q);
+    row.style.display = match ? 'flex' : 'none';
+    if (match) visibleCount++;
+  });
+
+  sections.forEach(sec => {
+    const visibleInSec = sec.querySelectorAll('.tuhh-menu-row:not([style*="display: none"]), .homeyhuts-menu-row:not([style*="display: none"])').length;
+    sec.style.display = visibleInSec > 0 ? 'block' : 'none';
+  });
+
+  let emptyState = document.getElementById('menuEmptySearchNotice');
+  if (q && visibleCount === 0) {
+    if (!emptyState) {
+      emptyState = document.createElement('div');
+      emptyState.id = 'menuEmptySearchNotice';
+      emptyState.className = 'homeyhuts-menu-empty-notice';
+      const container = document.querySelector('.tuhh-menu-wrap') || document.querySelector('.homeyhuts-menu-list');
+      if (container) container.appendChild(emptyState);
+    }
+    emptyState.style.display = 'block';
+    emptyState.innerHTML = `
+      <div style="text-align:center;padding:24px 16px;color:#64748B;">
+        <div style="font-size:28px;margin-bottom:8px;">🔍</div>
+        <div style="font-size:14px;font-weight:700;color:#1E293B;">No direct menu item matched "${escapeHtml(q)}"</div>
+        <div style="font-size:12px;margin-top:4px;margin-bottom:12px;color:#64748B;">Try global search across bookings, tasks, and PMS pages</div>
+        <button type="button" onclick="window.openCommandPalette && window.openCommandPalette('${escapeHtml(q)}')" style="background:var(--primary);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,165,233,0.25);">
+          Open in Command Palette (⌘K) ➔
+        </button>
+      </div>
+    `;
+  } else if (emptyState) {
+    emptyState.style.display = 'none';
+  }
+};
+
+
+
+

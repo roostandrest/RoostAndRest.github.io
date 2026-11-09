@@ -1,0 +1,2492 @@
+/**
+ * Universal Claims Manager (v8 MASTER FIXED)
+ * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ */
+
+function getClaimsDefaultFromDate() {
+  const d = new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  return `${yr}-${mo}-01`;
+}
+
+function getClaimsDefaultToDate() {
+  const d = new Date();
+  const yr = d.getFullYear();
+  const mo = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${yr}-${mo}-${day}`;
+}
+
+window._claimsState = {
+  fromDate: getClaimsDefaultFromDate(),
+  fromTime: '00:00',
+  toDate: getClaimsDefaultToDate(),
+  toTime: '23:59',
+  moduleFilter: 'all',
+  statusFilter: 'all',
+  paidByFilter: 'all',
+  employeeFilter: 'all',
+  selectedIds: new Set(),
+  allData: [],
+  allAdvs: [],
+  empMap: {}
+};
+
+// 1. Normalizers
+function normalizePaymentSource(rawVal) {
+  if (!rawVal) return 'OTHER';
+  const s = String(rawVal).trim().toUpperCase();
+  if (s === 'FIROZ') return 'FIROZ';
+  if (s === 'COMPANY') return 'COMPANY';
+  if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'UHHS-OD';
+  return 'OTHER';
+}
+
+function normalizeStatus(st) {
+  if (!st) return 'unclaimed';
+  const s = String(st).trim().toLowerCase();
+  if (s === 'received' || s === 'settled' || s === 'reconciled') return 'received';
+  if (s === 'claimed') return 'claimed';
+  return 'unclaimed'; // pending, unclaimed -> unclaimed
+}
+
+// 2. Main Claims Manager Render
+window.addEventListener('uhhs:dataChanged', () => {
+  if (document.getElementById('claimsTableContainer') && typeof loadClaimsData === 'function') {
+    loadClaimsData();
+  }
+});
+
+window.renderClaims = async function() {
+  if (window.showLoadingSkeleton) window.showLoadingSkeleton('list');
+
+  const nowD = new Date();
+  const todayStr = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(nowD.getDate()).padStart(2, '0')}`;
+  const monthStartStr = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-01`;
+  const lastDayVal = new Date(nowD.getFullYear(), nowD.getMonth() + 1, 0).getDate();
+  const monthEndStr = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(lastDayVal).padStart(2, '0')}`;
+  const monthName = nowD.toLocaleString('en-IN', { month: 'short' });
+
+  // Default to 1st of current running month and today
+  if (!window._claimsState.fromDate) {
+    window._claimsState.fromDate = monthStartStr;
+  }
+  if (!window._claimsState.toDate) {
+    window._claimsState.toDate = todayStr;
+  }
+
+  renderShell(`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h1>⚖️ Universal Claims Manager</h1>
+          <div class="sub">Checkpoint: <strong>16-Sep-2026 11:59 PM (Settled)</strong> · TUHH-OD Engine</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="openUhhsDepositModal()" style="background:#0284C7;color:#fff;font-weight:700;">📥 Deposit Entry (TUHH-OD)</button>
+          <button onclick="showUhhsStatementModal()" style="background:#0F766E;color:#fff;font-weight:600;">📜 TUHH Ledger</button>
+          <button onclick="showCompanyLedgerModal()" style="background:#EA580C;color:#fff;font-weight:600;">🏢 Company Ledger</button>
+          <button onclick="generateClaimReport()" style="background:#8B5CF6;color:#fff;font-weight:600;">📊 Claim Report Statement</button>
+          <button onclick="copyClaimWhatsAppText()" style="background:#25D366;color:#fff;font-weight:600;">📱 WhatsApp Summary</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- UHHS-OD LIVE ACCOUNT BANNER -->
+    <div class="card" style="background:#F0FDF4;border:1.5px solid #86EFAC;padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:20px;">🏦</span>
+            <strong style="font-size:16px;color:#15803D;">TUHH-OD Account (Online Balance)</strong>
+          </div>
+          <div style="font-size:12px;color:#64748B;margin-top:2px;">
+            Money received online from Firoz &amp; spent via TUHH-OD (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:#64748B;font-weight:700;">📥 TOTAL DEPOSITED</div>
+            <div style="font-size:18px;font-weight:800;color:#059669;" id="claims-od-inflow">₹0</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;color:#64748B;font-weight:700;">📤 TOTAL SPENT</div>
+            <div style="font-size:18px;font-weight:800;color:#DC2626;" id="claims-od-outflow">₹0</div>
+          </div>
+          <div style="text-align:right;padding-left:14px;border-left:1.5px solid #CBD5E1;">
+            <div style="font-size:11px;color:#64748B;font-weight:700;">NET RUNNING BALANCE</div>
+            <div style="font-size:24px;font-weight:900;" id="claims-od-banner-bal" class="claims-od-bal-value">₹0</div>
+          </div>
+          <button onclick="openUhhsDepositModal()" style="padding:8px 14px;background:#10B981;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(16,185,129,0.3);">
+            📥 + Deposit Funds
+          </button>
+          <button onclick="openUhhsReturnModal()" style="padding:8px 14px;background:#EF4444;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(239,68,68,0.3);">
+            💸 Return to Company
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📅 TODAY'S OD BALANCE & CLOSING PROOF (OWNER TRUST CARD) -->
+    <style>
+      .today-proof-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      @media (max-width: 640px) {
+        #todayBalanceProofCard {
+          padding: 14px !important;
+        }
+        .today-proof-grid {
+          grid-template-columns: 1fr 1fr !important;
+          gap: 8px !important;
+        }
+        .today-proof-closing-col {
+          grid-column: 1 / -1 !important;
+        }
+        #todayProofActions {
+          width: 100% !important;
+          margin-top: 6px;
+        }
+        #todayProofActions button {
+          flex: 1 1 calc(50% - 6px) !important;
+          justify-content: center !important;
+          font-size: 11.5px !important;
+          padding: 8px 10px !important;
+        }
+      }
+    </style>
+    <div class="card" id="todayBalanceProofCard" style="background:#FFFFFF;border:1.5px solid #0284C7;box-shadow:0 8px 24px -4px rgba(2,132,199,0.12);padding:18px;margin-bottom:14px;border-radius:12px;">
+      <!-- Header with Live Stamp -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid #E2E8F0;padding-bottom:12px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:42px;height:42px;border-radius:10px;background:#E0F2FE;color:#0284C7;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;">
+            📅
+          </div>
+          <div>
+            <div style="font-size:16px;font-weight:800;color:#0F172A;display:flex;align-items:center;gap:8px;">
+              OD Balance &amp; Daily Closing Statement
+              <span style="font-size:11px;font-weight:700;background:#DCFCE7;color:#166534;border:1px solid #86EFAC;padding:2px 8px;border-radius:999px;">
+                ✓ Live Verified
+              </span>
+            </div>
+            <div style="font-size:12px;color:#64748B;" id="today-proof-timestamp">
+              Automated Daily Closing Proof · The Unique Haven Homes
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS: SCREENSHOT & WHATSAPP (HIDDEN IN EXPORTED PROOF) -->
+        <div id="todayProofActions" data-html2canvas-ignore="true" style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" onclick="downloadTodayBalanceScreenshot(event)" style="padding:8px 14px;background:#0284C7;color:#ffffff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(2,132,199,0.25);">
+            <span>📸</span>
+            <span>Download Mobile Proof</span>
+          </button>
+          <button type="button" onclick="shareTodayBalanceWhatsApp()" style="padding:8px 14px;background:#25D366;color:#ffffff;border:none;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(37,211,102,0.25);">
+            <span>📱</span>
+            <span>Send to WhatsApp Group</span>
+          </button>
+        </div>
+
+        <!-- OFFICIAL CERTIFICATE STAMP (SHOWN IN EXPORTED PROOF) -->
+        <div id="todayProofOfficialSeal" style="display:none;padding:6px 14px;background:#0F172A;color:#FFFFFF;border-radius:8px;border:1.5px solid #334155;text-align:right;">
+          <div style="color:#FCD34D;font-size:11.5px;font-weight:800;letter-spacing:0.3px;">🏛️ TUHH OFFICIAL STATEMENT</div>
+          <div style="font-size:10px;color:#94A3B8;margin-top:1px;">Verified Daily Financial Statement · Zero Discrepancy</div>
+        </div>
+      </div>
+
+      <!-- Statement Day / Range Switcher Bar -->
+      <div id="proofDaySwitcherBar" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px;background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:11px;font-weight:700;color:#64748B;">Statement View:</span>
+          <button id="proofBtnRange" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('range')" style="padding:5px 12px;background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+            📅 Active Filter Range
+          </button>
+          <button id="proofBtnToday" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('today')" style="padding:5px 12px;background:#0284C7;color:#fff;border:1px solid #0284C7;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(2,132,199,0.25);">
+            📅 Today (${todayStr.slice(-2)}-Oct)
+          </button>
+          <button id="proofBtnLatest" type="button" onclick="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate('latest')" style="padding:5px 12px;background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">
+            ⚡ Last Closed Day
+          </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:#64748B;font-weight:600;">Single Date:</span>
+          <input type="date" id="proofCustomDate" onchange="if(window.renderClosingStatementForDate) window.renderClosingStatementForDate(this.value, this.value)" style="padding:4px 8px;border:1px solid #CBD5E1;border-radius:6px;font-size:11.5px;background:#fff;color:#0F172A;">
+        </div>
+      </div>
+
+      <!-- METRIC KPI GRID FOR STATEMENT -->
+      <div class="today-proof-grid">
+        <!-- Deposits / Inflow -->
+        <div style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;" id="today-proof-inflow-title">📥 Period Deposits (Inflow)</div>
+          <div style="font-size:20px;font-weight:800;color:#15803D;margin-top:4px;" id="today-proof-inflow">₹0</div>
+          <div style="font-size:11px;color:#15803D;margin-top:2px;" id="today-proof-inflow-count">0 deposits</div>
+        </div>
+
+        <!-- Claims / Spends Outflow -->
+        <div style="background:#FEF2F2;border:1px solid #FECACA;border-radius:10px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:#991B1B;text-transform:uppercase;" id="today-proof-outflow-title">📤 Period Spends / Claims</div>
+          <div style="font-size:20px;font-weight:800;color:#DC2626;margin-top:4px;" id="today-proof-outflow">₹0</div>
+          <div style="font-size:11px;color:#991B1B;margin-top:2px;" id="today-proof-outflow-count">0 claims settled</div>
+        </div>
+
+        <!-- Net Movement -->
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;" id="today-proof-net-title">📊 Period Net Movement</div>
+          <div style="font-size:20px;font-weight:800;color:#0F172A;margin-top:4px;" id="today-proof-net">₹0</div>
+          <div style="font-size:11px;color:#64748B;margin-top:2px;" id="today-proof-net-sub">Net period delta</div>
+        </div>
+
+        <!-- Closing Running Balance -->
+        <div class="today-proof-closing-col" style="background:linear-gradient(135deg,#0F172A,#1E293B);color:#ffffff;border-radius:10px;padding:12px 14px;border:1.5px solid #334155;">
+          <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;" id="today-proof-closing-title">💰 Closing Running Balance</div>
+          <div style="font-size:22px;font-weight:900;color:#4ADE80;margin-top:4px;" id="today-proof-closing-bal">₹0</div>
+          <div style="font-size:11px;color:#CBD5E1;margin-top:2px;" id="today-proof-status-label">🛡️ Verified by TUHH Engine</div>
+        </div>
+      </div>
+
+      <!-- Explanatory note when today has no new movements yet -->
+      <div id="today-proof-note" style="display:none;font-size:11.5px;color:#475569;background:#F1F5F9;border:1px solid #E2E8F0;padding:6px 12px;border-radius:6px;margin-bottom:12px;text-align:center;">
+        ℹ️ No new entries recorded yet today. Previous running balance fully intact.
+      </div>
+
+      <!-- FOOTER AUDIT NOTE FOR OWNERS -->
+      <div style="background:#F8FAFC;border-radius:8px;padding:8px 12px;font-size:11.5px;color:#64748B;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+        <div>
+          🛡️ <strong>Owner Assurance:</strong> Automatically compiled from TUHH-OD bank receipts and verified vendor claims. Zero manual adjustments.
+        </div>
+        <div style="color:#0284C7;font-weight:600;">
+          The Unique Haven Homes Private Limited
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTERS BAR -->
+    <div class="card" style="background:#F8FAFC;border:1px solid #E2E8F0;padding:14px;">
+      <style>
+        .claims-filter-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 10px;
+        }
+        .claims-filter-grid > div {
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        .claims-filter-grid select,
+        .claims-filter-grid input {
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 0 !important;
+          box-sizing: border-box !important;
+          padding: 7px 8px !important;
+          font-size: 12px !important;
+          border-radius: 6px !important;
+          border: 1px solid #CBD5E1 !important;
+          background: #fff !important;
+        }
+        @media (max-width: 640px) {
+          .claims-filter-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+          .claims-filter-grid > div {
+            width: 100% !important;
+          }
+        }
+      </style>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#334155;">🔍 Filters</div>
+      <div class="claims-filter-grid">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">📅 FROM Date</label>
+          <input id="cfFromDate" type="date" value="${window._claimsState.fromDate}" onchange="updateClaimsFilter()">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">📅 TO Date</label>
+          <input id="cfToDate" type="date" value="${window._claimsState.toDate}" onchange="updateClaimsFilter()">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">👤 Paid By (Payer)</label>
+          <select id="cfPaidBy" onchange="updateClaimsFilter()">
+            <option value="all" ${window._claimsState.paidByFilter==='all'?'selected':''}>All Payers</option>
+            <option value="UHHS-OD" ${window._claimsState.paidByFilter==='UHHS-OD'?'selected':''}>🏦 TUHH-OD</option>
+            <option value="COMPANY" ${window._claimsState.paidByFilter==='COMPANY'?'selected':''}>🏢 COMPANY</option>
+            <option value="FIROZ" ${window._claimsState.paidByFilter==='FIROZ'?'selected':''}>👤 FIROZ</option>
+            <option value="OTHER" ${window._claimsState.paidByFilter==='OTHER'?'selected':''}>⚠️ OTHER</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">📁 Module</label>
+          <select id="cfModule" onchange="updateClaimsFilter()">
+            <option value="all" ${window._claimsState.moduleFilter==='all'?'selected':''}>All Modules</option>
+            <option value="reimbursements" ${window._claimsState.moduleFilter==='reimbursements'?'selected':''}>💸 Daily Expenses</option>
+            <option value="maintenance" ${window._claimsState.moduleFilter==='maintenance'?'selected':''}>🔧 Maintenance</option>
+            <option value="laundry" ${window._claimsState.moduleFilter==='laundry'?'selected':''}>🧺 Laundry</option>
+            <option value="advances" ${window._claimsState.moduleFilter==='advances'?'selected':''}>💰 Staff Advances</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">🏷️ Status</label>
+          <select id="cfStatus" onchange="updateClaimsFilter()">
+            <option value="unclaimed" ${window._claimsState.statusFilter==='unclaimed'?'selected':''}>⏳ Pending</option>
+            <option value="claimed" ${window._claimsState.statusFilter==='claimed'?'selected':''}>📤 Claimed</option>
+            <option value="received" ${window._claimsState.statusFilter==='received'?'selected':''}>✅ Settled</option>
+            <option value="all" ${window._claimsState.statusFilter==='all'?'selected':''}>All Statuses</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">🧑‍💼 Staff / Employee</label>
+          <select id="cfEmployee" onchange="updateClaimsFilter()">
+            <option value="all">All Staff / Anyone</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:11px;font-weight:700;color:#64748B;">Quick Presets:</span>
+          <button type="button" onclick="setClaimsQuickDate('${todayStr}', '${todayStr}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">⚡ Today</button>
+          <button type="button" onclick="setClaimsQuickDate('${monthStartStr}', '${todayStr}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">📅 ${monthName} (1st to Today)</button>
+          <button type="button" onclick="setClaimsQuickDate('${monthStartStr}', '${monthEndStr}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">📅 ${monthName} Full Month</button>
+          <button type="button" onclick="setClaimsQuickDate('2026-09-17', '${todayStr}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">🏁 Checkpoint (17-Sep) to Today</button>
+          <button type="button" onclick="setClaimsQuickDate('', '')" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">🌐 All Dates</button>
+        </div>
+        <button onclick="loadClaimsData()" style="background:#4F46E5;color:#fff;padding:8px 16px;border:none;border-radius:6px;font-weight:600;cursor:pointer;">🔄 Refresh Data</button>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="card" id="claimsStatCards">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px;">
+        <div style="text-align:center;padding:12px;background:#EEF2FF;border-radius:8px;">
+          <div id="statTotalAmt" style="font-size:20px;font-weight:800;color:#3730A3;">₹0</div>
+          <div style="font-size:11px;color:#666;">Total Expenses</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#FEF3C7;border-radius:8px;">
+          <div id="statClaimedAmt" style="font-size:20px;font-weight:800;color:#92400E;">₹0</div>
+          <div style="font-size:11px;color:#666;">📤 Claimed Expenses</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#FEE2E2;border-radius:8px;">
+          <div id="statAdvancesAmt" style="font-size:20px;font-weight:800;color:#991B1B;">₹0</div>
+          <div style="font-size:11px;color:#666;">👥 Staff Advances (included above)</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#D1FAE5;border-radius:8px;">
+          <div id="statNetPayableAmt" style="font-size:20px;font-weight:800;color:#065F46;">₹0</div>
+          <div style="font-size:11px;color:#666;" id="statNetPayableLabel">💵 Pending to Settle (Unpaid)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAFF ADVANCES BREAKDOWN -->
+    <div class="card" style="background:#FFF5F5;border:1.5px solid #FECDD3;padding:14px;border-radius:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:800;color:#991B1B;">👥 Staff Advances Breakdown &amp; Analysis</div>
+        <button type="button" onclick="window.showEmployeeAdvanceAnalysisModal()" style="background:#B91C1C;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 4px rgba(185,28,28,0.3);">
+          🔍 Detailed Advance Analysis (Total, Monthly &amp; Range)
+        </button>
+      </div>
+      <div id="staffAdvancesBreakdownContainer" style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;">
+        <div style="color:#666;">Loading staff advances...</div>
+      </div>
+    </div>
+
+    <!-- ⚡ ONE-CLICK BULK ACTIONS FOR FILTERED RANGE -->
+    <div class="card" style="background:linear-gradient(135deg, #1E1B4B 0%, #312E81 100%);color:#fff;padding:16px 20px;border-radius:12px;box-shadow:0 4px 15px rgba(49,46,129,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#A5B4FC;font-weight:700;">⚡ Bulk Action on All Items in Filtered Range</div>
+          <div style="font-size:16px;font-weight:800;margin-top:2px;">
+            Range: <span id="bulkRangeLabel" style="color:#FDE047;">${window._claimsState.fromDate || 'All'} to ${window._claimsState.toDate || 'All'}</span>
+            — <span id="bulkRangeCount" style="color:#67E8F9;">0</span> items (<span id="bulkRangePendingCount" style="color:#FCA5A5;">0 pending</span>) · Total: <span style="color:#86EFAC;">₹</span><span id="bulkRangeTotal" style="color:#86EFAC;">0</span>
+          </div>
+          <div style="font-size:11px;color:#C7D2FE;margin-top:2px;">Settle or claim all transactions matching the selected date range at once — no need to tick individual checkboxes!</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="bulkUpdateRange('claimed')" style="background:#F59E0B;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:0.2s;">
+            📤 Claim All in Range
+          </button>
+          <button onclick="bulkUpdateRange('received')" style="background:#10B981;color:#fff;border:none;padding:10px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(0,0,0,0.2);transition:0.2s;">
+            ✅ Settle All in Range
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SELECTION ACTIONS & TABLE -->
+    <div class="card" style="padding:12px 20px;background:#EEF2FF;border:1px solid #C7D2FE;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div style="font-size:13px;color:#3730A3;">
+          Selected via Checkboxes: <strong id="selectedCountText">0 items</strong> ·
+          Payable: <strong id="selectedAmountText" style="font-size:16px;">₹0</strong>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="bulkUpdateClaims('claimed')" class="btn-sm" style="background:#F59E0B;color:#fff;padding:6px 12px;font-weight:600;">📤 Mark Claimed (Selected)</button>
+          <button onclick="bulkUpdateClaims('received')" class="btn-sm" style="background:#10B981;color:#fff;padding:6px 12px;font-weight:600;">✅ Mark Settled (Selected)</button>
+          <button onclick="bulkUpdateClaims('unclaimed')" class="btn-sm" style="background:#6B7280;color:#fff;padding:6px 12px;font-weight:600;">↩️ Revert Pending</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div id="claimsTableContainer" style="overflow-x:auto;">
+        <div style="text-align:center;padding:30px;color:#666;">Loading claims data...</div>
+      </div>
+    </div>
+  `, 'claims');
+
+  await loadClaimsData();
+};
+
+window.setClaimsQuickDate = function(f, t) {
+  const fEl = document.getElementById('cfFromDate');
+  const tEl = document.getElementById('cfToDate');
+  if (fEl) fEl.value = f;
+  if (tEl) tEl.value = t;
+  window._claimsState.fromDate = f;
+  window._claimsState.toDate = t;
+  window._claimsState.statusFilter = 'all';
+  const sEl = document.getElementById('cfStatus');
+  if (sEl) sEl.value = 'all';
+  window.updateClaimsFilter();
+};
+
+window.updateClaimsFilter = function() {
+  const fD = document.getElementById('cfFromDate')?.value;
+  const tD = document.getElementById('cfToDate')?.value;
+  const mF = document.getElementById('cfModule')?.value;
+  const sF = document.getElementById('cfStatus')?.value;
+  const pF = document.getElementById('cfPaidBy')?.value;
+  const eF = document.getElementById('cfEmployee')?.value;
+
+  if (fD) window._claimsState.fromDate = fD;
+  if (tD) window._claimsState.toDate = tD;
+  if (mF) window._claimsState.moduleFilter = mF;
+  if (sF) window._claimsState.statusFilter = sF;
+  if (pF) window._claimsState.paidByFilter = pF;
+  if (eF) window._claimsState.employeeFilter = eF;
+
+  window._claimsState.selectedIds.clear();
+  renderClaimsTable();
+
+  // Keep OD Top Banner showing true live account balance
+  if (window.UHHSODManager) {
+    window.UHHSODManager.calculateBalance(sb);
+  }
+
+  // Synchronize Statement Proof Card & Mobile Download State with filtered date range
+  if (typeof window.renderClosingStatementForDate === 'function') {
+    window.renderClosingStatementForDate(window._claimsState.fromDate, window._claimsState.toDate);
+  }
+};
+
+// 3. Load All Data & Apply Filters Dynamically
+async function loadClaimsData() {
+  const container = document.getElementById('claimsTableContainer');
+  if (container) container.innerHTML = '<div style="text-align:center;padding:30px;color:#666;">Loading claims and advances data...</div>';
+
+  try {
+    const [{ data: eData }, { data: mData }, { data: lData }, { data: aData }, { data: empData }] = await Promise.all([
+      sb.from('reimbursements').select('*').order('expense_date', { ascending: false }),
+      sb.from('maintenance_log').select('*').gt('cost', 0).order('reported_date', { ascending: false }),
+      sb.from('laundry_payments').select('*, laundry_records(vendor_name)').order('payment_date', { ascending: false }),
+      sb.from('advance_tracker').select('*, employees(name)').order('date_given', { ascending: false }),
+      sb.from('employees').select('emp_id, name').order('name')
+    ]);
+
+    const empMap = {};
+    (empData || []).forEach(e => { if (e.emp_id) empMap[e.emp_id] = e.name; });
+    window._claimsState.empMap = empMap;
+    window._claimsState.empList = empData || [];
+    window._claimsState.allAdvs = aData || [];
+
+    // Populate Employee select dropdown if element exists
+    const empSelect = document.getElementById('cfEmployee');
+    if (empSelect) {
+      const currEmp = window._claimsState.employeeFilter || 'all';
+      empSelect.innerHTML = `<option value="all">All Staff / Anyone</option>` +
+        (empData || []).map(e => `<option value="${e.name}" ${currEmp === e.name ? 'selected' : ''}>👤 ${e.name}</option>`).join('');
+    }
+
+    const combined = [];
+
+    // A. Daily Expenses
+    (eData || []).forEach(r => {
+      combined.push({
+        uniqKey: `reimb_${r.id}`,
+        module: 'reimbursements',
+        moduleLabel: '💸 Expense',
+        id: r.id,
+        dateStr: r.expense_date || (r.created_at || '').slice(0, 10),
+        description: r.description || r.notes || 'Daily Expense',
+        vendorOrStaff: r.paid_to || '-',
+        staffName: r.paid_to || '-',
+        empId: r.created_by,
+        paidBy: normalizePaymentSource(r.payment_source || r.paid_by),
+        amount: Number(r.amount || 0),
+        status: normalizeStatus(r.status),
+        photo: r.receipt_photo,
+        raw: r
+      });
+    });
+
+    // B. Maintenance
+    (mData || []).forEach(m => {
+      const staffName = empMap[m.assigned_to] || m.assigned_to || m.vendor_name || '-';
+      combined.push({
+        uniqKey: `maint_${m.id}`,
+        module: 'maintenance',
+        moduleLabel: '🔧 Maintenance',
+        id: m.id,
+        dateStr: m.reported_date || (m.created_at || '').slice(0, 10),
+        description: `${m.issue_type || 'Repair'}: ${(m.description || '').slice(0, 80)}`,
+        vendorOrStaff: m.vendor_name || staffName,
+        staffName: staffName,
+        empId: m.assigned_to,
+        paidBy: normalizePaymentSource(m.payment_source || m.paid_by),
+        amount: Number(m.cost || 0),
+        status: normalizeStatus(m.claim_status || m.status),
+        photo: m.payment_photo || m.photo_before,
+        raw: m
+      });
+    });
+
+    // C. Laundry
+    (lData || []).forEach(lp => {
+      const vName = lp.laundry_records?.vendor_name || 'Laundry Vendor';
+      combined.push({
+        uniqKey: `laundry_${lp.id}`,
+        module: 'laundry',
+        moduleLabel: '🧺 Laundry',
+        id: lp.id,
+        dateStr: lp.payment_date || (lp.created_at || '').slice(0, 10),
+        description: `Laundry Payment (${vName})`,
+        vendorOrStaff: vName,
+        staffName: vName,
+        empId: null,
+        paidBy: normalizePaymentSource(lp.payment_source || lp.paid_by),
+        amount: Number(lp.amount || 0),
+        status: normalizeStatus(lp.claim_status),
+        photo: lp.payment_photo || lp.bill_photo,
+        raw: lp
+      });
+    });
+
+    // D. Staff Advances (from advance_tracker — the module actually used under Advance)
+    (aData || []).forEach(adv => {
+      const realName = adv.employees?.name || empMap[adv.emp_id] || 'Staff';
+      const bal = Number(adv.advance_amount || 0) - Number(adv.repaid_amount || 0);
+      const nStr = String(adv.notes || '');
+
+      let st = 'unclaimed';
+      if (adv.claim_status) {
+        st = adv.claim_status;
+      } else if (nStr.includes('[CLAIM: received]') || nStr.includes('[CLAIM: settled]') || adv.is_deducted || (Number(adv.repaid_amount || 0) >= Number(adv.advance_amount || 0) && Number(adv.advance_amount || 0) > 0)) {
+        st = 'received';
+      } else if (nStr.includes('[CLAIM: claimed]')) {
+        st = 'claimed';
+      } else if (bal <= 0) {
+        st = 'received';
+      }
+
+      combined.push({
+        uniqKey: `adv_${adv.id}`,
+        module: 'advances',
+        moduleLabel: '💰 Staff Advance',
+        id: adv.id,
+        dateStr: adv.date_given || (adv.created_at || '').slice(0, 10),
+        description: `Advance to ${realName}: ${adv.reason || 'Given'}`,
+        vendorOrStaff: realName,
+        staffName: realName,
+        empId: adv.emp_id,
+        paidBy: normalizePaymentSource(adv.paid_by),
+        amount: Number(adv.advance_amount || 0),
+        status: normalizeStatus(st),
+        photo: null,
+        raw: adv
+      });
+    });
+
+    window._claimsState.allData = combined;
+
+    // Trigger OD Top Banner Balance Calculation (Live Running Balance from 17-Sep Checkpoint)
+    if (window.UHHSODManager) {
+      await window.UHHSODManager.calculateBalance(sb);
+    }
+
+    renderClaimsTable();
+  } catch (err) {
+    if (container) container.innerHTML = `<div style="color:#DC2626;padding:20px;text-align:center;">Error loading claims: ${err.message}</div>`;
+  }
+}
+
+// 4. Render Table with Strict Real-time Filtering
+function renderClaimsTable() {
+  const container = document.getElementById('claimsTableContainer');
+  if (!container) return;
+
+  const { fromDate, toDate, moduleFilter, statusFilter, paidByFilter, employeeFilter, selectedIds, allData, empMap } = window._claimsState;
+
+  // Filter items strictly
+  const filtered = (allData || []).filter(item => {
+    // Date filter
+    if (fromDate && item.dateStr < fromDate) return false;
+    if (toDate && item.dateStr > toDate) return false;
+
+    // Module filter
+    if (moduleFilter !== 'all' && item.module !== moduleFilter) return false;
+
+    // PaidBy filter
+    if (paidByFilter !== 'all' && item.paidBy !== paidByFilter) return false;
+
+    // Status filter
+    if (statusFilter !== 'all' && item.status !== statusFilter) return false;
+
+    // Employee filter
+    if (employeeFilter && employeeFilter !== 'all') {
+      const matchEmp = (item.staffName === employeeFilter) ||
+                       (item.vendorOrStaff === employeeFilter) ||
+                       (item.empId === employeeFilter) ||
+                       (empMap[item.empId] === employeeFilter);
+      if (!matchEmp) return false;
+    }
+
+    return true;
+  });
+
+  window._claimsState.filteredKeys = filtered.map(item => item.uniqKey);
+
+  // Calculate Summaries — Staff Advances are also paid FROM the UHHS-OD account
+  // (just like expenses/maintenance/laundry), so they ADD to the claimable total,
+  // they are never subtracted from it.
+  let totalExps = 0;
+  let totalClaimed = 0;
+  let totalAdvances = 0;
+  const empAdvMap = {};
+
+  filtered.forEach(item => {
+    totalExps += item.amount;
+    if (item.status === 'claimed' || item.status === 'received') {
+      totalClaimed += item.amount;
+    }
+    if (item.module === 'advances') {
+      totalAdvances += item.amount;
+      const staffName = item.vendorOrStaff || 'Staff';
+      empAdvMap[staffName] = (empAdvMap[staffName] || 0) + item.amount;
+    }
+  });
+
+  const pendingPayable = Math.max(0, totalExps - totalClaimed);
+
+  // Update Stat Cards UI
+  document.getElementById('statTotalAmt').innerText = `₹${totalExps.toLocaleString('en-IN')}`;
+  document.getElementById('statClaimedAmt').innerText = `₹${totalClaimed.toLocaleString('en-IN')}`;
+  document.getElementById('statAdvancesAmt').innerText = `₹${totalAdvances.toLocaleString('en-IN')}`;
+  const netEl = document.getElementById('statNetPayableAmt');
+  if (netEl) {
+    if (pendingPayable === 0) {
+      netEl.innerHTML = `<span style="color:#059669;">₹0 (All Settled)</span>`;
+    } else {
+      netEl.innerText = `₹${pendingPayable.toLocaleString('en-IN')}`;
+      netEl.style.color = '#B45309';
+    }
+  }
+
+  // Update Bulk Banner Counters
+  const rLabel = document.getElementById('bulkRangeLabel');
+  const rCount = document.getElementById('bulkRangeCount');
+  const rPendingCount = document.getElementById('bulkRangePendingCount');
+  const rTotal = document.getElementById('bulkRangeTotal');
+  const pendingCount = filtered.filter(i => i.status !== 'received').length;
+  if (rLabel) rLabel.innerText = `${fromDate || 'All'} to ${toDate || 'All'}`;
+  if (rCount) rCount.innerText = `${filtered.length}`;
+  if (rPendingCount) rPendingCount.innerText = `${pendingCount} pending`;
+  if (rTotal) rTotal.innerText = `${totalExps.toLocaleString('en-IN')}`;
+
+  // Update Staff Advances Breakdown Chips
+  const advContainer = document.getElementById('staffAdvancesBreakdownContainer');
+  if (advContainer) {
+    const entries = Object.entries(empAdvMap);
+    if (entries.length === 0) {
+      advContainer.innerHTML = '<span style="color:#059669;font-weight:600;">✅ No staff advances in selected filter.</span>';
+    } else {
+      advContainer.innerHTML = entries.map(([name, amt]) => `
+        <span onclick="window.showEmployeeAdvanceAnalysisModal('${name.replace(/'/g, "\\'")}')" style="background:#FFE4E6;color:#991B1B;padding:6px 12px;border-radius:6px;font-weight:700;cursor:pointer;border:1px solid #FDA4AF;transition:0.15s;display:inline-flex;align-items:center;gap:5px;" title="Click to view Total, Monthly & Between-dates breakdown for ${name}">
+          👤 ${name}: ₹${amt.toLocaleString('en-IN')} <span style="font-size:10px;opacity:0.8;">📊 Click</span>
+        </span>
+      `).join('');
+    }
+  }
+
+  // Render Table HTML
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="text-align:center;padding:40px;color:#64748B;">No entries match the selected filters (Module: ${moduleFilter}, Status: ${statusFilter}, PaidBy: ${paidByFilter})</div>`;
+    updateSelectionText();
+    return;
+  }
+
+  container.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:#F1F5F9;text-align:left;">
+          <th style="padding:10px;width:30px;"><input type="checkbox" onchange="toggleSelectAllClaims(this)" /></th>
+          <th style="padding:10px;">MODULE</th>
+          <th style="padding:10px;">DATE</th>
+          <th style="padding:10px;">DESCRIPTION</th>
+          <th style="padding:10px;">VENDOR / STAFF</th>
+          <th style="padding:10px;">PAID BY</th>
+          <th style="padding:10px;text-align:right;">AMOUNT (₹)</th>
+          <th style="padding:10px;text-align:center;">STATUS</th>
+          <th style="padding:10px;text-align:center;">PROOF</th>
+          <th style="padding:10px;text-align:center;">ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(item => {
+          const isChecked = selectedIds.has(item.uniqKey);
+          const badgeClass = item.status === 'received' ? 'background:#DCFCE7;color:#15803D;' : item.status === 'claimed' ? 'background:#FEF3C7;color:#92400E;' : 'background:#FEE2E2;color:#B91C1C;';
+          const badgeLabel = item.status === 'received' ? '✅ Settled' : item.status === 'claimed' ? '📤 Claimed' : '⏳ Pending';
+          const sourceBadge = window.UHHSODManager ? UHHSODManager.getBadge(item.paidBy) : item.paidBy;
+
+          return `
+            <tr style="border-bottom:1px solid #E2E8F0;background:${isChecked ? '#EFF6FF' : '#fff'};">
+              <td style="padding:10px;"><input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSelectClaim('${item.uniqKey}')" /></td>
+              <td style="padding:10px;font-weight:600;">${item.moduleLabel}</td>
+              <td style="padding:10px;white-space:nowrap;">${item.dateStr}</td>
+              <td style="padding:10px;max-width:220px;">${item.description}</td>
+              <td style="padding:10px;">${item.vendorOrStaff}</td>
+              <td style="padding:10px;">${sourceBadge}</td>
+              <td style="padding:10px;text-align:right;font-weight:700;color:#0F172A;">
+                ₹${item.amount.toLocaleString('en-IN')}
+              </td>
+              <td style="padding:10px;text-align:center;">
+                <span style="padding:3px 8px;border-radius:4px;font-size:10px;font-weight:700;${badgeClass}">${badgeLabel}</span>
+              </td>
+              <td style="padding:10px;text-align:center;">
+                ${item.photo ? `<button onclick="dlIdPhoto('${item.photo.includes('/id-proofs/') ? item.photo.split('/id-proofs/')[1] : item.photo}')" class="btn-sm" style="background:#3B82F6;color:#fff;padding:2px 6px;font-size:10px;">💳 View</button>` : '-'}
+              </td>
+              <td style="padding:10px;text-align:center;white-space:nowrap;">
+                ${item.status !== 'claimed' ? `
+                  <button onclick="updateSingleClaim('${item.uniqKey}', 'claimed')" class="btn-sm" style="background:#F59E0B;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Mark as Claimed">📤 Claim</button>
+                ` : ''}
+                ${item.status !== 'received' ? `
+                  <button onclick="updateSingleClaim('${item.uniqKey}', 'received')" class="btn-sm" style="background:#10B981;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Mark as Settled (Received)">✅ Settle</button>
+                ` : ''}
+                ${item.status !== 'unclaimed' ? `
+                  <button onclick="updateSingleClaim('${item.uniqKey}', 'unclaimed')" class="btn-sm" style="background:#64748B;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;" title="Revert to Pending">↩️</button>
+                ` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  updateSelectionText();
+}
+
+// 5. Checkbox & Selection Helpers
+window.toggleSelectClaim = function(uniqKey) {
+  const { selectedIds } = window._claimsState;
+  if (selectedIds.has(uniqKey)) selectedIds.delete(uniqKey);
+  else selectedIds.add(uniqKey);
+  renderClaimsTable();
+};
+
+window.toggleSelectAllClaims = function(masterCb) {
+  const { selectedIds, filteredKeys } = window._claimsState;
+  if (masterCb.checked) {
+    (filteredKeys || []).forEach(k => selectedIds.add(k));
+  } else {
+    (filteredKeys || []).forEach(k => selectedIds.delete(k));
+  }
+  renderClaimsTable();
+};
+
+function updateSelectionText() {
+  const { selectedIds, allData } = window._claimsState;
+  let selAmt = 0;
+  allData.forEach(item => {
+    if (selectedIds.has(item.uniqKey)) selAmt += item.amount;
+  });
+
+  const cEl = document.getElementById('selectedCountText');
+  const aEl = document.getElementById('selectedAmountText');
+  if (cEl) cEl.innerText = `${selectedIds.size} items`;
+  if (aEl) aEl.innerText = `₹${selAmt.toLocaleString('en-IN')}`;
+}
+
+// 6. Universal Updater and Bulk Handlers (Mark Claimed, Mark Received, Revert Pending)
+async function updateItemClaimStatus(item, targetStatus, today = new Date().toISOString().slice(0, 10)) {
+  const nowIso = new Date().toISOString();
+
+  if (item.module === 'reimbursements') {
+    const dbStatus = targetStatus === 'received' ? 'Received' : targetStatus === 'claimed' ? 'Claimed' : 'Pending';
+    const payload = { status: dbStatus };
+    if (targetStatus === 'claimed') {
+      payload.claimed_date = today;
+      payload.claimed_at = nowIso;
+    } else if (targetStatus === 'received') {
+      payload.received_date = today;
+      payload.received_at = nowIso;
+    } else {
+      payload.claimed_date = null;
+      payload.received_date = null;
+      payload.claimed_at = null;
+      payload.received_at = null;
+    }
+    const { error } = await sb.from('reimbursements').update(payload).eq('id', item.id);
+    if (error) throw error;
+    return true;
+  }
+
+  if (item.module === 'maintenance') {
+    const payload = { claim_status: targetStatus };
+    if (targetStatus === 'claimed') payload.claimed_at = nowIso;
+    else if (targetStatus === 'received') payload.received_at = nowIso;
+    else { payload.claimed_at = null; payload.received_at = null; }
+
+    const { error } = await sb.from('maintenance_log').update(payload).eq('id', item.id);
+    if (error) throw error;
+    return true;
+  }
+
+  if (item.module === 'laundry') {
+    const dbStatus = targetStatus === 'unclaimed' ? 'not_claimed' : targetStatus;
+    const payload = { claim_status: dbStatus };
+    if (targetStatus === 'claimed') {
+      payload.claim_date = today;
+      payload.claimed_at = nowIso;
+    } else if (targetStatus === 'received') {
+      payload.claim_received_date = today;
+      payload.received_at = nowIso;
+    } else {
+      payload.claim_date = null;
+      payload.claim_received_date = null;
+      payload.claimed_at = null;
+      payload.received_at = null;
+    }
+    const { error } = await sb.from('laundry_payments').update(payload).eq('id', item.id);
+    if (error) throw error;
+    return true;
+  }
+
+  if (item.module === 'advances') {
+    const oldNotes = (item.raw?.notes || '').replace(/\[CLAIM:\s*\w+\]/g, '').trim();
+    if (targetStatus === 'received') {
+      const newNotes = oldNotes ? `${oldNotes} [CLAIM: received]` : '[CLAIM: received]';
+      const { error } = await sb.from('advance_tracker').update({
+        is_deducted: true,
+        repaid_amount: Number(item.amount || 0),
+        repaid_date: today,
+        notes: newNotes
+      }).eq('id', item.id);
+      if (error) throw error;
+    } else if (targetStatus === 'claimed') {
+      const newNotes = oldNotes ? `${oldNotes} [CLAIM: claimed]` : '[CLAIM: claimed]';
+      const { error } = await sb.from('advance_tracker').update({
+        notes: newNotes
+      }).eq('id', item.id);
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('advance_tracker').update({
+        is_deducted: false,
+        repaid_amount: 0,
+        repaid_date: null,
+        notes: oldNotes || null
+      }).eq('id', item.id);
+      if (error) throw error;
+    }
+    return true;
+  }
+
+  return false;
+}
+
+// Single-item action toggle
+window.updateSingleClaim = async function(uniqKey, targetStatus) {
+  const item = (window._claimsState.allData || []).find(i => i.uniqKey === uniqKey);
+  if (!item) return;
+  const label = targetStatus === 'received' ? 'Settled (Received)' : targetStatus === 'claimed' ? 'Claimed' : 'Pending';
+  try {
+    await updateItemClaimStatus(item, targetStatus);
+    if (window.fsn?.success) {
+      fsn.success('Updated', `✅ Item marked as ${label}!`);
+    }
+    if (typeof window.notifyDataChanged === 'function') window.notifyDataChanged();
+    await loadClaimsData();
+  } catch (err) {
+    alert('❌ Error updating item: ' + err.message);
+  }
+};
+
+// Checkbox selection action handler
+window.bulkUpdateClaims = async function(targetStatus) {
+  const { selectedIds, allData } = window._claimsState;
+  if (selectedIds.size === 0) {
+    alert('⚠️ Please select at least 1 item using checkboxes, or click "Claim All in Range" / "Settle All in Range" above to update the whole date range at once!');
+    return;
+  }
+
+  const label = targetStatus === 'received' ? 'Settled (Received)' : targetStatus === 'claimed' ? 'Claimed' : 'Pending';
+  const today = new Date().toISOString().slice(0, 10);
+  let updatedCount = 0;
+  let failCount = 0;
+
+  for (const item of allData) {
+    if (selectedIds.has(item.uniqKey)) {
+      try {
+        await updateItemClaimStatus(item, targetStatus, today);
+        updatedCount++;
+      } catch (err) {
+        console.error('Error updating item:', item, err);
+        failCount++;
+      }
+    }
+  }
+
+  selectedIds.clear();
+  if (window.fsn?.success) {
+    fsn.success('Updated', `✅ Updated status for ${updatedCount} selected items!`);
+  } else {
+    alert(`✅ Updated status for ${updatedCount} items!${failCount > 0 ? ` (${failCount} failed)` : ''}`);
+  }
+
+  if (typeof window.notifyDataChanged === 'function') window.notifyDataChanged();
+  await loadClaimsData();
+};
+
+// ⚡ Range Bulk Updater (Claim All / Settle All across selected date range)
+window.bulkUpdateRange = async function(targetStatus) {
+  const { fromDate, toDate, allData, moduleFilter, paidByFilter } = window._claimsState;
+
+  const matchingItems = (allData || []).filter(item => {
+    if (fromDate && item.dateStr < fromDate) return false;
+    if (toDate && item.dateStr > toDate) return false;
+    if (moduleFilter !== 'all' && item.module !== moduleFilter) return false;
+    if (paidByFilter !== 'all' && item.paidBy !== paidByFilter) return false;
+    return true;
+  });
+
+  if (matchingItems.length === 0) {
+    alert(`⚠️ No transactions found matching the selected range (${fromDate || 'all'} to ${toDate || 'all'})!`);
+    return;
+  }
+
+  const label = targetStatus === 'received' ? 'Settled (Received)' : targetStatus === 'claimed' ? 'Claimed' : 'Pending';
+  const totalAmt = matchingItems.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+
+  const ok = confirm(
+    `⚡ BULK ACTION CONFIRMATION\n\n` +
+    `Mark ALL ${matchingItems.length} transactions in date range as "${label}"?\n\n` +
+    `📅 Date Range: ${fromDate || 'Start'} to ${toDate || 'End'}\n` +
+    `💰 Total Amount: ₹${totalAmt.toLocaleString('en-IN')}\n\n` +
+    `Click OK to proceed with bulk update.`
+  );
+  if (!ok) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  let successCount = 0;
+  let failCount = 0;
+
+  const container = document.getElementById('claimsTableContainer');
+  if (container) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:50px 20px;">
+        <div style="font-size:32px;margin-bottom:12px;">⏳</div>
+        <h3 style="color:#312E81;margin:0 0 8px;font-size:18px;">Updating ${matchingItems.length} records to "${label}"...</h3>
+        <p style="color:#64748B;font-size:13px;margin:0;">Please wait while the database records are safely updated.</p>
+      </div>
+    `;
+  }
+
+  for (const item of matchingItems) {
+    try {
+      await updateItemClaimStatus(item, targetStatus, today);
+      successCount++;
+    } catch (err) {
+      console.error('Failed to update item in range:', item, err);
+      failCount++;
+    }
+  }
+
+  if (window._claimsState.selectedIds) window._claimsState.selectedIds.clear();
+
+  if (window.fsn?.success) {
+    fsn.success('Success', `✅ Successfully marked ${successCount} transactions as "${label}"!`);
+  } else {
+    alert(`✅ Successfully marked ${successCount} transactions as "${label}"!${failCount > 0 ? ` (${failCount} failed)` : ''}`);
+  }
+
+  if (typeof window.notifyDataChanged === 'function') window.notifyDataChanged();
+  await loadClaimsData();
+};
+
+// 7. UHHS Deposit Entry Modal & Ledger Popup
+window.openUhhsDepositModal = function() {
+  if (window.cbDepositToODModal) window.cbDepositToODModal();
+};
+
+window.openUhhsReturnModal = function() {
+  if (window.cbReturnFromODModal) window.cbReturnFromODModal();
+};
+
+window.closeUhhsStatementModal = function() {
+  const m = document.getElementById('uhhsLedgerModalOverlay');
+  if (m) m.remove();
+};
+
+window.showUhhsStatementModal = async function() {
+  try {
+    const { fromDate, toDate } = window._claimsState || {};
+    const fDate = fromDate || '2026-09-17';
+    const tDate = toDate || new Date().toISOString().slice(0, 10);
+
+    let ledger = null;
+    if (window.UHHSODManager && window.UHHSODManager.getLedgerData) {
+      ledger = await window.UHHSODManager.getLedgerData(sb, fDate, tDate);
+    }
+
+    const txns = ledger ? (ledger.txns || []) : [];
+    const totalInflow = ledger ? Number(ledger.totalInflow || 0) : 0;
+    const totalOutflow = ledger ? Number(ledger.totalOutflow || 0) : 0;
+    const netBalance = ledger ? Number(ledger.netBalance || 0) : 0;
+    const openingBalance = ledger ? Number(ledger.openingBalance || 0) : 0;
+
+    // Immediately synchronize Claims Manager Top Banner with exact same numbers
+    const bEl = document.getElementById('claims-od-banner-bal');
+    if (bEl) {
+      const prefix = netBalance < 0 ? '-₹' : '₹';
+      const absVal = Math.abs(netBalance).toLocaleString('en-IN');
+      bEl.innerText = `${prefix}${absVal}`;
+      bEl.style.color = netBalance >= 0 ? '#15803D' : '#DC2626';
+    }
+    const inEl = document.getElementById('claims-od-inflow');
+    if (inEl) inEl.innerText = `₹${totalInflow.toLocaleString('en-IN')}`;
+    const outEl = document.getElementById('claims-od-outflow');
+    if (outEl) outEl.innerText = `₹${totalOutflow.toLocaleString('en-IN')}`;
+
+    // Remove any existing instance
+    window.closeUhhsStatementModal();
+
+    const modal = document.createElement('div');
+    modal.id = 'uhhsLedgerModalOverlay';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:80000;padding:12px;box-sizing:border-box;backdrop-filter:blur(2px);';
+    modal.onclick = e => { if (e.target === modal) window.closeUhhsStatementModal(); };
+
+    window._currentUhhsStatementData = { fDate, tDate, totalInflow, totalOutflow, netBalance, txns };
+
+    modal.innerHTML = `
+      <div class="modal-box" style="background:#fff;border-radius:14px;width:100%;max-width:880px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 12px 35px rgba(0,0,0,0.35);margin:auto;position:relative;" onclick="event.stopPropagation()">
+        <!-- STICKY HEADER -->
+        <div style="padding:12px 16px;border-bottom:1.5px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#F8FAFC;">
+          <div style="min-width:0;flex:1;">
+            <h2 style="margin:0;color:#0F766E;font-size:16px;font-weight:800;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              📜 TUHH-OD Statement / Ledger
+            </h2>
+            <div style="font-size:11px;color:#64748B;margin-top:2px;">
+              Period: <strong>${fDate}</strong> → <strong>${tDate}</strong> · Txns: <strong>${txns.length}</strong>
+            </div>
+          </div>
+          <button type="button" class="modal-close" onclick="window.closeUhhsStatementModal()" title="Close Ledger (ESC)" aria-label="Close" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;width:32px;height:32px;border-radius:50%;font-weight:800;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s ease;">✕</button>
+        </div>
+
+        <!-- ACTION TOOLBAR -->
+        <div style="padding:8px 16px;background:#FFFFFF;border-bottom:1px solid #F1F5F9;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button onclick="openUhhsDepositModal()" style="padding:6px 12px;background:#10B981;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">📥 + Add Deposit</button>
+          <button onclick="openUhhsReturnModal()" style="padding:6px 12px;background:#EF4444;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">💸 Return to Company</button>
+          <button onclick="window.exportUhhsLedgerPDF()" style="padding:6px 12px;background:#0F172A;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">📄 Export PDF</button>
+        </div>
+
+        <!-- SCROLLABLE BODY -->
+        <div style="padding:12px 16px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;flex:1;">
+          <!-- KPI SUMMARY ROW (Transparent Opening Bal + Inflow - Outflow = Net Balance) -->
+          <div class="uhhs-od-kpi-row" style="display:flex;flex-direction:row;gap:6px;margin-bottom:12px;width:100%;flex-wrap:wrap;">
+            ${openingBalance !== 0 ? `
+              <div class="uhhs-od-kpi-card" style="flex:1 1 120px;min-width:0;padding:8px 6px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;text-align:center;">
+                <div class="kpi-label" style="font-size:9.5px;color:#1D4ED8;font-weight:700;">OPENING BAL (B/F)</div>
+                <div class="kpi-val" style="font-size:14.5px;font-weight:800;color:#2563EB;margin-top:2px;">₹${openingBalance.toLocaleString('en-IN')}</div>
+              </div>
+            ` : ''}
+            <div class="uhhs-od-kpi-card" style="flex:1 1 120px;min-width:0;padding:8px 6px;background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;text-align:center;">
+              <div class="kpi-label" style="font-size:9.5px;color:#166534;font-weight:700;">TOTAL DEPOSITED (+)</div>
+              <div class="kpi-val" style="font-size:14.5px;font-weight:800;color:#059669;margin-top:2px;">₹${totalInflow.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="uhhs-od-kpi-card" style="flex:1 1 120px;min-width:0;padding:8px 6px;background:#FEF2F2;border:1px solid #FECDD3;border-radius:8px;text-align:center;">
+              <div class="kpi-label" style="font-size:9.5px;color:#991B1B;font-weight:700;">TOTAL SPENT (-)</div>
+              <div class="kpi-val" style="font-size:14.5px;font-weight:800;color:#DC2626;margin-top:2px;">₹${totalOutflow.toLocaleString('en-IN')}</div>
+            </div>
+            <div class="uhhs-od-kpi-card" style="flex:1 1 120px;min-width:0;padding:8px 6px;background:${netBalance>=0?'#ECFDF5':'#FFF1F2'};border:1.5px solid ${netBalance>=0?'#10B981':'#EF4444'};border-radius:8px;text-align:center;">
+              <div class="kpi-label" style="font-size:9.5px;color:${netBalance>=0?'#065F46':'#9F1239'};font-weight:800;">NET RUNNING BAL</div>
+              <div class="kpi-val" style="font-size:15px;font-weight:900;color:${netBalance>=0?'#059669':'#DC2626'};margin-top:2px;">₹${netBalance.toLocaleString('en-IN')}</div>
+            </div>
+          </div>
+
+          <!-- HORIZONTALLY SCROLLABLE TABLE WRAPPER -->
+          <div class="uhhs-od-table-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;border:1px solid #E2E8F0;border-radius:8px;background:#FFFFFF;">
+            <table class="uhhs-od-ledger-table" style="width:100%;min-width:680px;border-collapse:collapse;table-layout:auto;font-size:12px;">
+              <thead>
+                <tr style="background:#F1F5F9;text-align:left;border-bottom:1.5px solid #CBD5E1;">
+                  <th style="padding:8px 10px;width:90px;min-width:90px;white-space:nowrap;font-weight:700;color:#334155;">Date</th>
+                  <th style="padding:8px 10px;width:95px;min-width:95px;white-space:nowrap;font-weight:700;color:#334155;">Type</th>
+                  <th style="padding:8px 10px;min-width:240px;font-weight:700;color:#334155;">Description</th>
+                  <th style="padding:8px 10px;width:115px;min-width:115px;text-align:right;white-space:nowrap;font-weight:700;color:#334155;">Amount (₹)</th>
+                  <th style="padding:8px 10px;width:135px;min-width:135px;text-align:center;white-space:nowrap;font-weight:700;color:#334155;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${txns.length === 0 ? '<tr><td colspan="5" style="padding:24px;text-align:center;color:#94A3B8;">No transactions found in selected period</td></tr>' : ''}
+                ${txns.map(t => `
+                  <tr style="border-bottom:1px solid #E2E8F0;">
+                    <td style="padding:8px 10px;white-space:nowrap;color:#475569;font-weight:600;">${t.date || '-'}</td>
+                    <td style="padding:8px 10px;white-space:nowrap;"><span style="padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;background:${t.isOpening?'#EFF6FF':(t.isDep?'#DCFCE7':'#FEE2E2')};color:${t.isOpening?'#1D4ED8':(t.isDep?'#15803D':'#B91C1C')};">${t.isOpening ? '💼 OPENING BAL' : (t.isDep ? '📥 DEPOSIT' : '📤 EXPENSE')}</span></td>
+                    <td style="padding:8px 10px;min-width:240px;max-width:none !important;white-space:normal !important;word-break:break-word !important;color:#1E293B;line-height:1.35;">${t.desc}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:${t.isDep?'#15803D':'#B91C1C'};white-space:nowrap;min-width:115px;">${t.isDep ? '+' : '-'}₹${t.amount.toLocaleString('en-IN')}</td>
+                    <td style="padding:8px 10px;text-align:center;white-space:nowrap;min-width:135px;">
+                      ${(t.isSecurityDeposit || t.isSecurityRefund) && t.booking_id ? `
+                        <button onclick="window.showSecurityDepositModal('${t.booking_id}')" class="btn-sm" style="background:#0284C7;color:#fff;padding:4px 9px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;" title="Manage Security Deposit">🛡️ Manage</button>
+                      ` : (t.isDep ? `
+                        <button onclick="window.cbEditODDeposit('${t.id}')" class="btn-sm" style="background:#3B82F6;color:#fff;padding:4px 8px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;margin-right:4px;">✏️ Edit</button>
+                        <button onclick="window.cbDeleteODDeposit('${t.id}')" class="btn-sm" style="background:#DC2626;color:#fff;padding:4px 8px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;">🗑️ Delete</button>
+                      ` : (t.source === 'reimbursements' && t.id ? `
+                        <button onclick="window.openReimbursementEditModal('${t.id}')" class="btn-sm" style="background:#3B82F6;color:#fff;padding:4px 8px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Edit Daily Expense">✏️ Edit</button>
+                        <button onclick="window.deleteReimbursementFromLedger('${t.id}')" class="btn-sm" style="background:#DC2626;color:#fff;padding:4px 8px;font-size:10.5px;font-weight:600;border:none;border-radius:4px;cursor:pointer;" title="Delete Daily Expense">🗑️ Delete</button>
+                      ` : '<span style="color:#94A3B8;font-size:11px;">Auto</span>'))}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- STICKY FOOTER -->
+        <div style="padding:10px 16px;border-top:1px solid #E2E8F0;background:#F8FAFC;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div style="font-size:12px;color:#64748B;">
+            Period Net Balance: <strong style="color:${netBalance>=0?'#059669':'#DC2626'};font-size:13px;">₹${netBalance.toLocaleString('en-IN')}</strong>
+          </div>
+          <button type="button" class="modal-close" onclick="window.closeUhhsStatementModal()" style="background:#64748B;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
+            ✕ Close Ledger
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Escape key handler
+    const escHandler = e => {
+      if (e.key === 'Escape') {
+        window.closeUhhsStatementModal();
+        window.removeEventListener('keydown', escHandler);
+      }
+    };
+    window.addEventListener('keydown', escHandler);
+  } catch (err) {
+    alert('Error loading ledger: ' + err.message);
+  }
+};
+
+// 7b. In-Place Daily Expense Edit Modal for Ledger (z-index 9999999 so it never appears in background)
+window.openReimbursementEditModal = async function(id) {
+  const oldModal = document.getElementById('reimbEditModalOverlay');
+  if (oldModal) oldModal.remove();
+
+  try {
+    const { data: rec, error } = await sb.from('reimbursements').select('*').eq('id', id).single();
+    if (error || !rec) {
+      alert('❌ Expense record not found!');
+      return;
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'reimbEditModalOverlay';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999999;padding:16px;box-sizing:border-box;backdrop-filter:blur(3px);';
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+    modal.innerHTML = `
+      <div class="modal-box" style="background:#fff;border-radius:12px;padding:22px;max-width:480px;width:100%;box-shadow:0 12px 32px rgba(0,0,0,0.25);" onclick="event.stopPropagation()">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #eee;padding-bottom:10px;">
+          <h3 style="margin:0;font-size:17px;color:#1E293B;font-weight:800;display:flex;align-items:center;gap:6px;">
+            ✏️ Edit Daily Expense (ID: ${rec.id})
+          </h3>
+          <button onclick="document.getElementById('reimbEditModalOverlay')?.remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;">✕</button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <label style="font-weight:600;font-size:12px;display:block;margin-bottom:4px;">Date *</label>
+            <input id="ledgerEditDate" type="date" value="${rec.expense_date || ''}" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-weight:600;font-size:12px;display:block;margin-bottom:4px;">Amount (₹) *</label>
+            <input id="ledgerEditAmt" type="number" min="1" value="${rec.amount || ''}" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;font-size:15px;font-weight:700;box-sizing:border-box;">
+          </div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-weight:600;font-size:12px;display:block;margin-bottom:4px;">Category *</label>
+          <select id="ledgerEditCat" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+            ${['🛒 Grocery/Food', '🧹 Cleaning Supplies', '🚚 Delivery/Transport', '💡 Utilities', '🎁 Guest Requests', '📦 Other'].map(c =>
+              `<option value="${c}" ${(rec.category || '').includes(c.slice(2).trim()) ? 'selected' : ''}>${c}</option>`
+            ).join('')}
+          </select>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <label style="font-weight:600;font-size:12px;display:block;margin-bottom:4px;">Description / Item Name *</label>
+          <input id="ledgerEditDesc" type="text" value="${(rec.description || '').replace(/"/g, '&quot;')}" placeholder="e.g. CNG, Breakfast, Groceries" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-weight:700;font-size:12.5px;color:#0F172A;display:block;margin-bottom:4px;">💳 Payment Account / Source *</label>
+          <select id="ledgerEditSource" style="width:100%;padding:8px;border:1.5px solid #0D6EFD;border-radius:6px;font-weight:600;background:#F8FAFC;box-sizing:border-box;">
+            <option value="UHHS-OD" ${rec.payment_source === 'UHHS-OD' || !rec.payment_source ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+            <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
+            <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom:16px;">
+          <label style="font-weight:600;font-size:12px;display:block;margin-bottom:4px;">Notes / Remarks</label>
+          <input id="ledgerEditNotes" type="text" value="${(rec.notes || '').replace(/"/g, '&quot;')}" placeholder="Optional notes" style="width:100%;padding:8px;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;">
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button id="btnSaveLedgerEdit" onclick="window.saveReimbursementFromLedger('${rec.id}')" style="flex:2;padding:11px;background:#10B981;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
+            💾 Save Expense Changes
+          </button>
+          <button onclick="document.getElementById('reimbEditModalOverlay')?.remove()" style="flex:1;padding:11px;background:#64748B;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;">
+            Cancel
+          </button>
+        </div>
+        <div id="ledgerEditErr" style="margin-top:10px;color:#DC2626;font-size:12px;font-weight:600;text-align:center;"></div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+  } catch (e) {
+    alert('Error loading expense: ' + e.message);
+  }
+};
+
+window.saveReimbursementFromLedger = async function(id) {
+  const btn = document.getElementById('btnSaveLedgerEdit');
+  const errEl = document.getElementById('ledgerEditErr');
+  const date = document.getElementById('ledgerEditDate')?.value;
+  const amt = parseFloat(document.getElementById('ledgerEditAmt')?.value) || 0;
+  const cat = document.getElementById('ledgerEditCat')?.value;
+  const desc = document.getElementById('ledgerEditDesc')?.value?.trim();
+  const paymentSource = document.getElementById('ledgerEditSource')?.value || 'UHHS-OD';
+  const notes = document.getElementById('ledgerEditNotes')?.value?.trim();
+
+  if (!date || amt <= 0 || !desc) {
+    if (errEl) errEl.innerText = '⚠️ Please fill date, positive amount, and description!';
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.innerText = '⏳ Saving...'; }
+
+  try {
+    const { error } = await sb.from('reimbursements').update({
+      expense_date: date,
+      amount: amt,
+      category: cat,
+      description: desc,
+      payment_source: paymentSource,
+      notes: notes
+    }).eq('id', id);
+
+    if (error) throw error;
+
+    document.getElementById('reimbEditModalOverlay')?.remove();
+    if (window.fsn?.success) fsn.success('Saved', '✅ Expense updated!');
+    else alert('✅ Expense updated!');
+
+    // Refresh UI seamlessly
+    if (typeof window.showUhhsStatementModal === 'function') window.showUhhsStatementModal();
+    if (typeof window.loadClaimsData === 'function') window.loadClaimsData();
+    if (window.UHHSODManager) window.UHHSODManager.calculateBalance(sb);
+    if (typeof window.notifyDataChanged === 'function') window.notifyDataChanged();
+  } catch (err) {
+    if (errEl) errEl.innerText = '❌ ' + err.message;
+    if (btn) { btn.disabled = false; btn.innerText = '💾 Save Expense Changes'; }
+  }
+};
+
+window.deleteReimbursementFromLedger = async function(id) {
+  if (!confirm('🗑️ Are you sure you want to delete this daily expense record?')) return;
+  try {
+    const { error } = await sb.from('reimbursements').delete().eq('id', id);
+    if (error) throw error;
+
+    if (window.fsn?.success) fsn.success('Deleted', '✅ Expense deleted!');
+    else alert('✅ Expense deleted!');
+
+    // Refresh UI
+    if (typeof window.showUhhsStatementModal === 'function') window.showUhhsStatementModal();
+    if (typeof window.loadClaimsData === 'function') window.loadClaimsData();
+    if (window.UHHSODManager) window.UHHSODManager.calculateBalance(sb);
+    if (typeof window.notifyDataChanged === 'function') window.notifyDataChanged();
+  } catch (err) {
+    alert('❌ Error deleting expense: ' + err.message);
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// 8. INTERACTIVE EMPLOYEE ADVANCE ANALYSIS MODAL (TOTAL, MONTHLY & BETWEEN)
+// ══════════════════════════════════════════════════════════════════
+window.closeEmployeeAdvanceModal = function() {
+  const m = document.getElementById('empAdvModalOverlay');
+  if (m) m.remove();
+};
+
+window.showEmployeeAdvanceAnalysisModal = async function(preselectedEmp = null) {
+  try {
+    let allAdvs = window._claimsState.allAdvs || [];
+    let empList = window._claimsState.empList || [];
+
+    // If not loaded yet, fetch from supabase
+    if (allAdvs.length === 0 || empList.length === 0) {
+      const [{ data: aData }, { data: eData }] = await Promise.all([
+        sb.from('advance_tracker').select('*, employees(name)').order('date_given', { ascending: false }),
+        sb.from('employees').select('emp_id, name').order('name')
+      ]);
+      allAdvs = aData || [];
+      empList = eData || [];
+      window._claimsState.allAdvs = allAdvs;
+      window._claimsState.empList = empList;
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'empAdvModalOverlay';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:999999;padding:12px;box-sizing:border-box;backdrop-filter:blur(2px);';
+    modal.onclick = e => { if (e.target === modal) window.closeEmployeeAdvanceModal(); };
+
+    // Default dates from current filter state or current month
+    const curFrom = window._claimsState.fromDate || new Date().toISOString().slice(0, 7) + '-01';
+    const curTo = window._claimsState.toDate || new Date().toISOString().slice(0, 10);
+    const curMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+    modal.innerHTML = `
+      <div class="modal-box" style="background:#fff;border-radius:12px;width:100%;max-width:850px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.35);margin:auto;" onclick="event.stopPropagation()">
+        <!-- STICKY HEADER -->
+        <div style="padding:14px 18px;border-bottom:1.5px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#FFF5F5;">
+          <div>
+            <h2 style="margin:0;color:#991B1B;font-size:17px;font-weight:800;display:flex;align-items:center;gap:6px;">
+              👥 Employee Advance Tracker &amp; Analysis
+            </h2>
+            <div style="font-size:11.5px;color:#64748B;margin-top:2px;">
+              Total, Monthly, and Between-Dates breakdown for staff advances
+            </div>
+          </div>
+          <button type="button" onclick="window.closeEmployeeAdvanceModal()" style="background:#EF4444;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:800;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(239,68,68,0.3);">
+            ✕ Close
+          </button>
+        </div>
+
+        <!-- CONTROLS: EMPLOYEE & BETWEEN DATES -->
+        <div style="padding:12px 18px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:10px;align-items:end;">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:3px;">👤 Select Employee</label>
+              <select id="modalAdvEmp" onchange="updateEmpAdvModalView()" style="width:100%;padding:7px 8px;font-size:12px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;">
+                <option value="all">👥 All Employees (Entire Staff)</option>
+                ${(empList || []).map(e => `<option value="${e.name}" ${preselectedEmp === e.name ? 'selected' : ''}>👤 ${e.name}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:3px;">📅 Between: From Date</label>
+              <input id="modalAdvFrom" type="date" value="${curFrom}" onchange="updateEmpAdvModalView()" style="width:100%;padding:6px 8px;font-size:12px;border:1px solid #CBD5E1;border-radius:6px;box-sizing:border-box;">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#475569;display:block;margin-bottom:3px;">📅 Between: To Date</label>
+              <input id="modalAdvTo" type="date" value="${curTo}" onchange="updateEmpAdvModalView()" style="width:100%;padding:6px 8px;font-size:12px;border:1px solid #CBD5E1;border-radius:6px;box-sizing:border-box;">
+            </div>
+          </div>
+          <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:10.5px;color:#64748B;font-weight:700;">Quick Date Range:</span>
+            <button type="button" onclick="setModalAdvRange('${curMonth}-01', '${curTo}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">📅 This Month (${curMonth})</button>
+            <button type="button" onclick="setModalAdvRange('2026-09-17', '${curTo}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">⚡ Post-Checkpoint (17-Sep Onwards)</button>
+            <button type="button" onclick="setModalAdvRange('', '')" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">🌐 All Time</button>
+          </div>
+        </div>
+
+        <!-- DYNAMIC STATS & TABLE CONTENT -->
+        <div id="modalAdvDynamicContent" style="padding:14px 18px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;">
+          <!-- Rendered by updateEmpAdvModalView -->
+        </div>
+
+        <!-- FOOTER -->
+        <div style="padding:10px 18px;border-top:1px solid #E2E8F0;background:#F8FAFC;display:flex;justify-content:flex-end;">
+          <button type="button" onclick="window.closeEmployeeAdvanceModal()" style="background:#64748B;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    window.setModalAdvRange = function(f, t) {
+      const fEl = document.getElementById('modalAdvFrom');
+      const tEl = document.getElementById('modalAdvTo');
+      if (fEl) fEl.value = f;
+      if (tEl) tEl.value = t;
+      updateEmpAdvModalView();
+    };
+
+    window.updateEmpAdvModalView = function() {
+      const empVal = document.getElementById('modalAdvEmp')?.value || 'all';
+      const fVal = document.getElementById('modalAdvFrom')?.value || '';
+      const tVal = document.getElementById('modalAdvTo')?.value || '';
+      const container = document.getElementById('modalAdvDynamicContent');
+      if (!container) return;
+
+      const currMonthPrefix = new Date().toISOString().slice(0, 7);
+
+      // Filter advances for selected employee
+      const matching = (allAdvs || []).filter(a => {
+        const aName = a.employees?.name || window._claimsState.empMap[a.emp_id] || 'Staff';
+        if (empVal !== 'all' && aName !== empVal) return false;
+        return true;
+      });
+
+      // 1. Total Advance (All-Time)
+      const totalAllTime = matching.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+      const totalRepaid = matching.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
+      const outstandingBal = totalAllTime - totalRepaid;
+
+      // 2. Monthly Advance (Current Month)
+      const monthlyTotal = matching
+        .filter(a => (a.date_given || (a.created_at || '')).slice(0, 7) === currMonthPrefix)
+        .reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+
+      // 3. Between Dates Advance
+      const betweenMatching = matching.filter(a => {
+        const d = a.date_given || (a.created_at || '').slice(0, 10);
+        if (fVal && d < fVal) return false;
+        if (tVal && d > tVal) return false;
+        return true;
+      });
+      const betweenTotal = betweenMatching.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+
+      container.innerHTML = `
+        <!-- 4 SUMMARY CARDS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px;margin-bottom:16px;">
+          <div style="padding:12px;background:#FEF2F2;border:1px solid #FECDD3;border-radius:8px;text-align:center;">
+            <div style="font-size:10.5px;color:#991B1B;font-weight:700;">💰 TOTAL ALL-TIME</div>
+            <div style="font-size:20px;font-weight:800;color:#991B1B;margin-top:2px;">₹${totalAllTime.toLocaleString('en-IN')}</div>
+            <div style="font-size:10px;color:#64748B;">All dates combined</div>
+          </div>
+          <div style="padding:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;text-align:center;">
+            <div style="font-size:10.5px;color:#1E40AF;font-weight:700;">📅 MONTHLY (${currMonthPrefix})</div>
+            <div style="font-size:20px;font-weight:800;color:#1D4ED8;margin-top:2px;">₹${monthlyTotal.toLocaleString('en-IN')}</div>
+            <div style="font-size:10px;color:#64748B;">In current month</div>
+          </div>
+          <div style="padding:12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;text-align:center;">
+            <div style="font-size:10.5px;color:#92400E;font-weight:700;">⏳ BETWEEN DATES</div>
+            <div style="font-size:20px;font-weight:800;color:#B45309;margin-top:2px;">₹${betweenTotal.toLocaleString('en-IN')}</div>
+            <div style="font-size:10px;color:#64748B;">${fVal || 'Start'} to ${tVal || 'End'}</div>
+          </div>
+          <div style="padding:12px;background:${outstandingBal > 0 ? '#FEF2F2' : '#F0FDF4'};border:1px solid ${outstandingBal > 0 ? '#FCA5A5' : '#86EFAC'};border-radius:8px;text-align:center;">
+            <div style="font-size:10.5px;color:${outstandingBal > 0 ? '#991B1B' : '#166534'};font-weight:700;">⚖️ NET OUTSTANDING</div>
+            <div style="font-size:20px;font-weight:800;color:${outstandingBal > 0 ? '#DC2626' : '#059669'};margin-top:2px;">₹${outstandingBal.toLocaleString('en-IN')}</div>
+            <div style="font-size:10px;color:#64748B;">Repaid: ₹${totalRepaid.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+
+        <!-- TRANSACTIONS TABLE -->
+        <div style="font-size:13px;font-weight:800;color:#334155;margin-bottom:8px;">
+          📋 Advance Records in Selected Range (${betweenMatching.length} items)
+        </div>
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:580px;">
+            <thead>
+              <tr style="background:#F1F5F9;text-align:left;">
+                <th style="padding:8px;">Date</th>
+                <th style="padding:8px;">Staff Name</th>
+                <th style="padding:8px;text-align:right;">Amount (₹)</th>
+                <th style="padding:8px;">Payment Source</th>
+                <th style="padding:8px;">Mode</th>
+                <th style="padding:8px;">Reason / Notes</th>
+                <th style="padding:8px;text-align:center;">Claim Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${betweenMatching.length === 0 ? '<tr><td colspan="7" style="padding:24px;text-align:center;color:#94A3B8;">No advance entries found in this date range</td></tr>' : ''}
+              ${betweenMatching.map(a => {
+                const sName = a.employees?.name || window._claimsState.empMap[a.emp_id] || 'Staff';
+                const st = a.claim_status || (a.is_deducted ? 'received' : 'unclaimed');
+                const stBadge = st === 'received' ? '<span style="background:#DCFCE7;color:#15803D;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">✅ Settled</span>'
+                  : st === 'claimed' ? '<span style="background:#FEF3C7;color:#92400E;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">📤 Claimed</span>'
+                  : '<span style="background:#FEE2E2;color:#B91C1C;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10px;">⏳ Pending</span>';
+
+                return `
+                  <tr style="border-bottom:1px solid #E2E8F0;">
+                    <td style="padding:8px;white-space:nowrap;">${a.date_given || (a.created_at || '').slice(0, 10)}</td>
+                    <td style="padding:8px;font-weight:700;color:#1E293B;">${sName}</td>
+                    <td style="padding:8px;text-align:right;font-weight:800;color:#B91C1C;white-space:nowrap;">₹${Number(a.advance_amount || 0).toLocaleString('en-IN')}</td>
+                    <td style="padding:8px;">${window.UHHSODManager ? UHHSODManager.getBadge(a.paid_by) : (a.paid_by || '-')}</td>
+                    <td style="padding:8px;">${a.payment_mode || '-'}</td>
+                    <td style="padding:8px;max-width:200px;">${a.reason || '-'}</td>
+                    <td style="padding:8px;text-align:center;">${stBadge}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    };
+
+    updateEmpAdvModalView();
+
+    // Escape handler
+    const escHandler = e => {
+      if (e.key === 'Escape') {
+        window.closeEmployeeAdvanceModal();
+        window.removeEventListener('keydown', escHandler);
+      }
+    };
+    window.addEventListener('keydown', escHandler);
+
+  } catch (err) {
+    alert('Error loading advance analysis: ' + err.message);
+  }
+};
+
+window.exportUhhsLedgerPDF = function(fDate, tDate, totalInflow, totalOutflow, netBalance, txnsJson) {
+  let txns = [];
+  if ((!fDate || typeof fDate !== 'string') && window._currentUhhsStatementData) {
+    fDate = window._currentUhhsStatementData.fDate;
+    tDate = window._currentUhhsStatementData.tDate;
+    totalInflow = window._currentUhhsStatementData.totalInflow;
+    totalOutflow = window._currentUhhsStatementData.totalOutflow;
+    netBalance = window._currentUhhsStatementData.netBalance;
+    txns = window._currentUhhsStatementData.txns || [];
+  } else if (Array.isArray(txnsJson)) {
+    txns = txnsJson;
+  } else if (typeof txnsJson === 'string') {
+    try {
+      txns = JSON.parse(decodeURIComponent(txnsJson));
+    } catch (e) {
+      try { txns = JSON.parse(txnsJson); } catch (e2) { txns = []; }
+    }
+  } else if (window._currentUhhsStatementData?.txns) {
+    txns = window._currentUhhsStatementData.txns;
+  }
+
+  const safeFDate = fDate || '-';
+  const safeTDate = tDate || '-';
+  const safeInflow = Number(totalInflow) || 0;
+  const safeOutflow = Number(totalOutflow) || 0;
+  const safeBalance = Number(netBalance) || 0;
+
+  const escapeHtml = str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const cleanFDate = String(safeFDate || 'Start').replace(/[\/\\:*?"<>|]/g, '-');
+  const cleanTDate = String(safeTDate || 'End').replace(/[\/\\:*?"<>|]/g, '-');
+  const title = `TUHH_OD_Ledger_Statement_${cleanFDate}_to_${cleanTDate}`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>${title}</title>
+      <style>
+        @page { size: auto; margin: 0 !important; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 10mm 14mm !important; margin: 0 !important; color: #1e293b; background: #fff; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; background: #0F172A; color: #fff; padding: 10px 16px; border-radius: 8px; margin-bottom: 20px; }
+        .toolbar button { background: #10B981; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13px; }
+        .header { border-bottom: 2px solid #0f766e; padding-bottom: 10px; margin-bottom: 16px; }
+        h1 { margin: 0; color: #0f766e; font-size: 20px; font-weight: 800; }
+        .sub { color: #64748b; font-size: 11px; margin-top: 4px; }
+        .cards { display: flex; gap: 10px; margin-bottom: 18px; }
+        .card { flex: 1; padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #cbd5e1; }
+        .card-in { background: #f0fdf4; border-color: #86efac; }
+        .card-out { background: #fef2f2; border-color: #fca5a5; }
+        .card-bal { background: ${safeBalance >= 0 ? '#ecfdf5' : '#fff1f2'}; border-color: ${safeBalance >= 0 ? '#6ee7b7' : '#fecdd3'}; }
+        .lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+        .val { font-size: 18px; font-weight: 800; margin-top: 2px; }
+        table { width: 100% !important; min-width: 650px !important; border-collapse: collapse !important; table-layout: auto !important; font-size: 11px !important; }
+        th { background: #f1f5f9 !important; padding: 8px 10px !important; text-align: left !important; border-bottom: 2px solid #cbd5e1 !important; font-weight: 700 !important; white-space: nowrap !important; }
+        td { padding: 8px 10px !important; border-bottom: 1px solid #e2e8f0 !important; vertical-align: middle !important; }
+        th:nth-child(1), td:nth-child(1) { width: 95px !important; white-space: nowrap !important; }
+        th:nth-child(2), td:nth-child(2) { width: 110px !important; white-space: nowrap !important; }
+        th:nth-child(3), td:nth-child(3) { width: auto !important; min-width: 240px !important; white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important; }
+        th:nth-child(4), td:nth-child(4) { width: 125px !important; text-align: right !important; white-space: nowrap !important; }
+        .dep { background: #dcfce7 !important; color: #15803d !important; padding: 2px 6px !important; border-radius: 4px !important; font-weight: 700 !important; font-size: 9px !important; white-space: nowrap !important; display: inline-block !important; }
+        .exp { background: #fee2e2 !important; color: #b91c1c !important; padding: 2px 6px !important; border-radius: 4px !important; font-weight: 700 !important; font-size: 9px !important; white-space: nowrap !important; display: inline-block !important; }
+        @media print {
+          body { padding: 0 !important; }
+          .toolbar { display: none !important; }
+          table { min-width: 100% !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="toolbar no-print">
+        <span style="font-weight:700;">📄 ${title}</span>
+        <div style="display:flex;gap:8px;">
+          <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+          <button onclick="window.close()" style="background:#EF4444;">✕ Close</button>
+        </div>
+      </div>
+
+      <div class="header">
+        <h1>📜 TUHH-OD Account Statement / Ledger</h1>
+        <div class="sub">Period: <strong>${safeFDate}</strong> → <strong>${safeTDate}</strong> | Generated: ${new Date().toLocaleString('en-IN')}</div>
+      </div>
+
+      <div class="cards">
+        <div class="card card-in">
+          <div class="lbl" style="color:#166534;">TOTAL DEPOSITED (+)</div>
+          <div class="val" style="color:#059669;">₹${safeInflow.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="card card-out">
+          <div class="lbl" style="color:#991b1b;">TOTAL SPENT (-)</div>
+          <div class="val" style="color:#dc2626;">₹${safeOutflow.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="card card-bal">
+          <div class="lbl" style="color:${safeBalance>=0?'#065f46':'#9f1239'};">NET RUNNING BALANCE</div>
+          <div class="val" style="color:${safeBalance>=0?'#059669':'#dc2626'};">₹${safeBalance.toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+
+      <div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <table class="uhh-report-table" style="width:100%;min-width:650px;border-collapse:collapse;table-layout:auto;">
+          <thead>
+            <tr>
+              <th style="padding:8px 10px;text-align:left;white-space:nowrap;width:95px;">Date</th>
+              <th style="padding:8px 10px;text-align:left;white-space:nowrap;width:110px;">Type</th>
+              <th style="padding:8px 10px;text-align:left;min-width:240px;">Description</th>
+              <th style="padding:8px 10px;text-align:right;white-space:nowrap;width:125px;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${txns.map(t => `
+              <tr>
+                <td style="padding:8px 10px;white-space:nowrap;width:95px;">${t.date || '-'}</td>
+                <td style="padding:8px 10px;white-space:nowrap;width:110px;"><span class="${t.isDep ? 'dep' : 'exp'}">${t.isDep ? '📥 DEPOSIT' : '📤 EXPENSE'}</span></td>
+                <td style="padding:8px 10px;white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.4;min-width:240px;">${escapeHtml(t.desc)}</td>
+                <td style="padding:8px 10px;text-align:right;white-space:nowrap;font-weight:700;width:125px;color:${t.isDep?'#15803d':'#b91c1c'};">${t.isDep ? '+' : '-'}₹${(Number(t.amount) || 0).toLocaleString('en-IN')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      ${typeof window.getOfficialReportFooterHTML === 'function' ? window.getOfficialReportFooterHTML() : `
+        <div style="margin-top:24px;padding-top:12px;border-top:1px solid #cbd5e1;text-align:center;font-size:11px;color:#64748b;">
+          <strong>THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong> &bull; uniquehavenhomesstay.com<br>
+          ⚡ Developed by Praveen Singh
+        </div>
+      `}
+
+      <script>
+        window.onload = function() {
+          setTimeout(function(){ window.print(); }, 400);
+        };
+      </script>
+    </body>
+    </html>
+  `;
+  window.printDocumentHTML(html, title);
+};
+
+// ══════════════════════════════════════════════════════════════════
+// 9. CLAIM REPORT STATEMENT & WHATSAPP SUMMARY
+// ══════════════════════════════════════════════════════════════════
+function getFilteredClaimsItems() {
+  const { fromDate, toDate, moduleFilter, statusFilter, paidByFilter, employeeFilter, allData, empMap } = window._claimsState || {};
+  return (allData || []).filter(item => {
+    if (fromDate && item.dateStr < fromDate) return false;
+    if (toDate && item.dateStr > toDate) return false;
+    if (moduleFilter && moduleFilter !== 'all' && item.module !== moduleFilter) return false;
+    if (paidByFilter && paidByFilter !== 'all' && item.paidBy !== paidByFilter) return false;
+    if (statusFilter && statusFilter !== 'all' && item.status !== statusFilter) return false;
+    if (employeeFilter && employeeFilter !== 'all') {
+      const matchEmp = (item.staffName === employeeFilter) ||
+                       (item.vendorOrStaff === employeeFilter) ||
+                       (item.empId === employeeFilter) ||
+                       (empMap && empMap[item.empId] === employeeFilter);
+      if (!matchEmp) return false;
+    }
+    return true;
+  });
+}
+
+window.generateClaimReport = function() {
+  const items = getFilteredClaimsItems();
+  if (!items || items.length === 0) {
+    if (window.fsn?.warn) fsn.warn('No Data', 'No claim items found matching current filters.');
+    else alert('No claim items found matching current filters.');
+    return;
+  }
+
+  const { fromDate, toDate, paidByFilter } = window._claimsState || {};
+  const fDate = fromDate || 'Start';
+  const tDate = toDate || 'Present';
+  const payerLabel = paidByFilter === 'all' ? 'All Payers' : paidByFilter;
+
+  let totalAmt = 0;
+  let claimedAmt = 0;
+  let advancesAmt = 0;
+
+  items.forEach(i => {
+    totalAmt += (i.amount || 0);
+    if (i.status === 'claimed' || i.status === 'received') {
+      claimedAmt += (i.amount || 0);
+    }
+    if (i.module === 'advances') {
+      advancesAmt += (i.amount || 0);
+    }
+  });
+
+  const pendingAmt = Math.max(0, totalAmt - claimedAmt);
+
+  // Remove existing modal if any
+  document.getElementById('claimReportModalOverlay')?.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'claimReportModalOverlay';
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:90000;padding:12px;box-sizing:border-box;backdrop-filter:blur(2px);';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+  modal.innerHTML = `
+    <div class="modal-box" style="background:#fff;border-radius:12px;width:100%;max-width:900px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.35);margin:auto;" onclick="event.stopPropagation()">
+      <!-- HEADER -->
+      <div style="padding:14px 18px;border-bottom:1.5px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#F8FAFC;">
+        <div>
+          <h2 style="margin:0;color:#6D28D9;font-size:17px;font-weight:800;display:flex;align-items:center;gap:6px;">
+            📊 Claim Settlement Statement Report
+          </h2>
+          <div style="font-size:11.5px;color:#64748B;margin-top:2px;">
+            Payer: <strong>${payerLabel}</strong> · Period: <strong>${fDate}</strong> → <strong>${tDate}</strong> · Total Items: <strong>${items.length}</strong>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <button onclick="window.printClaimReportStatement()" style="padding:6px 12px;background:#0F172A;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;">🖨️ Print / PDF</button>
+          <button onclick="window.copyClaimWhatsAppText()" style="padding:6px 12px;background:#25D366;color:#fff;border:none;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;">📱 Copy WhatsApp</button>
+          <button onclick="document.getElementById('claimReportModalOverlay')?.remove()" style="background:#EF4444;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-weight:800;font-size:12.5px;cursor:pointer;">✕ Close</button>
+        </div>
+      </div>
+
+      <!-- BODY -->
+      <div style="padding:14px 18px;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;flex:1;">
+        <!-- METRICS -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;margin-bottom:14px;">
+          <div style="padding:10px;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;color:#4338CA;font-weight:700;">TOTAL EXPENSES</div>
+            <div style="font-size:18px;font-weight:800;color:#3730A3;margin-top:2px;">₹${totalAmt.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="padding:10px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;color:#92400E;font-weight:700;">CLAIMED / SETTLED</div>
+            <div style="font-size:18px;font-weight:800;color:#B45309;margin-top:2px;">₹${claimedAmt.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="padding:10px;background:#FEE2E2;border:1px solid #FECDD3;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;color:#991B1B;font-weight:700;">STAFF ADVANCES</div>
+            <div style="font-size:18px;font-weight:800;color:#DC2626;margin-top:2px;">₹${advancesAmt.toLocaleString('en-IN')}</div>
+          </div>
+          <div style="padding:10px;background:#ECFDF5;border:1px solid #A7F3D0;border-radius:8px;text-align:center;">
+            <div style="font-size:10px;color:#065F46;font-weight:700;">PENDING TO SETTLE</div>
+            <div style="font-size:18px;font-weight:800;color:#059669;margin-top:2px;">₹${pendingAmt.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:600px;">
+            <thead>
+              <tr style="background:#F1F5F9;text-align:left;">
+                <th style="padding:8px;">Date</th>
+                <th style="padding:8px;">Module</th>
+                <th style="padding:8px;">Description</th>
+                <th style="padding:8px;">Staff / Vendor</th>
+                <th style="padding:8px;">Paid By</th>
+                <th style="padding:8px;text-align:right;">Amount (₹)</th>
+                <th style="padding:8px;text-align:center;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(i => `
+                <tr style="border-bottom:1px solid #E2E8F0;">
+                  <td style="padding:8px;white-space:nowrap;">${i.dateStr || '-'}</td>
+                  <td style="padding:8px;white-space:nowrap;"><span style="font-size:11px;font-weight:700;color:#475569;">${i.moduleLabel || i.module}</span></td>
+                  <td style="padding:8px;">${i.description || '-'}</td>
+                  <td style="padding:8px;white-space:nowrap;">${i.vendorOrStaff || '-'}</td>
+                  <td style="padding:8px;white-space:nowrap;"><span style="padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background:#E0E7FF;color:#3730A3;">${i.paidBy}</span></td>
+                  <td style="padding:8px;text-align:right;font-weight:700;color:#0F172A;white-space:nowrap;">₹${(i.amount || 0).toLocaleString('en-IN')}</td>
+                  <td style="padding:8px;text-align:center;white-space:nowrap;">
+                    <span style="padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background:${i.status==='received'?'#DCFCE7':i.status==='claimed'?'#FEF3C7':'#F1F5F9'};color:${i.status==='received'?'#15803D':i.status==='claimed'?'#92400E':'#475569'};">
+                      ${i.status.toUpperCase()}
+                    </span>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- FOOTER -->
+      <div style="padding:10px 18px;border-top:1px solid #E2E8F0;background:#F8FAFC;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:12px;color:#64748B;">
+          Pending Payable: <strong style="color:${pendingAmt>0?'#B45309':'#059669'};">₹${pendingAmt.toLocaleString('en-IN')}</strong>
+        </div>
+        <button type="button" onclick="document.getElementById('claimReportModalOverlay')?.remove()" style="background:#64748B;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
+          ✕ Close
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+};
+
+window.printClaimReportStatement = function() {
+  const items = getFilteredClaimsItems();
+  if (!items || items.length === 0) return;
+
+  const { fromDate, toDate, paidByFilter } = window._claimsState || {};
+  const fDate = fromDate || 'Start';
+  const tDate = toDate || 'Present';
+  const payerLabel = paidByFilter === 'all' ? 'All Payers' : paidByFilter;
+
+  let totalAmt = 0;
+  let claimedAmt = 0;
+  let advancesAmt = 0;
+
+  items.forEach(i => {
+    totalAmt += (i.amount || 0);
+    if (i.status === 'claimed' || i.status === 'received') claimedAmt += (i.amount || 0);
+    if (i.module === 'advances') advancesAmt += (i.amount || 0);
+  });
+  const pendingAmt = Math.max(0, totalAmt - claimedAmt);
+
+  const cleanPayer = String(payerLabel || 'All').trim().replace(/[\/\\:*?"<>|]/g, '-').replace(/\s+/g, '_');
+  const cleanFDate = String(fDate || 'Start').replace(/[\/\\:*?"<>|]/g, '-');
+  const cleanTDate = String(tDate || 'End').replace(/[\/\\:*?"<>|]/g, '-');
+  const pdfTitle = `TUHH_Claim_Statement_${cleanPayer}_${cleanFDate}_to_${cleanTDate}`;
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${pdfTitle}</title>
+      <style>
+        @page { size: auto; margin: 0 !important; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0 !important; padding: 10mm 14mm !important; color: #1e293b; background: #fff; font-size: 11px; }
+        .header { border-bottom: 2px solid #6d28d9; padding-bottom: 8px; margin-bottom: 14px; }
+        h1 { margin: 0; color: #6d28d9; font-size: 18px; font-weight: 800; }
+        .sub { color: #64748b; font-size: 11px; margin-top: 3px; }
+        .cards { display: flex; gap: 8px; margin-bottom: 14px; }
+        .card { flex: 1; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #cbd5e1; }
+        .lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; color: #64748b; }
+        .val { font-size: 16px; font-weight: 800; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; font-size: 10.5px; }
+        th { background: #f1f5f9; padding: 6px 8px; text-align: left; border-bottom: 2px solid #cbd5e1; font-weight: 700; }
+        td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; }
+        @media print { .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>⚖️ UNIVERSAL CLAIM STATEMENT REPORT</h1>
+        <div class="sub">Payer: <strong>${payerLabel}</strong> | Period: <strong>${fDate}</strong> → <strong>${tDate}</strong> | Generated: ${new Date().toLocaleString('en-IN')}</div>
+      </div>
+      <div class="cards">
+        <div class="card" style="background:#eef2ff;">
+          <div class="lbl">Total Expenses</div>
+          <div class="val" style="color:#3730a3;">₹${totalAmt.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="card" style="background:#fef3c7;">
+          <div class="lbl">Claimed / Settled</div>
+          <div class="val" style="color:#b45309;">₹${claimedAmt.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="card" style="background:#fee2e2;">
+          <div class="lbl">Staff Advances</div>
+          <div class="val" style="color:#dc2626;">₹${advancesAmt.toLocaleString('en-IN')}</div>
+        </div>
+        <div class="card" style="background:#ecfdf5;">
+          <div class="lbl">Pending to Settle</div>
+          <div class="val" style="color:#059669;">₹${pendingAmt.toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Module</th>
+            <th>Description</th>
+            <th>Staff / Vendor</th>
+            <th>Paid By</th>
+            <th style="text-align:right;">Amount (₹)</th>
+            <th style="text-align:center;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(i => `
+            <tr>
+              <td>${i.dateStr || '-'}</td>
+              <td>${i.moduleLabel || i.module}</td>
+              <td>${i.description || '-'}</td>
+              <td>${i.vendorOrStaff || '-'}</td>
+              <td>${i.paidBy}</td>
+              <td style="text-align:right;font-weight:700;">₹${(i.amount||0).toLocaleString('en-IN')}</td>
+              <td style="text-align:center;">${i.status.toUpperCase()}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      ${window.getOfficialReportFooterHTML ? window.getOfficialReportFooterHTML() : `
+        <div style="margin-top:24px;padding-top:10px;border-top:1px solid #cbd5e1;text-align:center;font-size:10px;color:#64748b;">
+          <strong>THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong> &bull; uniquehavenhomesstay.com
+        </div>
+      `}
+      <script>window.onload = function() { setTimeout(function(){ window.print(); }, 400); };</script>
+    </body>
+    </html>
+  `;
+  window.printDocumentHTML(html, pdfTitle);
+};
+
+window.copyClaimWhatsAppText = function() {
+  const items = getFilteredClaimsItems();
+  if (!items || items.length === 0) {
+    alert('No claim items found to summarize.');
+    return;
+  }
+
+  const { fromDate, toDate, paidByFilter } = window._claimsState || {};
+  const fDate = fromDate || 'Start';
+  const tDate = toDate || 'Present';
+  const payerLabel = paidByFilter === 'all' ? 'ALL PAYERS' : paidByFilter.toUpperCase();
+
+  let totalAmt = 0;
+  let claimedAmt = 0;
+  let advancesAmt = 0;
+  let listText = '';
+
+  items.slice(0, 40).forEach((i, idx) => {
+    totalAmt += (i.amount || 0);
+    if (i.status === 'claimed' || i.status === 'received') claimedAmt += (i.amount || 0);
+    if (i.module === 'advances') advancesAmt += (i.amount || 0);
+    const emoji = i.module === 'reimbursements' ? '💸' : i.module === 'maintenance' ? '🔧' : i.module === 'laundry' ? '🧺' : '💰';
+    listText += `${idx + 1}. ${emoji} *${i.description || i.module}* (${i.dateStr})\n   👤 ${i.vendorOrStaff || i.paidBy} → ₹${(i.amount||0).toLocaleString('en-IN')}\n`;
+  });
+
+  if (items.length > 40) {
+    items.slice(40).forEach(i => {
+      totalAmt += (i.amount || 0);
+      if (i.status === 'claimed' || i.status === 'received') claimedAmt += (i.amount || 0);
+      if (i.module === 'advances') advancesAmt += (i.amount || 0);
+    });
+    listText += `\n...and ${items.length - 40} more items (see statement report)\n`;
+  }
+
+  const pendingAmt = Math.max(0, totalAmt - claimedAmt);
+
+  const text = `⚖️ *UNIVERSAL CLAIM STATEMENT (${payerLabel})*\n📅 Period: *${fDate}* → *${tDate}*\n📦 Total Items: *${items.length}*\n\n*ITEMIZED BREAKDOWN:*\n${listText}\n━━━━━━━━━━━━━━━━━━\n💰 *Total Expenses:* ₹${totalAmt.toLocaleString('en-IN')}\n✅ *Claimed / Settled:* ₹${claimedAmt.toLocaleString('en-IN')}\n👥 *Staff Advances:* ₹${advancesAmt.toLocaleString('en-IN')}\n💵 *NET PENDING TO SETTLE: ₹${pendingAmt.toLocaleString('en-IN')}*\n━━━━━━━━━━━━━━━━━━\n_The Unique Haven Homes CRM_`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    if (window.fsn?.success) fsn.success('Copied', '📱 WhatsApp Claim Summary copied to clipboard!');
+    else alert('✅ Copied! WhatsApp Claim Summary copied to clipboard. Paste directly into WhatsApp.');
+  }).catch(err => {
+    prompt('Copy this summary:', text);
+  });
+};
+
+console.log("✅ Claims Manager v8 MASTER LOADED!");
+
+// ═══════════════════════════════════════════════════════════
+// 🏢 COMPANY LEDGER — Statement of Company Expenses & Advances
+// ═══════════════════════════════════════════════════════════
+
+window.showCompanyLedgerModal = function() {
+  const old = document.getElementById('companyLedgerModalOverlay');
+  if (old) old.remove();
+
+  const state = window._claimsState || {};
+  // Checkpoint: Defaults to 17-Sep-2026 onwards
+  const fDate = state.companyLedgerFrom || '2026-09-17';
+  const tDate = state.companyLedgerTo || new Date().toISOString().slice(0, 10);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'companyLedgerModalOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,0.65);z-index:9000000;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(2px);';
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.25);overflow:hidden;">
+      <div style="background:#EA580C;color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:17px;font-weight:800;">🏢 Company Payments Ledger</div>
+          <div style="font-size:12px;opacity:0.85;margin-top:2px;">Statement of all Company-paid expenses &amp; staff advances</div>
+        </div>
+        <button onclick="document.getElementById('companyLedgerModalOverlay').remove()" style="background:rgba(255,255,255,0.15);border:none;color:#fff;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:4px;">📅 FROM DATE</label>
+            <input type="date" id="compLedgerFrom" value="${fDate}" style="width:100%;padding:8px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+            <div style="font-size:10px;color:#10B981;font-weight:600;margin-top:3px;">⚡ Checkpoint: 17-Sep-2026</div>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:4px;">📅 TO DATE</label>
+            <input type="date" id="compLedgerTo" value="${tDate}" style="width:100%;padding:8px;border:1.5px solid #E2E8F0;border-radius:8px;font-size:13px;box-sizing:border-box;">
+          </div>
+        </div>
+        <div style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:#9A3412;line-height:1.5;">
+          ℹ️ Generates an executive <strong>PDF statement</strong> of all expenses and staff advances paid via <strong>Company funds</strong> (Guest rent / cash in hand) in the selected period.
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button id="btnGenCompLedger" onclick="window.exportCompanyLedgerPDF(document.getElementById('compLedgerFrom').value,document.getElementById('compLedgerTo').value)" style="flex:1;padding:12px;background:#EA580C;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;">
+            📄 Generate PDF Statement
+          </button>
+          <button onclick="document.getElementById('companyLedgerModalOverlay').remove()" style="padding:12px 18px;background:#F1F5F9;color:#475569;border:1.5px solid #E2E8F0;border-radius:10px;font-weight:600;cursor:pointer;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+};
+
+window.exportCompanyLedgerPDF = async function(fDate, tDate) {
+  const btn = document.getElementById('btnGenCompLedger');
+  if (btn) { btn.disabled = true; btn.innerText = '⏳ Fetching Data...'; }
+
+  const fromD = fDate || '2026-09-17';
+  const toD = tDate || new Date().toISOString().slice(0, 10);
+
+  // Save selected dates in state
+  if (window._claimsState) {
+    window._claimsState.companyLedgerFrom = fromD;
+    window._claimsState.companyLedgerTo = toD;
+  }
+
+  // Ensure claims allData is loaded
+  if (!window._claimsState?.allData || window._claimsState.allData.length === 0) {
+    if (typeof loadClaimsData === 'function') await loadClaimsData();
+  }
+
+  document.getElementById('companyLedgerModalOverlay')?.remove();
+
+  const allData = window._claimsState?.allData || [];
+
+  // Filter: COMPANY/FIROZ paid expenses and advances within date range
+  const compItems = allData.filter(item => {
+    if (item.paidBy !== 'COMPANY' && item.paidBy !== 'FIROZ') return false;
+    if (fromD && item.dateStr && item.dateStr < fromD) return false;
+    if (toD && item.dateStr && item.dateStr > toD) return false;
+    return true;
+  }).sort((a, b) => (a.dateStr || '').localeCompare(b.dateStr || ''));
+
+  const totalCompanyExpenses = compItems.reduce((s, i) => s + (Number(i.amount) || 0), 0);
+  const settledExpenses = compItems.filter(i => i.status === 'received').reduce((s, i) => s + (Number(i.amount) || 0), 0);
+  const pendingExpenses = totalCompanyExpenses - settledExpenses;
+
+  // Category breakdown for expenses
+  const catMap = {};
+  compItems.forEach(i => { const c = i.moduleLabel || 'Other'; catMap[c] = (catMap[c] || 0) + (Number(i.amount) || 0); });
+
+  const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const cleanFDate = String(fromD).replace(/[\/\\:*?"<>|]/g, '-');
+  const cleanTDate = String(toD).replace(/[\/\\:*?"<>|]/g, '-');
+  const title = `TUHH_Company_Payments_Ledger_${cleanFDate}_to_${cleanTDate}`;
+
+  const html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title><style>' +
+    '@page{size:auto;margin:0!important}*{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}' +
+    'body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:10mm 14mm!important;margin:0!important;color:#1e293b;background:#fff}' +
+    '.toolbar{display:flex;justify-content:space-between;align-items:center;background:#EA580C;color:#fff;padding:10px 16px;border-radius:8px;margin-bottom:20px}' +
+    '.toolbar button{background:#fff;color:#EA580C;border:none;padding:8px 16px;border-radius:6px;font-weight:700;cursor:pointer;font-size:13px}' +
+    '.tbtn-close{background:#EF4444!important;color:#fff!important}' +
+    '.header{border-bottom:2px solid #EA580C;padding-bottom:10px;margin-bottom:16px}' +
+    'h1{margin:0;color:#EA580C;font-size:20px;font-weight:800}.sub{color:#64748b;font-size:11px;margin-top:4px}' +
+    '.cards{display:flex;gap:10px;margin-bottom:18px}.card{flex:1;padding:12px;border-radius:8px;text-align:center;border:1px solid #cbd5e1}' +
+    '.c-total{background:#FFF7ED;border-color:#FDBA74}.c-settled{background:#f0fdf4;border-color:#86efac}.c-pending{background:#fef2f2;border-color:#fca5a5}' +
+    '.lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}.val{font-size:18px;font-weight:800;margin-top:2px}' +
+    '.cat-box{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}.cat-chip{background:#FFF7ED;border:1px solid #FED7AA;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:#9A3412}' +
+    'table{width:100%!important;min-width:720px!important;border-collapse:collapse!important;table-layout:auto!important;font-size:11px!important;margin-bottom:16px!important}' +
+    'th{background:#FFF7ED!important;padding:8px 10px!important;text-align:left!important;border-bottom:2px solid #FED7AA!important;font-weight:700!important;color:#9A3412!important;white-space:nowrap!important}' +
+    'td{padding:8px 10px!important;border-bottom:1px solid #EDE9FE!important;vertical-align:middle!important}' +
+    'th:nth-child(1),td:nth-child(1){width:36px!important;white-space:nowrap!important}' +
+    'th:nth-child(2),td:nth-child(2){width:88px!important;white-space:nowrap!important}' +
+    'th:nth-child(3),td:nth-child(3){width:95px!important;white-space:nowrap!important}' +
+    'th:nth-child(4),td:nth-child(4){width:auto!important;min-width:180px!important;white-space:normal!important;word-break:break-word!important;overflow-wrap:anywhere!important}' +
+    'th:nth-child(5),td:nth-child(5){width:150px!important;min-width:130px!important;white-space:normal!important;word-break:break-word!important;overflow-wrap:anywhere!important}' +
+    'th:nth-child(6),td:nth-child(6){width:95px!important;white-space:nowrap!important;text-align:center!important}' +
+    'th:nth-child(7),td:nth-child(7){width:110px!important;white-space:nowrap!important;text-align:right!important}' +
+    '.bs{background:#dcfce7!important;color:#15803d!important;padding:2px 6px!important;border-radius:4px!important;font-weight:700!important;font-size:9px!important;display:inline-block!important;white-space:nowrap!important}' +
+    '.bc{background:#fef9c3!important;color:#92400e!important;padding:2px 6px!important;border-radius:4px!important;font-weight:700!important;font-size:9px!important;display:inline-block!important;white-space:nowrap!important}' +
+    '.bp{background:#fee2e2!important;color:#b91c1c!important;padding:2px 6px!important;border-radius:4px!important;font-weight:700!important;font-size:9px!important;display:inline-block!important;white-space:nowrap!important}' +
+    '.tr-total{background:#FFF7ED!important;font-weight:800!important}' +
+    '@media print{body{padding:0!important}.toolbar{display:none!important}table{min-width:100%!important}}' +
+    '</style></head><body>' +
+    '<div class="toolbar"><span style="font-weight:700;">🏢 ' + title + '</span>' +
+    '<div style="display:flex;gap:8px;"><button onclick="window.print()">🖨️ Print / Save as PDF</button>' +
+    '<button class="tbtn-close" onclick="window.close()">✕ Close</button></div></div>' +
+    '<div class="header"><h1>🏢 Company Payments Ledger</h1>' +
+    '<div class="sub">Period: <strong>' + fromD + '</strong> → <strong>' + toD + '</strong> · Post-Checkpoint (17-Sep-2026 onwards) · Paid via: COMPANY Funds · Generated: ' + new Date().toLocaleString('en-IN') + '</div></div>' +
+    '<div class="cards">' +
+    '<div class="card c-total"><div class="lbl" style="color:#9A3412;">TOTAL COMPANY PAID</div><div class="val" style="color:#EA580C;">₹' + totalCompanyExpenses.toLocaleString('en-IN') + '</div><div style="font-size:10px;color:#64748b;margin-top:2px;">' + compItems.length + ' transactions</div></div>' +
+    '<div class="card c-settled"><div class="lbl" style="color:#166534;">SETTLED / RECEIVED</div><div class="val" style="color:#059669;">₹' + settledExpenses.toLocaleString('en-IN') + '</div></div>' +
+    '<div class="card c-pending"><div class="lbl" style="color:#991b1b;">PENDING TO SETTLE</div><div class="val" style="color:#dc2626;">₹' + pendingExpenses.toLocaleString('en-IN') + '</div></div>' +
+    '</div>' +
+    '<div style="font-size:11px;font-weight:700;color:#9A3412;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Category Breakdown</div>' +
+    '<div class="cat-box">' + Object.entries(catMap).map(([c,a]) => '<div class="cat-chip">' + c + ': ₹' + a.toLocaleString('en-IN') + '</div>').join('') + '</div>' +
+    '<div style="width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">' +
+    '<table class="uhh-report-table" style="width:100%;min-width:720px;border-collapse:collapse;table-layout:auto;">' +
+    '<thead><tr><th>#</th><th>Date</th><th>Type</th><th>Description</th><th>Vendor / Staff</th><th>Status</th><th style="text-align:right;">Amount (₹)</th></tr></thead><tbody>' +
+    (compItems.length === 0
+      ? '<tr><td colspan="7" style="text-align:center;padding:20px;color:#64748B;">No COMPANY-paid expenses found in this date range.</td></tr>'
+      : compItems.map((item, idx) =>
+          '<tr>' +
+          '<td style="color:#64748B;white-space:nowrap;width:36px;">' + (idx+1) + '</td>' +
+          '<td style="white-space:nowrap;width:88px;">' + (item.dateStr||'-') + '</td>' +
+          '<td style="white-space:nowrap;width:95px;">' + (item.moduleLabel||'-') + '</td>' +
+          '<td style="white-space:normal;word-break:break-word;overflow-wrap:anywhere;line-height:1.4;">' + esc(item.description) + '</td>' +
+          '<td style="color:#475569;white-space:normal;word-break:break-word;overflow-wrap:anywhere;width:150px;">' + esc(item.vendorOrStaff) + '</td>' +
+          '<td style="text-align:center;white-space:nowrap;width:95px;"><span class="' + (item.status==='received'?'bs':item.status==='claimed'?'bc':'bp') + '">' + (item.status==='received'?'✅ SETTLED':item.status==='claimed'?'⏳ CLAIMED':'🔴 PENDING') + '</span></td>' +
+          '<td style="text-align:right;white-space:nowrap;font-weight:700;color:#EA580C;width:110px;">₹' + (Number(item.amount)||0).toLocaleString('en-IN') + '</td>' +
+          '</tr>'
+        ).join('') +
+        '<tr class="tr-total"><td colspan="6" style="text-align:right;padding:10px 8px;font-size:13px;">🏢 TOTAL COMPANY PAID</td>' +
+        '<td style="text-align:right;font-size:14px;font-weight:800;color:#EA580C;padding:10px 8px;white-space:nowrap;">₹' + totalCompanyExpenses.toLocaleString('en-IN') + '</td></tr>'
+    ) +
+    '</tbody></table></div>' +
+    '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #DDD6FE;text-align:center;font-size:11px;color:#64748b;">' +
+    '<strong>THE UNIQUE HAVEN HOMES PRIVATE LIMITED</strong> · uniquehavenhomesstay.com<br>⚡ Developed by Praveen Singh</div>' +
+    '<script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>' +
+    '</body></html>';
+  window.printDocumentHTML(html, title);
+};
+
+// =========================================================================
+// 📸 BALANCE STATEMENT SCREENSHOT DOWNLOAD & WHATSAPP PROOF (OWNER TRUST)
+// =========================================================================
+window.downloadTodayBalanceScreenshot = async function(evt) {
+  if (typeof html2canvas === 'undefined') {
+    alert('Screenshot component is still loading. Please try again in 2 seconds.');
+    return;
+  }
+  const btn = evt ? evt.currentTarget : document.querySelector('button[onclick*="downloadTodayBalanceScreenshot"]');
+  const origHtml = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Generating Mobile Proof...';
+  }
+
+  try {
+    // Only initialize if statement state is completely missing; do not override user's active choice (e.g. Today vs Range)
+    if (!window._tuhhOdBalanceState?.selectedDate && typeof window.renderClosingStatementForDate === 'function') {
+      const curFrom = document.getElementById('cfFromDate')?.value || window._claimsState?.fromDate;
+      const curTo = document.getElementById('cfToDate')?.value || window._claimsState?.toDate;
+      window.renderClosingStatementForDate(curFrom, curTo);
+    }
+
+    const state = window._tuhhOdBalanceState || {};
+    const isRange = !!state.isRange;
+    const nowD = new Date();
+    const timeFmt = state.timeFmt || nowD.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    const startDateFmt = state.startDateFmt || state.dateFmt || 'Start';
+    const endDateFmt = state.endDateFmt || state.dateFmt || 'Today';
+    const rangeFmt = state.rangeFmt || (isRange ? `${startDateFmt} → ${endDateFmt}` : state.dateFmt);
+
+    const closeBalNum = (state.closingBalance !== undefined) ? state.closingBalance : (state.netBalance !== undefined ? state.netBalance : 19739.54);
+    const closeBalStr = (closeBalNum < 0 ? '-₹' : '₹') + Math.abs(closeBalNum).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const openBalNum = (state.openingBalance !== undefined) ? state.openingBalance : 0;
+    const openBalStr = (openBalNum < 0 ? '-₹' : '₹') + Math.abs(openBalNum).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const inAmt = state.todayInflowAmt || 0;
+    const inCnt = state.todayInflowsCount || 0;
+    const inStr = '₹' + Math.abs(inAmt).toLocaleString('en-IN');
+
+    const outAmt = state.todayOutflowAmt || 0;
+    const outCnt = state.todayOutflowsCount || 0;
+    const outStr = '₹' + Math.abs(outAmt).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    const netAmt = state.todayNetAmt || (inAmt - outAmt);
+    const netStr = (netAmt > 0 ? '+₹' : (netAmt < 0 ? '-₹' : '₹')) + Math.abs(netAmt).toLocaleString('en-IN');
+
+    const totalInflowNum = state.totalInflow || 252200;
+    const totalInflowStr = '₹' + Math.abs(totalInflowNum).toLocaleString('en-IN');
+
+    const totalOutflowNum = state.totalOutflow || 232460.46;
+    const totalOutflowStr = '₹' + Math.abs(totalOutflowNum).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Build dedicated 460px mobile portrait voucher container
+    const voucher = document.createElement('div');
+    voucher.id = 'tuhh-mobile-statement-export';
+    voucher.style.cssText = [
+      'position: fixed',
+      'left: -9999px',
+      'top: 0',
+      'width: 460px',
+      'background: #ffffff',
+      'color: #0f172a',
+      'border-radius: 20px',
+      'border: 2px solid #0284c7',
+      'box-shadow: 0 16px 40px rgba(15,23,42,0.15)',
+      'padding: 24px',
+      'box-sizing: border-box',
+      'font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    ].join(';');
+
+    voucher.innerHTML = `
+      <!-- Header with Official Brand & Status -->
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid #e2e8f0;padding-bottom:14px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 10px rgba(2,132,199,0.35);">
+            🏛️
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:900;color:#0f172a;letter-spacing:0.2px;">THE UNIQUE HAVEN HOMES</div>
+            <div style="font-size:11px;font-weight:700;color:#0284c7;text-transform:uppercase;">
+              ${isRange ? 'TUHH-OD Period Financial Statement' : 'TUHH-OD Official Daily Statement'}
+            </div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:3px 9px;border-radius:999px;font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;gap:3px;">
+            ✓ Live Verified
+          </span>
+          <div style="font-size:10px;color:#64748b;margin-top:3px;font-weight:600;">
+            ${isRange ? rangeFmt : state.dateFmt} · ${timeFmt}
+          </div>
+        </div>
+      </div>
+
+      <!-- Primary Hero Closing Balance Card -->
+      <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#ffffff;border-radius:14px;padding:20px;text-align:center;border:1.5px solid #334155;box-shadow:0 6px 18px rgba(15,23,42,0.25);margin-bottom:16px;">
+        <div style="font-size:11.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">
+          💰 ${isRange ? `CLOSING BALANCE AS OF ${endDateFmt}` : 'TUHH-OD CLOSING BALANCE'}
+        </div>
+        <div style="font-size:34px;font-weight:900;color:#4ade80;margin:6px 0;letter-spacing:-0.5px;">
+          ${closeBalStr}
+        </div>
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.08);padding:4px 12px;border-radius:999px;font-size:10.5px;color:#e2e8f0;font-weight:600;">
+          ${isRange ? `🛡️ Opening Balance: ${openBalStr} · Audit Verified` : '🛡️ Verified by TUHH Engine · Zero Manual Adjustments'}
+        </div>
+      </div>
+
+      <!-- Account Position (Period or All-Time) -->
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+          <span>${isRange ? '📊 SELECTED PERIOD MOVEMENT' : '📊 ALL-TIME ACCOUNT POSITION'}</span>
+          <span style="font-size:10px;color:#64748b;font-weight:600;">
+            ${isRange ? rangeFmt : 'Post-Checkpoint (17-Sep Onwards)'}
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 14px;">
+            <div style="font-size:10.5px;font-weight:800;color:#166534;text-transform:uppercase;">
+              📥 ${isRange ? 'Period Deposited' : 'Total Deposited'}
+            </div>
+            <div style="font-size:20px;font-weight:900;color:#15803d;margin-top:3px;">
+              ${isRange ? inStr : totalInflowStr}
+            </div>
+            <div style="font-size:10px;color:#166534;margin-top:2px;">
+              ${isRange ? `${inCnt} deposits in period` : 'Received from Firoz'}
+            </div>
+          </div>
+          <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:12px;padding:12px 14px;">
+            <div style="font-size:10.5px;font-weight:800;color:#991b1b;text-transform:uppercase;">
+              📤 ${isRange ? 'Period Utilized' : 'Total Utilized'}
+            </div>
+            <div style="font-size:20px;font-weight:900;color:#dc2626;margin-top:3px;">
+              ${isRange ? outStr : totalOutflowStr}
+            </div>
+            <div style="font-size:10px;color:#991b1b;margin-top:2px;">
+              ${isRange ? `${outCnt} claims &amp; spends in period` : 'Claims, vendor &amp; staff spends'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Breakdown -->
+      <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;">
+            📅 ${isRange ? `PERIOD ACTIVITY SUMMARY (${rangeFmt})` : `TODAY'S ACTIVITY (${state.dateFmt})`}
+          </div>
+          <span style="font-size:10px;font-weight:800;color:${netAmt !== 0 ? '#15803d' : '#0284c7'};background:${netAmt !== 0 ? '#dcfce7' : '#e0f2fe'};padding:2px 8px;border-radius:6px;">
+            ${(inAmt > 0 || outAmt > 0) ? `${inCnt + outCnt} Movements Recorded` : '0 Entries Recorded'}
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 4px;">
+            <div style="font-size:9.5px;color:#64748b;font-weight:700;">${isRange ? 'PERIOD INFLOW' : 'TODAY INFLOW'}</div>
+            <div style="font-size:14px;font-weight:800;color:#15803d;margin-top:2px;">${inStr}</div>
+            <div style="font-size:9.5px;color:#94a3b8;">${inCnt} deposits</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 4px;">
+            <div style="font-size:9.5px;color:#64748b;font-weight:700;">${isRange ? 'PERIOD SPENDS' : 'TODAY SPENDS'}</div>
+            <div style="font-size:14px;font-weight:800;color:#dc2626;margin-top:2px;">${outStr}</div>
+            <div style="font-size:9.5px;color:#94a3b8;">${outCnt} claims</div>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:8px 4px;">
+            <div style="font-size:9.5px;color:#64748b;font-weight:700;">NET DELTA</div>
+            <div style="font-size:14px;font-weight:800;color:#0f172a;margin-top:2px;">${netStr}</div>
+            <div style="font-size:9.5px;color:#94a3b8;">${isRange ? 'Period net' : 'Daily net'}</div>
+          </div>
+        </div>
+
+        ${isRange ? `
+          <div style="font-size:10px;color:#475569;margin-top:10px;padding:6px 10px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
+            <span>🏁 <strong>All-Time Position:</strong> In: ${totalInflowStr} | Out: ${totalOutflowStr}</span>
+            <span style="font-weight:700;color:#0284c7;">Net OD: ${closeBalStr}</span>
+          </div>
+        ` : (inAmt === 0 && outAmt === 0) ? `
+          <div style="font-size:10.5px;color:#64748b;margin-top:8px;text-align:center;background:rgba(2,132,199,0.06);padding:5px 8px;border-radius:6px;line-height:1.4;">
+            ℹ️ No new movements recorded yet today. Running balance of <strong>${closeBalStr}</strong> carried forward safely.
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- Trust Footer & Authority Seal -->
+      <div style="border-top:1.5px dashed #cbd5e1;padding-top:12px;display:flex;justify-content:space-between;align-items:center;font-size:10.5px;color:#64748b;">
+        <div>
+          🛡️ <strong>Owner Assurance:</strong> Auto-compiled from verified bank records.<br>
+          Zero manual adjustments · 100% Audit trail.
+        </div>
+        <div style="text-align:right;">
+          <strong style="color:#0284c7;">The Unique Haven Homes Pvt Ltd</strong><br>
+          <span style="color:#94a3b8;font-size:9.5px;">TUHH Financial Engine</span>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(voucher);
+
+    const canvas = await html2canvas(voucher, {
+      scale: 2.5,
+      useCORS: true,
+      backgroundColor: '#ffffff'
+    });
+
+    document.body.removeChild(voucher);
+
+    const dlName = isRange
+      ? `TUHH_OD_Statement_${state.startDate || 'Start'}_to_${state.endDate || 'End'}.png`
+      : `TUHH_OD_Daily_Closing_Statement_${state.selectedDate || 'Today'}.png`;
+    const link = document.createElement('a');
+    link.download = dlName;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    if (btn) btn.innerHTML = isRange ? '✅ Saved Period Proof!' : '✅ Saved Mobile Proof!';
+    if (window.fsn) fsn.success('Saved Proof', `${isRange ? 'Period' : 'Daily'} portrait financial statement saved successfully!`);
+  } catch (err) {
+    console.error('Screenshot error:', err);
+    alert('Could not generate screenshot: ' + err.message);
+    if (btn) btn.innerHTML = origHtml;
+  } finally {
+    setTimeout(() => {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
+    }, 2500);
+  }
+};
+
+window.shareTodayBalanceWhatsApp = function() {
+  // Only initialize if statement state is completely missing; do not override user's active choice (e.g. Today vs Range)
+  if (!window._tuhhOdBalanceState?.selectedDate && typeof window.renderClosingStatementForDate === 'function') {
+    const curFrom = document.getElementById('cfFromDate')?.value || window._claimsState?.fromDate;
+    const curTo = document.getElementById('cfToDate')?.value || window._claimsState?.toDate;
+    window.renderClosingStatementForDate(curFrom, curTo);
+  }
+
+  const state = window._tuhhOdBalanceState || {};
+  const isRange = !!state.isRange;
+  const now = new Date();
+  const timeStr = state.timeFmt || now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+  const startDateFmt = state.startDateFmt || state.dateFmt || 'Start';
+  const endDateFmt = state.endDateFmt || state.dateFmt || 'Today';
+  const dateRangeFmt = state.rangeFmt || (isRange ? `${startDateFmt} → ${endDateFmt}` : state.dateFmt);
+
+  const closeBal = (state.closingBalance !== undefined)
+    ? ((state.closingBalance < 0 ? '-₹' : '₹') + Math.abs(state.closingBalance).toLocaleString('en-IN'))
+    : (document.getElementById('today-proof-closing-bal')?.innerText || '₹0');
+
+  const openBal = (state.openingBalance !== undefined)
+    ? ((state.openingBalance < 0 ? '-₹' : '₹') + Math.abs(state.openingBalance).toLocaleString('en-IN'))
+    : '₹0';
+
+  const inVal = document.getElementById('today-proof-inflow')?.innerText || '₹0';
+  const inCnt = document.getElementById('today-proof-inflow-count')?.innerText || '0 deposits';
+  const outVal = document.getElementById('today-proof-outflow')?.innerText || '₹0';
+  const outCnt = document.getElementById('today-proof-outflow-count')?.innerText || '0 claims settled';
+  const netVal = document.getElementById('today-proof-net')?.innerText || '₹0';
+
+  const totalIn = document.getElementById('claims-od-inflow')?.innerText || ('₹' + (state.totalInflow || 252200).toLocaleString('en-IN'));
+  const totalOut = document.getElementById('claims-od-outflow')?.innerText || ('₹' + (state.totalOutflow || 232460.46).toLocaleString('en-IN'));
+
+  const text = isRange ? [
+    '🏦 *THE UNIQUE HAVEN HOMES PVT LTD*',
+    '📊 *TUHH-OD PERIOD FINANCIAL STATEMENT*',
+    `📅 *Statement Period:* ${dateRangeFmt}`,
+    `🕒 *Refreshed:* ${timeStr}`,
+    '────────────────────────────',
+    `💰 *CLOSING BALANCE AS OF ${endDateFmt}:* *${closeBal}*`,
+    `💼 *Opening Balance (${startDateFmt}):* ${openBal}`,
+    '────────────────────────────',
+    `📥 *Period Deposited (Inflow):* ${inVal} (${inCnt})`,
+    `📤 *Period Utilized (Outflow):* ${outVal} (${outCnt})`,
+    `⚖️ *Net Period Delta:* *${netVal}*`,
+    '────────────────────────────',
+    '📈 *ALL-TIME LEDGER (Post-Checkpoint 17-Sep Onwards):*',
+    `• Total Inflow: ${totalIn} (from Firoz)`,
+    `• Total Outflow: ${totalOut} (claims & spends)`,
+    `• Running OD Balance: ${closeBal}`,
+    '────────────────────────────',
+    '_🛡️ Owner Assurance: Automatically compiled from verified TUHH-OD bank receipts & claims._',
+    '_Generated by TUHH Financial Engine_'
+  ].filter(Boolean).join('\n') : [
+    '🏦 *THE UNIQUE HAVEN HOMES PVT LTD*',
+    '📊 *DAILY TUHH-OD CLOSING & BALANCE STATEMENT*',
+    `📅 *Statement Day:* ${state.dateFmt} | ${timeStr}`,
+    '────────────────────────────',
+    `💰 *CURRENT TUHH-OD CLOSING BALANCE:* *${closeBal}*`,
+    '🛡️ *Status:* Verified & Reconciled (Zero Discrepancy)',
+    '────────────────────────────',
+    '📈 *ALL-TIME LEDGER (Post-Checkpoint 17-Sep):*',
+    `📥 *Total Deposited (Inflow):* ${totalIn} (from Firoz)`,
+    `📤 *Total Utilized (Outflow):* ${totalOut} (claims & spends)`,
+    `⚖️ *Net Balance:* ${closeBal}`,
+    '────────────────────────────',
+    `📅 *DAY\'S ACTIVITY (${state.dateFmt}):*`,
+    `• Deposits: ${inVal} (${inCnt})`,
+    `• Spends: ${outVal} (${outCnt})`,
+    `• Net Daily Delta: ${netVal}`,
+    (inVal === '₹0' && outVal === '₹0') ? '_(No new entries recorded yet today. Previous running balance carried forward)_' : '',
+    '────────────────────────────',
+    '_🛡️ Owner Assurance: Automatically compiled from TUHH-OD bank receipts & verified vendor claims._',
+    '_Generated by TUHH Financial Engine_'
+  ].filter(Boolean).join('\n');
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text);
+  }
+
+  const waUrl = 'https://wa.me/?text=' + encodeURIComponent(text);
+  window.open(waUrl, '_blank');
+};

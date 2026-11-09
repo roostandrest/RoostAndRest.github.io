@@ -1,0 +1,3881 @@
+
+function isEmpCleanerPieceRate(e) {
+  if (!e) return false;
+  if (window.EMPLOYEE_LEDGER && typeof window.EMPLOYEE_LEDGER.isPerFlatStaff === 'function') {
+    return window.EMPLOYEE_LEDGER.isPerFlatStaff(e);
+  }
+  const savedType = localStorage.getItem('tuhh_emp_type_' + e.emp_id);
+  if (savedType === 'per_flat') return true;
+  if (savedType === 'monthly') return false;
+  const name = (e.name || '').toLowerCase();
+  if (name.includes('praveen') || name.includes('arman') || name.includes('shuaib') || name.includes('aniket')) return false;
+  if (name.includes('kanchan') || name.includes('shalu') || name.includes('laxmi')) return true;
+  const role = (e.role || '').toLowerCase();
+  return role.includes('maid') || role.includes('clean');
+}
+window.isEmpCleanerPieceRate = isEmpCleanerPieceRate;
+
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+window.escapeHtml = escapeHtml;
+
+function isEmployeeActive(e) {
+  if (!e) return false;
+  const st = String(e.status || '').trim().toLowerCase();
+  if (st === 'inactive' || st === 'disabled' || st === 'fired' || st === 'terminated' || e.is_active === false) return false;
+  return st === 'active' || e.is_active === true;
+}
+
+// ============ STORAGE USAGE CHECK ============
+async function checkStorageUsage() {
+  try {
+    const { data, error } = await sb.storage.from('id-proofs').list('', { limit: 1000 });
+    if (error) return { used: 0, total: 1073741824, error: error.message };
+    const countFiles = (data || []).length;
+    return { files: countFiles, total: 1073741824, label: '1 GB (Free Plan)' };
+  } catch(e) {
+    return { files: 0, total: 1073741824, label: '1 GB', error: e.message };
+  }
+}
+
+/**
+ * Employees Module
+ * Employees, Tasks, Attendance, Salary, Advance
+ * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ */
+
+// ============ EMPLOYEE SUB-NAVIGATION ============
+// Replaced by unified top Hub sticky subnav
+function renderEmployeeSubNav(activeTab = 'employees') {
+  return '';
+}
+window.renderEmployeeSubNav = renderEmployeeSubNav;
+
+function getEmpRoleBadge(role) {
+  const r = String(role || 'Other').trim();
+  const lower = r.toLowerCase();
+  let bg = '#F1F5F9', color = '#475569', border = '#CBD5E1', icon = '👤';
+
+  if (lower.includes('manager')) {
+    bg = '#EFF6FF'; color = '#1D4ED8'; border = '#BFDBFE'; icon = '👑';
+  } else if (lower.includes('caretaker') || lower.includes('care taker')) {
+    bg = '#ECFDF5'; color = '#047857'; border = '#A7F3D0'; icon = '🛡️';
+  } else if (lower.includes('clean') || lower.includes('housekeep')) {
+    bg = '#FAF5FF'; color = '#7E22CE'; border = '#E9D5FF'; icon = '🧹';
+  } else if (lower.includes('maid')) {
+    bg = '#FDF2F8'; color = '#BE185D'; border = '#FBCFE8'; icon = '🌸';
+  } else if (lower.includes('cook')) {
+    bg = '#FFFBEB'; color = '#B45309'; border = '#FDE68A'; icon = '🍳';
+  } else if (lower.includes('maintenance')) {
+    bg = '#FEF2F2'; color = '#B91C1C'; border = '#FECACA'; icon = '🔧';
+  } else if (lower.includes('driver')) {
+    bg = '#F0FDF4'; color = '#15803D'; border = '#BBF7D0'; icon = '🚗';
+  }
+  return `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:${bg};color:${color};border:1px solid ${border};">${icon} ${r}</span>`;
+}
+window.getEmpRoleBadge = getEmpRoleBadge;
+
+// ============ EMPLOYEES DIRECTORY ============
+window._empFilterStatus = window._empFilterStatus || 'Active';
+window._empRoleFilter = window._empRoleFilter || 'All';
+window._empSearchQuery = window._empSearchQuery || '';
+window._empViewMode = window._empViewMode || (window.innerWidth < 768 ? 'cards' : 'table');
+
+async function renderManageEmployees() {
+  renderShell(`<div class="loading">Loading staff directory...</div>`, 'employees');
+
+  try {
+    const [{ data: emps, error: empErr }, { data: rooms }] = await Promise.all([
+      sb.from("employees").select("*").order("name"),
+      sb.from("rooms").select("room_id, nickname, unit_no").order("room_id")
+    ]);
+
+    if (empErr) {
+      renderShell(`<div class="card"><div class="error">Failed to load employees: ${empErr.message}</div></div>`, 'employees');
+      return;
+    }
+
+    // Async storage check without blocking UI
+    let storageInfo = { files: 0, label: '1 GB' };
+    checkStorageUsage().then(s => { storageInfo = s; }).catch(() => {});
+
+  window._allEmployees = emps || [];
+  window._allRooms = rooms || [];
+  // Auto-sync Sole Manager Praveen Singh to all registered rooms
+  const praveenEmp = (emps || []).find(e => (e.name || '').toLowerCase().includes('praveen'));
+  if (praveenEmp && rooms && rooms.length > 0) {
+    const allRoomIds = rooms.map(r => r.room_id).join(',');
+    const curAssigned = (praveenEmp.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (curAssigned.length < rooms.length) {
+      praveenEmp.assigned_rooms = allRoomIds;
+      (async () => {
+        try {
+          if (window.sb) {
+            await sb.from('employees').update({ assigned_rooms: allRoomIds }).eq('emp_id', praveenEmp.emp_id);
+          }
+        } catch(e) {}
+      })();
+    }
+  }
+
+  const roomMap = {};
+  (rooms || []).forEach(r => {
+    roomMap[r.room_id] = propLabel(r);
+  });
+  window._empRoomMap = roomMap;
+
+  const isO = ['owner','admin','moderator','developer'].includes(SESSION.role);
+  const statusFilter = window._empFilterStatus;
+  const roleFilter = window._empRoleFilter;
+  const searchQuery = (window._empSearchQuery || '').toLowerCase().trim();
+  const viewMode = window._empViewMode;
+
+  // Counts
+  const totalCount = (emps || []).length;
+  const activeCount = (emps || []).filter(isEmployeeActive).length;
+  const inactiveCount = totalCount - activeCount;
+  const caretakersCount = (emps || []).filter(e => isEmployeeActive(e) && /caretaker/i.test(e.role || '')).length;
+  const cleanersCount = (emps || []).filter(e => isEmployeeActive(e) && /(clean|housekeep)/i.test(e.role || '')).length;
+  const maidsCount = (emps || []).filter(e => isEmployeeActive(e) && /maid/i.test(e.role || '')).length;
+  const managersCount = (emps || []).filter(e => isEmployeeActive(e) && /manager/i.test(e.role || '')).length;
+
+  // Filtered employees
+  const filteredEmps = (emps || []).filter(e => {
+    const isActive = isEmployeeActive(e);
+    if (statusFilter === 'Active' && !isActive) return false;
+    if (statusFilter === 'Inactive' && isActive) return false;
+
+    if (roleFilter !== 'All') {
+      const r = (e.role || '').toLowerCase();
+      if (roleFilter === 'Caretaker' && !r.includes('caretaker')) return false;
+      if (roleFilter === 'Cleaning Staff' && !r.includes('clean') && !r.includes('housekeep')) return false;
+      if (roleFilter === 'Maid' && !r.includes('maid')) return false;
+      if (roleFilter === 'Manager' && !r.includes('manager')) return false;
+    }
+
+    if (searchQuery) {
+      const name = (e.name || '').toLowerCase();
+      const phone = (e.phone || '').toLowerCase();
+      const role = (e.role || '').toLowerCase();
+      const assigned = (e.assigned_rooms || '').toLowerCase();
+      if (!name.includes(searchQuery) && !phone.includes(searchQuery) && !role.includes(searchQuery) && !assigned.includes(searchQuery)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  renderShell(`
+    ${renderEmployeeSubNav('employees')}
+
+    <!-- KPI Ribbon -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:14px;">
+      <div class="card" onclick="window._empFilterStatus='All';window._empRoleFilter='All';renderManageEmployees()" style="padding:12px;cursor:pointer;border-left:4px solid #4F46E5;transition:all 0.15s;${statusFilter==='All'&&roleFilter==='All'?'box-shadow:0 0 0 2px #4F46E5;':''}">
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">👥 Total Staff</div>
+        <div style="font-size:22px;font-weight:800;color:var(--text);margin-top:2px;">${totalCount}</div>
+        <div style="font-size:10.5px;color:var(--muted);">All registered</div>
+      </div>
+
+      <div class="card" onclick="window._empFilterStatus='Active';window._empRoleFilter='All';renderManageEmployees()" style="padding:12px;cursor:pointer;border-left:4px solid #059669;transition:all 0.15s;${statusFilter==='Active'&&roleFilter==='All'?'box-shadow:0 0 0 2px #059669;':''}">
+        <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;">🟢 Active</div>
+        <div style="font-size:22px;font-weight:800;color:#059669;margin-top:2px;">${activeCount}</div>
+        <div style="font-size:10.5px;color:var(--muted);">On-duty / live</div>
+      </div>
+
+      <div class="card" onclick="window._empFilterStatus='Active';window._empRoleFilter='Caretaker';renderManageEmployees()" style="padding:12px;cursor:pointer;border-left:4px solid #10B981;transition:all 0.15s;${roleFilter==='Caretaker'?'box-shadow:0 0 0 2px #10B981;':''}">
+        <div style="font-size:11px;font-weight:700;color:#047857;text-transform:uppercase;">🛡️ Caretakers</div>
+        <div style="font-size:22px;font-weight:800;color:#047857;margin-top:2px;">${caretakersCount}</div>
+        <div style="font-size:10.5px;color:var(--muted);">On-ground care</div>
+      </div>
+
+      <div class="card" onclick="window._empFilterStatus='Active';window._empRoleFilter='Cleaning Staff';renderManageEmployees()" style="padding:12px;cursor:pointer;border-left:4px solid #8B5CF6;transition:all 0.15s;${roleFilter==='Cleaning Staff'?'box-shadow:0 0 0 2px #8B5CF6;':''}">
+        <div style="font-size:11px;font-weight:700;color:#7E22CE;text-transform:uppercase;">🧹 Cleaning Staff</div>
+        <div style="font-size:22px;font-weight:800;color:#7E22CE;margin-top:2px;">${cleanersCount}</div>
+        <div style="font-size:10.5px;color:var(--muted);">Housekeeping</div>
+      </div>
+
+      <div class="card" onclick="window._empFilterStatus='Active';window._empRoleFilter='Maid';renderManageEmployees()" style="padding:12px;cursor:pointer;border-left:4px solid #EC4899;transition:all 0.15s;${roleFilter==='Maid'?'box-shadow:0 0 0 2px #EC4899;':''}">
+        <div style="font-size:11px;font-weight:700;color:#BE185D;text-transform:uppercase;">🌸 Maids</div>
+        <div style="font-size:22px;font-weight:800;color:#BE185D;margin-top:2px;">${maidsCount}</div>
+        <div style="font-size:10.5px;color:var(--muted);">Daily turnover</div>
+      </div>
+
+      <div class="card" onclick="window._empFilterStatus='Inactive';window._empRoleFilter='All';renderManageEmployees()" style="padding:12px;cursor:pointer;border-left:4px solid #DC2626;transition:all 0.15s;${statusFilter==='Inactive'?'box-shadow:0 0 0 2px #DC2626;':''}">
+        <div style="font-size:11px;font-weight:700;color:#DC2626;text-transform:uppercase;">🔴 Inactive / Off</div>
+        <div style="font-size:22px;font-weight:800;color:#DC2626;margin-top:2px;">${inactiveCount}</div>
+        <div style="font-size:10.5px;color:var(--muted);">Deactivated</div>
+      </div>
+    </div>
+
+    <!-- Main Header Card & Controls -->
+    <div class="card" style="margin-bottom:14px;padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h1 style="margin:0;font-size:20px;font-weight:800;">👥 Team & Staff Directory</h1>
+            <span style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--card-sub-bg,#F1F5F9);color:var(--muted);font-weight:700;">
+              ${filteredEmps.length} visible
+            </span>
+          </div>
+          <div class="sub" style="margin-top:4px;">
+            Sole Property Manager: <strong>Praveen Singh</strong> &bull; On-ground operational staff: Caretakers, Cleaning Staff & Maids
+          </div>
+          ${SESSION.role === 'developer' ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">ID Proof Storage: ${(storageInfo?.files || 0)} files &bull; Limit: ${storageInfo?.label || '1 GB'}</div>` : ''}
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <!-- View Switcher -->
+          <div style="display:inline-flex;background:var(--card-sub-bg,#F1F5F9);padding:3px;border-radius:10px;border:1px solid var(--border,#E2E8F0);">
+            <button class="btn-sm" onclick="window._empViewMode='cards';renderManageEmployees()" style="border:none;border-radius:7px;padding:5px 10px;font-size:12px;${viewMode==='cards'?'background:var(--primary,#4F46E5);color:#fff;font-weight:700;':'background:transparent;color:var(--text);'}">
+              📱 Cards
+            </button>
+            <button class="btn-sm" onclick="window._empViewMode='table';renderManageEmployees()" style="border:none;border-radius:7px;padding:5px 10px;font-size:12px;${viewMode==='table'?'background:var(--primary,#4F46E5);color:#fff;font-weight:700;':'background:transparent;color:var(--text);'}">
+              📋 Table
+            </button>
+          </div>
+
+          ${isO ? `<button onclick="renderAddEmp()" style="background:#059669;color:#fff;font-weight:700;padding:8px 16px;border-radius:10px;box-shadow:0 2px 8px rgba(5,150,105,0.25);">➕ Add Employee</button>` : ''}
+        </div>
+      </div>
+
+      <!-- Search & Filters -->
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center;">
+        <!-- Live Search -->
+        <div style="flex:1;min-width:240px;position:relative;">
+          <input
+            type="text"
+            id="empSearchInput"
+            placeholder="🔍 Search staff by name, phone, role, property..."
+            value="${escapeHtml(window._empSearchQuery || '')}"
+            oninput="window._empSearchQuery=this.value;window.debounceFilterEmployees && window.debounceFilterEmployees()"
+            style="width:100%;padding:9px 12px 9px 34px;border-radius:10px;font-size:13px;"
+          />
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:0.5;">🔍</span>
+          ${window._empSearchQuery ? `
+            <button onclick="window._empSearchQuery='';renderManageEmployees()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;">✕</button>
+          ` : ''}
+        </div>
+
+        <!-- Status Filter Chips -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="${statusFilter === 'Active' ? '' : 'secondary'} btn-sm" onclick="window._empFilterStatus='Active';renderManageEmployees()" style="${statusFilter === 'Active' ? 'background:#059669;color:#fff;font-weight:700;' : ''}">🟢 Active (${activeCount})</button>
+          <button class="${statusFilter === 'Inactive' ? '' : 'secondary'} btn-sm" onclick="window._empFilterStatus='Inactive';renderManageEmployees()" style="${statusFilter === 'Inactive' ? 'background:#DC2626;color:#fff;font-weight:700;' : ''}">🔴 Inactive (${inactiveCount})</button>
+          <button class="${statusFilter === 'All' ? '' : 'secondary'} btn-sm" onclick="window._empFilterStatus='All';renderManageEmployees()" style="${statusFilter === 'All' ? 'background:#4F46E5;color:#fff;font-weight:700;' : ''}">📋 All (${totalCount})</button>
+        </div>
+
+        <!-- Role Filter Dropdown -->
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11.5px;font-weight:600;color:var(--muted);">Role:</span>
+          <select onchange="window._empRoleFilter=this.value;renderManageEmployees()" style="padding:7px 10px;border-radius:10px;font-size:12.5px;font-weight:600;">
+            <option value="All" ${roleFilter==='All'?'selected':''}>All Roles</option>
+            <option value="Caretaker" ${roleFilter==='Caretaker'?'selected':''}>🛡️ Caretaker</option>
+            <option value="Cleaning Staff" ${roleFilter==='Cleaning Staff'?'selected':''}>🧹 Cleaning Staff</option>
+            <option value="Maid" ${roleFilter==='Maid'?'selected':''}>🌸 Maid</option>
+            <option value="Manager" ${roleFilter==='Manager'?'selected':''}>👑 Manager</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Staff Listing: Cards or Table -->
+    ${filteredEmps.length === 0 ? `
+      <div class="card" style="text-align:center;padding:48px 16px;">
+        <div style="font-size:36px;margin-bottom:10px;">👥</div>
+        <h3 style="margin:0 0 6px 0;">No employees found</h3>
+        <p class="sub" style="margin:0;">No staff members match the selected search or filter criteria.</p>
+        <button class="secondary btn-sm" onclick="window._empSearchQuery='';window._empFilterStatus='All';window._empRoleFilter='All';renderManageEmployees()" style="margin-top:14px;">
+          Reset Filters
+        </button>
+      </div>
+    ` : (viewMode === 'cards' ? renderEmployeeCardsView(filteredEmps, isO, roomMap) : renderEmployeeTableView(filteredEmps, isO, roomMap))}
+  `, 'employees');
+  } catch (err) {
+    console.error('Error rendering employees directory:', err);
+    renderShell(`
+      <div class="card" style="padding:24px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:10px;">⚠️</div>
+        <h3 style="margin:0 0 8px 0;color:#DC2626;">Failed to display staff directory</h3>
+        <p style="color:#64748B;font-size:13px;margin:0 0 16px 0;">${err.message || 'An unexpected error occurred while loading employees.'}</p>
+        <button onclick="renderManageEmployees()" class="btn-sm" style="background:#4F46E5;color:#fff;">🔄 Retry Loading</button>
+      </div>
+    `, 'employees');
+  }
+}
+
+// 📱 Responsive Cards View (Mobile & Grid friendly)
+function renderEmployeeCardsView(emps, isO, roomMap) {
+  return `
+    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:14px;">
+      ${emps.map(e => {
+        const isActive = isEmployeeActive(e);
+        const assignedArr = (e.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
+              const totalPropsCount = Object.keys(roomMap).length || (window._allRooms || []).length || 18;
+              const isAllAssigned = assignedArr.length >= (totalPropsCount - 1) || (e.role && e.role.toLowerCase().includes('manager')) || (e.name && e.name.toLowerCase().includes('praveen'));
+        const cleanPhone = (e.phone || '').replace(/\D/g, '');
+        const whatsappPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+        const initial = (e.name || 'S').trim().charAt(0).toUpperCase();
+
+        return `
+          <div class="card" style="padding:16px;display:flex;flex-direction:column;justify-content:space-between;border-top:3px solid ${isActive ? '#10B981' : '#EF4444'};position:relative;">
+            <!-- Top Header: Avatar + Name + Badges -->
+            <div>
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;box-shadow:0 2px 6px rgba(79,70,229,0.3);">
+                    ${initial}
+                  </div>
+                  <div>
+                    <h3 style="margin:0;font-size:15px;font-weight:800;color:var(--text);line-height:1.2;">
+                      ${escapeHtml(e.name)}
+                    </h3>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap;">
+                      ${getEmpRoleBadge(e.role)}
+                      ${(e.shift === 'night')
+                        ? `<span class="badge" style="background:#312E81;color:#E0E7FF;font-size:10px;padding:2px 7px;">🌙 Night (9PM–9AM)</span>`
+                        : ((e.shift === 'full')
+                          ? `<span class="badge" style="background:#065F46;color:#D1FAE5;font-size:10px;padding:2px 7px;">🔄 24x7 Duty</span>`
+                          : `<span class="badge" style="background:#FEF3C7;color:#92400E;font-size:10px;padding:2px 7px;">☀️ Day (9AM–9PM)</span>`)}
+                      <span class="badge ${isActive ? 'green' : 'red'}" style="font-size:10px;padding:2px 7px;">
+                        ${isActive ? 'Active' : (e.status || 'Disabled')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Salary Tag -->
+                <div style="text-align:right;">
+                  ${isEmpCleanerPieceRate(e) ? `
+                    <div style="font-size:14px;font-weight:800;color:#4338CA;">
+                      ₹${Number(localStorage.getItem('tuhh_cleaner_rate_' + e.emp_id)) || e.per_flat_rate || 133} / flat
+                    </div>
+                    <div style="font-size:10.5px;color:#4F46E5;font-weight:700;">🧹 Piece Rate (100 flats = ₹13,300)</div>
+                  ` : `
+                    <div style="font-size:15px;font-weight:800;color:#DC2626;">
+                      ₹${(e.monthly_salary || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div style="font-size:10px;color:var(--muted);font-weight:600;">per month · Fixed</div>
+                  `}
+                </div>
+                  <div style="font-size:10px;color:var(--muted);font-weight:600;">per month</div>
+                </div>
+              </div>
+
+              <!-- Quick Communication Bar -->
+              <div style="display:flex;gap:8px;margin-bottom:12px;">
+                ${cleanPhone ? `
+                  <a href="tel:${escapeHtml(e.phone)}" class="btn-sm" style="flex:1;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--card-sub-bg,#F1F5F9);color:var(--text);border:1px solid var(--border,#CBD5E1);border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;">
+                    📞 Call
+                  </a>
+                  <a href="https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Hello ${e.name}, from The Unique Haven Homes:`)}" target="_blank" class="btn-sm" style="flex:1;text-align:center;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#25D366;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;box-shadow:0 2px 6px rgba(37,211,102,0.3);">
+                    💬 WhatsApp
+                  </a>
+                ` : `
+                  <div style="font-size:11.5px;color:var(--muted);padding:6px 0;">No phone number registered</div>
+                `}
+              </div>
+
+              <!-- Assigned Properties -->
+              <div style="background:var(--card-sub-bg,#F8FAFC);padding:10px;border-radius:8px;border:1px solid var(--border,#E2E8F0);margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px;">
+                  🏢 Assigned Properties (${assignedArr.length})
+                ${assignedArr.length === 0 ? `
+                  <div style="font-size:12px;color:var(--muted);font-style:italic;">No properties assigned</div>
+                ` : (isAllAssigned ? `
+                  <span style="display:inline-block;padding:3px 8px;border-radius:6px;font-size:11.5px;background:#EFF6FF;color:#1D4ED8;font-weight:700;border:1px solid #BFDBFE;">
+                    ✨ All Properties Assigned (${totalPropsCount} Units)
+                  </span>
+                ` : `
+                    ${assignedArr.map(roomId => `
+                      <span style="font-size:11px;padding:2px 7px;border-radius:6px;background:var(--card-bg,#fff);border:1px solid var(--border,#CBD5E1);color:var(--text);font-weight:600;">
+                        ${escapeHtml(roomMap[roomId] || roomId)}
+                      </span>
+                    `).join('')}
+                  </div>
+                `)}
+              </div>
+
+              <!-- Details Row -->
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11.5px;color:var(--muted);margin-bottom:12px;">
+                <div>
+                  <span style="font-weight:600;">Joined:</span> ${e.joining_date ? new Date(e.joining_date).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : 'Not set'}
+                </div>
+                <div>
+                  <span style="font-weight:600;">ID Proof:</span>
+                  ${e.id_proof_type ? `<span style="font-weight:700;color:var(--text);">${e.id_proof_type}</span>` : 'None'}
+                </div>
+                ${e.emergency_contact ? `
+                  <div style="grid-column:1/-1;">
+                    <span style="font-weight:600;">Emergency:</span> ${escapeHtml(e.emergency_contact)}
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- ID Photos Preview -->
+              ${(e.id_proof_photo_front || e.id_proof_photo_back) ? `
+                <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;">
+                  <span style="font-size:11px;font-weight:600;color:var(--muted);">ID Photos:</span>
+                  ${e.id_proof_photo_front ? `<button class="btn-sm outline" onclick="dlIdPhoto('${e.id_proof_photo_front}')" style="font-size:11px;padding:3px 8px;">📄 Front</button>` : ''}
+                  ${e.id_proof_photo_back ? `<button class="btn-sm outline" onclick="dlIdPhoto('${e.id_proof_photo_back}')" style="font-size:11px;padding:3px 8px;">📄 Back</button>` : ''}
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Card Actions Footer -->
+            ${isO ? `
+              <div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border,#E2E8F0);margin-top:auto;">
+                <button class="btn-sm secondary" onclick="editEmp('${e.emp_id}')" style="flex:1;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                  ✏️ Edit
+                </button>
+                <button class="btn-sm ${isActive ? 'danger' : 'green-btn'}" onclick="toggleEmpStatus('${e.emp_id}', '${escapeHtml(e.name)}', ${isActive})" style="flex:1;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:5px;">
+                  ${isActive ? '🚫 Deactivate' : '🟢 Activate'}
+                </button>
+                ${window.canDelete && window.canDelete() ? `
+                  <button class="btn-sm danger" onclick="delEmp('${e.emp_id}','${escapeHtml(e.name)}')" title="Permanently Delete" style="padding:6px 10px;">
+                    🗑️
+                  </button>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// 📋 Detailed Table View (Desktop friendly)
+function renderEmployeeTableView(emps, isO, roomMap) {
+  return `
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="table-wrap" style="margin:0;">
+        <table>
+          <thead>
+            <tr>
+              <th>Staff Member</th>
+              <th>Role</th>
+              <th>Contact</th>
+              <th>Assigned Properties</th>
+              <th>Salary</th>
+              <th>ID Proof</th>
+              <th>Status</th>
+              ${isO ? '<th style="text-align:right;">Actions</th>' : ''}
+            </tr>
+          </thead>
+          <tbody>
+            ${emps.map(e => {
+              const isActive = isEmployeeActive(e);
+              const assignedArr = (e.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
+              const totalPropsCount = Object.keys(roomMap).length || (window._allRooms || []).length || 18;
+              const isAllAssigned = assignedArr.length >= (totalPropsCount - 1) || (e.role && e.role.toLowerCase().includes('manager')) || (e.name && e.name.toLowerCase().includes('praveen'));
+              const cleanPhone = (e.phone || '').replace(/\D/g, '');
+              const whatsappPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
+              const initial = (e.name || 'S').trim().charAt(0).toUpperCase();
+
+              return `
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">
+                        ${initial}
+                      </div>
+                      <div>
+                        <strong>${escapeHtml(e.name)}</strong>
+                        ${e.joining_date ? `<div style="font-size:10.5px;color:var(--muted);">Since ${e.joining_date}</div>` : ''}
+                      </div>
+                    </div>
+                  </td>
+                  <td>${getEmpRoleBadge(e.role)}</td>
+                  <td>
+                    ${cleanPhone ? `
+                      <div style="display:flex;align-items:center;gap:6px;">
+                        <span>${escapeHtml(e.phone)}</span>
+                        <a href="https://wa.me/${whatsappPhone}?text=${encodeURIComponent(`Hello ${e.name}, from The Unique Haven Homes:`)}" target="_blank" style="text-decoration:none;font-size:14px;" title="Chat on WhatsApp">💬</a>
+                        <a href="tel:${escapeHtml(e.phone)}" style="text-decoration:none;font-size:14px;" title="Call">📞</a>
+                      </div>
+                    ` : '<span style="color:var(--muted);">-</span>'}
+                  </td>
+                  <td style="max-width:200px;">
+                    ${assignedArr.length === 0 ? '<span style="color:var(--muted);font-size:11px;">None</span>' : (
+                      isAllAssigned ? `<span style="font-size:11px;font-weight:700;color:#1D4ED8;">All ${totalPropsCount} Properties</span>` : `
+                        <div style="font-size:11.5px;line-height:1.4;white-space:normal;">
+                          ${assignedArr.map(id => escapeHtml(roomMap[id] || id)).join(', ')}
+                        </div>
+                      `
+                    )}
+                  </td>
+                  <td style="font-weight:700;">
+                    ${isEmpCleanerPieceRate(e) ? `
+                      <div style="color:#4338CA;font-weight:800;">₹${Number(localStorage.getItem('tuhh_cleaner_rate_' + e.emp_id)) || e.per_flat_rate || 133} / flat</div>
+                      <div style="font-size:10.5px;color:#4F46E5;font-weight:600;">🧹 Piece Rate (100 flats = ₹13,300)</div>
+                    ` : `
+                      <div style="color:#DC2626;">₹${(e.monthly_salary || 0).toLocaleString('en-IN')}</div>
+                      <div style="font-size:10px;color:var(--muted);font-weight:500;">Fixed Monthly</div>
+                    `}
+                  </td>
+                  <td>
+                    ${(e.id_proof_photo_front || e.id_proof_photo_back) ? `
+                      <div style="display:flex;gap:4px;">
+                        ${e.id_proof_photo_front ? `<button class="btn-sm outline" onclick="dlIdPhoto('${e.id_proof_photo_front}')" title="Front Photo">📄 F</button>` : ''}
+                        ${e.id_proof_photo_back ? `<button class="btn-sm outline" onclick="dlIdPhoto('${e.id_proof_photo_back}')" title="Back Photo">📄 B</button>` : ''}
+                      </div>
+                    ` : `<span style="font-size:11px;color:var(--muted);">${e.id_proof_type || '-'}</span>`}
+                  </td>
+                  <td>
+                    <span class="badge ${isActive ? 'green' : 'red'}">
+                      ${isActive ? 'Active' : (e.status || 'Disabled')}
+                    </span>
+                  </td>
+                  ${isO ? `
+                    <td class="table-actions" style="text-align:right;">
+                      <button class="btn-sm" onclick="editEmp('${e.emp_id}')" title="Edit Staff Member">✏️</button>
+                      <button class="btn-sm ${isActive ? 'danger' : 'green-btn'}" onclick="toggleEmpStatus('${e.emp_id}', '${escapeHtml(e.name)}', ${isActive})" title="${isActive ? 'Deactivate' : 'Activate'}">
+                        ${isActive ? '🚫' : '🟢'}
+                      </button>
+                      ${window.canDelete && window.canDelete() ? `
+                        <button class="btn-sm danger" onclick="delEmp('${e.emp_id}','${escapeHtml(e.name)}')" title="Permanently Delete">🗑️</button>
+                      ` : ''}
+                    </td>
+                  ` : ''}
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// Live Search Debounce
+let _empSearchTimeout = null;
+window.debounceFilterEmployees = function() {
+  clearTimeout(_empSearchTimeout);
+  _empSearchTimeout = setTimeout(() => {
+    renderManageEmployees();
+  }, 250);
+};
+
+window.toggleEmpStatus = async function(empId, name, currentlyActive) {
+  const newStatus = currentlyActive ? 'Inactive' : 'Active';
+  const actionText = currentlyActive ? 'DEACTIVATE' : 'ACTIVATE';
+
+  if (!confirm(`Are you sure you want to ${actionText} employee "${name}"?\n\n${currentlyActive ? '• Will NOT show in Advance, Salary, Attendance, or active property forms.\n• Past history and records will remain safely preserved.' : '• Will be active and visible again in all operational forms.'}`)) {
+    return;
+  }
+
+  const updatePayload = {
+    status: newStatus,
+    is_active: !currentlyActive
+  };
+  if (currentlyActive) {
+    updatePayload.in_whatsapp_template = false;
+  }
+
+  const { error } = await sb.from('employees').update(updatePayload).eq('emp_id', empId);
+
+  if (error) {
+    if (window.fsn) fsn.error('Error', error.message);
+    else alert('Error: ' + error.message);
+    return;
+  }
+
+  if (window.fsn) fsn.success('Success', `✅ ${name} marked as ${newStatus}`);
+  renderManageEmployees();
+};
+
+function employeeRoleOptions(selected = '') {
+  const roles = [
+    'Caretaker',
+    'Cleaning Staff',
+    'Maid',
+    'Manager',
+    'Cook',
+    'Maintenance',
+    'Driver',
+    'Other'
+  ];
+  const list = roles.includes(selected) || !selected ? roles : [selected, ...roles];
+  return list.map(r => `<option value="${r}" ${r === selected ? 'selected' : ''}>${r}</option>`).join('');
+}
+
+function employeePropertyRoleOptions(selected = 'Caretaker') {
+  const roles = ['Caretaker', 'Cleaning Staff', 'Maid', 'Manager'];
+  const list = roles.includes(selected) || !selected ? roles : [selected, ...roles];
+  return list.map(r => `<option value="${r}" ${r === selected ? 'selected' : ''}>${r}</option>`).join('');
+}
+
+// Interactive Property Multi-Picker Helpers
+window.toggleAllEmpRooms = function(mode) {
+  const cbs = document.querySelectorAll('.prop-chip-checkbox');
+  cbs.forEach(cb => {
+    if (mode === 'all') cb.checked = true;
+    else if (mode === 'none') cb.checked = false;
+    else if (mode === 'gomti') cb.checked = cb.value.startsWith('GOM') || cb.value.startsWith('LUL');
+    else if (mode === 'villas') cb.checked = cb.value.startsWith('VIL');
+
+    const pill = document.getElementById('prop_pill_' + cb.value);
+    if (pill) {
+      if (cb.checked) {
+        pill.style.background = 'var(--primary, #4F46E5)';
+        pill.style.color = '#fff';
+        pill.style.borderColor = 'var(--primary, #4F46E5)';
+      } else {
+        pill.style.background = 'var(--card-bg, #fff)';
+        pill.style.color = 'var(--text, #1E293B)';
+        pill.style.borderColor = 'var(--border, #CBD5E1)';
+      }
+    }
+  });
+  updateEmpRoomsCount();
+};
+
+window.toggleEmpRoomPill = function(roomId) {
+  const cb = document.getElementById('prop_cb_' + roomId);
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  const pill = document.getElementById('prop_pill_' + roomId);
+  if (pill) {
+    if (cb.checked) {
+      pill.style.background = 'var(--primary, #4F46E5)';
+      pill.style.color = '#fff';
+      pill.style.borderColor = 'var(--primary, #4F46E5)';
+    } else {
+      pill.style.background = 'var(--card-bg, #fff)';
+      pill.style.color = 'var(--text, #1E293B)';
+      pill.style.borderColor = 'var(--border, #CBD5E1)';
+    }
+  }
+  updateEmpRoomsCount();
+};
+
+window.updateEmpRoomsCount = function() {
+  const cnt = document.querySelectorAll('.prop-chip-checkbox:checked').length;
+  const el = document.getElementById('empRoomsCountText');
+  if (el) el.textContent = `${cnt} property(s) selected`;
+};
+
+function getSelectedRoomsFromUI() {
+  const cbs = document.querySelectorAll('.prop-chip-checkbox:checked');
+  if (cbs.length > 0) {
+    return Array.from(cbs).map(c => c.value).join(',');
+  }
+  const sel = document.getElementById('eRooms');
+  if (sel && sel.selectedOptions) {
+    return Array.from(sel.selectedOptions).map(o => o.value).join(',');
+  }
+  return '';
+}
+
+// ============ ROBUST EMPLOYEE ID PROOF UPLOAD & PREVIEW ============
+window._empIdFrontBlob = null;
+window._empIdBackBlob = null;
+
+async function smartCompressEmpImage(file) {
+  let quality = 0.8;
+  let maxDim = 1200;
+  const sizeMB = file.size / 1024 / 1024;
+  if (sizeMB > 5) { quality = 0.6; maxDim = 1000; }
+  if (sizeMB > 10) { quality = 0.5; maxDim = 800; }
+
+  try {
+    return await compressImage(file, maxDim, quality);
+  } catch (e) {
+    console.warn('Compression fallback to original:', e);
+    return file;
+  }
+}
+
+async function robustUploadEmpId(path, fileOrBlob, maxRetries = 3) {
+  const compressed = await smartCompressEmpImage(fileOrBlob);
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const { error } = await sb.storage.from('id-proofs').upload(path, compressed, {
+        contentType: 'image/jpeg',
+        upsert: true,
+        cacheControl: '3600'
+      });
+      if (!error) return { success: true, path };
+      lastError = error;
+      if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 800));
+    } catch (e) {
+      lastError = e;
+      if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 800));
+    }
+  }
+  return { success: false, error: lastError?.message || 'Upload failed after 3 attempts' };
+}
+
+window.handleEmpIdFileSelect = function(input, side) {
+  const file = input?.files?.[0];
+  if (!file) return;
+
+  const sideLabel = side === 'front' ? 'Front Side' : 'Back Side';
+
+  // Use global crop modal if available (from bookings.js)
+  if (typeof openCropModal === 'function') {
+    openCropModal(file, (croppedFile) => {
+      if (side === 'front') window._empIdFrontBlob = croppedFile;
+      else window._empIdBackBlob = croppedFile;
+      renderEmpIdPreview(croppedFile, side);
+    });
+  } else {
+    if (side === 'front') window._empIdFrontBlob = file;
+    else window._empIdBackBlob = file;
+    renderEmpIdPreview(file, side);
+  }
+};
+
+window.clearEmpIdFile = function(side) {
+  if (side === 'front') {
+    window._empIdFrontBlob = null;
+    const cam = document.getElementById('eIdFrontCam');
+    const gal = document.getElementById('eIdFrontGal');
+    if (cam) cam.value = '';
+    if (gal) gal.value = '';
+  } else {
+    window._empIdBackBlob = null;
+    const cam = document.getElementById('eIdBackCam');
+    const gal = document.getElementById('eIdBackGal');
+    if (cam) cam.value = '';
+    if (gal) gal.value = '';
+  }
+  const preview = document.getElementById(`eIdPreview_${side}`);
+  if (preview) preview.innerHTML = '';
+};
+
+window.renderEmpIdPreview = function(file, side) {
+  const preview = document.getElementById(`eIdPreview_${side}`);
+  if (!preview || !file) return;
+
+  const url = URL.createObjectURL(file);
+  const sizeMB = (file.size / 1024 / 1024).toFixed(2);
+  const label = side === 'front' ? 'Front' : 'Back';
+
+  preview.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#F0FDF4;border:1.5px solid #10B981;border-radius:10px;margin-top:8px;">
+      <img src="${url}" style="width:60px;height:45px;object-fit:cover;border-radius:6px;border:1px solid #A7F3D0;cursor:pointer;" onclick="window.open('${url}','_blank')" title="Click to view full image" />
+      <div style="flex:1;">
+        <div style="font-size:12px;font-weight:700;color:#047857;">✅ ${label} Ready</div>
+        <div style="font-size:10.5px;color:#64748B;">${sizeMB} MB &bull; Auto-optimized for upload</div>
+      </div>
+      <button type="button" class="btn-sm danger" onclick="clearEmpIdFile('${side}')" style="padding:4px 8px;font-size:11px;min-height:26px;" title="Remove photo">✕</button>
+    </div>
+  `;
+};
+
+async function renderAddEmp() {
+  window._empIdFrontBlob = null;
+  window._empIdBackBlob = null;
+
+  const { data: rooms } = await sb.from('rooms').select('room_id, nickname, unit_no').order('room_id');
+
+  renderShell(`
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h1 style="margin:0;font-size:20px;font-weight:800;">➕ Add New Staff Member</h1>
+        <button class="secondary btn-sm" onclick="renderManageEmployees()">← Back to Staff</button>
+      </div>
+    </div>
+
+    <!-- Manager Specification Note -->
+    <div class="card" style="background:#EFF6FF;border:1px solid #BFDBFE;margin-bottom:14px;padding:12px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">ℹ️</span>
+        <div style="font-size:12.5px;color:#1E3A8A;line-height:1.4;">
+          <strong>Manager Note:</strong> <strong>Praveen Singh</strong> is the sole Manager across all properties. On-ground staff roles should be assigned as <strong>Caretaker</strong>, <strong>Cleaning Staff</strong>, or <strong>Maid</strong>.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input id="eName" placeholder="e.g. Ramesh Kumar" /></div>
+        <div class="form-group"><label>Phone Number</label><input id="ePhone" type="tel" placeholder="e.g. 9876543210" /></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Primary Role</label>
+          <select id="eRole">${employeeRoleOptions('Caretaker')}</select>
+        </div>
+        <div class="form-group">
+          <label>On-Site Property Role</label>
+          <select id="ePropertyRole">${employeePropertyRoleOptions('Caretaker')}</select>
+        </div>
+      </div>
+
+      <div class="form-grid" style="grid-column:1/-1;">
+        <div class="form-group">
+          <label style="font-weight:700;color:var(--text);">Employee Salary System / Model *</label>
+          <select id="eSalaryType" onchange="window.toggleEmpSalaryTypeInputs()" style="padding:10px;font-weight:700;border:1.5px solid var(--border);">
+            <option value="fixed" selected>💼 Type 1: Fixed Monthly Salary (e.g. Praveen, Arman, Shuaib, Aniket)</option>
+            <option value="per_flat">🧹 Type 2: Per-Flat Cleaning Staff (e.g. Kanchan, Maids — ₹133/flat)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group" id="groupFixedSalary">
+          <label>Monthly Salary ₹ *</label>
+          <input id="eSal" type="number" placeholder="e.g. 10000" />
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Fixed full month salary. Absents deducted proportionately.</div>
+        </div>
+        <div class="form-group" id="groupPerFlatRate" style="display:none;background:#EEF2FF;padding:10px;border-radius:8px;border:1px solid #C7D2FE;">
+          <label style="color:#3730A3;font-weight:700;">Rate per Flat Cleaned ₹ *</label>
+          <input id="ePerFlatRate" type="number" value="133" placeholder="133" style="font-weight:800;font-size:15px;" />
+          <div style="font-size:11.5px;color:#4338CA;margin-top:3px;font-weight:600;">
+            💡 Standard: ₹133/flat (e.g. 100 flats cleaned = ₹13,300/month). Linked from Housekeeping.
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Operational Shift (Duty Hours)</label>
+          <select id="eShift">
+            <option value="day" selected>☀️ Day Shift (9:00 AM – 9:00 PM)</option>
+            <option value="night">🌙 Night Shift (9:00 PM – 9:00 AM)</option>
+            <option value="full">🔄 24x7 / Full Day Duty (Sole Caretaker)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Auto-pick for Guest WhatsApp Check-in Pass?</label>
+        <select id="eInWhatsApp">
+          <option value="true" selected>✅ Yes — Auto-pick as On-Duty Caretaker for assigned properties</option>
+          <option value="false">❌ No (Internal / Maintenance only)</option>
+        </select>
+      </div>
+
+      <!-- Touch-friendly Assigned Properties Picker -->
+      <div class="form-group" style="background:var(--card-sub-bg,#F8FAFC);padding:14px;border-radius:10px;border:1px solid var(--border,#CBD5E1);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <div>
+            <label style="margin:0;font-weight:700;">Assigned Properties</label>
+            <div id="empRoomsCountText" style="font-size:11.5px;color:var(--muted);margin-top:2px;">0 property(s) selected</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('all')" style="font-size:11px;padding:4px 8px;">✅ Select All</button>
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('gomti')" style="font-size:11px;padding:4px 8px;">🏢 Gomti Units</button>
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('villas')" style="font-size:11px;padding:4px 8px;">🏡 Villas</button>
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('none')" style="font-size:11px;padding:4px 8px;">❌ Clear</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:8px;">
+          ${(rooms || []).map(r => `
+            <div
+              id="prop_pill_${r.room_id}"
+              onclick="toggleEmpRoomPill('${r.room_id}')"
+              style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card-bg,#fff);border:1px solid var(--border,#CBD5E1);border-radius:8px;cursor:pointer;user-select:none;transition:all 0.15s;"
+            >
+              <input type="checkbox" id="prop_cb_${r.room_id}" class="prop-chip-checkbox" value="${r.room_id}" style="pointer-events:none;margin:0;" />
+              <span style="font-size:12px;font-weight:600;line-height:1.2;">${escapeHtml(propLabel(r))}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group"><label>Joining Date</label><input id="eJoin" type="date" value="${new Date().toISOString().slice(0,10)}" /></div>
+        <div class="form-group">
+          <label>ID Document Type</label>
+          <select id="eIdType">
+            <option value="Aadhar">Aadhar Card</option>
+            <option value="PAN">PAN Card</option>
+            <option value="DL">Driving License</option>
+            <option value="Passport">Passport</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group"><label>ID Number</label><input id="eIdNo" placeholder="Document ID / Aadhar number" /></div>
+        <div class="form-group"><label>Residential Address</label><input id="eAddr" placeholder="Permanent / local address" /></div>
+      </div>
+
+      <div class="form-group">
+        <label>Emergency Contact & Relation</label>
+        <input id="eEmergency" placeholder="e.g. Brother: 9876543210" />
+      </div>
+
+      <!-- High Reliability Camera / Gallery ID Proof Section -->
+      <div style="background:var(--card-sub-bg,#F8FAFC);padding:14px;border-radius:10px;border:1px solid var(--border,#CBD5E1);margin-bottom:14px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px;color:var(--text);">
+          📄 ID Proof Photos (Aadhar / PAN / Driving License)
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:12px;">
+          Upload clear front and back photos. Use 📷 Camera to snap or 🖼️ Gallery to choose from files.
+        </div>
+
+        <div class="form-grid">
+          <!-- Front Photo -->
+          <div class="form-group" style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border,#E2E8F0);">
+            <label style="font-weight:700;display:block;margin-bottom:8px;">📄 Front Side Photo</label>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdFrontCam').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                📷 Camera
+              </button>
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdFrontGal').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                🖼️ Gallery
+              </button>
+            </div>
+            <input type="file" id="eIdFrontCam" accept="image/*" capture="environment" style="display:none;" onchange="handleEmpIdFileSelect(this, 'front')" />
+            <input type="file" id="eIdFrontGal" accept="image/*" style="display:none;" onchange="handleEmpIdFileSelect(this, 'front')" />
+            <div id="eIdPreview_front"></div>
+          </div>
+
+          <!-- Back Photo -->
+          <div class="form-group" style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border,#E2E8F0);">
+            <label style="font-weight:700;display:block;margin-bottom:8px;">📄 Back Side Photo</label>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdBackCam').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                📷 Camera
+              </button>
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdBackGal').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                🖼️ Gallery
+              </button>
+            </div>
+            <input type="file" id="eIdBackCam" accept="image/*" capture="environment" style="display:none;" onchange="handleEmpIdFileSelect(this, 'back')" />
+            <input type="file" id="eIdBackGal" accept="image/*" style="display:none;" onchange="handleEmpIdFileSelect(this, 'back')" />
+            <div id="eIdPreview_back"></div>
+          </div>
+        </div>
+      </div>
+
+      <label style="display:flex;align-items:center;gap:8px;margin:12px 0;font-weight:600;cursor:pointer;">
+        <input type="checkbox" id="eActive" checked style="width:18px;height:18px;" /> Active & on-duty
+      </label>
+
+      <div class="form-group">
+        <label>Internal Notes</label>
+        <textarea id="eNotes" placeholder="Additional background, uniforms, keys issued, bank details..."></textarea>
+      </div>
+
+      <div id="empUploadProgress"></div>
+
+      <button id="saveEmpBtn" onclick="saveEmp()" style="width:100%;padding:12px;font-size:15px;font-weight:700;border-radius:10px;background:var(--primary,#4F46E5);color:#fff;">
+        💾 Save Staff Member
+      </button>
+      <div id="empErr" style="margin-top:10px;"></div>
+    </div>
+  `, 'employees');
+}
+
+async function saveEmp() {
+  const _btn = document.getElementById('saveEmpBtn') || document.querySelector('button[onclick="saveEmp()"]');
+  const progEl = document.getElementById('empUploadProgress');
+  const errEl = document.getElementById('empErr');
+  if (errEl) errEl.innerHTML = '';
+
+  const name = document.getElementById('eName')?.value?.trim();
+  if (!name) {
+    if (errEl) errEl.innerHTML = '<div class="error">Name is required</div>';
+    return;
+  }
+
+  if (_btn) { _btn.disabled = true; _btn.textContent = '⏳ Saving staff member...'; }
+
+  const selectedRooms = getSelectedRoomsFromUI();
+  let frontPath = null, backPath = null;
+  const empId = 'E' + Date.now();
+
+  // Upload Front Photo
+  if (window._empIdFrontBlob) {
+    if (_btn) _btn.textContent = '⏳ Uploading ID Front photo...';
+    if (progEl) progEl.innerHTML = '<div style="padding:8px 12px;background:#EFF6FF;border-radius:8px;color:#1D4ED8;font-size:12px;font-weight:600;margin-bottom:10px;">📤 Uploading Front ID Photo...</div>';
+
+    const path = `employees/${empId}_front_${Date.now()}.jpg`;
+    const res = await robustUploadEmpId(path, window._empIdFrontBlob);
+    if (res.success) {
+      frontPath = path;
+    } else {
+      if (errEl) errEl.innerHTML = `<div class="error">❌ Front ID photo upload failed: ${res.error}. Please retry.</div>`;
+      if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Staff Member'; }
+      if (progEl) progEl.innerHTML = '';
+      return;
+    }
+  }
+
+  // Upload Back Photo
+  if (window._empIdBackBlob) {
+    if (_btn) _btn.textContent = '⏳ Uploading ID Back photo...';
+    if (progEl) progEl.innerHTML = '<div style="padding:8px 12px;background:#EFF6FF;border-radius:8px;color:#1D4ED8;font-size:12px;font-weight:600;margin-bottom:10px;">📤 Uploading Back ID Photo...</div>';
+
+    const path = `employees/${empId}_back_${Date.now()}.jpg`;
+    const res = await robustUploadEmpId(path, window._empIdBackBlob);
+    if (res.success) {
+      backPath = path;
+    } else {
+      if (errEl) errEl.innerHTML = `<div class="error">❌ Back ID photo upload failed: ${res.error}. Please retry.</div>`;
+      if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Staff Member'; }
+      if (progEl) progEl.innerHTML = '';
+      return;
+    }
+  }
+
+  if (_btn) _btn.textContent = '⏳ Saving record...';
+  const isActive = document.getElementById('eActive')?.checked !== false;
+
+  const { error } = await sb.from('employees').insert({
+    emp_id: empId,
+    name,
+    phone: document.getElementById('ePhone')?.value?.trim() || null,
+    role: document.getElementById('eRole')?.value || null,
+    property_role: document.getElementById('ePropertyRole')?.value || 'Staff',
+    monthly_salary: parseFloat(document.getElementById('eSal')?.value) || 0,
+    shift: document.getElementById('eShift')?.value || 'day',
+    in_whatsapp_template: document.getElementById('eInWhatsApp')?.value === 'true',
+    whatsapp_display_role: 'Caretaker',
+    joining_date: document.getElementById('eJoin')?.value || null,
+    assigned_rooms: selectedRooms || null,
+    id_proof_type: document.getElementById('eIdType')?.value || null,
+    id_proof_no: document.getElementById('eIdNo')?.value?.trim() || null,
+    address: document.getElementById('eAddr')?.value?.trim() || null,
+    emergency_contact: document.getElementById('eEmergency')?.value?.trim() || null,
+    id_proof_photo_front: frontPath,
+    id_proof_photo_back: backPath,
+    status: isActive ? 'Active' : 'Inactive',
+    is_active: isActive,
+    notes: document.getElementById('eNotes')?.value?.trim() || null,
+  });
+
+  // Save salary model
+  const newSalType = document.getElementById('eSalaryType')?.value || 'fixed';
+  const newRate = parseFloat(document.getElementById('ePerFlatRate')?.value) || 133;
+  if (newSalType === 'per_flat') {
+    localStorage.setItem('tuhh_emp_type_' + empId, 'per_flat');
+    localStorage.setItem('tuhh_cleaner_rate_' + empId, String(newRate));
+  } else {
+    localStorage.setItem('tuhh_emp_type_' + empId, 'monthly');
+    localStorage.removeItem('tuhh_cleaner_rate_' + empId);
+  }
+
+  if (error) {
+    if (errEl) errEl.innerHTML = `<div class="error">${error.message}</div>`;
+    if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Staff Member'; }
+    if (progEl) progEl.innerHTML = '';
+    return;
+  }
+
+  // 🔄 Auto-propagate Caretaker assignment to rooms table (Zero Manual Entry)
+  const primaryRole = document.getElementById('eRole')?.value || '';
+  const propRole = document.getElementById('ePropertyRole')?.value || 'Staff';
+  const inWa = document.getElementById('eInWhatsApp')?.value === 'true';
+  const empPhone = document.getElementById('ePhone')?.value?.trim() || null;
+  const isCaretaker = primaryRole === 'Caretaker' || propRole === 'Caretaker' || inWa;
+  if (isCaretaker && Array.isArray(selectedRooms) && selectedRooms.length > 0) {
+    try {
+      for (const roomId of selectedRooms) {
+        await sb.from('rooms').update({
+          caretaker_emp_id: empId,
+          caretaker_name: name,
+          caretaker_phone: empPhone
+        }).eq('room_id', roomId);
+      }
+      console.log(`✅ Auto-synced caretaker ${name} to rooms:`, selectedRooms);
+    } catch (roomSyncErr) {
+      console.warn('Auto room caretaker sync warning:', roomSyncErr);
+    }
+  }
+
+  window._empIdFrontBlob = null;
+  window._empIdBackBlob = null;
+
+  if (window.fsn) fsn.success('Added', `Staff member ${name} added & assigned to properties successfully`);
+  renderManageEmployees();
+}
+
+async function editEmp(id) {
+  window._empIdFrontBlob = null;
+  window._empIdBackBlob = null;
+
+  const [{ data: e }, { data: rooms }] = await Promise.all([
+    sb.from('employees').select('*').eq('emp_id', id).single(),
+    sb.from('rooms').select('room_id, nickname, unit_no').order('room_id')
+  ]);
+
+  if (!e) return;
+  const assignedArr = (e.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  // Fetch signed URLs for current photos to display thumbnails
+  let currentFrontUrl = null, currentBackUrl = null;
+  if (e.id_proof_photo_front) {
+    try {
+      const { data } = await sb.storage.from('id-proofs').createSignedUrl(e.id_proof_photo_front, 600);
+      if (data?.signedUrl) currentFrontUrl = data.signedUrl;
+    } catch(err) {}
+  }
+  if (e.id_proof_photo_back) {
+    try {
+      const { data } = await sb.storage.from('id-proofs').createSignedUrl(e.id_proof_photo_back, 600);
+      if (data?.signedUrl) currentBackUrl = data.signedUrl;
+    } catch(err) {}
+  }
+
+  renderShell(`
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h1 style="margin:0;font-size:20px;font-weight:800;">✏️ Edit Staff Member: ${escapeHtml(e.name)}</h1>
+        <button class="secondary btn-sm" onclick="renderManageEmployees()">← Back to Staff</button>
+      </div>
+    </div>
+
+    <!-- Manager Note -->
+    <div class="card" style="background:#EFF6FF;border:1px solid #BFDBFE;margin-bottom:14px;padding:12px 16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:20px;">ℹ️</span>
+        <div style="font-size:12.5px;color:#1E3A8A;line-height:1.4;">
+          <strong>Manager Note:</strong> <strong>Praveen Singh</strong> is the sole Manager across all properties. On-ground staff roles should be assigned as <strong>Caretaker</strong>, <strong>Cleaning Staff</strong>, or <strong>Maid</strong>.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input id="eName" value="${escapeHtml(e.name)}" /></div>
+        <div class="form-group"><label>Phone Number</label><input id="ePhone" value="${escapeHtml(e.phone || '')}" /></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Primary Role</label>
+          <select id="eRole">${employeeRoleOptions(e.role || '')}</select>
+        </div>
+        <div class="form-group">
+          <label>On-Site Property Role</label>
+          <select id="ePropertyRole">${employeePropertyRoleOptions(e.property_role || 'Caretaker')}</select>
+        </div>
+      </div>
+
+      ${(() => {
+        const isCleaner = isEmpCleanerPieceRate(e);
+        const cleanerRate = Number(localStorage.getItem('tuhh_cleaner_rate_' + e.emp_id)) || e.per_flat_rate || 133;
+        return `
+        <div class="form-grid" style="grid-column:1/-1;">
+          <div class="form-group">
+            <label style="font-weight:700;color:var(--text);">Employee Salary System / Model *</label>
+            <select id="eSalaryType" onchange="window.toggleEmpSalaryTypeInputs()" style="padding:10px;font-weight:700;border:1.5px solid var(--border);">
+              <option value="fixed" ${!isCleaner ? 'selected' : ''}>💼 Type 1: Fixed Monthly Salary (e.g. Praveen, Arman, Shuaib, Aniket)</option>
+              <option value="per_flat" ${isCleaner ? 'selected' : ''}>🧹 Type 2: Per-Flat Cleaning Staff (e.g. Kanchan, Maids — ₹133/flat)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group" id="groupFixedSalary" style="display:${isCleaner ? 'none' : 'block'};">
+            <label>Monthly Salary ₹ *</label>
+            <input id="eSal" type="number" value="${e.monthly_salary || 0}" />
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">Fixed full month salary. Absents deducted proportionately.</div>
+          </div>
+          <div class="form-group" id="groupPerFlatRate" style="display:${isCleaner ? 'block' : 'none'};background:#EEF2FF;padding:10px;border-radius:8px;border:1px solid #C7D2FE;">
+            <label style="color:#3730A3;font-weight:700;">Rate per Flat Cleaned ₹ *</label>
+            <input id="ePerFlatRate" type="number" value="${cleanerRate}" style="font-weight:800;font-size:15px;" />
+            <div style="font-size:11.5px;color:#4338CA;margin-top:3px;font-weight:600;">
+              💡 Standard: ₹133/flat (e.g. 100 flats cleaned = ₹13,300/month). Linked from Housekeeping.
+            </div>
+          </div>
+        `;
+      })()}
+        <div class="form-group">
+          <label>Operational Shift (Duty Hours)</label>
+          <select id="eShift">
+            <option value="day" ${e.shift === 'day' ? 'selected' : ''}>☀️ Day Shift (9:00 AM – 9:00 PM)</option>
+            <option value="night" ${e.shift === 'night' ? 'selected' : ''}>🌙 Night Shift (9:00 PM – 9:00 AM)</option>
+            <option value="full" ${e.shift === 'full' ? 'selected' : ''}>🔄 24x7 / Full Day Duty (Sole Caretaker)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Auto-pick for Guest WhatsApp Check-in Pass?</label>
+        <select id="eInWhatsApp">
+          <option value="true" ${e.in_whatsapp_template !== false ? 'selected' : ''}>✅ Yes — Auto-pick as On-Duty Caretaker for assigned properties</option>
+          <option value="false" ${e.in_whatsapp_template === false ? 'selected' : ''}>❌ No (Internal / Maintenance only)</option>
+        </select>
+      </div>
+
+      <!-- Touch-friendly Assigned Properties Picker -->
+      <div class="form-group" style="background:var(--card-sub-bg,#F8FAFC);padding:14px;border-radius:10px;border:1px solid var(--border,#CBD5E1);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <div>
+            <label style="margin:0;font-weight:700;">Assigned Properties</label>
+            <div id="empRoomsCountText" style="font-size:11.5px;color:var(--muted);margin-top:2px;">
+              ${assignedArr.length} property(s) selected
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('all')" style="font-size:11px;padding:4px 8px;">✅ Select All</button>
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('gomti')" style="font-size:11px;padding:4px 8px;">🏢 Gomti Units</button>
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('villas')" style="font-size:11px;padding:4px 8px;">🏡 Villas</button>
+            <button type="button" class="btn-sm secondary" onclick="toggleAllEmpRooms('none')" style="font-size:11px;padding:4px 8px;">❌ Clear</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:8px;">
+          ${(rooms || []).map(r => {
+            const isAssigned = assignedArr.includes(r.room_id);
+            return `
+              <div
+                id="prop_pill_${r.room_id}"
+                onclick="toggleEmpRoomPill('${r.room_id}')"
+                style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:${isAssigned ? 'var(--primary,#4F46E5)' : 'var(--card-bg,#fff)'};color:${isAssigned ? '#fff' : 'var(--text,#1E293B)'};border:1px solid ${isAssigned ? 'var(--primary,#4F46E5)' : 'var(--border,#CBD5E1)'};border-radius:8px;cursor:pointer;user-select:none;transition:all 0.15s;"
+              >
+                <input type="checkbox" id="prop_cb_${r.room_id}" class="prop-chip-checkbox" value="${r.room_id}" ${isAssigned ? 'checked' : ''} style="pointer-events:none;margin:0;" />
+                <span style="font-size:12px;font-weight:600;line-height:1.2;">${escapeHtml(propLabel(r))}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group"><label>Joining Date</label><input id="eJoin" type="date" value="${e.joining_date || ''}" /></div>
+        <div class="form-group">
+          <label>ID Document Type</label>
+          <select id="eIdType">
+            <option value="Aadhar" ${e.id_proof_type === 'Aadhar' ? 'selected' : ''}>Aadhar Card</option>
+            <option value="PAN" ${e.id_proof_type === 'PAN' ? 'selected' : ''}>PAN Card</option>
+            <option value="DL" ${e.id_proof_type === 'DL' ? 'selected' : ''}>Driving License</option>
+            <option value="Passport" ${e.id_proof_type === 'Passport' ? 'selected' : ''}>Passport</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group"><label>ID Number</label><input id="eIdNo" value="${escapeHtml(e.id_proof_no || '')}" /></div>
+        <div class="form-group"><label>Residential Address</label><input id="eAddr" value="${escapeHtml(e.address || '')}" /></div>
+      </div>
+
+      <div class="form-group">
+        <label>Emergency Contact</label>
+        <input id="eEmergency" value="${escapeHtml(e.emergency_contact || '')}" />
+      </div>
+
+      <div class="form-group">
+        <label>Status</label>
+        <select id="eStatus">
+          <option value="Active" ${e.status === 'Active' ? 'selected' : ''}>🟢 Active (On-duty)</option>
+          <option value="Inactive" ${e.status === 'Inactive' ? 'selected' : ''}>🔴 Inactive (Disabled / Off)</option>
+          <option value="Fired" ${e.status === 'Fired' ? 'selected' : ''}>⛔ Fired / Terminated</option>
+        </select>
+      </div>
+
+      <!-- High Reliability Camera / Gallery ID Proof Section (Edit Mode) -->
+      <div style="background:var(--card-sub-bg,#F8FAFC);padding:14px;border-radius:10px;border:1px solid var(--border,#CBD5E1);margin-bottom:14px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:4px;color:var(--text);">
+          📄 ID Proof Photos (Aadhar / PAN / Driving License)
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:12px;">
+          View existing photos or snap new ones with Camera / Gallery to replace.
+        </div>
+
+        <div class="form-grid">
+          <!-- Front Photo -->
+          <div class="form-group" style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border,#E2E8F0);">
+            <label style="font-weight:700;display:block;margin-bottom:8px;">📄 Front Side Photo</label>
+
+            ${currentFrontUrl ? `
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#F1F5F9;border-radius:8px;margin-bottom:8px;">
+                <img src="${currentFrontUrl}" style="width:55px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #CBD5E1;cursor:pointer;" onclick="window.open('${currentFrontUrl}','_blank')" title="Click to view full image" />
+                <div style="flex:1;">
+                  <div style="font-size:11px;font-weight:700;color:#1E293B;">Current Front Photo</div>
+                  <a href="${currentFrontUrl}" target="_blank" style="font-size:10.5px;color:var(--primary);text-decoration:none;font-weight:600;">🔍 View Full Size</a>
+                </div>
+              </div>
+            ` : '<div class="sub" style="margin-bottom:8px;">No front photo uploaded</div>'}
+
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;">Replace with:</div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdFrontCam').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                📷 Camera
+              </button>
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdFrontGal').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                🖼️ Gallery
+              </button>
+            </div>
+            <input type="file" id="eIdFrontCam" accept="image/*" capture="environment" style="display:none;" onchange="handleEmpIdFileSelect(this, 'front')" />
+            <input type="file" id="eIdFrontGal" accept="image/*" style="display:none;" onchange="handleEmpIdFileSelect(this, 'front')" />
+            <div id="eIdPreview_front"></div>
+          </div>
+
+          <!-- Back Photo -->
+          <div class="form-group" style="background:#fff;padding:12px;border-radius:8px;border:1px solid var(--border,#E2E8F0);">
+            <label style="font-weight:700;display:block;margin-bottom:8px;">📄 Back Side Photo</label>
+
+            ${currentBackUrl ? `
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;background:#F1F5F9;border-radius:8px;margin-bottom:8px;">
+                <img src="${currentBackUrl}" style="width:55px;height:40px;object-fit:cover;border-radius:6px;border:1px solid #CBD5E1;cursor:pointer;" onclick="window.open('${currentBackUrl}','_blank')" title="Click to view full image" />
+                <div style="flex:1;">
+                  <div style="font-size:11px;font-weight:700;color:#1E293B;">Current Back Photo</div>
+                  <a href="${currentBackUrl}" target="_blank" style="font-size:10.5px;color:var(--primary);text-decoration:none;font-weight:600;">🔍 View Full Size</a>
+                </div>
+              </div>
+            ` : '<div class="sub" style="margin-bottom:8px;">No back photo uploaded</div>'}
+
+            <div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600;">Replace with:</div>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdBackCam').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                📷 Camera
+              </button>
+              <button type="button" class="btn-sm outline" onclick="document.getElementById('eIdBackGal').click()" style="flex:1;padding:8px;font-size:12px;font-weight:700;">
+                🖼️ Gallery
+              </button>
+            </div>
+            <input type="file" id="eIdBackCam" accept="image/*" capture="environment" style="display:none;" onchange="handleEmpIdFileSelect(this, 'back')" />
+            <input type="file" id="eIdBackGal" accept="image/*" style="display:none;" onchange="handleEmpIdFileSelect(this, 'back')" />
+            <div id="eIdPreview_back"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Internal Notes</label>
+        <textarea id="eNotes">${escapeHtml(e.notes || '')}</textarea>
+      </div>
+
+      <div id="empUploadProgress"></div>
+
+      <button id="updEmpBtn" onclick="updEmp('${id}')" style="width:100%;padding:12px;font-size:15px;font-weight:700;border-radius:10px;background:var(--primary,#4F46E5);color:#fff;">
+        💾 Save & Update Staff Member
+      </button>
+      <div id="empErr" style="margin-top:10px;"></div>
+    </div>
+  `, 'employees');
+}
+
+async function updEmp(id) {
+  const _btn = document.getElementById('updEmpBtn') || document.querySelector('button[onclick^="updEmp"]');
+  const progEl = document.getElementById('empUploadProgress');
+  const errEl = document.getElementById('empErr');
+  if (errEl) errEl.innerHTML = '';
+
+  const name = document.getElementById('eName')?.value?.trim();
+  if (!name) {
+    if (errEl) errEl.innerHTML = '<div class="error">Name is required</div>';
+    return;
+  }
+
+  if (_btn) { _btn.disabled = true; _btn.textContent = '⏳ Updating staff member...'; }
+
+  const selectedRooms = getSelectedRoomsFromUI();
+  const statusVal = document.getElementById('eStatus')?.value || 'Active';
+  const isActive = statusVal === 'Active';
+
+  const obj = {
+    name,
+    phone: document.getElementById('ePhone')?.value?.trim() || null,
+    role: document.getElementById('eRole')?.value || null,
+    property_role: document.getElementById('ePropertyRole')?.value || 'Staff',
+    monthly_salary: parseFloat(document.getElementById('eSal')?.value) || 0,
+    shift: document.getElementById('eShift')?.value || 'day',
+    in_whatsapp_template: document.getElementById('eInWhatsApp')?.value === 'true',
+    whatsapp_display_role: 'Caretaker',
+    joining_date: document.getElementById('eJoin')?.value || null,
+    assigned_rooms: selectedRooms || null,
+    id_proof_type: document.getElementById('eIdType')?.value || null,
+    id_proof_no: document.getElementById('eIdNo')?.value?.trim() || null,
+    address: document.getElementById('eAddr')?.value?.trim() || null,
+    emergency_contact: document.getElementById('eEmergency')?.value?.trim() || null,
+    status: statusVal,
+    is_active: isActive,
+    notes: document.getElementById('eNotes')?.value?.trim() || null,
+  };
+  if (!isActive) {
+    obj.in_whatsapp_template = false;
+  }
+
+  // Upload New Front Photo if selected
+  if (window._empIdFrontBlob) {
+    if (_btn) _btn.textContent = '⏳ Uploading ID Front photo...';
+    if (progEl) progEl.innerHTML = '<div style="padding:8px 12px;background:#EFF6FF;border-radius:8px;color:#1D4ED8;font-size:12px;font-weight:600;margin-bottom:10px;">📤 Uploading New Front ID Photo...</div>';
+
+    const path = `employees/${id}_front_${Date.now()}.jpg`;
+    const res = await robustUploadEmpId(path, window._empIdFrontBlob);
+    if (res.success) {
+      obj.id_proof_photo_front = path;
+    } else {
+      if (errEl) errEl.innerHTML = `<div class="error">❌ Front ID photo upload failed: ${res.error}. Please retry.</div>`;
+      if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save & Update Staff Member'; }
+      if (progEl) progEl.innerHTML = '';
+      return;
+    }
+  }
+
+  // Upload New Back Photo if selected
+  if (window._empIdBackBlob) {
+    if (_btn) _btn.textContent = '⏳ Uploading ID Back photo...';
+    if (progEl) progEl.innerHTML = '<div style="padding:8px 12px;background:#EFF6FF;border-radius:8px;color:#1D4ED8;font-size:12px;font-weight:600;margin-bottom:10px;">📤 Uploading New Back ID Photo...</div>';
+
+    const path = `employees/${id}_back_${Date.now()}.jpg`;
+    const res = await robustUploadEmpId(path, window._empIdBackBlob);
+    if (res.success) {
+      obj.id_proof_photo_back = path;
+    } else {
+      if (errEl) errEl.innerHTML = `<div class="error">❌ Back ID photo upload failed: ${res.error}. Please retry.</div>`;
+      if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save & Update Staff Member'; }
+      if (progEl) progEl.innerHTML = '';
+      return;
+    }
+  }
+
+  if (_btn) _btn.textContent = '⏳ Saving updates...';
+  // Save salary model
+  const editSalType = document.getElementById('eSalaryType')?.value || 'fixed';
+  const editRate = parseFloat(document.getElementById('ePerFlatRate')?.value) || 133;
+  if (editSalType === 'per_flat') {
+    localStorage.setItem('tuhh_emp_type_' + id, 'per_flat');
+    localStorage.setItem('tuhh_cleaner_rate_' + id, String(editRate));
+    obj.employee_type = 'per_flat';
+    obj.per_flat_rate = editRate;
+    obj.monthly_salary = editRate * 100;
+  } else {
+    localStorage.setItem('tuhh_emp_type_' + id, 'monthly');
+    localStorage.removeItem('tuhh_cleaner_rate_' + id);
+    obj.employee_type = 'Monthly';
+    obj.per_flat_rate = 0;
+  }
+
+  const { error } = await sb.from('employees').update(obj).eq('emp_id', id);
+
+  if (error) {
+    if (errEl) errEl.innerHTML = `<div class="error">${error.message}</div>`;
+    if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save & Update Staff Member'; }
+    if (progEl) progEl.innerHTML = '';
+    return;
+  }
+
+  // 🔄 Auto-propagate Caretaker assignment to rooms table (Zero Manual Entry)
+  const isCaretaker = obj.role === 'Caretaker' || obj.property_role === 'Caretaker' || obj.in_whatsapp_template;
+  if (isCaretaker && Array.isArray(selectedRooms) && selectedRooms.length > 0) {
+    try {
+      for (const roomId of selectedRooms) {
+        await sb.from('rooms').update({
+          caretaker_emp_id: id,
+          caretaker_name: name,
+          caretaker_phone: obj.phone || null
+        }).eq('room_id', roomId);
+      }
+      console.log(`✅ Auto-synced caretaker ${name} (${obj.phone}) to rooms:`, selectedRooms);
+    } catch (roomSyncErr) {
+      console.warn('Auto room caretaker sync warning:', roomSyncErr);
+    }
+  }
+
+  window._empIdFrontBlob = null;
+  window._empIdBackBlob = null;
+
+  if (window.fsn) fsn.success('Updated', `Staff member ${name} updated & assigned to properties successfully`);
+  renderManageEmployees();
+}
+
+async function delEmp(id, name) {
+  if (!confirm(`Permanently delete "${name}" and all historical records?`)) return;
+  await sb.from('employee_tasks').delete().eq('emp_id', id);
+  await sb.from('attendance_log').delete().eq('emp_id', id);
+  await sb.from('salary_tracker').delete().eq('emp_id', id);
+  await sb.from('advance_tracker').delete().eq('emp_id', id);
+  await sb.from('profiles').delete().eq('emp_id', id);
+  await sb.from('employees').delete().eq('emp_id', id);
+  renderManageEmployees();
+}
+
+// ============ TASKS ============
+// ═══════════════════════════════════════════════════════════
+// 🧰 STAFF TASKS — Modernized with KPIs, 1-Click Actions & WhatsApp
+// ═══════════════════════════════════════════════════════════
+
+async function renderEmployeeTasks(viewMode) {
+  viewMode = viewMode || 'list';
+  window._taskViewMode = viewMode;
+  renderShell('<div class="loading">Loading staff tasks...</div>', 'tasks');
+
+  try {
+    const [{ data: tasks, error: tasksErr }, { data: emps, error: empsErr }, { data: rooms, error: roomsErr }] = await Promise.all([
+      sb.from('employee_tasks').select('*').order('assigned_date', { ascending: false }),
+      sb.from('employees').select('emp_id, name, phone, status'),
+      sb.from('rooms').select('room_id, nickname, unit_no, property_name')
+    ]);
+
+    if (tasksErr) {
+      console.error('Error fetching employee_tasks:', tasksErr);
+    }
+
+    const allTasks = tasks || [];
+    const empMap = {};
+    const empPhoneMap = {};
+    (emps || []).forEach(e => {
+      empMap[e.emp_id] = e.name;
+      empPhoneMap[e.emp_id] = e.phone;
+    });
+
+    const roomMap = {};
+    (rooms || []).forEach(r => {
+      roomMap[r.room_id] = r.nickname || r.unit_no || r.property_name || r.room_id;
+    });
+
+    // Store globally for quick access
+    window._allStaffTasks = allTasks;
+    window._staffEmps = emps || [];
+    window._staffRooms = rooms || [];
+
+    const isO = ['owner','admin','moderator','developer'].includes(SESSION.role);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const currentMonth = todayStr.slice(0, 7);
+    const selectedMonth = window._taskMonth || currentMonth;
+    const statusFilter = window._taskStatusFilter || 'ALL';
+    const staffFilter = window._taskStaffFilter || 'ALL';
+    // Use explicit task property filter only, avoid silent global prop lock from hiding tasks
+    const propFilter = (window._taskPropFilter && window._taskPropFilter !== 'ALL') ? window._taskPropFilter : 'ALL';
+
+    // Month options
+    const allMonths = [...new Set(allTasks.map(t => (t.assigned_date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+    if (!allMonths.includes(currentMonth)) allMonths.unshift(currentMonth);
+
+    // Filter tasks by month first for KPI calculations
+    const monthTasks = allTasks.filter(t => (t.assigned_date||'').startsWith(selectedMonth));
+
+    // KPIs for the selected month
+    const totalMonth = monthTasks.length;
+    const pendingCount = monthTasks.filter(t => t.status === 'Pending').length;
+    const inProgCount = monthTasks.filter(t => t.status === 'In Progress').length;
+    const doneCount = monthTasks.filter(t => t.status === 'Completed').length;
+    const urgentCount = monthTasks.filter(t => t.priority === 'Urgent' && t.status !== 'Completed').length;
+    const todayCount = monthTasks.filter(t => t.assigned_date === todayStr).length;
+
+    // Apply sub-filters
+    let displayTasks = monthTasks;
+    if (statusFilter === 'Pending') displayTasks = displayTasks.filter(t => t.status === 'Pending');
+    else if (statusFilter === 'In Progress') displayTasks = displayTasks.filter(t => t.status === 'In Progress');
+    else if (statusFilter === 'Completed') displayTasks = displayTasks.filter(t => t.status === 'Completed');
+    else if (statusFilter === 'Urgent') displayTasks = displayTasks.filter(t => t.priority === 'Urgent');
+    else if (statusFilter === 'Today') displayTasks = displayTasks.filter(t => t.assigned_date === todayStr);
+
+    if (staffFilter !== 'ALL') displayTasks = displayTasks.filter(t => t.emp_id === staffFilter);
+    if (propFilter !== 'ALL') displayTasks = displayTasks.filter(t => t.room_id === propFilter);
+
+    // Auto-heal: If sub-filters yield 0 tasks while month has tasks, reset sub-filters to ALL
+    if (displayTasks.length === 0 && monthTasks.length > 0 && (statusFilter !== 'ALL' || staffFilter !== 'ALL' || propFilter !== 'ALL')) {
+      window._taskStatusFilter = 'ALL';
+      window._taskStaffFilter = 'ALL';
+      window._taskPropFilter = 'ALL';
+      displayTasks = monthTasks;
+    }
+
+    // Groupings for By-Employee view
+    const isByEmp = viewMode === 'byEmployee';
+    const empGroups = {};
+    displayTasks.forEach(t => {
+      const eName = empMap[t.emp_id] || t.emp_id;
+      if (!empGroups[eName]) empGroups[eName] = { tasks: [], props: {} };
+      empGroups[eName].tasks.push(t);
+      const prop = roomMap[t.room_id] || 'General/All';
+      empGroups[eName].props[prop] = (empGroups[eName].props[prop] || 0) + 1;
+    });
+
+    // Table view for Desktop
+    let tableHTML = `
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Property</th>
+          <th>Task & Type</th>
+          <th>Priority</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Quick Action</th>
+          ${isO ? '<th>Manage</th>' : ''}
+        </tr>
+      </thead>
+      <tbody>
+    `;
+
+    if (displayTasks.length) {
+      displayTasks.forEach(t => {
+        const priC = t.priority === 'Urgent' ? 'red' : t.priority === 'High' ? 'yellow' : 'blue';
+        const isDone = t.status === 'Completed';
+        const isInProg = t.status === 'In Progress';
+        const isPastPending = !isDone && t.assigned_date && t.assigned_date < todayStr;
+        const isToday = t.assigned_date === todayStr;
+
+        let quickBtn = '';
+        if (!isDone) {
+          if (!isInProg) {
+            quickBtn = `
+              <button class="btn-sm" style="background:#0284C7;color:#fff;padding:4px 8px;font-size:11px;font-weight:700;" onclick="quickUpdateTaskStatus(${t.id}, 'In Progress')">
+                🔄 Start
+              </button>
+              <button class="btn-sm" style="background:#059669;color:#fff;padding:4px 8px;font-size:11px;font-weight:700;margin-left:4px;" onclick="quickUpdateTaskStatus(${t.id}, 'Completed')">
+                ✅ Done
+              </button>
+            `;
+          } else {
+            quickBtn = `
+              <button class="btn-sm" style="background:#059669;color:#fff;padding:4px 10px;font-size:11px;font-weight:700;" onclick="quickUpdateTaskStatus(${t.id}, 'Completed')">
+                ✅ Mark Done
+              </button>
+            `;
+          }
+        } else {
+          quickBtn = `
+            <button class="btn-sm outline" style="padding:3px 8px;font-size:10.5px;color:var(--muted);" onclick="quickUpdateTaskStatus(${t.id}, 'Pending')" title="Reopen task">
+              ↩️ Reopen
+            </button>
+          `;
+        }
+
+        tableHTML += `
+          <tr data-task-id="${t.id}" id="task-${t.id}">
+            <td>
+              <strong>👤 ${empMap[t.emp_id] || t.emp_id}</strong>
+            </td>
+            <td>
+              <span style="font-size:12.5px;font-weight:600;color:var(--text-secondary);">${roomMap[t.room_id] || 'General'}</span>
+            </td>
+            <td>
+              <div style="font-weight:600;color:var(--dark);font-size:13px;">${t.task_description || '-'}</div>
+              <span class="badge blue" style="font-size:10px;margin-top:3px;">${t.task_type || 'Task'}</span>
+            </td>
+            <td><span class="badge ${priC}">${t.priority || 'Normal'}</span></td>
+            <td>
+              <span style="font-size:12.5px;">${t.assigned_date || '-'}</span>
+              ${isToday ? '<br><span class="badge yellow" style="font-size:9.5px;padding:1px 4px;">Today</span>' : ''}
+              ${isPastPending ? '<br><span class="badge red" style="font-size:9.5px;padding:1px 4px;">Overdue</span>' : ''}
+            </td>
+            <td>
+              <span class="badge ${isDone ? 'green' : isInProg ? 'yellow' : 'red'}">${t.status || 'Pending'}</span>
+            </td>
+            <td style="white-space:nowrap;">${quickBtn}</td>
+            ${isO ? `
+              <td class="table-actions" style="white-space:nowrap;">
+                <button class="btn-sm" style="background:#25D366;color:#fff;padding:4px 8px;font-size:11px;" onclick="shareTaskWhatsApp(${t.id})" title="Send to WhatsApp">📲</button>
+                <button class="btn-sm" style="padding:4px 8px;font-size:11px;" onclick="editTask(${t.id})" title="Edit Task">✏️</button>
+                ${window.canDelete && window.canDelete() ? `<button class="btn-sm danger" style="padding:4px 8px;font-size:11px;" onclick="delTask(${t.id})" title="Delete Task">🗑️</button>` : ''}
+              </td>
+            ` : ''}
+          </tr>
+        `;
+      });
+    } else {
+      tableHTML += '<tr><td colspan="8" class="sub" style="text-align:center;padding:24px;">No tasks found matching current filters</td></tr>';
+    }
+    tableHTML += '</tbody>';
+
+    // Responsive Mobile Cards View
+    let cardsHTML = '<div class="tasks-mobile-container" style="display:none;flex-direction:column;gap:10px;">';
+    if (displayTasks.length) {
+      displayTasks.forEach(t => {
+        const priC = t.priority === 'Urgent' ? 'red' : t.priority === 'High' ? 'yellow' : 'blue';
+        const isDone = t.status === 'Completed';
+        const isInProg = t.status === 'In Progress';
+        const isPastPending = !isDone && t.assigned_date && t.assigned_date < todayStr;
+        const isToday = t.assigned_date === todayStr;
+
+        cardsHTML += `
+          <div class="card" style="padding:12px;border-radius:12px;border-left:4px solid ${isDone ? '#10B981' : isInProg ? '#F59E0B' : t.priority === 'Urgent' ? '#DC2626' : 'var(--primary)'};margin-bottom:0;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;">
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--dark);">👤 ${empMap[t.emp_id] || t.emp_id}</div>
+                <div style="font-size:12px;color:var(--muted);margin-top:1px;">🏨 ${roomMap[t.room_id] || 'General'}</div>
+              </div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                <span class="badge ${priC}" style="font-size:10px;">${t.priority || 'Normal'}</span>
+                <span class="badge ${isDone ? 'green' : isInProg ? 'yellow' : 'red'}" style="font-size:10px;">${t.status || 'Pending'}</span>
+              </div>
+            </div>
+
+            <div style="font-size:13px;font-weight:600;color:var(--dark);margin:8px 0;line-height:1.4;">
+              ${t.task_description || '-'}
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;">
+              <div>
+                <span class="badge blue" style="font-size:10px;">${t.task_type || 'Task'}</span>
+                <span style="color:var(--muted);margin-left:4px;">🗓️ ${t.assigned_date || '-'}</span>
+                ${isToday ? '<span class="badge yellow" style="font-size:9px;padding:1px 4px;margin-left:3px;">Today</span>' : ''}
+                ${isPastPending ? '<span class="badge red" style="font-size:9px;padding:1px 4px;margin-left:3px;">Overdue</span>' : ''}
+              </div>
+              <div style="display:flex;gap:5px;align-items:center;">
+                ${!isDone ? `
+                  <button class="btn-sm" style="background:#059669;color:#fff;padding:5px 9px;font-size:11px;font-weight:700;" onclick="quickUpdateTaskStatus(${t.id}, 'Completed')">
+                    ✅ Done
+                  </button>
+                ` : `
+                  <button class="btn-sm outline" style="padding:4px 8px;font-size:10.5px;" onclick="quickUpdateTaskStatus(${t.id}, 'Pending')">
+                    ↩️ Reopen
+                  </button>
+                `}
+                <button class="btn-sm" style="background:#25D366;color:#fff;padding:5px 9px;font-size:11px;" onclick="shareTaskWhatsApp(${t.id})" title="Share WhatsApp">
+                  📲
+                </button>
+                ${isO ? `
+                  <button class="btn-sm secondary" style="padding:5px 8px;font-size:11px;" onclick="editTask(${t.id})">
+                    ✏️
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+    } else {
+      cardsHTML += '<div class="sub" style="text-align:center;padding:24px;">No tasks found matching current filters</div>';
+    }
+    cardsHTML += '</div>';
+
+    // By Employee view
+    let byEmpHTML = `
+      <thead>
+        <tr>
+          <th>Employee / Property</th>
+          <th>Total</th>
+          <th>Completed ✅</th>
+          <th>Pending ⏳</th>
+          <th>In Progress 🔄</th>
+        </tr>
+      </thead>
+      <tbody>
+    `;
+    Object.entries(empGroups).forEach(([eName, d]) => {
+      const done = d.tasks.filter(t => t.status==='Completed').length;
+      const pend = d.tasks.filter(t => t.status==='Pending').length;
+      const prog = d.tasks.filter(t => t.status==='In Progress').length;
+      byEmpHTML += `
+        <tr style="background:var(--card-bg);border-top:2px solid var(--border)">
+          <td><strong>👤 ${eName}</strong></td>
+          <td><span class="badge blue">${d.tasks.length}</span></td>
+          <td><span class="badge green">${done}</span></td>
+          <td><span class="badge ${pend>0?'red':'green'}">${pend}</span></td>
+          <td><span class="badge ${prog>0?'yellow':'green'}">${prog}</span></td>
+        </tr>
+      `;
+      Object.entries(d.props).forEach(([prop, cnt]) => {
+        byEmpHTML += `
+          <tr style="background:var(--bg)">
+            <td style="padding-left:24px;color:var(--muted);font-size:13px">↳ ${prop}</td>
+            <td><span class="badge blue">${cnt}</span></td>
+            <td>-</td><td>-</td><td>-</td>
+          </tr>
+        `;
+      });
+    });
+    if (!Object.keys(empGroups).length) byEmpHTML += '<tr><td colspan="5" class="sub">No tasks this month</td></tr>';
+    byEmpHTML += '</tbody>';
+
+    // By Date View
+    let byDateHTML = '';
+    if (viewMode === 'byDate') {
+      const [yr, mo] = selectedMonth.split('-').map(Number);
+      const daysInMonth = new Date(yr, mo, 0).getDate();
+      const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+      const tasksByDate = {};
+      displayTasks.forEach(t => {
+        const d = (t.assigned_date || '').slice(0, 10);
+        if (!d) return;
+        if (!tasksByDate[d]) tasksByDate[d] = [];
+        tasksByDate[d].push(t);
+      });
+
+      const rows = [];
+      // Combine sorted dates from actual tasks to guarantee no date gets missed
+      const activeDates = Object.keys(tasksByDate).sort().reverse();
+      activeDates.forEach(dateStr => {
+        const dTasks = tasksByDate[dateStr] || [];
+        const count = dTasks.length;
+        if (count === 0) return;
+        const dObj = new Date(dateStr);
+        const dayName = isNaN(dObj.getDay()) ? '' : dayNames[dObj.getDay()];
+
+        let expandHTML = '';
+        dTasks.forEach(t => {
+          const eName = empMap[t.emp_id] || t.emp_id;
+          const prop = roomMap[t.room_id] || 'General';
+          const stC = t.status==='Completed'?'green':t.status==='In Progress'?'yellow':'red';
+          expandHTML += `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--border);font-size:12.5px;">
+              <div>
+                <strong>👤 ${eName}</strong> &bull; 🏨 ${prop} &bull; <span class="badge blue" style="font-size:9.5px;">${t.task_type||'Task'}</span>
+                <div style="color:var(--dark);margin-top:2px;">${t.task_description || '-'}</div>
+              </div>
+              <div style="display:flex;gap:4px;align-items:center;">
+                <span class="badge ${stC}">${t.status||'Pending'}</span>
+                ${t.status !== 'Completed' ? `
+                  <button class="btn-sm" style="background:#059669;color:#fff;padding:3px 7px;font-size:10px;" onclick="quickUpdateTaskStatus(${t.id}, 'Completed')">✅</button>
+                ` : ''}
+                <button class="btn-sm" style="background:#25D366;color:#fff;padding:3px 7px;font-size:10px;" onclick="shareTaskWhatsApp(${t.id})">📲</button>
+              </div>
+            </div>
+          `;
+        });
+
+        const isToday = dateStr === todayStr;
+        rows.push(`
+          <div style="border-bottom:1px solid var(--border);padding:10px;${isToday ? 'background:rgba(254,243,199,0.3);' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;" onclick="toggleTaskDate('${dateStr}')">
+              <div>
+                <span id="arrow-${dateStr}" style="display:inline-block;width:18px;">▼</span>
+                <strong>📅 ${dateStr} (${dayName})</strong>
+                ${isToday ? '<span class="badge yellow" style="margin-left:6px;font-size:9.5px;">Today</span>' : ''}
+              </div>
+              <span class="badge ${count>0?'green':'secondary'}">${count} task${count>1?'s':''}</span>
+            </div>
+            <div id="date-${dateStr}" style="display:block;margin-top:8px;padding-top:6px;border-top:1px dashed var(--border);">
+              ${expandHTML}
+            </div>
+          </div>
+        `);
+      });
+
+      const activeFilterDesc = statusFilter !== 'ALL' ? `Status: ${statusFilter}` : (staffFilter !== 'ALL' ? `Staff: ${empMap[staffFilter]||staffFilter}` : (propFilter !== 'ALL' ? `Property: ${roomMap[propFilter]||propFilter}` : 'Filter'));
+      byDateHTML = rows.join('') || (totalMonth > 0 ? `
+        <div style="padding:28px 20px;text-align:center;background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:12px;">
+          <div style="font-weight:700;font-size:14.5px;color:#0F172A;">⚠️ Selected filter (${activeFilterDesc}) me koi task nahi mila</div>
+          <div style="font-size:12.5px;color:#64748B;margin:5px 0 14px;">Total <strong>${totalMonth} tasks</strong> is month (${selectedMonth}) me moujood hain.</div>
+          <button type="button" class="btn-sm" style="background:#0284C7;color:#fff;font-weight:700;padding:7px 16px;border-radius:8px;cursor:pointer;" onclick="window.clearTaskFilters('${viewMode}')">
+            🔄 Reset Filter & Show All (${totalMonth}) Tasks
+          </button>
+        </div>
+      ` : '<div class="sub" style="padding:20px;text-align:center;">No tasks for this month</div>');
+    }
+
+    // Render Shell
+    renderShell(`
+      <style>
+        .task-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(95px, 1fr));
+          gap: 6px;
+          margin-bottom: 12px;
+        }
+        .task-kpi-card {
+          background: #fff;
+          border-radius: 10px;
+          padding: 8px 6px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+          border: 1px solid var(--border);
+          cursor: pointer;
+          transition: transform 0.1s, box-shadow 0.1s;
+          text-align: center;
+        }
+        .task-kpi-card:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+        }
+        .task-kpi-num {
+          font-size: clamp(16px, 3.6vw, 20px);
+          font-weight: 800;
+          line-height: 1.1;
+        }
+        .task-kpi-label {
+          font-size: 10px;
+          font-weight: 700;
+          color: var(--muted);
+          text-transform: uppercase;
+          margin-top: 2px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        @media (max-width: 640px) {
+          .task-kpi-grid {
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 5px;
+          }
+          .task-filter-row {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px !important;
+            width: 100% !important;
+            margin-top: 6px !important;
+            margin-left: 0 !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .tasks-desktop-table { display: none !important; }
+          .tasks-mobile-container { display: flex !important; }
+        }
+      </style>
+
+      <!-- HEADER & ACTIONS -->
+      <div class="card" style="padding:14px;border-radius:14px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h1 style="margin:0;font-size:22px;font-weight:800;color:var(--dark);">🧰 Staff Tasks</h1>
+            <div class="sub" style="margin-top:2px;">Manage daily assignments, housekeeping, & team duties &bull; ${selectedMonth}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            ${isO ? '<button class="btn-sm" style="background:#059669;color:#fff;" onclick="renderAddTask()">➕ Add Task</button>' : ''}
+            <button class="btn-sm outline" onclick="renderEmployeeTasks()" title="Refresh">🔄 Refresh</button>
+          </div>
+        </div>
+
+        <!-- KPI METRIC CARDS -->
+        <div class="task-kpi-grid" style="margin-top:14px;">
+          <div class="task-kpi-card" style="border-left:4px solid var(--primary);${statusFilter==='ALL'?'background:#EFF6FF;box-shadow:0 0 0 2px var(--primary);':''}" onclick="window.clearTaskFilters('${viewMode}')" title="Click to show all tasks">
+            <div class="task-kpi-num" style="color:var(--primary);">${totalMonth}</div>
+            <div class="task-kpi-label">📋 Total Month</div>
+          </div>
+          <div class="task-kpi-card" style="border-left:4px solid #DC2626;${statusFilter==='Pending'?'background:#FEF2F2;box-shadow:0 0 0 2px #DC2626;':''}" onclick="window._taskStatusFilter='Pending';renderEmployeeTasks('${viewMode}');">
+            <div class="task-kpi-num" style="color:#DC2626;">${pendingCount}</div>
+            <div class="task-kpi-label">⏳ Pending</div>
+          </div>
+          <div class="task-kpi-card" style="border-left:4px solid #F59E0B;${statusFilter==='In Progress'?'background:#FFFBEB;box-shadow:0 0 0 2px #F59E0B;':''}" onclick="window._taskStatusFilter='In Progress';renderEmployeeTasks('${viewMode}');">
+            <div class="task-kpi-num" style="color:#F59E0B;">${inProgCount}</div>
+            <div class="task-kpi-label">🔄 In Progress</div>
+          </div>
+          <div class="task-kpi-card" style="border-left:4px solid #10B981;${statusFilter==='Completed'?'background:#F0FDF4;box-shadow:0 0 0 2px #10B981;':''}" onclick="window._taskStatusFilter='Completed';renderEmployeeTasks('${viewMode}');">
+            <div class="task-kpi-num" style="color:#10B981;">${doneCount}</div>
+            <div class="task-kpi-label">✅ Completed</div>
+          </div>
+          <div class="task-kpi-card" style="border-left:4px solid #991B1B;${statusFilter==='Urgent'?'background:#FEF2F2;box-shadow:0 0 0 2px #991B1B;':''}" onclick="window._taskStatusFilter='Urgent';renderEmployeeTasks('${viewMode}');">
+            <div class="task-kpi-num" style="color:#991B1B;">${urgentCount}</div>
+            <div class="task-kpi-label">🚨 Urgent</div>
+          </div>
+          <div class="task-kpi-card" style="border-left:4px solid #3B82F6;${statusFilter==='Today'?'background:#EFF6FF;box-shadow:0 0 0 2px #3B82F6;':''}" onclick="window._taskStatusFilter='Today';renderEmployeeTasks('${viewMode}');">
+            <div class="task-kpi-num" style="color:#3B82F6;">${todayCount}</div>
+            <div class="task-kpi-label">📅 Today</div>
+          </div>
+        </div>
+
+        <!-- FILTER & VIEW CONTROLS -->
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;padding-top:10px;border-top:1px solid var(--border);">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button class="${viewMode==='list'?'':'secondary'} btn-sm" onclick="renderEmployeeTasks('list')">📋 List</button>
+            <button class="${viewMode==='byEmployee'?'':'secondary'} btn-sm" onclick="renderEmployeeTasks('byEmployee')">👤 By Employee</button>
+            <button class="${viewMode==='byDate'?'':'secondary'} btn-sm" onclick="renderEmployeeTasks('byDate')">📅 By Date</button>
+          </div>
+
+          <div class="task-filter-row" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-left:auto;">
+            <!-- Status Dropdown Filter -->
+            <select onchange="window._taskStatusFilter=this.value;renderEmployeeTasks('${viewMode}')" style="padding:5px 9px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:600;">
+              <option value="ALL" ${statusFilter==='ALL'?'selected':''}>All Statuses</option>
+              <option value="Pending" ${statusFilter==='Pending'?'selected':''}>⏳ Pending</option>
+              <option value="In Progress" ${statusFilter==='In Progress'?'selected':''}>🔄 In Progress</option>
+              <option value="Completed" ${statusFilter==='Completed'?'selected':''}>✅ Completed</option>
+              <option value="Urgent" ${statusFilter==='Urgent'?'selected':''}>🚨 Urgent</option>
+              <option value="Today" ${statusFilter==='Today'?'selected':''}>📅 Today</option>
+            </select>
+
+            <!-- Staff Dropdown Filter -->
+            <select onchange="window._taskStaffFilter=this.value;renderEmployeeTasks('${viewMode}')" style="padding:5px 9px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:600;">
+              <option value="ALL" ${staffFilter==='ALL'?'selected':''}>All Staff</option>
+              ${(emps||[]).map(e => `<option value="${e.emp_id}" ${staffFilter===e.emp_id?'selected':''}>${e.name}</option>`).join('')}
+            </select>
+
+            <!-- Property Filter -->
+            <select onchange="window._taskPropFilter=this.value;renderEmployeeTasks('${viewMode}')" style="padding:5px 9px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:600;">
+              <option value="ALL" ${propFilter==='ALL'?'selected':''}>All Properties</option>
+              ${(rooms||[]).map(r => `<option value="${r.room_id}" ${propFilter===r.room_id?'selected':''}>${r.nickname||r.unit_no}</option>`).join('')}
+            </select>
+
+            <!-- Month Selector -->
+            <select onchange="window._taskMonth=this.value;renderEmployeeTasks('${viewMode}')" style="padding:5px 9px;border-radius:8px;border:1px solid var(--border);font-size:12px;font-weight:600;">
+              ${allMonths.map(m => `<option value="${m}" ${m===selectedMonth?'selected':''}>${m}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN CONTENT VIEW -->
+      <div class="card" style="padding:12px;border-radius:14px;">
+        ${viewMode === 'byDate'
+          ? byDateHTML
+          : viewMode === 'byEmployee'
+            ? `<div class="table-wrap"><table>${byEmpHTML}</table></div>`
+            : `
+              <div class="table-wrap tasks-desktop-table">
+                <table>${tableHTML}</table>
+              </div>
+              ${cardsHTML}
+            `
+        }
+      </div>
+    `, 'tasks');
+  } catch (err) {
+    console.error('Error rendering staff tasks:', err);
+    renderShell(`
+      <div class="card" style="padding:32px;text-align:center;">
+        <div style="font-size:36px;margin-bottom:12px;">⚠️</div>
+        <h3 style="margin:0 0 8px 0;color:var(--dark);">Unable to load staff tasks</h3>
+        <p style="color:var(--muted);font-size:13px;max-width:480px;margin:0 auto 16px auto;">${(err && err.message) || 'An unexpected error occurred while loading tasks.'}</p>
+        <button class="btn-sm" style="background:var(--primary);color:#fff;" onclick="renderEmployeeTasks()">🔄 Retry</button>
+      </div>
+    `, 'tasks');
+  }
+}
+window.renderEmployeeTasks = renderEmployeeTasks;
+
+window.clearTaskFilters = function(keepViewMode) {
+  window._taskStatusFilter = 'ALL';
+  window._taskStaffFilter = 'ALL';
+  window._taskPropFilter = 'ALL';
+  const targetMode = keepViewMode || window._taskViewMode || 'list';
+  if (typeof renderEmployeeTasks === 'function') {
+    renderEmployeeTasks(targetMode);
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// ⚡ QUICK TASK ACTIONS (1-CLICK STATUS UPDATE & WHATSAPP)
+// ═══════════════════════════════════════════════════════════
+
+window.quickUpdateTaskStatus = async function(id, newStatus) {
+  try {
+    const { error } = await sb.from('employee_tasks').update({
+      status: newStatus
+    }).eq('id', id);
+
+    if (error) {
+      alert('Error updating task: ' + error.message);
+      return;
+    }
+
+    // Refresh UI
+    if (typeof renderEmployeeTasks === 'function') {
+      renderEmployeeTasks();
+    }
+  } catch(e) {
+    console.error('Task update error:', e);
+  }
+};
+
+window.shareTaskWhatsApp = function(taskId) {
+  const tasks = window._allStaffTasks || [];
+  const t = tasks.find(x => x.id === taskId);
+  if (!t) { alert('Task not found'); return; }
+
+  const emps = window._staffEmps || [];
+  const rooms = window._staffRooms || [];
+  const emp = emps.find(e => e.emp_id === t.emp_id) || {};
+  const room = rooms.find(r => r.room_id === t.room_id) || {};
+
+  const empName = emp.name || t.emp_id;
+  const propName = room.nickname || room.unit_no || room.property_name || 'General/All Properties';
+  const cleanPhone = (emp.phone || '').replace(/[^0-9]/g, '');
+
+  const msg =
+`🔔 *Task Assigned — The Unique Haven Homes*
+━━━━━━━━━━━━━━━━━━
+👤 *Staff Member:* ${empName}
+🏨 *Property:* ${propName}
+📌 *Task Type:* ${t.task_type || 'General'}
+🚨 *Priority:* ${t.priority || 'Normal'}
+📅 *Date:* ${t.assigned_date || new Date().toISOString().slice(0,10)}
+⚡ *Status:* ${t.status || 'Pending'}
+
+📝 *Task Details:*
+${t.task_description || '-'}
+
+Kripya task complete karke CRM me update karein ya reply karein.
+━━━━━━━━━━━━━━━━━━`;
+
+  if (cleanPhone && cleanPhone.length >= 10) {
+    const fullPhone = cleanPhone.startsWith('91') && cleanPhone.length === 12 ? cleanPhone : '91' + cleanPhone.slice(-10);
+    window.open(`https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(msg)}`, '_blank');
+  } else {
+    // If no phone stored, open generic WhatsApp share
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+};
+
+window.toggleTaskDate = function(dateKey) {
+  const el = document.getElementById('date-' + dateKey);
+  const arrow = document.getElementById('arrow-' + dateKey);
+  if (el) {
+    const hidden = el.style.display === 'none';
+    el.style.display = hidden ? 'block' : 'none';
+    if (arrow) arrow.textContent = hidden ? '▼' : '▶';
+  }
+};
+
+async function renderAddTask() {
+  const [{ data: emps }, { data: rooms }] = await Promise.all([
+    sb.from('employees').select('emp_id,name').eq('status', 'Active').order('name'),
+    sb.from('rooms').select('room_id,nickname').order('room_id')
+  ]);
+
+  renderShell(`
+    <div class="card"><h1>➕ Add Task</h1><button class="secondary btn-sm" onclick="renderEmployeeTasks()">← Back</button></div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Employee *</label>
+          <select id="tEmp"><option value="">Select</option>
+            ${(emps || []).map(e => `<option value="${e.emp_id}">${e.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Property</label>
+          <select id="tRoom"><option value="">General</option>
+            ${(rooms || []).map(r => `<option value="${r.room_id}">${propLabel(r)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Task Type</label>
+          <select id="tType">
+            <option value="Cleaning">Cleaning</option>
+            <option value="Dusting">Dusting</option>
+            <option value="Laundry">Laundry</option>
+            <option value="Maintenance">Maintenance</option>
+            <option value="Guest Check-in">Guest Check-in</option>
+            <option value="Guest Check-out">Guest Check-out</option>
+            <option value="Inventory">Inventory</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Priority</label>
+          <select id="tPriority">
+            <option value="Normal">Normal</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Task Description *</label><textarea id="tDesc" placeholder="Details..."></textarea></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label><input id="tDate" type="date" value="${new Date().toISOString().slice(0, 10)}" /></div>
+        <div class="form-group"><label>Status</label>
+          <select id="tSt"><option>Pending</option><option>In Progress</option><option>Completed</option></select>
+        </div>
+      </div>
+      <button onclick="saveTask()" style="width:100%;">💾 Save Task</button>
+      <div id="tErr"></div>
+    </div>
+  `, 'tasks');
+}
+
+async function saveTask() {
+  const _btn = document.querySelector('button[onclick="saveTask()"]');
+  if (_btn) { if (_btn.disabled) return; _btn.disabled = true; _btn.textContent = '⏳ Saving...'; }
+  const eid = document.getElementById('tEmp').value;
+  const desc = document.getElementById('tDesc').value.trim();
+  if (!eid || !desc) { document.getElementById('tErr').innerHTML = '<div class="error">Employee & task required</div>'; return; }
+  await sb.from('employee_tasks').insert({
+    emp_id: eid,
+    room_id: document.getElementById('tRoom').value || null,
+    task_type: document.getElementById('tType').value,
+    task_description: desc,
+    assigned_date: document.getElementById('tDate').value || null,
+    status: document.getElementById('tSt').value,
+    priority: document.getElementById('tPriority')?.value || 'Normal',
+  });
+  renderEmployeeTasks();
+}
+
+async function editTask(id) {
+  window.editTask = editTask;
+  const { data: t } = await sb.from('employee_tasks').select('*, employees(name)').eq('id', id).single();
+  if (!t) return;
+  const { data: rooms } = await sb.from('rooms').select('room_id,nickname').order('room_id');
+
+  renderShell(`
+    <div class="card"><h1>✏️ Edit Task</h1><button class="secondary btn-sm" onclick="renderEmployeeTasks()">← Back</button></div>
+    <div class="card">
+      <div class="sub">${t.employees?.name || t.emp_id}</div>
+      <div class="form-group"><label>Property</label>
+        <select id="tRoom">
+          <option value="">General</option>
+          ${(rooms || []).map(r => `<option value="${r.room_id}" ${r.room_id === t.room_id ? 'selected' : ''}>${propLabel(r)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Type</label>
+          <select id="tType">
+            ${['Cleaning','Dusting','Laundry','Maintenance','Guest Check-in','Guest Check-out','Inventory','Other']
+              .map(tp => `<option ${tp === t.task_type ? 'selected' : ''}>${tp}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Priority</label>
+          <select id="tPriority">
+            ${['Normal','High','Urgent'].map(p => `<option ${p === (t.priority || 'Normal') ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Task</label><textarea id="tDesc">${t.task_description || ''}</textarea></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Date</label><input id="tDate" type="date" value="${t.assigned_date || ''}" /></div>
+        <div class="form-group"><label>Status</label>
+          <select id="tSt">
+            <option ${t.status === 'Pending' ? 'selected' : ''}>Pending</option>
+            <option ${t.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+            <option ${t.status === 'Completed' ? 'selected' : ''}>Completed</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="updTask(${id})" style="width:100%;">💾 Update</button>
+    </div>
+  `, 'tasks');
+}
+
+async function updTask(id) {
+  await sb.from('employee_tasks').update({
+    room_id: document.getElementById('tRoom').value || null,
+    task_type: document.getElementById('tType').value,
+    task_description: document.getElementById('tDesc').value.trim(),
+    assigned_date: document.getElementById('tDate').value || null,
+    status: document.getElementById('tSt').value,
+    priority: document.getElementById('tPriority')?.value || 'Normal',
+  }).eq('id', id);
+  renderEmployeeTasks();
+}
+
+async function delTask(id) {
+  if (confirm('Delete task?')) {
+    await sb.from('employee_tasks').delete().eq('id', id);
+    renderEmployeeTasks();
+  }
+}
+
+// ============ ATTENDANCE ============
+async function renderAttendance(selectedDate) {
+  const _renderAttendanceTabs = (active) => `
+    <div class="card" style="padding:8px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button onclick="renderAttendance()" class="${active==='mark'?'':'secondary'}" style="flex:1;">📋 Mark Today</button>
+        <button onclick="renderAttendanceSummary()" class="${active==='report'?'':'secondary'}" style="flex:1;">📊 Reports</button>
+      </div>
+    </div>`;
+  window._attTabsHtml = _renderAttendanceTabs('mark');
+
+  renderShell(`${window._attTabsHtml || ""}
+    <div class="loading">Loading...</div>`, 'attendance');
+  const today = new Date().toISOString().slice(0, 10);
+  const attDate = selectedDate || today;
+
+  const [{ data: emps }, { data: att }] = await Promise.all([
+    sb.from('employees').select('emp_id,name,role').eq('status', 'Active').order('name'),
+    sb.from('attendance_log').select('*').eq('att_date', attDate)
+  ]);
+  const am = {};
+  (att || []).forEach(a => { am[a.emp_id] = a.status; });
+  const isO = ['owner','admin','moderator','developer'].includes(SESSION.role);
+
+  const dateLabel = new Date(attDate).toLocaleDateString('en-IN', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  const isToday = attDate === today;
+
+  renderShell(`${window._attTabsHtml || ""}
+    <div class="card">
+      <h1>📋 Attendance</h1>
+      <div class="sub">${dateLabel} ${isToday ? '(Today)' : '(Back-dated)'}</div>
+
+      <div class="form-grid" style="margin-top:12px;">
+        <div class="form-group">
+          <label>Select Date (Back-dated allowed)</label>
+          <input type="date" id="attDatePicker" value="${attDate}" max="${today}"
+            onchange="renderAttendance(this.value)" />
+        </div>
+        <div class="form-group" style="justify-content:flex-end;">
+          ${!isToday ? `<button class="btn-sm" onclick="renderAttendance('${today}')">📅 Back to Today</button>` : ''}
+        </div>
+      </div>
+
+      <div class="sub">${(emps || []).length} active employees</div>
+    </div>
+
+    <div class="card" style="padding:14px;border-radius:12px;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${(emps || []).map(e => {
+          const st = am[e.emp_id] || 'Not Marked';
+          const isPresent = st === 'Present';
+          const isAbsent = st === 'Absent';
+          const isHalf = st === 'Half Day';
+          return `
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;border:1px solid #E2E8F0;border-radius:10px;background:#fff;transition:all 0.15s;">
+              <div style="flex:1;min-width:130px;">
+                <div style="font-weight:800;font-size:14px;color:#0F172A;">${escapeHtml(e.name)}</div>
+                <div style="font-size:11.5px;color:#64748B;display:flex;align-items:center;gap:6px;margin-top:2px;">
+                  <span>${escapeHtml(e.role || 'Staff')}</span>
+                  <span class="badge ${isPresent ? 'green' : isAbsent ? 'red' : isHalf ? 'yellow' : 'yellow'}" style="font-size:10px;padding:1px 6px;">
+                    ${st}
+                  </span>
+                </div>
+              </div>
+              ${isO ? `
+                <div style="display:flex;gap:4px;align-items:center;">
+                  <button class="btn-sm" onclick="markAtt('${e.emp_id}','Present','${attDate}')" style="padding:6px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;border:1.5px solid ${isPresent ? '#10B981' : '#CBD5E1'};background:${isPresent ? '#10B981' : '#F8FAFC'};color:${isPresent ? '#fff' : '#065F46'};box-shadow:${isPresent ? '0 2px 6px rgba(16,185,129,0.3)' : 'none'};">
+                    ✅ P
+                  </button>
+                  <button class="btn-sm" onclick="markAtt('${e.emp_id}','Absent','${attDate}')" style="padding:6px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;border:1.5px solid ${isAbsent ? '#DC2626' : '#CBD5E1'};background:${isAbsent ? '#DC2626' : '#F8FAFC'};color:${isAbsent ? '#fff' : '#991B1B'};box-shadow:${isAbsent ? '0 2px 6px rgba(220,38,38,0.3)' : 'none'};">
+                    ❌ A
+                  </button>
+                  <button class="btn-sm" onclick="markAtt('${e.emp_id}','Half Day','${attDate}')" style="padding:6px 12px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;border:1.5px solid ${isHalf ? '#D97706' : '#CBD5E1'};background:${isHalf ? '#D97706' : '#F8FAFC'};color:${isHalf ? '#fff' : '#92400E'};box-shadow:${isHalf ? '0 2px 6px rgba(217,119,6,0.3)' : 'none'};">
+                    ½
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `, 'attendance');
+}
+
+async function markAtt(eid, st, dateStr) {
+  const attDate = dateStr || new Date().toISOString().slice(0, 10);
+  const { data: ex } = await sb.from('attendance_log').select('id').eq('emp_id', eid).eq('att_date', attDate).single();
+  if (ex) await sb.from('attendance_log').update({ status: st }).eq('id', ex.id);
+  else await sb.from('attendance_log').insert({ emp_id: eid, att_date: attDate, status: st });
+  renderAttendance(attDate);
+}
+
+// ============ ATTENDANCE SUMMARY ============
+async function renderAttendanceSummary() {
+  const _renderTabsRep = () => `
+    <div class="card" style="padding:8px;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button onclick="renderAttendance()" class="secondary" style="flex:1;">📋 Mark Today</button>
+        <button style="flex:1;">📊 Reports</button>
+      </div>
+    </div>`;
+  window._attTabsHtmlRep = _renderTabsRep();
+
+  renderShell(`${window._attTabsHtmlRep || ""}
+    <div class="loading">Loading...</div>`, 'att-summary');
+  const cm = new Date().toISOString().slice(0, 7);
+  const daysInMonth = new Date(parseInt(cm.split('-')[0]), parseInt(cm.split('-')[1]), 0).getDate();
+
+  const [{ data: emps }, { data: logs }] = await Promise.all([
+    sb.from('employees').select('emp_id,name,role,monthly_salary').eq('status', 'Active').order('name'),
+    sb.from('attendance_log').select('emp_id,status,att_date').gte('att_date', `${cm}-01`).lte('att_date', `${cm}-31`)
+  ]);
+
+  const sum = (emps || []).map(e => {
+    const el = (logs || []).filter(l => l.emp_id === e.emp_id);
+    const pr = el.filter(l => l.status === 'Present').length;
+    const ab = el.filter(l => l.status === 'Absent').length;
+    const hd = el.filter(l => l.status === 'Half Day').length;
+    const totalMarked = pr + ab + hd;
+    const effectiveDays = pr + (hd * 0.5);
+    const pct = totalMarked > 0 ? ((effectiveDays / totalMarked) * 100).toFixed(1) : '0.0';
+    const perDay = e.monthly_salary > 0 ? Math.round(e.monthly_salary / daysInMonth) : 0;
+    const earnedSalary = Math.round(effectiveDays * perDay);
+    const deduction = (e.monthly_salary || 0) - earnedSalary;
+    return { ...e, pr, ab, hd, totalMarked, effectiveDays, pct, perDay, earnedSalary, deduction };
+  });
+
+  renderShell(`${window._attTabsHtmlRep || ""}
+    <div class="card">
+      <h1>📊 Attendance Report — ${cm}</h1>
+      <div class="sub">Days in month: ${daysInMonth}</div>
+      <button class="secondary btn-sm" onclick="renderAttendance()">📋 Mark Today</button>
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th>Employee</th><th>Role</th><th>Present</th><th>Half</th><th>Absent</th>
+        <th>Effective</th><th>%</th><th>Per Day ₹</th><th>Earned ₹</th><th>Deduction ₹</th>
+      </tr></thead>
+      <tbody>${sum.map(s => `<tr>
+        <td><strong>${s.name}</strong></td>
+        <td style="font-size:11px;">${s.role || '-'}</td>
+        <td><span class="badge green">${s.pr}</span></td>
+        <td><span class="badge yellow">${s.hd}</span></td>
+        <td><span class="badge ${s.ab > 0 ? 'red' : 'green'}">${s.ab}</span></td>
+        <td><strong>${s.effectiveDays}</strong></td>
+        <td><strong class="${parseFloat(s.pct) < 75 ? 'metric-value warn' : ''}">${s.pct}%</strong></td>
+        <td style="color:var(--red);">₹${s.perDay.toLocaleString('en-IN')}</td>
+        <td style="color:var(--green);">₹${s.earnedSalary.toLocaleString('en-IN')}</td>
+        <td style="color:${s.deduction > 0 ? 'var(--red)' : 'var(--green)'};">₹${s.deduction.toLocaleString('en-IN')}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>
+  `, 'att-summary');
+}
+
+// ============ SALARY TRACKER ============
+async function renderSalaryTracker() {
+  renderShell(`<div class="loading">Loading...</div>`, 'salary');
+  const [{ data: sals }, { data: advs }, { data: genExps }] = await Promise.all([
+    sb.from('salary_tracker').select('*, employees(name)').order('month', { ascending: false }),
+    sb.from('advance_tracker').select('emp_id, advance_amount, repaid_amount'),
+    sb.from('daily_expenses').select('emp_id, amount')
+  ]);
+  const isO = ['owner','admin','moderator','developer'].includes(SESSION.role);
+
+  const advMap = {};
+  (advs || []).forEach(a => {
+    advMap[a.emp_id] = (advMap[a.emp_id] || 0) + ((a.advance_amount || 0) - (a.repaid_amount || 0));
+  });
+
+  const genMap = {};
+  (genExps || []).forEach(e => {
+    genMap[e.emp_id] = (genMap[e.emp_id] || 0) + (e.amount || 0);
+  });
+
+  renderShell(`
+    <div class="card">
+      <h1>💰 Payroll</h1>
+      <div class="sub">${(sals || []).length} records</div>
+      ${isO ? `<button onclick="renderAddSal()">➕ Add Record</button>` : ''}
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th>Employee</th><th>Month</th><th>Due ₹</th><th>Paid ₹</th><th>Balance ₹</th>
+        <th>Advance ₹</th><th>Staff Exp ₹</th>
+        ${isO ? '<th>Actions</th>' : ''}
+      </tr></thead>
+      <tbody>${(sals || []).map(s => {
+        const bal = (s.salary_due || 0) - (s.salary_paid || 0);
+        return `<tr>
+          <td><strong style="color:var(--primary);cursor:pointer;text-decoration:underline;" onclick="showEmpDetailModal('${s.emp_id}')">${s.employees?.name || s.emp_id}</strong></td>
+          <td>${s.month || '-'}</td>
+          <td style="color:var(--red);">₹${(s.salary_due || 0).toLocaleString('en-IN')}</td>
+          <td style="color:var(--green);">₹${(s.salary_paid || 0).toLocaleString('en-IN')}</td>
+          <td style="color:${bal > 0 ? 'var(--red)' : 'var(--green)'};">₹${bal.toLocaleString('en-IN')}</td>
+          <td style="color:var(--red);">₹${(advMap[s.emp_id] || 0).toLocaleString('en-IN')}</td>
+          <td style="color:var(--blue);">₹${(genMap[s.emp_id] || 0).toLocaleString('en-IN')}</td>
+          ${isO ? `<td class="table-actions">
+            <button class="btn-sm" onclick="editSal(${s.id})">✏️</button>
+            ${window.canDelete && window.canDelete() ? `<button class="btn-sm danger" onclick="delSal(${s.id})">🗑️</button>` : ''}
+          </td>` : ''}
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div></div>
+  `, 'salary');
+}
+
+async function renderAddSal() {
+  const { data: emps } = await sb.from('employees').select('emp_id,name,monthly_salary').eq('status', 'Active').order('name');
+  window._salCache = emps || [];
+
+  renderShell(`
+    <div class="card"><h1>➕ Salary Record</h1><button class="secondary btn-sm" onclick="renderSalaryTracker()">← Back</button></div>
+    <div class="card">
+      <div class="form-group"><label>Employee *</label>
+        <select id="sEmp" onchange="onSalEmpChg()"><option value="">Select</option>
+          ${(emps || []).map(e => `<option value="${e.emp_id}">${e.name}</option>`).join('')}
+        </select>
+      </div>
+      <div id="sInfo" class="sub"></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Month</label><input id="sMo" type="month" value="${new Date().toISOString().slice(0, 7)}" /></div>
+        <div class="form-group"><label>Due ₹</label><input id="sDue" type="number" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Paid ₹</label><input id="sPaid" type="number" /></div>
+        <div class="form-group"><label>Date</label><input id="sDate" type="date" value="${new Date().toISOString().slice(0, 10)}" /></div>
+      </div>
+      <div class="form-group"><label>Payment Mode</label>
+        <select id="sMode">
+          <option value="">--</option>
+          <option>Cash</option><option>UPI</option><option>Bank</option>
+        </select>
+      </div>
+      <button onclick="saveSal()" style="width:100%;">💾 Save</button>
+      <div id="salErr"></div>
+    </div>
+  `, 'salary');
+}
+
+function onSalEmpChg() {
+  const e = (window._salCache || []).find(x => x.emp_id === document.getElementById('sEmp').value);
+  if (e) {
+    document.getElementById('sInfo').innerHTML = `💡 Monthly Salary: ₹${(e.monthly_salary || 0).toLocaleString('en-IN')}`;
+    document.getElementById('sDue').value = e.monthly_salary || 0;
+  }
+}
+
+async function saveSal() {
+  const _btn = document.querySelector('button[onclick="saveSal()"]');
+  if (_btn) { if (_btn.disabled) return; _btn.disabled = true; _btn.textContent = '⏳ Saving...'; }
+  const eid = document.getElementById('sEmp').value;
+  const mo = document.getElementById('sMo').value;
+  if (!eid || !mo) { document.getElementById('salErr').innerHTML = '<div class="error">Employee & month required</div>'; return; }
+  await sb.from('salary_tracker').insert({
+    emp_id: eid,
+    month: mo,
+    salary_due: parseFloat(document.getElementById('sDue').value) || 0,
+    salary_paid: parseFloat(document.getElementById('sPaid').value) || 0,
+    payment_date: document.getElementById('sDate').value || null,
+    payment_mode: document.getElementById('sMode').value || null,
+  });
+  renderSalaryTracker();
+}
+
+async function editSal(id) {
+  const { data: s } = await sb.from('salary_tracker').select('*, employees(name)').eq('id', id).single();
+  if (!s) return;
+
+  renderShell(`
+    <div class="card"><h1>✏️ Edit Salary</h1><button class="secondary btn-sm" onclick="renderSalaryTracker()">← Back</button></div>
+    <div class="card">
+      <div class="sub">${s.employees?.name || s.emp_id}</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Month</label><input id="sMo" type="month" value="${s.month || ''}" /></div>
+        <div class="form-group"><label>Due ₹</label><input id="sDue" type="number" value="${s.salary_due || 0}" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Paid ₹</label><input id="sPaid" type="number" value="${s.salary_paid || 0}" /></div>
+        <div class="form-group"><label>Date</label><input id="sDate" type="date" value="${s.payment_date || ''}" /></div>
+      </div>
+      <div class="form-group"><label>Payment Mode</label>
+        <select id="sMode">
+          <option value="" ${!s.payment_mode ? 'selected' : ''}>--</option>
+          <option ${s.payment_mode === 'Cash' ? 'selected' : ''}>Cash</option>
+          <option ${s.payment_mode === 'UPI' ? 'selected' : ''}>UPI</option>
+          <option ${s.payment_mode === 'Bank' ? 'selected' : ''}>Bank</option>
+        </select>
+      </div>
+      <button onclick="updSal(${id})" style="width:100%;">💾 Update</button>
+    </div>
+  `, 'salary');
+}
+
+async function updSal(id) {
+  await sb.from('salary_tracker').update({
+    month: document.getElementById('sMo').value,
+    salary_due: parseFloat(document.getElementById('sDue').value) || 0,
+    salary_paid: parseFloat(document.getElementById('sPaid').value) || 0,
+    payment_date: document.getElementById('sDate').value || null,
+    payment_mode: document.getElementById('sMode').value?.trim() || null,
+  }).eq('id', id);
+  renderSalaryTracker();
+}
+
+async function delSal(id) {
+  if (confirm('Delete?')) { await sb.from('salary_tracker').delete().eq('id', id); renderSalaryTracker(); }
+}
+
+// ============ ADVANCE TRACKER ============
+window._advTrackerFilter = window._advTrackerFilter || { empId: 'all', fromDate: '', toDate: '', showInactive: false };
+
+async function renderAdvanceTracker() {
+  renderShell(`<div class="loading">Loading advances...</div>`, 'advance');
+  const [{ data: advs }, { data: emps }] = await Promise.all([
+    sb.from('advance_tracker').select('*, employees(emp_id, name, role, phone, status, is_active)').order('date_given', { ascending: false }),
+    sb.from('employees').select('emp_id, name, role, phone, status, is_active').order('name')
+  ]);
+  const isO = ['owner','admin','moderator','developer'].includes(SESSION.role);
+
+  const filter = window._advTrackerFilter;
+  const currMonth = new Date().toISOString().slice(0, 7);
+
+  // Active vs Inactive separation
+  const activeEmps = (emps || []).filter(isEmployeeActive);
+  const inactiveEmps = (emps || []).filter(e => !isEmployeeActive(e));
+
+  // If currently selected employee was disabled and showInactive is false, reset to all
+  if (filter.empId !== 'all' && !filter.showInactive && !activeEmps.some(e => e.emp_id === filter.empId)) {
+    filter.empId = 'all';
+  }
+
+  // Filter advances
+  const filtered = (advs || []).filter(a => {
+    if (filter.empId && filter.empId !== 'all') {
+      if (a.emp_id !== filter.empId) return false;
+    } else if (!filter.showInactive) {
+      // By default, exclude disabled/inactive employees
+      const empObj = a.employees || (emps || []).find(e => e.emp_id === a.emp_id);
+      if (empObj && !isEmployeeActive(empObj)) return false;
+    }
+    const d = a.date_given || (a.created_at || '').slice(0, 10);
+    if (filter.fromDate && d < filter.fromDate) return false;
+    if (filter.toDate && d > filter.toDate) return false;
+    return true;
+  });
+
+  // Save in memory for universal export functions
+  window._currentFilteredAdvs = filtered;
+  window._currentAdvEmps = emps || [];
+  window._currentAdvActiveEmps = activeEmps;
+  window._currentAdvAllAdvs = advs || [];
+
+  // 1. Total All Time (for selected employee or all)
+  const empAllAdvs = (advs || []).filter(a => {
+    if (filter.empId !== 'all') return a.emp_id === filter.empId;
+    if (!filter.showInactive) {
+      const empObj = a.employees || (emps || []).find(e => e.emp_id === a.emp_id);
+      if (empObj && !isEmployeeActive(empObj)) return false;
+    }
+    return true;
+  });
+  const totalAllTimeGiven = empAllAdvs.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalAllTimeRepaid = empAllAdvs.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
+  const totalAllTimeBalance = totalAllTimeGiven - totalAllTimeRepaid;
+
+  // 2. Monthly Given (Current Month)
+  const totalMonthlyGiven = empAllAdvs
+    .filter(a => (a.date_given || (a.created_at || '')).slice(0, 7) === currMonth)
+    .reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+
+  // 3. Between Range Given
+  const totalBetweenGiven = filtered.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalBetweenRepaid = filtered.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
+  const totalBetweenBalance = totalBetweenGiven - totalBetweenRepaid;
+
+  const isNonDeductible = a => {
+    const r = (a.reason || '').toUpperCase();
+    return r.includes('[PETROL]') || r.includes('[RAPIDO]') || r.includes('[ITEMS]') || r.includes('NON-DEDUCTIBLE');
+  };
+  const totalTravelPetrol = filtered.filter(isNonDeductible).reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalDeductibleAdv = filtered.filter(a => !isNonDeductible(a)).reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalDeductibleBal = filtered.filter(a => !isNonDeductible(a)).reduce((s, a) => s + (Number(a.advance_amount || 0) - Number(a.repaid_amount || 0)), 0);
+
+  const selEmp = filter.empId !== 'all' ? (emps || []).find(e => e.emp_id === filter.empId) : null;
+  const selEmpName = selEmp ? selEmp.name : (filter.empId !== 'all' ? filter.empId : (filter.showInactive ? 'All Employees' : 'All Active Staff'));
+
+  renderShell(`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h1 style="margin:0;">💵 Staff Advances Tracker</h1>
+          <div class="sub">${filtered.length} records shown (${activeEmps.length} active staff)</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <button type="button" onclick="window.exportAdvancesCSV()" style="background:#059669;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:none;padding:8px 14px;border-radius:7px;cursor:pointer;box-shadow:0 1px 3px rgba(5,150,105,0.25);" title="Download CSV / Excel spreadsheet of advances">
+            📥 Export CSV / Excel
+          </button>
+          <button type="button" onclick="window.printAdvancesReport()" style="background:#0F172A;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:none;padding:8px 14px;border-radius:7px;cursor:pointer;box-shadow:0 1px 3px rgba(15,23,42,0.25);" title="Print or Save PDF Advance Statement / Slip">
+            📄 Print / PDF Report
+          </button>
+          <button type="button" onclick="window.shareAdvancesWhatsApp()" style="background:#16A34A;color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:none;padding:8px 14px;border-radius:7px;cursor:pointer;box-shadow:0 1px 3px rgba(22,163,74,0.25);" title="Share mobile advance statement on WhatsApp">
+            💬 WhatsApp Slip
+          </button>
+          ${isO ? `<button onclick="renderAddAdv()" style="background:#0F766E;color:#fff;font-weight:700;border:none;padding:8px 14px;border-radius:7px;cursor:pointer;">➕ Give Advance</button>` : ''}
+        </div>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="card" style="background:#F8FAFC;border:1px solid #E2E8F0;padding:14px;">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#334155;">🔍 Filter by Employee &amp; Date Range</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:10px;align-items:end;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">👤 Employee (Active Staff)</label>
+          <select id="advEmpFilter" onchange="updateAdvTrackerFilter()" style="width:100%;padding:7px;font-size:12px;border:1px solid #CBD5E1;border-radius:6px;background:#fff;">
+            <option value="all" ${filter.empId==='all'?'selected':''}>${filter.showInactive ? 'All Staff (Active + Disabled)' : 'All Active Staff (' + activeEmps.length + ')'}</option>
+            ${filter.showInactive ? `
+              <optgroup label="Active Staff (${activeEmps.length})">
+                ${activeEmps.map(e => `<option value="${e.emp_id}" ${filter.empId===e.emp_id?'selected':''}>${e.name}</option>`).join('')}
+              </optgroup>
+              <optgroup label="Disabled / Inactive Staff (${inactiveEmps.length})">
+                ${inactiveEmps.map(e => `<option value="${e.emp_id}" ${filter.empId===e.emp_id?'selected':''}>${e.name} (Disabled)</option>`).join('')}
+              </optgroup>
+            ` : `
+              ${activeEmps.map(e => `<option value="${e.emp_id}" ${filter.empId===e.emp_id?'selected':''}>${e.name}</option>`).join('')}
+            `}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">📅 Between: From Date</label>
+          <input id="advFromDate" type="date" value="${filter.fromDate}" onchange="updateAdvTrackerFilter()" style="width:100%;padding:6px;font-size:12px;border:1px solid #CBD5E1;border-radius:6px;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">📅 Between: To Date</label>
+          <input id="advToDate" type="date" value="${filter.toDate}" onchange="updateAdvTrackerFilter()" style="width:100%;padding:6px;font-size:12px;border:1px solid #CBD5E1;border-radius:6px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+          <span style="font-size:10.5px;color:#64748B;font-weight:700;">Quick Presets:</span>
+          <button type="button" onclick="setAdvTrackerDates('${currMonth}-01', '${new Date().toISOString().slice(0, 10)}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">📅 This Month</button>
+          <button type="button" onclick="setAdvTrackerDates('2026-09-17', '${new Date().toISOString().slice(0, 10)}')" style="background:#E0E7FF;color:#3730A3;border:1px solid #C7D2FE;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">⚡ Post-Checkpoint (17-Sep)</button>
+          <button type="button" onclick="setAdvTrackerDates('', '')" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">🌐 All Dates</button>
+          <label style="font-size:11px;color:#475569;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer;background:#fff;padding:3px 8px;border-radius:4px;border:1px solid #CBD5E1;margin-left:4px;">
+            <input type="checkbox" id="advShowInactive" ${filter.showInactive ? 'checked' : ''} onchange="window.toggleAdvInactive(this.checked)" style="margin:0;cursor:pointer;">
+            Include Disabled Staff (${inactiveEmps.length})
+          </label>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:11px;color:#475569;font-weight:600;">Active Filter: <strong>${escapeHtml(selEmpName)}</strong> (${filtered.length} records)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- METRICS BREAKDOWN -->
+    <div class="card">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:10px;">
+        <div style="text-align:center;padding:12px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;">
+          <div style="font-size:11px;color:#475569;font-weight:700;">💰 TOTAL GIVEN</div>
+          <div style="font-size:20px;font-weight:800;color:#0F172A;margin-top:2px;">₹${totalBetweenGiven.toLocaleString('en-IN')}</div>
+          <div style="font-size:10px;color:#64748B;">All entries in range</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;">
+          <div style="font-size:11px;color:#1E40AF;font-weight:700;">⛽ PETROL &amp; RAPIDO (CO.)</div>
+          <div style="font-size:20px;font-weight:800;color:#1D4ED8;margin-top:2px;">₹${totalTravelPetrol.toLocaleString('en-IN')}</div>
+          <div style="font-size:10px;color:#2563EB;font-weight:700;">🛡️ ZERO Salary Deduction</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;">
+          <div style="font-size:11px;color:#92400E;font-weight:700;">💵 SALARY ADVANCES</div>
+          <div style="font-size:20px;font-weight:800;color:#B45309;margin-top:2px;">₹${totalDeductibleAdv.toLocaleString('en-IN')}</div>
+          <div style="font-size:10px;color:#666;">Recoverable from salary</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:${totalDeductibleBal > 0 ? '#FEF2F2' : '#F0FDF4'};border:1px solid ${totalDeductibleBal > 0 ? '#FCA5A5' : '#86EFAC'};border-radius:8px;">
+          <div style="font-size:11px;color:${totalDeductibleBal > 0 ? '#991B1B' : '#166534'};font-weight:700;">⚖️ RECOVERABLE BALANCE</div>
+          <div style="font-size:20px;font-weight:800;color:${totalDeductibleBal > 0 ? '#DC2626' : '#059669'};margin-top:2px;">₹${totalDeductibleBal.toLocaleString('en-IN')}</div>
+          <div style="font-size:10px;color:#666;">Repaid: ₹${totalBetweenRepaid.toLocaleString('en-IN')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr>
+        <th>Employee</th><th>Date</th><th>Given ₹</th>
+        <th>Repaid ₹</th><th>Repaid On</th><th>Balance ₹</th>
+        <th>Account</th><th>Mode</th><th>Reason &amp; Purpose</th>
+        ${isO ? '<th>Actions</th>' : ''}
+      </tr></thead>
+      <tbody>${filtered.length === 0 ? '<tr><td colspan="10" style="text-align:center;padding:24px;color:#94A3B8;">No advance records found for this filter</td></tr>' : filtered.map(a => {
+        const bal = (a.advance_amount || 0) - (a.repaid_amount || 0);
+        const nonDed = isNonDeductible(a);
+        return `<tr>
+          <td><strong style="color:var(--primary);cursor:pointer;text-decoration:underline;" onclick="showEmpDetailModal('${a.emp_id}')">${a.employees?.name || a.emp_id}</strong></td>
+          <td style="font-size:12px;">${a.date_given || '-'}</td>
+          <td style="color:var(--red);font-weight:700;">₹${(a.advance_amount || 0).toLocaleString('en-IN')}</td>
+          <td style="color:var(--green);">₹${(a.repaid_amount || 0).toLocaleString('en-IN')}</td>
+          <td style="font-size:12px;">${a.repaid_date || '-'}</td>
+          <td style="color:${bal > 0 ? 'var(--red)' : 'var(--green)'};font-weight:700;">
+            ${nonDed ? '<span style="font-size:10px;color:#2563EB;font-weight:700;">₹0 (Company)</span>' : `₹${bal.toLocaleString('en-IN')}`}
+          </td>
+          <td>${window.UHHSODManager ? UHHSODManager.getBadge(a.paid_by) : (a.paid_by || '-')}</td>
+          <td style="font-size:12px;">${a.payment_mode || '-'}</td>
+          <td style="font-size:12px;">
+            ${nonDed ? `<span style="display:inline-block;margin-bottom:3px;font-size:9.5px;font-weight:800;color:#1E40AF;background:#EFF6FF;padding:2px 6px;border-radius:4px;border:1px solid #BFDBFE;">🛡️ Company Paid (Non-deductible)</span><br>` : ''}
+            ${escapeHtml(a.reason || '-')}
+          </td>
+          ${isO ? `<td class="table-actions">
+            <button class="btn-sm" onclick="editAdv(${a.id})">✏️</button>
+            ${window.canDelete && window.canDelete() ? `<button class="btn-sm danger" onclick="delAdv(${a.id})">🗑️</button>` : ''}
+          </td>` : ''}
+        </tr>`;
+      }).join('')}</tbody>
+      ${filtered.length > 0 ? `
+      <tfoot style="background:#F8FAFC;border-top:2px solid #CBD5E1;font-weight:700;">
+        <tr>
+          <td colspan="2" style="padding:10px 8px;text-align:right;font-weight:800;color:#334155;">
+            Total (${filtered.length} records):
+          </td>
+          <td style="padding:10px 8px;color:var(--red);font-weight:800;font-size:13px;">₹${totalBetweenGiven.toLocaleString('en-IN')}</td>
+          <td style="padding:10px 8px;color:var(--green);font-weight:800;font-size:13px;">₹${totalBetweenRepaid.toLocaleString('en-IN')}</td>
+          <td></td>
+          <td style="padding:10px 8px;color:${totalBetweenBalance > 0 ? 'var(--red)' : 'var(--green)'};font-weight:900;font-size:14px;">₹${totalBetweenBalance.toLocaleString('en-IN')}</td>
+          <td colspan="${isO ? 4 : 3}"></td>
+        </tr>
+      </tfoot>` : ''}
+    </table></div></div>
+  `, 'advance');
+}
+
+window.updateAdvTrackerFilter = function() {
+  window._advTrackerFilter.empId = document.getElementById('advEmpFilter')?.value || 'all';
+  window._advTrackerFilter.fromDate = document.getElementById('advFromDate')?.value || '';
+  window._advTrackerFilter.toDate = document.getElementById('advToDate')?.value || '';
+  renderAdvanceTracker();
+};
+
+window.setAdvTrackerDates = function(f, t) {
+  window._advTrackerFilter.fromDate = f;
+  window._advTrackerFilter.toDate = t;
+  renderAdvanceTracker();
+};
+
+window.toggleAdvInactive = function(show) {
+  window._advTrackerFilter.showInactive = !!show;
+  if (!show && window._advTrackerFilter.empId !== 'all') {
+    const isStillActive = (window._currentAdvActiveEmps || []).some(e => e.emp_id === window._advTrackerFilter.empId);
+    if (!isStillActive) window._advTrackerFilter.empId = 'all';
+  }
+  renderAdvanceTracker();
+};
+
+// ============ EXPORT STAFF ADVANCES TO CSV / EXCEL ============
+window.exportAdvancesCSV = async function(targetEmpId = null) {
+  let advs = window._currentFilteredAdvs || [];
+  let emps = window._currentAdvEmps || [];
+  let filterEmpId = targetEmpId || window._advTrackerFilter?.empId || 'all';
+
+  // If called directly with a specific employee ID or if memory empty, fetch fresh
+  if (targetEmpId || !advs.length) {
+    let query = sb.from('advance_tracker').select('*, employees(emp_id, name, role, phone)').order('date_given', { ascending: false });
+    if (filterEmpId && filterEmpId !== 'all') {
+      query = query.eq('emp_id', filterEmpId);
+    }
+    const { data } = await query;
+    advs = data || [];
+  }
+
+  if (!advs.length) {
+    if (window.fsn) fsn.info('No Records', 'Export karne ke liye koi advance record nahi mila.');
+    else alert('No advance records found to export.');
+    return;
+  }
+
+  // Determine employee info
+  let empName = 'All Employees';
+  let empSub = 'Consolidated Staff Advances';
+  if (filterEmpId && filterEmpId !== 'all') {
+    const matched = (emps || []).find(e => e.emp_id === filterEmpId) || advs[0]?.employees;
+    empName = matched?.name || filterEmpId;
+    empSub = `ID: ${filterEmpId}${matched?.role ? ' · ' + matched.role : ''}`;
+  }
+
+  const fromDate = targetEmpId ? '' : (window._advTrackerFilter?.fromDate || '');
+  const toDate = targetEmpId ? '' : (window._advTrackerFilter?.toDate || '');
+  let periodStr = 'All Historical Dates';
+  if (fromDate && toDate) periodStr = `${fromDate} to ${toDate}`;
+  else if (fromDate) periodStr = `From ${fromDate}`;
+  else if (toDate) periodStr = `Up to ${toDate}`;
+
+  const totalGiven = advs.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalRepaid = advs.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
+  const totalBal = totalGiven - totalRepaid;
+
+  let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - STAFF ADVANCES & REPAYMENTS REGISTER\n`;
+  csv += `CIN: U55101UP2024PTC202863 · Corporate Office: Lucknow, UP\n`;
+  csv += `Employee / Scope,"${empName} (${empSub})"\n`;
+  csv += `Period / Date Filter,"${periodStr}"\n`;
+  csv += `Exported On,"${new Date().toLocaleString('en-IN')}"\n`;
+  csv += `Total Records,"${advs.length}"\n`;
+  csv += `Total Advance Given (INR),${totalGiven}\n`;
+  csv += `Total Repaid (INR),${totalRepaid}\n`;
+  csv += `Net Outstanding Balance (INR),${totalBal}\n\n`;
+
+  // Column Headers
+  csv += `Sr,Employee Name,Employee ID,Date Given,Advance Given (INR),Repaid Amount (INR),Repaid Date,Balance Amount (INR),Account / Source,Payment Mode,Reason / Purpose,Status,Record ID\n`;
+
+  advs.forEach((a, idx) => {
+    const eName = (a.employees?.name || a.emp_id || '-').replace(/"/g, '""');
+    const eId = (a.emp_id || '-').replace(/"/g, '""');
+    const dGiven = a.date_given || (a.created_at || '').slice(0, 10) || '-';
+    const amtGiven = Number(a.advance_amount || 0);
+    const amtRepaid = Number(a.repaid_amount || 0);
+    const dRepaid = a.repaid_date || '-';
+    const bal = amtGiven - amtRepaid;
+    const paidBy = (a.paid_by || '-').replace(/"/g, '""');
+    const mode = (a.payment_mode || '-').replace(/"/g, '""');
+    const reason = (a.reason || '-').replace(/"/g, '""').replace(/\n/g, ' ');
+    const status = bal <= 0 ? 'Fully Repaid' : (amtRepaid > 0 ? 'Partially Repaid' : 'Outstanding');
+    const id = a.id || '';
+
+    csv += `${idx + 1},"${eName}","${eId}","${dGiven}",${amtGiven},${amtRepaid},"${dRepaid}",${bal},"${paidBy}","${mode}","${reason}","${status}",${id}\n`;
+  });
+
+  csv += `\n"Total",,,,"${totalGiven}","${totalRepaid}",,"${totalBal}",,,,,\n`;
+  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+
+  const cleanEmpSlug = String(empName).replace(/[^a-zA-Z0-9]/g, '_');
+  const today = new Date().toISOString().slice(0, 10);
+  const fileName = `TUHH_Staff_Advance_${cleanEmpSlug}_${today}.csv`;
+
+  if (typeof window.exportCSV === 'function') {
+    window.exportCSV(csv, fileName);
+  } else if (typeof window.downloadExportFile === 'function') {
+    window.downloadExportFile(csv, fileName, 'text/csv;charset=utf-8');
+  } else {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+  }
+
+  if (window.fsn) {
+    fsn.success('Advance Report Exported', `Advance register for ${empName} downloaded!`);
+  }
+};
+
+// ============ WHATSAPP STAFF ADVANCE STATEMENT (MOBILE SLIP) ============
+window.shareAdvancesWhatsApp = async function(targetEmpId = null) {
+  let advs = window._currentFilteredAdvs || [];
+  let emps = window._currentAdvEmps || [];
+  let filterEmpId = targetEmpId || window._advTrackerFilter?.empId || 'all';
+
+  if (targetEmpId || !advs.length) {
+    let query = sb.from('advance_tracker').select('*, employees(emp_id, name, role, phone)').order('date_given', { ascending: false });
+    if (filterEmpId && filterEmpId !== 'all') {
+      query = query.eq('emp_id', filterEmpId);
+    }
+    const { data } = await query;
+    advs = data || [];
+  }
+
+  if (!advs.length) {
+    if (window.fsn) fsn.info('No Records', 'WhatsApp par share karne ke liye koi advance record nahi mila.');
+    else alert('No advance records found to share.');
+    return;
+  }
+
+  let empMeta = null;
+  let empName = 'All Staff Consolidated';
+  const isSingle = Boolean(filterEmpId && filterEmpId !== 'all');
+  if (isSingle) {
+    empMeta = (emps || []).find(e => e.emp_id === filterEmpId) || advs[0]?.employees;
+    empName = empMeta?.name || filterEmpId;
+  }
+
+  const totalGiven = advs.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalRepaid = advs.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
+  const totalBal = totalGiven - totalRepaid;
+
+  let msg = `*THE UNIQUE HAVEN HOMES PRIVATE LIMITED*\n`;
+  msg += `*📄 Staff Salary Advance & Repayment Slip*\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `👤 *Employee:* ${empName}\n`;
+  if (empMeta?.role) msg += `💼 *Role:* ${empMeta.role}\n`;
+  if (empMeta?.emp_id) msg += `🆔 *ID:* ${empMeta.emp_id}\n`;
+  msg += `📅 *Date:* ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `💰 *Total Advances:* ₹${totalGiven.toLocaleString('en-IN')}\n`;
+  msg += `✅ *Total Repaid:* ₹${totalRepaid.toLocaleString('en-IN')}\n`;
+  msg += `⚖️ *Balance Due:* ₹${totalBal.toLocaleString('en-IN')} ${totalBal > 0 ? '(⚠️ Pending Deduction)' : '(✓ Cleared)'}\n`;
+  msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `*Itemized Entries (${advs.length}):*\n`;
+
+  const topAdvs = advs.slice(0, 6);
+  topAdvs.forEach((a, i) => {
+    const bal = Number(a.advance_amount || 0) - Number(a.repaid_amount || 0);
+    const dt = a.date_given || (a.created_at || '').slice(0, 10);
+    msg += `${i + 1}. ${dt}: ₹${Number(a.advance_amount || 0).toLocaleString('en-IN')} (Repaid: ₹${Number(a.repaid_amount || 0).toLocaleString('en-IN')}, Due: ₹${bal.toLocaleString('en-IN')}) [${a.paid_by || 'TUHH'}]\n`;
+  });
+  if (advs.length > 6) {
+    msg += `_...and ${advs.length - 6} more historical entries_\n`;
+  }
+
+  msg += `━━━━━━━━━━━━━━━━━━━━\n`;
+  msg += `_Official computer-generated payroll record._\n`;
+  msg += `🌐 uniquehavenhomesstay.com`;
+
+  const phone = empMeta?.phone ? String(empMeta.phone).replace(/\D/g, '') : '';
+  const fullPhone = phone.length === 10 ? '91' + phone : phone;
+  const waUrl = fullPhone
+    ? `https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`
+    : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  window.open(waUrl, '_blank');
+};
+
+// ============ PRINT / PDF STAFF ADVANCE STATEMENT ============
+window.printAdvancesReport = async function(targetEmpId = null) {
+  let advs = window._currentFilteredAdvs || [];
+  let emps = window._currentAdvEmps || [];
+  let filterEmpId = targetEmpId || window._advTrackerFilter?.empId || 'all';
+
+  if (targetEmpId || !advs.length) {
+    let query = sb.from('advance_tracker').select('*, employees(emp_id, name, role, phone)').order('date_given', { ascending: false });
+    if (filterEmpId && filterEmpId !== 'all') {
+      query = query.eq('emp_id', filterEmpId);
+    }
+    const { data } = await query;
+    advs = data || [];
+  }
+
+  if (!advs.length) {
+    if (window.fsn) fsn.info('No Records', 'Print karne ke liye koi advance record nahi mila.');
+    else alert('No advance records found to print.');
+    return;
+  }
+
+  let empName = 'All Employees (Consolidated)';
+  let empMeta = null;
+  const isSingleEmp = Boolean(filterEmpId && filterEmpId !== 'all');
+
+  if (isSingleEmp) {
+    empMeta = (emps || []).find(e => e.emp_id === filterEmpId) || advs[0]?.employees;
+    empName = empMeta?.name || filterEmpId;
+  }
+
+  const fromDate = targetEmpId ? '' : (window._advTrackerFilter?.fromDate || '');
+  const toDate = targetEmpId ? '' : (window._advTrackerFilter?.toDate || '');
+
+  const fmtD = dStr => {
+    if (!dStr) return '';
+    try {
+      const parts = dStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+      }
+    } catch(e) {}
+    return dStr;
+  };
+
+  let periodStr = 'All Historical Records';
+  if (fromDate && toDate) periodStr = `${fmtD(fromDate)} – ${fmtD(toDate)}`;
+  else if (fromDate) periodStr = `From ${fmtD(fromDate)}`;
+  else if (toDate) periodStr = `Up to ${fmtD(toDate)}`;
+
+  const totalGiven = advs.reduce((s, a) => s + Number(a.advance_amount || 0), 0);
+  const totalRepaid = advs.reduce((s, a) => s + Number(a.repaid_amount || 0), 0);
+  const totalBal = totalGiven - totalRepaid;
+
+  // Table rows with exact column widths and zero awkward wrapping
+  const rows = advs.map((a, idx) => {
+    const bal = Number(a.advance_amount || 0) - Number(a.repaid_amount || 0);
+    const isSettled = bal <= 0;
+    return `
+      <tr style="border-bottom:1px solid #CBD5E1;background:${idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'};">
+        <td style="padding:5px 4px;text-align:center;color:#64748B;font-size:10.5px;border:1px solid #CBD5E1;">${idx + 1}</td>
+        ${!isSingleEmp ? `<td style="padding:5px 6px;font-weight:700;color:#0F172A;font-size:11px;white-space:nowrap;border:1px solid #CBD5E1;">${escapeHtml(a.employees?.name || a.emp_id)}</td>` : ''}
+        <td style="padding:5px 6px;text-align:center;font-size:11px;color:#334155;white-space:nowrap;border:1px solid #CBD5E1;">${escapeHtml(a.date_given || (a.created_at || '').slice(0, 10) || '-')}</td>
+        <td style="padding:5px 6px;text-align:right;font-weight:700;color:#DC2626;font-size:11.5px;white-space:nowrap;border:1px solid #CBD5E1;">₹${Number(a.advance_amount || 0).toLocaleString('en-IN')}</td>
+        <td style="padding:5px 6px;text-align:right;font-weight:700;color:#059669;font-size:11.5px;white-space:nowrap;border:1px solid #CBD5E1;">₹${Number(a.repaid_amount || 0).toLocaleString('en-IN')}</td>
+        <td style="padding:5px 6px;text-align:center;font-size:10.5px;color:#64748B;white-space:nowrap;border:1px solid #CBD5E1;">${escapeHtml(a.repaid_date || '-')}</td>
+        <td style="padding:5px 6px;text-align:right;font-weight:800;color:${bal > 0 ? '#DC2626' : '#059669'};font-size:11.5px;white-space:nowrap;border:1px solid #CBD5E1;">₹${bal.toLocaleString('en-IN')}</td>
+        <td style="padding:5px 6px;text-align:center;font-size:10.5px;color:#334155;white-space:nowrap;border:1px solid #CBD5E1;">${escapeHtml(a.paid_by || '-')}</td>
+        <td style="padding:5px 6px;text-align:center;font-size:10.5px;color:#64748B;white-space:nowrap;border:1px solid #CBD5E1;">${escapeHtml(a.payment_mode || '-')}</td>
+        <td style="padding:5px 6px;font-size:10.5px;color:#475569;border:1px solid #CBD5E1;word-break:break-word;">${escapeHtml(a.reason || '-')}</td>
+        <td style="padding:5px 4px;text-align:center;font-size:10px;white-space:nowrap;border:1px solid #CBD5E1;">
+          <span style="display:inline-block;padding:2px 6px;border-radius:10px;font-weight:700;white-space:nowrap;${isSettled ? 'background:#DCFCE7;color:#166534;' : 'background:#FEE2E2;color:#991B1B;'}">
+            ${isSettled ? '✓ Repaid' : '● Due'}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <div style="width:100%;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0F172A;line-height:1.35;">
+
+      <!-- HEADER -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid #0F766E;padding-bottom:10px;margin-bottom:10px;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:22px;">🏡</span>
+            <div>
+              <h1 style="margin:0;font-size:17px;font-weight:900;letter-spacing:-0.2px;color:#0F172A;">THE UNIQUE HAVEN HOMES PRIVATE LIMITED</h1>
+              <div style="font-size:10.5px;color:#64748B;font-weight:600;margin-top:2px;">CIN: U55101UP2024PTC202863 · HRMS &amp; Staff Payroll Portal</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;display:inline-block;background:#F0FDFA;border:1px solid #99F6E4;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:800;color:#0F766E;letter-spacing:0.4px;">
+            📄 STAFF SALARY ADVANCE &amp; REPAYMENT STATEMENT
+          </div>
+        </div>
+        <div style="text-align:right;white-space:nowrap;min-width:180px;">
+          <div style="font-size:10.5px;color:#64748B;font-weight:600;">Statement Date</div>
+          <div style="font-size:13px;font-weight:900;color:#0F172A;margin-top:1px;">${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+          <div style="font-size:10.5px;color:#64748B;margin-top:3px;white-space:nowrap;">Period: <strong style="color:#0F172A;">${escapeHtml(periodStr)}</strong></div>
+        </div>
+      </div>
+
+      <!-- EMPLOYEE / SCOPE INFO -->
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;">Employee Details</div>
+          <div style="font-size:15px;font-weight:900;color:#0F172A;margin-top:1px;">${escapeHtml(empName)}</div>
+          ${empMeta ? `
+            <div style="font-size:11px;color:#475569;margin-top:2px;">
+              <span><strong>ID:</strong> ${escapeHtml(filterEmpId)}</span>
+              ${empMeta.role ? ` · <span><strong>Role:</strong> ${escapeHtml(empMeta.role)}</span>` : ''}
+              ${empMeta.phone ? ` · <span><strong>Phone:</strong> ${escapeHtml(empMeta.phone)}</span>` : ''}
+            </div>
+          ` : `
+            <div style="font-size:11px;color:#475569;margin-top:2px;">Consolidated ledger for all employees in system (${advs.length} entries)</div>
+          `}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;font-weight:700;color:#64748B;text-transform:uppercase;">Generated By</div>
+          <div style="font-size:11.5px;font-weight:700;color:#334155;">${escapeHtml(window.SESSION?.name || window.SESSION?.user || 'Admin')} (${escapeHtml(window.SESSION?.role || 'Management')})</div>
+        </div>
+      </div>
+
+      <!-- KPI METRIC BOXES -->
+      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:12px;">
+        <div style="background:#FEF2F2;border:1.5px solid #FECDD3;padding:8px 10px;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;font-weight:800;color:#991B1B;letter-spacing:0.4px;">💰 TOTAL ADVANCES GIVEN</div>
+          <div style="font-size:18px;font-weight:900;color:#DC2626;margin-top:2px;">₹${totalGiven.toLocaleString('en-IN')}</div>
+          <div style="font-size:9.5px;color:#7F1D1D;margin-top:1px;">${advs.length} ${advs.length === 1 ? 'disbursement' : 'disbursements'}</div>
+        </div>
+        <div style="background:#F0FDF4;border:1.5px solid #BBF7D0;padding:8px 10px;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;font-weight:800;color:#166534;letter-spacing:0.4px;">✅ TOTAL REPAID / DEDUCTED</div>
+          <div style="font-size:18px;font-weight:900;color:#059669;margin-top:2px;">₹${totalRepaid.toLocaleString('en-IN')}</div>
+          <div style="font-size:9.5px;color:#14532D;margin-top:1px;">Salary recovery / cash return</div>
+        </div>
+        <div style="background:${totalBal > 0 ? '#FEF2F2' : '#F0FDF4'};border:1.5px solid ${totalBal > 0 ? '#FCA5A5' : '#86EFAC'};padding:8px 10px;border-radius:8px;text-align:center;">
+          <div style="font-size:10px;font-weight:800;color:${totalBal > 0 ? '#991B1B' : '#166534'};letter-spacing:0.4px;">⚖️ OUTSTANDING DUE BALANCE</div>
+          <div style="font-size:18px;font-weight:900;color:${totalBal > 0 ? '#DC2626' : '#059669'};margin-top:2px;">₹${totalBal.toLocaleString('en-IN')}</div>
+          <div style="font-size:9.5px;color:${totalBal > 0 ? '#7F1D1D' : '#14532D'};margin-top:1px;">${totalBal > 0 ? 'To be deducted in upcoming salary' : 'Fully Cleared / Nil Balance'}</div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div style="margin-bottom:14px;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:11px;background:#fff;border:1.5px solid #0F172A;">
+          <thead>
+            <tr style="background:#0F172A;color:#fff;text-align:left;">
+              <th style="padding:6px 5px;text-align:center;width:26px;border:1px solid #334155;font-size:10.5px;">#</th>
+              ${!isSingleEmp ? `<th style="padding:6px 8px;white-space:nowrap;width:110px;border:1px solid #334155;font-size:10.5px;">Employee</th>` : ''}
+              <th style="padding:6px 6px;text-align:center;white-space:nowrap;width:78px;border:1px solid #334155;font-size:10.5px;">Date Given</th>
+              <th style="padding:6px 6px;text-align:right;white-space:nowrap;width:78px;border:1px solid #334155;font-size:10.5px;">Given (₹)</th>
+              <th style="padding:6px 6px;text-align:right;white-space:nowrap;width:78px;border:1px solid #334155;font-size:10.5px;">Repaid (₹)</th>
+              <th style="padding:6px 6px;text-align:center;white-space:nowrap;width:78px;border:1px solid #334155;font-size:10.5px;">Repaid Date</th>
+              <th style="padding:6px 6px;text-align:right;white-space:nowrap;width:82px;border:1px solid #334155;font-size:10.5px;">Balance (₹)</th>
+              <th style="padding:6px 6px;text-align:center;white-space:nowrap;width:72px;border:1px solid #334155;font-size:10.5px;">Account</th>
+              <th style="padding:6px 6px;text-align:center;white-space:nowrap;width:55px;border:1px solid #334155;font-size:10.5px;">Mode</th>
+              <th style="padding:6px 8px;border:1px solid #334155;font-size:10.5px;">Reason / Purpose</th>
+              <th style="padding:6px 5px;text-align:center;white-space:nowrap;width:62px;border:1px solid #334155;font-size:10.5px;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+          <tfoot>
+            <tr style="background:#F1F5F9;border-top:2px solid #0F172A;font-weight:900;">
+              <td colspan="${isSingleEmp ? 2 : 3}" style="padding:7px 8px;text-align:right;font-size:11px;font-weight:900;color:#0F172A;border:1px solid #CBD5E1;background:#F1F5F9;">GRAND TOTAL:</td>
+              <td style="padding:7px 6px;text-align:right;color:#DC2626;font-size:11.5px;font-weight:900;white-space:nowrap;border:1px solid #CBD5E1;background:#F1F5F9;">₹${totalGiven.toLocaleString('en-IN')}</td>
+              <td style="padding:7px 6px;text-align:right;color:#059669;font-size:11.5px;font-weight:900;white-space:nowrap;border:1px solid #CBD5E1;background:#F1F5F9;">₹${totalRepaid.toLocaleString('en-IN')}</td>
+              <td style="border:1px solid #CBD5E1;background:#F1F5F9;text-align:center;color:#94A3B8;font-size:11px;">—</td>
+              <td style="padding:7px 6px;text-align:right;color:${totalBal > 0 ? '#DC2626' : '#059669'};font-size:12px;font-weight:900;white-space:nowrap;border:1px solid #CBD5E1;background:#F1F5F9;">₹${totalBal.toLocaleString('en-IN')}</td>
+              <td colspan="4" style="border:1px solid #CBD5E1;background:#F1F5F9;"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- SIGN-OFF & ACKNOWLEDGMENT SECTION -->
+      <div style="border:1px solid #CBD5E1;border-radius:8px;padding:10px 14px;background:#FAFAFA;margin-top:12px;page-break-inside:avoid;break-inside:avoid;">
+        <div style="font-size:10px;font-weight:800;color:#475569;text-transform:uppercase;margin-bottom:6px;letter-spacing:0.5px;">Verification &amp; Acknowledgment</div>
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:16px;margin-top:10px;text-align:center;">
+          <div>
+            <div style="border-bottom:1px dashed #94A3B8;height:30px;margin-bottom:5px;"></div>
+            <div style="font-weight:700;font-size:11px;color:#0F172A;">Prepared By</div>
+            <div style="font-size:10px;color:#64748B;">HR &amp; Payroll Officer</div>
+          </div>
+          <div>
+            <div style="border-bottom:1px dashed #94A3B8;height:30px;margin-bottom:5px;"></div>
+            <div style="font-weight:700;font-size:11px;color:#0F172A;">Employee Signature</div>
+            <div style="font-size:9.5px;color:#64748B;">I accept advance records &amp; balance due</div>
+          </div>
+          <div>
+            <div style="border-bottom:1px dashed #94A3B8;height:30px;margin-bottom:5px;"></div>
+            <div style="font-weight:700;font-size:11px;color:#0F172A;">Authorized Signatory</div>
+            <div style="font-size:10px;color:#64748B;">Director / Finance TUHH</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOOTER NOTE -->
+      <div style="margin-top:12px;border-top:1px solid #E2E8F0;padding-top:6px;font-size:9.5px;color:#94A3B8;text-align:center;">
+        THE UNIQUE HAVEN HOMES PRIVATE LIMITED · CIN: U55101UP2024PTC202863 · This is a computer generated payroll advance document · uniquehavenhomesstay.com
+      </div>
+    </div>
+  `;
+
+  const cleanTitle = `Staff_Advance_${String(empName).replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}`;
+
+  if (typeof window.printDocumentHTML === 'function') {
+    window.printDocumentHTML(html, cleanTitle);
+  } else {
+    const printWin = window.open('', '_blank');
+    if (printWin) {
+      printWin.document.write(`<html><head><title>${cleanTitle}</title><style>@page{size:auto;margin:0 !important;}body{margin:0 !important;padding:10mm 14mm !important;font-family:sans-serif;}@media print{@page{margin:0 !important;}body{padding:10mm 14mm !important;}}</style></head><body>${html}</body></html>`);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => { printWin.print(); }, 500);
+    } else {
+      alert('Popup blocked. Please allow popups to print.');
+    }
+  }
+};
+
+async function renderAddAdv() {
+  const { data: emps } = await sb.from('employees').select('emp_id,name').eq('status', 'Active').order('name');
+  renderShell(`
+    <div class="card"><h1>➕ Advance</h1><button class="secondary btn-sm" onclick="renderAdvanceTracker()">← Back</button></div>
+    <div class="card">
+      <div class="form-group"><label>Employee *</label>
+        <select id="aEmp"><option value="">Select</option>
+          ${(emps || []).map(e => `<option value="${e.emp_id}">${e.name}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Advance Type / Purpose *</label>
+        <select id="aType" style="border: 1.5px solid #EA3829; font-weight: 700; color: #1e293b;">
+          <option value="ADVANCE">💵 Salary Advance (Recoverable — Monthly Salary se deduct hoga)</option>
+          <option value="PETROL">⛽ Petrol Allowance (Paid by Company — Salary se ZERO deduction)</option>
+          <option value="RAPIDO">🛵 Rapido / Transport Ride (Paid by Company — Salary se ZERO deduction)</option>
+          <option value="ITEMS">🛒 Property Grocery / Items Purchase (Paid by Company — Non-deductible)</option>
+        </select>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Date Given</label><input id="aDate" type="date" value="${new Date().toISOString().slice(0, 10)}" /></div>
+        <div class="form-group"><label>Amount ₹ *</label><input id="aAmt" type="number" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Payment Mode</label>
+          <select id="aMode">
+            <option value="">--</option>
+            <option>Cash</option><option>UPI</option><option>Bank</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment Source / Account *</label>
+          <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
+            <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
+            <option value="UHHS-OD" selected>🏦 TUHH-OD (Overdraft Account)</option>
+            <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Reason</label><input id="aReason" /></div>
+      <button onclick="saveAdv()" style="width:100%;">💾 Save</button>
+      <div id="advErr"></div>
+    </div>
+  `, 'advance');
+}
+
+async function saveAdv() {
+  const _btn = document.querySelector('button[onclick="saveAdv()"]');
+  if (_btn) { if (_btn.disabled) return; _btn.disabled = true; _btn.textContent = '⏳ Saving...'; }
+  const eid = document.getElementById('aEmp').value;
+  const amt = parseFloat(document.getElementById('aAmt').value) || 0;
+  if (!eid || amt <= 0) {
+    document.getElementById('advErr').innerHTML = '<div class="error">Employee & amount required</div>';
+    if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Advance'; }
+    return;
+  }
+  const paidByVal = document.getElementById('aPaidBy')?.value || 'UHHS-OD';
+  const dateVal = document.getElementById('aDate').value || null;
+
+  // 🚨 DUPLICATE ADVANCE CHECK
+  if (dateVal) {
+    const { data: existingAdv } = await sb.from('advance_tracker')
+      .select('id, emp_id, advance_amount, date_given')
+      .eq('emp_id', eid)
+      .eq('advance_amount', amt)
+      .eq('date_given', dateVal)
+      .limit(1);
+
+    if (existingAdv && existingAdv.length > 0) {
+      const ok = confirm(
+        `⚠️ DUPLICATE ADVANCE WARNING!\n\n` +
+        `Is employee ke liye date ${dateVal} par already ₹${amt.toLocaleString('en-IN')} ka advance recorded hai.\n\n` +
+        `Kya aap sach me duplicate advance add karna chahte hain?`
+      );
+      if (!ok) {
+        if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Advance'; }
+        return;
+      }
+    }
+  }
+
+  const advType = document.getElementById('aType')?.value || 'ADVANCE';
+  let reasonText = document.getElementById('aReason')?.value?.trim() || '';
+  if (advType === 'PETROL') {
+    reasonText = `[PETROL] ${reasonText || 'Staff Petrol Allowance (Company Paid - Non-deductible)'}`;
+  } else if (advType === 'RAPIDO') {
+    reasonText = `[RAPIDO] ${reasonText || 'Rapido / Travel (Company Paid - Non-deductible)'}`;
+  } else if (advType === 'ITEMS') {
+    reasonText = `[ITEMS] ${reasonText || 'Property Purchase / Supplies (Non-deductible)'}`;
+  }
+
+  const { error } = await sb.from('advance_tracker').insert({
+    emp_id: eid,
+    date_given: dateVal,
+    advance_amount: amt,
+    repaid_amount: 0,
+    payment_mode: document.getElementById('aMode').value || null,
+    paid_by: paidByVal,
+    reason: reasonText || null,
+    is_deducted: false
+  });
+  if (error) {
+    document.getElementById('advErr').innerHTML = `<div class="error">${error.message}</div>`;
+    if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Advance'; }
+    return;
+  }
+
+  // 📋 Audit log for Developer
+  if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
+    const empSelect = document.getElementById('aEmp');
+    const empName = empSelect?.options?.[empSelect.selectedIndex]?.text || eid;
+    window.UserActionAudit.recordAction('advance_give', {
+      empId: eid,
+      empName: empName,
+      amount: amt,
+      paidBy: paidByVal,
+      reason: reasonText,
+      dateGiven: dateVal,
+      mode: document.getElementById('aMode')?.value || 'Cash'
+    });
+  }
+  if (window.notifyDataChanged) window.notifyDataChanged();
+  renderAdvanceTracker();
+}
+
+async function editAdv(id) {
+  const { data: a } = await sb.from('advance_tracker').select('*, employees(name)').eq('id', id).single();
+  if (!a) return;
+  renderShell(`
+    <div class="card"><h1>✏️ Edit Advance</h1><button class="secondary btn-sm" onclick="renderAdvanceTracker()">← Back</button></div>
+    <div class="card">
+      <div class="sub" style="font-weight:600;font-size:14px;">${a.employees?.name || a.emp_id}</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Given Date</label><input id="aDate" type="date" value="${a.date_given || ''}" /></div>
+        <div class="form-group"><label>Amount ₹</label><input id="aAmt" type="number" value="${a.advance_amount || 0}" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Repaid ₹</label><input id="aRep" type="number" value="${a.repaid_amount || 0}" /></div>
+        <div class="form-group"><label>Repaid Date</label><input id="aRepDate" type="date" value="${a.repaid_date || ''}" /></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Payment Mode</label>
+          <select id="aMode">
+            <option value="" ${!a.payment_mode ? 'selected' : ''}>--</option>
+            <option ${a.payment_mode === 'Cash' ? 'selected' : ''}>Cash</option>
+            <option ${a.payment_mode === 'UPI' ? 'selected' : ''}>UPI</option>
+            <option ${a.payment_mode === 'Bank' ? 'selected' : ''}>Bank</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Payment Source / Account *</label>
+          <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
+            <option value="COMPANY" ${a.paid_by === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
+            <option value="UHHS-OD" ${a.paid_by === 'UHHS-OD' || !a.paid_by ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+            <option value="FIROZ" ${a.paid_by === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Reason</label><input id="aReason" value="${a.reason || ''}" /></div>
+      <button onclick="updAdv(${id})" style="width:100%;">💾 Update</button>
+    </div>
+  `, 'advance');
+}
+
+async function updAdv(id) {
+  await sb.from('advance_tracker').update({
+    date_given: document.getElementById('aDate').value || null,
+    advance_amount: parseFloat(document.getElementById('aAmt').value) || 0,
+    repaid_amount: parseFloat(document.getElementById('aRep').value) || 0,
+    repaid_date: document.getElementById('aRepDate').value || null,
+    payment_mode: document.getElementById('aMode').value || null,
+    paid_by: document.getElementById('aPaidBy')?.value || 'UHHS-OD',
+    reason: document.getElementById('aReason').value.trim() || null
+  }).eq('id', id);
+  if (window.notifyDataChanged) window.notifyDataChanged();
+  renderAdvanceTracker();
+}
+
+async function delAdv(id) {
+  if (confirm('Delete?')) {
+    await sb.from('advance_tracker').delete().eq('id', id);
+    if (window.notifyDataChanged) window.notifyDataChanged();
+    renderAdvanceTracker();
+  }
+}
+
+// ============ EMPLOYEE GENERAL EXPENSES ============
+async function renderEmpExpenses() {
+  renderShell(`<div class="loading">Loading...</div>`, 'emp-expenses');
+
+  const [{ data: exps }, { data: emps }, { data: rooms }] = await Promise.all([
+    sb.from('daily_expenses')
+      .select('*')
+      .order('expense_date', { ascending: false })
+      .limit(200),
+    sb.from('employees').select('emp_id, name').eq('status', 'Active').order('name'),
+    sb.from('rooms').select('room_id, nickname').order('room_id')
+  ]);
+
+  const empMap = {};
+  (emps || []).forEach(e => { empMap[e.emp_id] = e.name; });
+  const roomMap = {};
+  (rooms || []).forEach(r => { roomMap[r.room_id] = r.nickname; });
+
+  window._empExpData = exps || [];
+  window._empExpEmpMap = empMap;
+  window._empExpRoomMap = roomMap;
+  window._empExpEmps = emps || [];
+  window._empExpRooms = rooms || [];
+
+  renderShell(`
+    <div class="card">
+      <h1>🧾 Employee Expenses</h1>
+      <div class="sub">Daily / General expenses by staff</div>
+      <div class="btn-row">
+        <button onclick="renderAddEmpExpense()">➕ Log Expense</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🔍 Filter</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Employee</label>
+          <select id="eeEmpFilter" onchange="filterEmpExpenses()">
+            <option value="">All Employees</option>
+            ${(emps || []).map(e => `<option value="${e.emp_id}">${e.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Category</label>
+          <select id="eeCatFilter" onchange="filterEmpExpenses()">
+            <option value="">All Categories</option>
+            ${['🧹 Cleaning Supplies','🛒 Grocery/Food','🚗 Travel/Fuel','🔧 Maintenance','💡 Utilities','📱 Recharge/Internet','🎁 Guest Requests','📦 Other']
+              .map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Month</label>
+          <input type="month" id="eeMonthFilter"
+            value="${new Date().toISOString().slice(0,7)}"
+            onchange="filterEmpExpenses()" />
+        </div>
+      </div>
+    </div>
+
+    <div id="eeTableWrap"></div>
+  `, 'emp-expenses');
+
+  filterEmpExpenses();
+}
+
+function filterEmpExpenses() {
+  const wrap = document.getElementById('eeTableWrap');
+  if (!wrap) return;
+
+  const empVal   = document.getElementById('eeEmpFilter')?.value || '';
+  const catVal   = document.getElementById('eeCatFilter')?.value || '';
+  const monthVal = document.getElementById('eeMonthFilter')?.value || '';
+
+  let filtered = (window._empExpData || []);
+  if (empVal)   filtered = filtered.filter(e => e.emp_id === empVal);
+  if (catVal)   filtered = filtered.filter(e => e.category === catVal);
+  if (monthVal) filtered = filtered.filter(e => (e.expense_date || '').startsWith(monthVal));
+
+  const total = filtered.reduce((s, e) => s + (e.amount || 0), 0);
+  const isO = ['owner','admin','moderator','developer'].includes(SESSION.role) || SESSION.role === 'manager';
+
+  wrap.innerHTML = `
+    <div class="card">
+      <div class="section-title">
+        Expenses
+        <span class="badge red" style="float:right;">
+          Total: ₹${total.toLocaleString('en-IN')}
+        </span>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Date</th><th>Employee</th><th>Category</th>
+          <th>Property</th><th>Amount</th><th>Description</th>
+          <th>Paid To</th><th>Mode</th>
+          ${isO ? '<th>Actions</th>' : ''}
+        </tr></thead>
+        <tbody>
+          ${filtered.length === 0
+            ? `<tr><td colspan="${isO ? 9 : 8}" class="sub" style="text-align:center;">No expenses</td></tr>`
+            : filtered.map(e => `
+              <tr>
+                <td style="font-size:12px;">${e.expense_date || '-'}</td>
+                <td><strong>${window._empExpEmpMap[e.emp_id] || e.emp_id || '-'}</strong></td>
+                <td><span class="badge yellow">${e.category || '-'}</span></td>
+                <td style="font-size:12px;">${window._empExpRoomMap[e.room_id] || e.room_id || 'General'}</td>
+                <td style="color:var(--red);font-weight:700;">₹${(e.amount || 0).toLocaleString('en-IN')}</td>
+                <td style="font-size:12px;max-width:160px;">${e.description || '-'}</td>
+                <td style="font-size:12px;">${e.paid_to || '-'}</td>
+                <td style="font-size:12px;">${e.payment_mode || '-'}</td>
+                ${isO ? `<td class="table-actions">
+                  <button class="btn-sm" onclick="editEmpExpense(${e.id})">✏️</button>
+                  ${window.canDelete && window.canDelete() ? `<button class="btn-sm danger" onclick="delEmpExpense(${e.id})">🗑️</button>` : ''}
+                </td>` : ''}
+              </tr>
+            `).join('')}
+        </tbody>
+        ${filtered.length > 0 ? `
+        <tfoot>
+          <tr style="font-weight:700;background:#fafafa;">
+            <td colspan="4">Total</td>
+            <td style="color:var(--red);">₹${total.toLocaleString('en-IN')}</td>
+            <td colspan="${isO ? 4 : 3}"></td>
+          </tr>
+        </tfoot>` : ''}
+      </table></div>
+    </div>
+  `;
+}
+
+async function renderAddEmpExpense() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  renderShell(`
+    <div class="card">
+      <h1>➕ Log Employee Expense</h1>
+      <button class="secondary btn-sm" onclick="renderEmpExpenses()">← Back</button>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Employee *</label>
+          <select id="eeEmp">
+            <option value="">Select Employee</option>
+            ${(window._empExpEmps || []).map(e =>
+              `<option value="${e.emp_id}">${e.name}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Date *</label>
+          <input id="eeDate" type="date" value="${today}" />
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Category *</label>
+          <select id="eeCat">
+            <option value="">Select</option>
+            ${['🧹 Cleaning Supplies','🛒 Grocery/Food','🚗 Travel/Fuel','🔧 Maintenance','💡 Utilities','📱 Recharge/Internet','🎁 Guest Requests','📦 Other']
+              .map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Amount ₹ *</label>
+          <input id="eeAmt" type="number" placeholder="0" />
+        </div>
+      </div>
+      <div class="form-group"><label>Description *</label>
+        <textarea id="eeDesc" placeholder="Kya kharcha kiya..."></textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Property</label>
+          <select id="eeRoom">
+            <option value="">General / All</option>
+            ${(window._empExpRooms || []).map(r =>
+              `<option value="${r.room_id}">${propLabel(r)}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Paid To</label>
+          <input id="eePaidTo" placeholder="Vendor / Shop name" />
+        </div>
+      </div>
+      <div class="form-group"><label>Payment Mode</label>
+        <select id="eeMode">
+          <option value="">--</option>
+          <option>Cash</option>
+          <option>UPI</option>
+          <option>Bank</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notes</label>
+        <textarea id="eeNotes" placeholder="Optional"></textarea>
+      </div>
+      <button onclick="saveEmpExpense()" style="width:100%;margin-top:10px;">
+        💾 Save Expense
+      </button>
+      <div id="eeErr"></div>
+    </div>
+  `, 'emp-expenses');
+}
+
+async function saveEmpExpense() {
+  const _btn = document.querySelector('button[onclick="saveEmpExpense()"]');
+  if (_btn) { if (_btn.disabled) return; _btn.disabled = true; _btn.textContent = '⏳ Saving...'; }
+
+  const empId = document.getElementById('eeEmp').value;
+  const date  = document.getElementById('eeDate').value;
+  const cat   = document.getElementById('eeCat').value;
+  const amt   = parseFloat(document.getElementById('eeAmt').value) || 0;
+  const desc  = document.getElementById('eeDesc').value.trim();
+
+  if (!empId || !date || !cat || amt <= 0 || !desc) {
+    document.getElementById('eeErr').innerHTML =
+      '<div class="error">Employee, Date, Category, Amount & Description required</div>';
+    if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Expense'; }
+    return;
+  }
+
+  // 🚨 DUPLICATE DAILY EXPENSE CHECK
+  const { data: existingEmpExps } = await sb.from('daily_expenses')
+    .select('id, emp_id, expense_date, category, amount, description')
+    .eq('emp_id', empId)
+    .eq('expense_date', date)
+    .eq('category', cat)
+    .eq('amount', amt)
+    .limit(1);
+
+  if (existingEmpExps && existingEmpExps.length > 0) {
+    const ok = confirm(
+      `⚠️ DUPLICATE EXPENSE WARNING!\n\n` +
+      `Date: ${date}\n` +
+      `Category: ${cat}\n` +
+      `Amount: ₹${amt.toLocaleString('en-IN')}\n` +
+      `Description: "${existingEmpExps[0].description || desc}"\n\n` +
+      `Is employee ke liye same date aur category me ₹${amt.toLocaleString('en-IN')} ka expense pehle se recorded hai.\n\n` +
+      `Kya aap sach me duplicate expense add karna chahte hain?`
+    );
+    if (!ok) {
+      if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Expense'; }
+      return;
+    }
+  }
+
+  const { error } = await sb.from('daily_expenses').insert({
+    emp_id:       empId,
+    expense_date: date,
+    category:     cat,
+    amount:       amt,
+    description:  desc,
+    room_id:      document.getElementById('eeRoom').value || null,
+    paid_to:      document.getElementById('eePaidTo').value.trim() || null,
+    payment_mode: document.getElementById('eeMode').value || null,
+    notes:        document.getElementById('eeNotes').value.trim() || null,
+    created_by:   SESSION.userId || null
+  });
+
+  if (error) {
+    document.getElementById('eeErr').innerHTML =
+      `<div class="error">${error.message}</div>`;
+    if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Expense'; }
+    return;
+  }
+
+  fsn.success('Success', '✅ Expense saved!');
+  renderEmpExpenses();
+}
+
+async function editEmpExpense(id) {
+  const { data: ex } = await sb.from('daily_expenses').select('*').eq('id', id).single();
+  if (!ex) { fsn.error('Error', 'Not found'); return; }
+
+  renderShell(`
+    <div class="card">
+      <h1>✏️ Edit Expense</h1>
+      <button class="secondary btn-sm" onclick="renderEmpExpenses()">← Back</button>
+    </div>
+    <div class="card">
+      <div class="form-grid">
+        <div class="form-group"><label>Employee</label>
+          <select id="eeEmp">
+            ${(window._empExpEmps || []).map(e =>
+              `<option value="${e.emp_id}" ${e.emp_id === ex.emp_id ? 'selected' : ''}>${e.name}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Date</label>
+          <input id="eeDate" type="date" value="${ex.expense_date || ''}" />
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Category</label>
+          <select id="eeCat">
+            ${['🧹 Cleaning Supplies','🛒 Grocery/Food','🚗 Travel/Fuel','🔧 Maintenance','💡 Utilities','📱 Recharge/Internet','🎁 Guest Requests','📦 Other']
+              .map(c => `<option value="${c}" ${c === ex.category ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Amount ₹</label>
+          <input id="eeAmt" type="number" value="${ex.amount || 0}" />
+        </div>
+      </div>
+      <div class="form-group"><label>Description</label>
+        <textarea id="eeDesc">${ex.description || ''}</textarea>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Property</label>
+          <select id="eeRoom">
+            <option value="">General / All</option>
+            ${(window._empExpRooms || []).map(r =>
+              `<option value="${r.room_id}" ${r.room_id === ex.room_id ? 'selected' : ''}>${propLabel(r)}</option>`
+            ).join('')}
+          </select>
+        </div>
+        <div class="form-group"><label>Paid To</label>
+          <input id="eePaidTo" value="${ex.paid_to || ''}" />
+        </div>
+      </div>
+      <div class="form-group"><label>Payment Mode</label>
+        <select id="eeMode">
+          <option value="" ${!ex.payment_mode ? 'selected' : ''}>--</option>
+          <option ${ex.payment_mode === 'Cash' ? 'selected' : ''}>Cash</option>
+          <option ${ex.payment_mode === 'UPI' ? 'selected' : ''}>UPI</option>
+          <option ${ex.payment_mode === 'Bank' ? 'selected' : ''}>Bank</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notes</label>
+        <textarea id="eeNotes">${ex.notes || ''}</textarea>
+      </div>
+      <button onclick="updateEmpExpense(${id})" style="width:100%;margin-top:10px;">
+        💾 Update
+      </button>
+      <div id="eeErr"></div>
+    </div>
+  `, 'emp-expenses');
+}
+
+async function updateEmpExpense(id) {
+  const amt  = parseFloat(document.getElementById('eeAmt').value) || 0;
+  const desc = document.getElementById('eeDesc').value.trim();
+  if (!desc || amt <= 0) {
+    document.getElementById('eeErr').innerHTML =
+      '<div class="error">Amount & Description required</div>';
+    return;
+  }
+
+  const { error } = await sb.from('daily_expenses').update({
+    emp_id:       document.getElementById('eeEmp').value || null,
+    expense_date: document.getElementById('eeDate').value || null,
+    category:     document.getElementById('eeCat').value || null,
+    amount:       amt,
+    description:  desc,
+    room_id:      document.getElementById('eeRoom').value || null,
+    paid_to:      document.getElementById('eePaidTo').value.trim() || null,
+    payment_mode: document.getElementById('eeMode').value || null,
+    notes:        document.getElementById('eeNotes').value.trim() || null
+  }).eq('id', id);
+
+  if (error) {
+    document.getElementById('eeErr').innerHTML =
+      `<div class="error">${error.message}</div>`;
+    return;
+  }
+
+  fsn.success('Success', '✅ Updated!');
+  renderEmpExpenses();
+}
+
+async function delEmpExpense(id) {
+  if (!confirm('Delete this expense?')) return;
+  const { error } = await sb.from('daily_expenses').delete().eq('id', id);
+  if (error) { fsn.error('Error', '❌ ' + error.message); return; }
+  fsn.success('Success', '✅ Deleted');
+  renderEmpExpenses();
+}
+
+// ============ EMPLOYEE DETAIL MODAL ============
+async function showEmpDetailModal(empId) {
+  const [{ data: emp }, { data: sals }, { data: advs }, { data: exps }, { data: att }, { data: tasks }] = await Promise.all([
+    sb.from('employees').select('*').eq('emp_id', empId).single(),
+    sb.from('salary_tracker').select('*').eq('emp_id', empId).order('month', { ascending: false }),
+    sb.from('advance_tracker').select('*').eq('emp_id', empId).order('date_given', { ascending: false }),
+    sb.from('daily_expenses').select('*').eq('emp_id', empId).order('expense_date', { ascending: false }).limit(50),
+    sb.from('attendance_log').select('status, att_date').eq('emp_id', empId).gte('att_date', new Date().toISOString().slice(0,7) + '-01'),
+    sb.from('employee_tasks').select('*').eq('emp_id', empId).order('assigned_date', { ascending: false }).limit(20)
+  ]);
+
+  if (!emp) { fsn.error('Error', 'Employee not found'); return; }
+
+  const totalDue = (sals || []).reduce((s, r) => s + (r.salary_due || 0), 0);
+  const totalPaid = (sals || []).reduce((s, r) => s + (r.salary_paid || 0), 0);
+  const salBalance = totalDue - totalPaid;
+
+  const totalAdvGiven = (advs || []).reduce((s, r) => s + (r.advance_amount || 0), 0);
+  const totalAdvRepaid = (advs || []).reduce((s, r) => s + (r.repaid_amount || 0), 0);
+  const advBalance = totalAdvGiven - totalAdvRepaid;
+
+  const totalGenExp = (exps || []).reduce((s, r) => s + (r.amount || 0), 0);
+
+  const presentDays = (att || []).filter(a => a.status === 'Present').length;
+  const absentDays = (att || []).filter(a => a.status === 'Absent').length;
+
+  const pendingTasks = (tasks || []).filter(t => t.status === 'Pending').length;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:700px;">
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      <h2>👤 ${emp.name}</h2>
+      <div class="sub">${emp.role || '-'} · 📞 ${emp.phone || '-'} · <span class="badge ${(emp.status === 'Active' || emp.is_active === true) ? 'green' : 'red'}">${(emp.status === 'Active' || emp.is_active === true) ? 'Active' : 'Disabled'}</span></div>
+
+      <div class="stat-grid" style="margin-top:12px;">
+        <div class="stat-card" style="border-left:4px solid var(--red);">
+          <div class="stat-num" style="color:var(--red);font-size:18px;">₹${salBalance.toLocaleString('en-IN')}</div>
+          <div class="stat-label">Salary Pending</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--red);">
+          <div class="stat-num" style="color:var(--red);font-size:18px;">₹${advBalance.toLocaleString('en-IN')}</div>
+          <div class="stat-label">Advance Due</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--blue);">
+          <div class="stat-num" style="color:var(--blue);font-size:18px;">₹${totalGenExp.toLocaleString('en-IN')}</div>
+          <div class="stat-label">Staff Expense</div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card" style="border-left:4px solid var(--green);">
+          <div class="stat-num" style="color:var(--green);">${presentDays}</div>
+          <div class="stat-label">Present (${new Date().toISOString().slice(0,7)})</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--red);">
+          <div class="stat-num" style="color:var(--red);">${absentDays}</div>
+          <div class="stat-label">Absent</div>
+        </div>
+        <div class="stat-card" style="border-left:4px solid var(--yellow);">
+          <div class="stat-num" style="color:var(--yellow);">${pendingTasks}</div>
+          <div class="stat-label">Pending Tasks</div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:14px;">💰 Salary History</div>
+      ${(sals || []).length === 0 ? '<div class="sub">No records</div>' : `
+        <div class="table-wrap"><table>
+          <thead><tr><th>Month</th><th>Due</th><th>Paid</th><th>Balance</th></tr></thead>
+          <tbody>${sals.map(r => {
+            const b = (r.salary_due || 0) - (r.salary_paid || 0);
+            return `<tr>
+              <td>${r.month || '-'}</td>
+              <td style="color:var(--red);">₹${(r.salary_due || 0).toLocaleString('en-IN')}</td>
+              <td style="color:var(--green);">₹${(r.salary_paid || 0).toLocaleString('en-IN')}</td>
+              <td style="color:${b > 0 ? 'var(--red)' : 'var(--green)'};">₹${b.toLocaleString('en-IN')}</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>`}
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;flex-wrap:wrap;gap:6px;">
+        <div class="section-title" style="margin:0;">💵 Advance History</div>
+        ${(advs || []).length > 0 ? `
+          <div style="display:flex;gap:6px;">
+            <button type="button" class="btn-sm" onclick="window.exportAdvancesCSV('${emp.emp_id}')" style="background:#059669;color:#fff;font-weight:700;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">📥 Export CSV</button>
+            <button type="button" class="btn-sm" onclick="window.printAdvancesReport('${emp.emp_id}')" style="background:#0F172A;color:#fff;font-weight:700;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">📄 Print Slip</button>
+            <button type="button" class="btn-sm" onclick="window.shareAdvancesWhatsApp('${emp.emp_id}')" style="background:#16A34A;color:#fff;font-weight:700;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;">💬 WhatsApp</button>
+          </div>
+        ` : ''}
+      </div>
+      ${(advs || []).length === 0 ? '<div class="sub">No advances</div>' : `
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Given</th><th>Repaid</th><th>Balance</th><th>Reason</th></tr></thead>
+          <tbody>${advs.map(r => {
+            const b = (r.advance_amount || 0) - (r.repaid_amount || 0);
+            return `<tr>
+              <td style="font-size:12px;">${r.date_given || '-'}</td>
+              <td style="color:var(--red);">₹${(r.advance_amount || 0).toLocaleString('en-IN')}</td>
+              <td style="color:var(--green);">₹${(r.repaid_amount || 0).toLocaleString('en-IN')}</td>
+              <td style="color:${b > 0 ? 'var(--red)' : 'var(--green)'};">₹${b.toLocaleString('en-IN')}</td>
+              <td style="font-size:12px;">${r.reason || '-'}</td>
+            </tr>`;
+          }).join('')}</tbody>
+          <tfoot style="background:#F8FAFC;font-weight:700;border-top:2px solid #CBD5E1;">
+            <tr>
+              <td style="padding:6px 8px;font-weight:800;">Total:</td>
+              <td style="color:var(--red);padding:6px 8px;font-weight:800;">₹${totalAdvGiven.toLocaleString('en-IN')}</td>
+              <td style="color:var(--green);padding:6px 8px;font-weight:800;">₹${totalAdvRepaid.toLocaleString('en-IN')}</td>
+              <td style="color:${advBalance > 0 ? 'var(--red)' : 'var(--green)'};padding:6px 8px;font-weight:900;">₹${advBalance.toLocaleString('en-IN')}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table></div>`}
+
+      <div class="section-title" style="margin-top:14px;">🧾 Staff Expenses</div>
+      ${(exps || []).length === 0 ? '<div class="sub">No expenses</div>' : `
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Category</th><th>Property</th><th>Amount</th><th>Description</th></tr></thead>
+          <tbody>${exps.map(r => `
+            <tr>
+              <td style="font-size:12px;">${r.expense_date || '-'}</td>
+              <td><span class="badge yellow">${r.category || '-'}</span></td>
+              <td style="font-size:12px;">${r.room_id || 'General'}</td>
+              <td style="color:var(--red);">₹${(r.amount || 0).toLocaleString('en-IN')}</td>
+              <td style="font-size:12px;max-width:150px;">${r.description || '-'}</td>
+            </tr>
+          `).join('')}</tbody>
+        </table></div>`}
+
+      <div class="btn-row" style="margin-top:12px;">
+        <button class="outline" onclick="this.closest('.modal-overlay').remove()">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+console.log("✅ Employees Module v7 loaded");
+
+
+window.toggleEmpSalaryTypeInputs = function() {
+  const type = document.getElementById('eSalaryType')?.value;
+  const fix = document.getElementById('groupFixedSalary');
+  const pf = document.getElementById('groupPerFlatRate');
+  if (fix) fix.style.display = type === 'per_flat' ? 'none' : 'block';
+  if (pf) pf.style.display = type === 'per_flat' ? 'block' : 'none';
+};

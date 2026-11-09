@@ -1,0 +1,16 @@
+{
+  "name": "Roost And Rest CRM",
+  "short_name": "Roost & Rest",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#2C241E",
+  "description": "Roost And Rest Homestays & Stays Enterprise CRM • Lucknow",
+  "icons": [
+    {
+      "src": "assets/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,1109 @@
+/**
+ * Daily Report Generator - UPGRADED
+ * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ */
+
+async function renderDailyReport(selectedDate) {
+  const today = new Date().toISOString().slice(0, 10);
+  const repDate = selectedDate || today;
+  window._dailyReportDate = repDate;
+  const endDate = repDate;
+  
+  renderShell(`<div class="loading">Generating report for ${repDate}...</div>`, 'daily-report');
+
+  const [
+    { data: allBks },
+    { data: allPays },
+    { data: rooms },
+    { data: cfg }
+  ] = await Promise.all([
+    sb.from('guest_register').select('*, rooms(nickname, unit_no)'),
+    sb.from('payment_history').select('*').gte('payment_date', repDate).lte('payment_date', endDate).neq('verification_status', 'rejected'),
+    sb.from('rooms').select('room_id, nickname, unit_no'),
+    sb.from('company_config').select('*').eq('id', 1).single()
+  ]);
+
+  const globalProp = (typeof window.getGlobalSelectedProperty === 'function') ? window.getGlobalSelectedProperty() : '';
+  const activeBks = (allBks || []).filter(b => !globalProp || b.room_id === globalProp);
+  const activeRooms = (rooms || []).filter(r => !globalProp || r.room_id === globalProp);
+  const validBkIds = new Set(activeBks.map(b => b.booking_id));
+  const activePays = (allPays || []).filter(p => !globalProp || validBkIds.has(p.booking_id));
+
+  const checkins = activeBks.filter(b => (b.check_in >= repDate && b.check_in <= endDate) && !b.is_cancelled);
+  const checkouts = activeBks.filter(b => (b.check_out >= repDate && b.check_out <= endDate) && !b.is_cancelled);
+  const newBookings = checkins;
+  
+  const staying = activeBks.filter(b => 
+    b.check_in && b.check_in <= repDate && 
+    (!b.check_out || b.check_out > repDate) &&
+    !b.is_cancelled &&
+    b.verification_status !== 'rejected'
+  );
+
+  const totalPayments = activePays.reduce((s, p) => s + (p.amount || 0), 0);
+  const paymentByMode = {};
+  activePays.forEach(p => {
+    const mode = p.payment_mode || 'Unknown';
+    paymentByMode[mode] = (paymentByMode[mode] || 0) + (p.amount || 0);
+  });
+
+  const newBookingTotal = newBookings.reduce((s, b) => s + (b.total_amount || 0), 0);
+  const onlineBks = newBookings.filter(b => b.booking_mode === 'Online-Airbnb');
+  const offlineBks = newBookings.filter(b => b.booking_mode !== 'Online-Airbnb');
+  const reviewBks = newBookings.filter(b => b.is_review_booking === true);
+
+  const { data: allPaysFull } = await sb.from('payment_history')
+    .select('booking_id, amount').neq('verification_status', 'rejected');
+  
+  const paidMapFull = {};
+  (allPaysFull || []).forEach(p => {
+    paidMapFull[p.booking_id] = (paidMapFull[p.booking_id] || 0) + (p.amount || 0);
+  });
+
+  // PENDING DUES FIXED: Only calculate for currently active guests (Staying + Today Check-ins/outs)
+  const activeBookingIds = new Set([
+    ...(staying || []).map(b => b.booking_id),
+    ...(checkouts || []).map(b => b.booking_id),
+    ...(checkins || []).map(b => b.booking_id)
+  ]);
+
+  const totalDueOverall = (allBks || []).reduce((s, b) => {
+    if (b.is_cancelled || b.verification_status === 'rejected') return s;
+    if (!activeBookingIds.has(b.booking_id)) return s;
+    const paid = paidMapFull[b.booking_id] || 0;
+    const due = Math.max((b.total_amount || 0) - paid, 0);
+    return s + (due > 1 ? due : 0);
+  }, 0);
+
+  const todayPaymentTransactions = (allPays || []).length;
+
+  const totalRooms = (rooms || []).length;
+  const occupancyPct = totalRooms > 0 ? Math.round(staying.length / totalRooms * 100) : 0;
+
+  const dates = [];
+  for (let i = 0; i <= 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+
+  const brand = cfg?.company_name || window.COMPANY_LEGAL_NAME || 'THE UNIQUE HAVEN HOMES PRIVATE LIMITED';
+  const dateFormatted = new Date(repDate).toLocaleDateString('en-IN', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  });
+
+  const checkoutsDue = checkouts.filter(b => Math.max((b.total_amount||0) - (paidMapFull[b.booking_id]||0), 0) > 0);
+
+  renderShell(`
+    <div class="card no-print" style="margin-bottom:20px;padding:16px 22px;border:1px solid var(--border);box-shadow:var(--shadow-sm);border-radius:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:40px;height:40px;border-radius:10px;background:#EEF2FF;color:#4F46E5;display:flex;align-items:center;justify-content:center;font-size:20px;">
+            📊
+          </div>
+          <div>
+            <h1 style="font-size:18px;font-weight:800;color:var(--text);margin:0;line-height:1.2;">Daily Operations Report</h1>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">Real-time check-ins, check-outs, collections & dues overview</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <label style="font-size:12px;font-weight:600;color:var(--muted);">Select Date:</label>
+            <select onchange="renderDailyReport(this.value)" style="padding:7px 12px;font-size:13px;border-radius:8px;border:1px solid var(--border);background:#fff;min-width:180px;height:38px;font-weight:600;color:var(--text);">
+              ${dates.map(d => `<option value="${d}" ${d === repDate ? 'selected' : ''}>${new Date(d).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'})}${d === today ? ' (Today)' : ''}</option>`).join('')}
+            </select>
+          </div>
+          <button onclick="printDailyReportWindow()" class="btn-sm" style="background:#0F172A;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(15,23,42,0.15);">
+            🖨️ Print / PDF
+          </button>
+          <button onclick="exportDailyReportCSV('${repDate}')" class="btn-sm" style="background:#0284C7;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(2,132,199,0.2);">
+            📥 Export CSV
+          </button>
+          <button onclick="whatsappDailyReport('${repDate}')" class="btn-sm" style="background:#059669;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 1px 3px rgba(5,150,105,0.2);">
+            📱 Summary WA
+          </button>
+          <button onclick="openBlossomSkylineDailyStatusModal('${repDate}')" class="btn-sm" style="background:#25D366;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12.5px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 2px 8px rgba(37,211,102,0.35);" title="Auto-generate 1-Click Status for WhatsApp Booking Data Group">
+            📋 Group Status
+          </button>
+          <button onclick="navigate('dashboard')" class="btn-sm" style="background:#EF4444;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;display:inline-flex;align-items:center;gap:6px;cursor:pointer;height:38px;box-shadow:0 2px 6px rgba(239,68,68,0.35);" title="Close Report (ESC)">
+            ✕ Close
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card report-doc" style="max-width:920px;margin:0 auto;padding:32px;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-md);">
+      
+      <!-- Executive Letterhead Header -->
+      <div style="background:linear-gradient(135deg, #0F172A 0%, #1E293B 100%);color:#fff;padding:26px 28px;border-radius:12px;text-align:center;margin:-32px -32px 24px -32px;border-bottom:3px solid #4F46E5;box-shadow:0 4px 15px rgba(15,23,42,0.08);">
+        <div style="display:inline-block;padding:3px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;font-size:10.5px;letter-spacing:1.8px;font-weight:700;color:#94A3B8;margin-bottom:8px;text-transform:uppercase;">
+          ${brand.toUpperCase()}
+        </div>
+        <h1 style="margin:2px 0 6px;font-size:23px;font-weight:800;letter-spacing:0.5px;color:#FFFFFF;">
+          📊 DAILY OPERATIONS REPORT
+        </h1>
+        <div style="font-size:13px;color:#CBD5E1;font-weight:500;">
+          🗓️ ${dateFormatted}
+        </div>
+      </div>
+
+      <!-- Primary Operational Highlights -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;margin-bottom:12px;">
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #4F46E5;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">📥 Check-ins</div>
+          <div style="font-size:24px;font-weight:800;color:#0F172A;margin-top:2px;">${checkins.length}</div>
+          <div style="font-size:11.5px;color:#64748B;margin-top:2px;">₹${newBookingTotal.toLocaleString('en-IN')} value</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #64748B;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">📤 Check-outs</div>
+          <div style="font-size:24px;font-weight:800;color:#0F172A;margin-top:2px;">${checkouts.length}</div>
+          <div style="font-size:11.5px;color:#64748B;margin-top:2px;">Rooms freeing up</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #059669;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">💰 Collections</div>
+          <div style="font-size:24px;font-weight:800;color:#059669;margin-top:2px;">₹${totalPayments.toLocaleString('en-IN')}</div>
+          <div style="font-size:11.5px;color:#64748B;margin-top:2px;">${todayPaymentTransactions} transaction${todayPaymentTransactions===1?'':'s'}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #7C3AED;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">📈 Occupancy</div>
+          <div style="font-size:24px;font-weight:800;color:#0F172A;margin-top:2px;">${staying.length}/${totalRooms}</div>
+          <div style="font-size:11.5px;color:#7C3AED;font-weight:600;margin-top:2px;">${occupancyPct}% occupied</div>
+        </div>
+      </div>
+
+      <!-- Secondary Status Overview -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:12px;margin-bottom:22px;">
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid ${totalDueOverall > 0 ? '#DC2626' : '#059669'};padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">⚠️ Total Pending Dues</div>
+          <div style="font-size:24px;font-weight:800;color:${totalDueOverall > 0 ? '#DC2626' : '#059669'};margin-top:2px;">₹${totalDueOverall.toLocaleString('en-IN')}</div>
+          <div style="font-size:11.5px;color:#64748B;margin-top:2px;">Active guest accounts</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #0284C7;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">🏠 Currently Staying</div>
+          <div style="font-size:24px;font-weight:800;color:#0F172A;margin-top:2px;">${staying.length} guests</div>
+          <div style="font-size:11.5px;color:#64748B;margin-top:2px;">In-house right now</div>
+        </div>
+        <div style="background:#fff;border:1px solid #E2E8F0;border-left:4px solid #0D9488;padding:14px 16px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:10.5px;color:#64748B;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">✨ Available Rooms</div>
+          <div style="font-size:24px;font-weight:800;color:#0F172A;margin-top:2px;">${totalRooms - staying.length}</div>
+          <div style="font-size:11.5px;color:#0D9488;font-weight:600;margin-top:2px;">Ready to book</div>
+        </div>
+      </div>
+
+      ${checkoutsDue.length > 0 || totalDueOverall > 0 ? `
+      <div style="margin-bottom:22px;background:#FFFDF7;border:1px solid #FDE68A;border-left:4px solid #D97706;border-radius:8px;padding:14px 18px;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+        <div style="font-size:13px;font-weight:700;color:#92400E;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <span>⚠️</span> Priority Actions Required (Pending Settlements)
+        </div>
+        <ul style="margin:0;padding-left:18px;font-size:12.5px;line-height:1.8;color:#78350F;">
+          ${checkoutsDue.map(b => {
+            const due = Math.max((b.total_amount||0) - (paidMapFull[b.booking_id]||0), 0);
+            return `<li><strong style="color:#DC2626;">Collect ₹${due.toLocaleString('en-IN')}</strong> from <strong>${b.guest_name}</strong> (${b.rooms?.nickname || b.room_id}) — checking out today ${b.guest_phone ? '📞 '+b.guest_phone : ''}</li>`;
+          }).join('')}
+          ${totalDueOverall > 0 ? `<li>Total pending balance across active guests: <strong style="color:#B45309;">₹${totalDueOverall.toLocaleString('en-IN')}</strong></li>` : ''}
+        </ul>
+      </div>` : ''}
+
+      <!-- Section: Check-ins Today -->
+      <div style="margin-bottom:22px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="background:#0F172A;color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>📥</span> Check-ins Today
+          </div>
+          <span style="background:rgba(255,255,255,0.16);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">${checkins.length}</span>
+        </div>
+        <div>
+          ${checkins.length === 0 ? '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">No check-ins scheduled for this date</div>' :
+            `<table style="width:100%;font-size:12.5px;border-collapse:collapse;">
+              <thead style="background:#F8FAFC;color:#475569;border-bottom:1px solid #E2E8F0;">
+                <tr>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Guest</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Property</th>
+                  <th style="padding:9px 12px;text-align:center;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Nights</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Contact</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Time</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Total</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${checkins.map(b => {
+                  const paid = paidMapFull[b.booking_id] || 0;
+                  const due = Math.max((b.total_amount || 0) - paid, 0);
+                  const nights = b.check_in && b.check_out ? Math.max(1, Math.ceil((new Date(b.check_out) - new Date(b.check_in))/86400000)) : '-';
+                  return `<tr style="border-bottom:1px solid #F1F5F9;">
+                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong>${b.is_review_booking ? ' <span style="background:#7C3AED;color:#fff;padding:2px 7px;border-radius:10px;font-size:9.5px;font-weight:700;">REVIEW</span>' : ''}</td>
+                    <td style="padding:10px 12px;color:#334155;">${b.rooms?.nickname || b.room_id}</td>
+                    <td style="padding:10px 12px;text-align:center;color:#64748B;">${nights}</td>
+                    <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.guest_phone || '-'}</td>
+                    <td style="padding:10px 12px;color:#64748B;">${b.check_in_time || '2 PM'}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:600;">₹${(b.total_amount || 0).toLocaleString('en-IN')}</td>
+                    <td style="padding:10px 12px;text-align:right;color:#059669;font-weight:600;">₹${paid.toLocaleString('en-IN')}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${due > 0 ? '#DC2626' : '#059669'};font-weight:700;">₹${due.toLocaleString('en-IN')}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>`
+          }
+        </div>
+      </div>
+
+      <!-- Section: Check-outs Today -->
+      <div style="margin-bottom:22px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="background:#0F172A;color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>📤</span> Check-outs Today
+          </div>
+          <span style="background:rgba(255,255,255,0.16);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">${checkouts.length}</span>
+        </div>
+        <div>
+          ${checkouts.length === 0 ? '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">No check-outs scheduled for this date</div>' :
+            `<table style="width:100%;font-size:12.5px;border-collapse:collapse;">
+              <thead style="background:#F8FAFC;color:#475569;border-bottom:1px solid #E2E8F0;">
+                <tr>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Guest</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Property</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Contact</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Time</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Total</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Paid</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${checkouts.map(b => {
+                  const paid = paidMapFull[b.booking_id] || 0;
+                  const due = Math.max((b.total_amount || 0) - paid, 0);
+                  return `<tr style="border-bottom:1px solid #F1F5F9;${due > 0 ? 'background:#FEF2F2;' : ''}">
+                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong></td>
+                    <td style="padding:10px 12px;color:#334155;">${b.rooms?.nickname || b.room_id}</td>
+                    <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.guest_phone || '-'}</td>
+                    <td style="padding:10px 12px;color:#64748B;">${b.check_out_time || '11 AM'}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:600;">₹${(b.total_amount || 0).toLocaleString('en-IN')}</td>
+                    <td style="padding:10px 12px;text-align:right;color:#059669;font-weight:600;">₹${paid.toLocaleString('en-IN')}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${due > 0 ? '#DC2626' : '#059669'};font-weight:700;">₹${due.toLocaleString('en-IN')}${due>0?' ⚠️':''}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>`
+          }
+        </div>
+      </div>
+
+      <!-- Section: Currently In-House -->
+      <div style="margin-bottom:22px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="background:#0F172A;color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>🏠</span> Currently In-House
+          </div>
+          <span style="background:rgba(255,255,255,0.16);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">${staying.length}</span>
+        </div>
+        <div>
+          ${staying.length === 0 ? '<div style="color:var(--muted);text-align:center;padding:24px;font-size:13px;">No guests currently in-house</div>' :
+            `<table style="width:100%;font-size:12.5px;border-collapse:collapse;">
+              <thead style="background:#F8FAFC;color:#475569;border-bottom:1px solid #E2E8F0;">
+                <tr>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Guest</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Property</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Check-in</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Check-out</th>
+                  <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Contact</th>
+                  <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${staying.map(b => {
+                  const paid = paidMapFull[b.booking_id] || 0;
+                  const due = Math.max((b.total_amount || 0) - paid, 0);
+                  return `<tr style="border-bottom:1px solid #F1F5F9;">
+                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong></td>
+                    <td style="padding:10px 12px;color:#334155;">${b.rooms?.nickname || b.room_id}</td>
+                    <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.check_in || '-'}</td>
+                    <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.check_out || '-'}</td>
+                    <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.guest_phone || '-'}</td>
+                    <td style="padding:10px 12px;text-align:right;color:${due > 0 ? '#DC2626' : '#059669'};font-weight:700;">₹${due.toLocaleString('en-IN')}</td>
+                  </tr>`;
+                }).join('')}
+              </tbody>
+            </table>`
+          }
+        </div>
+      </div>
+
+      <!-- Section: Payments Received -->
+      <div style="margin-bottom:22px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="background:#0F172A;color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>💰</span> Payments Received Today
+          </div>
+          <span style="background:rgba(255,255,255,0.16);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">₹${totalPayments.toLocaleString('en-IN')} (${(allPays || []).length} txn)</span>
+        </div>
+        <div style="padding:14px;">
+          ${(allPays || []).length === 0 ? '<div style="color:var(--muted);text-align:center;padding:16px;font-size:13px;">No payments recorded for this date</div>' :
+            `<div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+                ${Object.entries(paymentByMode).map(([mode, amt]) => 
+                  `<span style="display:inline-block;background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46;padding:4px 10px;border-radius:16px;font-size:11.5px;font-weight:600;">${mode}: ₹${amt.toLocaleString('en-IN')}</span>`
+                ).join('')}
+              </div>
+              <table style="width:100%;font-size:12.5px;border-collapse:collapse;">
+                <thead style="background:#F8FAFC;color:#475569;border-bottom:1px solid #E2E8F0;">
+                  <tr>
+                    <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Guest</th>
+                    <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Property</th>
+                    <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Mode</th>
+                    <th style="padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Ref / Notes</th>
+                    <th style="padding:9px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(allPays || []).map(p => {
+                    const bk = (allBks || []).find(b => b.booking_id === p.booking_id);
+                    return `<tr style="border-bottom:1px solid #F1F5F9;">
+                      <td style="padding:10px 12px;"><strong>${bk?.guest_name || 'Unknown'}</strong></td>
+                      <td style="padding:10px 12px;color:#334155;">${bk?.rooms?.nickname || bk?.room_id || '-'}</td>
+                      <td style="padding:10px 12px;"><span style="background:#F1F5F9;padding:2px 8px;border-radius:4px;font-size:11.5px;font-weight:600;color:#334155;">${p.payment_mode || '-'}</span></td>
+                      <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${p.reference_no || p.notes || '-'}</td>
+                      <td style="padding:10px 12px;text-align:right;color:#059669;font-weight:700;">₹${(p.amount || 0).toLocaleString('en-IN')}</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>`
+          }
+        </div>
+      </div>
+
+      ${checkins.length > 0 ? `
+      <!-- Section: Channel Source Breakdown -->
+      <div style="margin-bottom:22px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+        <div style="background:#0F172A;color:#fff;padding:10px 16px;font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span>📊</span> Check-in Channel Breakdown
+          </div>
+          <span style="background:rgba(255,255,255,0.16);padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;">${checkins.length} Total</span>
+        </div>
+        <div>
+          <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <tr style="border-bottom:1px solid #F1F5F9;">
+              <td style="padding:10px 14px;"><strong>🌐 Online (Airbnb)</strong></td>
+              <td style="padding:10px 14px;text-align:center;color:#64748B;">${onlineBks.length} bookings</td>
+              <td style="padding:10px 14px;text-align:right;font-weight:700;color:#0F172A;">₹${onlineBks.reduce((s,b) => s+(b.total_amount||0), 0).toLocaleString('en-IN')}</td>
+            </tr>
+            <tr style="border-bottom:1px solid #F1F5F9;">
+              <td style="padding:10px 14px;"><strong>🏠 Offline (Direct / Phone)</strong></td>
+              <td style="padding:10px 14px;text-align:center;color:#64748B;">${offlineBks.length} bookings</td>
+              <td style="padding:10px 14px;text-align:right;font-weight:700;color:#0F172A;">₹${offlineBks.reduce((s,b) => s+(b.total_amount||0), 0).toLocaleString('en-IN')}</td>
+            </tr>
+            ${reviewBks.length > 0 ? `<tr style="background:#F5F3FF;">
+              <td style="padding:10px 14px;"><strong style="color:#6D28D9;">⭐ Review Bookings</strong></td>
+              <td style="padding:10px 14px;text-align:center;color:#6D28D9;">${reviewBks.length} bookings</td>
+              <td style="padding:10px 14px;text-align:right;color:#6D28D9;font-weight:700;">₹${reviewBks.reduce((s,b) => s+(b.total_amount||0), 0).toLocaleString('en-IN')} (own money)</td>
+            </tr>` : ''}
+          </table>
+        </div>
+      </div>` : ''}
+
+      <!-- Executive Footer -->
+      <div style="background:#0F172A;color:#94A3B8;padding:22px 24px;margin:24px -32px -32px -32px;border-radius:0 0 12px 12px;text-align:center;border-top:1px solid #1E293B;">
+        <div style="font-size:11px;letter-spacing:1.8px;color:#E2E8F0;font-weight:800;margin-bottom:4px;text-transform:uppercase;">${brand.toUpperCase()}</div>
+        <div style="font-size:11.5px;color:#94A3B8;">CIN: U55101UP2026PTC244637 &bull; GSTIN: 09ABECT9843K1Z7 &bull; Lucknow, Uttar Pradesh</div>
+        <div style="font-size:11px;color:#64748B;margin-top:4px;">Report Generated: ${new Date().toLocaleString('en-IN', {dateStyle:'medium', timeStyle:'short'})} &bull; 🌐 uniquehavenhomesstay.com</div>
+        <div style="font-size:11px;font-weight:600;margin-top:6px;color:#94A3B8;">⚡ Hospitality Operations Management System</div>
+      </div>
+    </div>
+
+    <style>
+      @media print {
+        @page { size: A4; margin: 0; }
+        body { padding: 8mm 10mm !important; }
+      }
+    </style>
+  `, 'daily-report');
+}
+
+function printDailyReportWindow() {
+  const reportEl = document.querySelector('.report-doc');
+  if (!reportEl) {
+    if (window.fsn) fsn.info('Info', 'Report not loaded');
+    else alert('Report not loaded');
+    return;
+  }
+  const html = reportEl.outerHTML;
+  const repDate = window._dailyReportDate || new Date().toISOString().slice(0, 10);
+  const pdfTitle = `TUHH_Daily_Operations_Report_${repDate}`;
+  window.printDocumentHTML(html, pdfTitle);
+}
+window.printDailyReportWindow = printDailyReportWindow;
+
+async function exportDailyReportCSV(date) {
+  const repDate = date || window._dailyReportDate || new Date().toISOString().slice(0, 10);
+  const [
+    { data: allBks },
+    { data: allPays }
+  ] = await Promise.all([
+    sb.from('guest_register').select('*, rooms(nickname, unit_no)'),
+    sb.from('payment_history').select('*').eq('payment_date', repDate).neq('verification_status', 'rejected')
+  ]);
+
+  const [
+    { data: allPaysFull }
+  ] = await Promise.all([
+    sb.from('payment_history').select('booking_id, amount').neq('verification_status', 'rejected')
+  ]);
+
+  const paidMapFull = {};
+  (allPaysFull || []).forEach(p => {
+    paidMapFull[p.booking_id] = (paidMapFull[p.booking_id] || 0) + (p.amount || 0);
+  });
+
+  const checkins = (allBks || []).filter(b => b.check_in === repDate && !b.is_cancelled);
+  const checkouts = (allBks || []).filter(b => b.check_out === repDate && !b.is_cancelled);
+  const staying = (allBks || []).filter(b => b.check_in <= repDate && b.check_out >= repDate && !b.is_cancelled);
+
+  let csv = `THE UNIQUE HAVEN HOMES PRIVATE LIMITED - DAILY OPERATIONS REPORT\n`;
+  csv += `Date,${repDate}\n`;
+  csv += `Generated On,${new Date().toLocaleString('en-IN')}\n\n`;
+
+  csv += `SECTION 1: TODAY CHECK-INS (${checkins.length})\n`;
+  csv += `Guest Name,Room / Unit,Phone,Booking ID,Mode,Check-Out,Total Amount,Paid,Balance Due\n`;
+  checkins.forEach(b => {
+    const pd = paidMapFull[b.booking_id] || 0;
+    const due = Math.max((b.total_amount || 0) - pd, 0);
+    const rName = (propLabel(b.rooms) || b.room_id || '-').replace(/"/g, '""');
+    csv += `"${(b.guest_name || '').replace(/"/g, '""')}","${rName}","${b.phone || '-'}","${b.booking_id || ''}","${b.booking_mode || ''}","${b.check_out || ''}",${b.total_amount || 0},${pd},${due}\n`;
+  });
+
+  csv += `\nSECTION 2: TODAY CHECK-OUTS (${checkouts.length})\n`;
+  csv += `Guest Name,Room / Unit,Phone,Booking ID,Mode,Check-In,Total Amount,Paid,Balance Due\n`;
+  checkouts.forEach(b => {
+    const pd = paidMapFull[b.booking_id] || 0;
+    const due = Math.max((b.total_amount || 0) - pd, 0);
+    const rName = (propLabel(b.rooms) || b.room_id || '-').replace(/"/g, '""');
+    csv += `"${(b.guest_name || '').replace(/"/g, '""')}","${rName}","${b.phone || '-'}","${b.booking_id || ''}","${b.booking_mode || ''}","${b.check_in || ''}",${b.total_amount || 0},${pd},${due}\n`;
+  });
+
+  csv += `\nSECTION 3: TODAY PAYMENTS RECEIVED (${(allPays || []).length})\n`;
+  csv += `Payment Date,Amount (INR),Mode,Booking ID,Notes\n`;
+  (allPays || []).forEach(p => {
+    csv += `"${p.payment_date || ''}",${p.amount || 0},"${p.payment_mode || ''}","${p.booking_id || ''}","${(p.notes || '').replace(/"/g, '""')}"\n`;
+  });
+
+  csv += `\n"THE UNIQUE HAVEN HOMES PRIVATE LIMITED"\n"CIN: U55101UP2024PTC202863 · uniquehavenhomesstay.com"\n`;
+
+  window.exportCSV(csv, `TUHH_Daily_Report_${repDate}.csv`);
+}
+window.exportDailyReportCSV = exportDailyReportCSV;
+
+async function whatsappDailyReport(date) {
+  const [
+    { data: allBks },
+    { data: allPays }
+  ] = await Promise.all([
+    sb.from('guest_register').select('*, rooms(nickname)'),
+    sb.from('payment_history').select('*').eq('payment_date', date).neq('verification_status', 'rejected')
+  ]);
+
+  const { data: allPaysFull } = await sb.from('payment_history')
+    .select('booking_id, amount').neq('verification_status', 'rejected');
+  
+  const paidMap = {};
+  (allPaysFull || []).forEach(p => {
+    paidMap[p.booking_id] = (paidMap[p.booking_id] || 0) + (p.amount || 0);
+  });
+
+  const checkins = (allBks || []).filter(b => b.check_in === date && !b.is_cancelled);
+  const checkouts = (allBks || []).filter(b => b.check_out === date && !b.is_cancelled);
+  const totalPay = (allPays || []).reduce((s,p) => s + (p.amount||0), 0);
+  const totalDue = (allBks || []).reduce((s, b) => {
+    if (b.is_cancelled || b.check_in > date) return s;
+    const paid = paidMap[b.booking_id] || 0;
+    const due = Math.max((b.total_amount || 0) - paid, 0);
+    return s + (due > 1 ? due : 0);
+  }, 0);
+
+  const NL = String.fromCharCode(10);
+  const dateStr = new Date(date).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
+  
+  let msg = '*📊 DAILY REPORT*' + NL + '*' + dateStr + '*' + NL + NL;
+  msg += '━━━━━━━━━━━━━━━━━' + NL;
+  msg += '*📥 Check-ins:* ' + checkins.length + NL;
+  msg += '*📤 Check-outs:* ' + checkouts.length + NL;
+  msg += '*💰 Payments:* Rs.' + totalPay.toLocaleString('en-IN') + NL;
+  msg += '*⚠️ Total Due:* Rs.' + totalDue.toLocaleString('en-IN') + NL;
+  msg += '━━━━━━━━━━━━━━━━━' + NL + NL;
+
+  if (checkins.length > 0) {
+    msg += '*📥 CHECK-INS:*' + NL;
+    checkins.forEach((b, i) => {
+      const paid = paidMap[b.booking_id] || 0;
+      const due = Math.max((b.total_amount||0) - paid, 0);
+      msg += (i+1) + '. ' + b.guest_name + NL;
+      msg += '   ' + (b.rooms?.nickname || b.room_id) + NL;
+      msg += '   Total: Rs.' + (b.total_amount||0).toLocaleString('en-IN');
+      if (due > 0) msg += ' (Due: Rs.' + due.toLocaleString('en-IN') + ')';
+      msg += NL + NL;
+    });
+  }
+
+  if (checkouts.length > 0) {
+    msg += '*📤 CHECK-OUTS:*' + NL;
+    checkouts.forEach((b, i) => {
+      msg += (i+1) + '. ' + b.guest_name + ' — ' + (b.rooms?.nickname || b.room_id) + NL;
+    });
+    msg += NL;
+  }
+
+  msg += '━━━━━━━━━━━━━━━━━' + NL;
+  msg += '_THE UNIQUE HAVEN HOMES PRIVATE LIMITED_' + NL;
+  msg += '🌐 uniquehavenhomesstay.com' + NL;
+  msg += '⚡ Developed by Praveen Singh';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  const q = String.fromCharCode(39);
+  modal.innerHTML = 
+    '<div class="modal-box" style="max-width:600px;">' +
+      '<button class="modal-close" onclick="this.closest(' + q + '.modal-overlay' + q + ').remove()">✕</button>' +
+      '<h2>📱 Daily Report — WhatsApp</h2>' +
+      '<textarea id="dailyMsg" style="width:100%;height:400px;font-family:monospace;font-size:12px;padding:10px;border:1px solid #ddd;border-radius:8px;">' + msg + '</textarea>' +
+      '<div class="btn-row" style="margin-top:12px;">' +
+        '<button style="background:#128C7E;color:#fff;" onclick="window.open(' + q + 'https://wa.me/?text=' + q + '+encodeURIComponent(document.getElementById(' + q + 'dailyMsg' + q + ').value),' + q + '_blank' + q + ')">📤 Share on WhatsApp</button>' +
+        '<button class="outline" onclick="navigator.clipboard.writeText(document.getElementById(' + q + 'dailyMsg' + q + ').value);fsn.success(' + q + 'Copied' + q + ',' + q + 'Message copied' + q + ')">📋 Copy</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+window.renderDailyReport = renderDailyReport;
+window.whatsappDailyReport = whatsappDailyReport;
+
+// ══════════════════════════════════════════════════════════════════════
+// 📋 AUTOMATED DAILY WHATSAPP STATUS GENERATOR (Blossom Skyline 101–501)
+// Tailored specifically for the "📑 Booking Data" WhatsApp Group
+// ══════════════════════════════════════════════════════════════════════
+window._blossomStatusSettings = {
+  includeTags: true,
+  vacantLabel: 'Khali',
+  includeVillas: false,
+  useRedEmoji: true
+};
+
+async function openBlossomSkylineDailyStatusModal(targetDate) {
+  const today = new Date().toISOString().slice(0, 10);
+  const repDate = targetDate || window._dailyReportDate || today;
+
+  let modal = document.getElementById('blossomStatusModalOverlay');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'blossomStatusModalOverlay';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  modal.style.display = 'flex';
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:680px;width:94%;padding:26px;border-radius:18px;box-shadow:0 20px 45px rgba(0,0,0,0.25);background:var(--card,#ffffff);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:24px;height:24px;border:3px solid #CBD5E1;border-top-color:#EF4444;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <div>
+          <div style="font-size:15px;font-weight:800;color:var(--text,#0F172A);">Generating WhatsApp Booking Status...</div>
+          <div style="font-size:12px;color:var(--muted,#64748B);margin-top:2px;">Analyzing live bookings, dues & payments for ${repDate}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  try {
+    const [
+      { data: bks, error: bksErr },
+      { data: pays, error: paysErr },
+      { data: flats, error: flatsErr }
+    ] = await Promise.all([
+      sb.from('guest_register')
+        .select('*')
+        .lte('check_in', repDate)
+        .gte('check_out', repDate)
+        .eq('is_cancelled', false),
+      sb.from('payment_history')
+        .select('booking_id, amount')
+        .neq('verification_status', 'rejected'),
+      sb.from('flats_status')
+        .select('*')
+    ]);
+
+    if (bksErr) console.warn('guest_register error:', bksErr);
+
+    const paidMap = {};
+    (pays || []).forEach(p => {
+      paidMap[p.booking_id] = (paidMap[p.booking_id] || 0) + (p.amount || 0);
+    });
+
+    const flatStatusMap = {};
+    (flats || []).forEach(f => {
+      flatStatusMap[f.room_id] = f;
+    });
+
+    const units = [
+      { num: '101', roomIds: ['GOM-101'], name: 'RedRose Palace' },
+      { num: '102', roomIds: ['GOM-102'], name: 'Black Beauty' },
+      { num: '201', roomIds: ['GOM-201'], name: 'The Dark Blue' },
+      { num: '202', roomIds: ['GOM-202'], name: 'The Brown' },
+      { num: '301', roomIds: ['GOM-301'], name: 'The Light Green' },
+      { num: '302', roomIds: ['GOM-302'], name: 'The Unique' },
+      { num: '401', roomIds: ['GOM-401'], name: 'The Nawabi Stay' },
+      { num: '402', roomIds: ['Flat 402', 'GOM-402'], name: 'The Tehzeeb Nest' },
+      { num: '501', roomIds: ['GOM-501'], name: 'Starlight Blue PentHouse' }
+    ];
+
+    window._blossomStatusCache = {
+      repDate,
+      bks: bks || [],
+      paidMap,
+      flatStatusMap,
+      units
+    };
+
+    renderBlossomStatusModalUI(repDate);
+
+  } catch (err) {
+    console.error('Error fetching Blossom status data:', err);
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:520px;padding:24px;border-radius:16px;">
+        <button class="modal-close" onclick="document.getElementById('blossomStatusModalOverlay').remove()">✕</button>
+        <h3 style="color:#DC2626;margin:0 0 8px;">⚠️ Could not load status</h3>
+        <p style="font-size:13px;color:#64748B;line-height:1.5;">${escapeHtml(err.message || String(err))}</p>
+      </div>
+    `;
+  }
+}
+
+function computeBlossomUnitDetails() {
+  const cache = window._blossomStatusCache;
+  if (!cache) return { items: [], totalPending: 0, totalPaid: 0, pendingCount: 0, paidCount: 0, vacantCount: 0 };
+  const { repDate, bks, paidMap, units } = cache;
+
+  const items = [];
+  let totalPending = 0;
+  let totalPaid = 0;
+  let pendingCount = 0;
+  let paidCount = 0;
+  let vacantCount = 0;
+
+  units.forEach(u => {
+    // Only bookings that are ACTUALLY ACTIVE on repDate:
+    // 1) Guest check_in is on repDate (whether multi-day stay or day-stay where check_in === check_out === repDate)
+    // 2) OR Guest checked in before repDate AND check_out is strictly after repDate (overnight staying guest)
+    // Guests where check_in < repDate AND check_out <= repDate have ALREADY CHECKED OUT today morning/earlier,
+    // so the flat is VACANT today!
+    const roomBks = bks.filter(b => {
+      if (!u.roomIds.includes(b.room_id)) return false;
+      if (b.check_in === repDate) return true;
+      if (b.check_in < repDate && b.check_out > repDate) return true;
+      return false;
+    });
+
+    roomBks.sort((a, b) => {
+      const aPri = a.check_in === repDate ? 2 : (a.check_out > repDate ? 1 : 0);
+      const bPri = b.check_in === repDate ? 2 : (b.check_out > repDate ? 1 : 0);
+      return bPri - aPri;
+    });
+
+    const activeBk = roomBks[0];
+    if (!activeBk) {
+      vacantCount++;
+      items.push({
+        num: u.num,
+        isVacant: true,
+        guestName: '',
+        total: 0,
+        paid: 0,
+        pending: 0,
+        isInfluencer: false
+      });
+      return;
+    }
+
+    let gName = (activeBk.guest_name || '').trim();
+    const isInfluencer = activeBk.is_review_booking || /\binfluencer\b/i.test(gName) || /\binfluencer\b/i.test(activeBk.notes || '');
+    if (isInfluencer && !/\(influencer\)/i.test(gName)) {
+      const cleanBase = gName.replace(/\s*\(?\s*influencer\s*\)?/i, '').trim();
+      gName = cleanBase ? `${cleanBase} (Influencer)` : 'Influencer';
+    }
+
+    const total = activeBk.total_amount || 0;
+    let paid = paidMap[activeBk.booking_id] || 0;
+
+    if (activeBk.payment_status === 'Paid' && paid < total) {
+      paid = total;
+    } else if (activeBk.payment_status === 'Unpaid' && paid === 0) {
+      paid = 0;
+    }
+
+    const pending = Math.max(0, total - paid);
+
+    if (pending > 0) {
+      pendingCount++;
+      totalPending += pending;
+    } else if (total > 0) {
+      paidCount++;
+      totalPaid += total;
+    }
+
+    items.push({
+      num: u.num,
+      isVacant: false,
+      guestName: gName,
+      total,
+      paid,
+      pending,
+      isInfluencer
+    });
+  });
+
+  return { items, totalPending, totalPaid, pendingCount, paidCount, vacantCount };
+}
+
+function generateBlossomStatusText(includeTags, vacantLabel, includeVillas, useRedEmoji = true) {
+  const cache = window._blossomStatusCache;
+  if (!cache) return '';
+  const { repDate, bks, paidMap } = cache;
+  const { items } = computeBlossomUnitDetails();
+
+  const lines = [];
+  if (includeTags) {
+    lines.push('@Arman Commander @Abraham Khan (Raja) @Mr. Firoz khan @Mr. Shahanshah Khan ');
+  }
+  lines.push('📋 UPDATED BOOKING STATUS\n');
+
+  items.forEach(item => {
+    if (item.isVacant) {
+      lines.push(`${item.num} – ${vacantLabel || 'Khali'}`);
+      return;
+    }
+
+    const fmtTotal = '₹' + item.total.toLocaleString('en-IN');
+    const fmtPending = '₹' + item.pending.toLocaleString('en-IN');
+
+    if (item.pending === 0 && item.total > 0) {
+      // 0 pending means fully paid -> marked with ✅
+      lines.push(`${item.num} – ${item.guestName} | ${fmtTotal} / ₹0 ✅`);
+    } else {
+      // Pending money to collect -> marked with 🔴 (Red dot highlights who owes money)
+      const redMarker = useRedEmoji ? ' 🔴' : '';
+      lines.push(`${item.num} – ${item.guestName} | ${fmtTotal} / ${fmtPending}${redMarker}`);
+    }
+  });
+
+  if (includeVillas) {
+    lines.push('\n🏡 VILLAS & ESTATES');
+    const villaUnits = [
+      { num: 'VIL-101', name: 'Gomti Grand Villa' },
+      { num: 'VIL-102', name: 'Royal White House' },
+      { num: 'VIL-103', name: 'The Pink House' },
+      { num: 'VIL-104', name: 'The Green House' },
+      { num: 'VIL-105', name: 'The Yellow House' },
+      { num: 'VIL-106', name: 'Green Forest' },
+      { num: 'VIL-107', name: 'The Velvet House' },
+      { num: 'VIL-108', name: 'Pink Paradise' },
+      { num: 'LUL-101', name: 'The Luxe Haven' }
+    ];
+    villaUnits.forEach(v => {
+      const vbk = bks.find(b => {
+        if (b.room_id !== v.num) return false;
+        if (b.check_in === repDate) return true;
+        if (b.check_in < repDate && b.check_out > repDate) return true;
+        return false;
+      });
+      if (!vbk) {
+        lines.push(`${v.num} – ${vacantLabel || 'Khali'}`);
+      } else {
+        const vTot = vbk.total_amount || 0;
+        let vPaid = paidMap[vbk.booking_id] || 0;
+        if (vbk.payment_status === 'Paid' && vPaid < vTot) vPaid = vTot;
+        const vPending = Math.max(0, vTot - vPaid);
+        if (vPending === 0 && vTot > 0) {
+          lines.push(`${v.num} – ${vbk.guest_name} | ₹${vTot.toLocaleString('en-IN')} / ₹0 ✅`);
+        } else {
+          const redMarker = useRedEmoji ? ' 🔴' : '';
+          lines.push(`${v.num} – ${vbk.guest_name} | ₹${vTot.toLocaleString('en-IN')} / ₹${vPending.toLocaleString('en-IN')}${redMarker}`);
+        }
+      }
+    });
+  }
+
+  return lines.join('\n');
+}
+
+function renderBlossomStatusModalUI(repDate) {
+  const modal = document.getElementById('blossomStatusModalOverlay');
+  if (!modal) return;
+
+  const s = window._blossomStatusSettings;
+  const initialText = generateBlossomStatusText(s.includeTags, s.vacantLabel, s.includeVillas, s.useRedEmoji);
+  const { items, totalPending, totalPaid, pendingCount, paidCount } = computeBlossomUnitDetails();
+
+  const dateFormatted = new Date(repDate).toLocaleDateString('en-IN', {
+    weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
+  });
+
+  // Generate visual cards: RED for pending payments, GREEN for paid, GRAY for Khali
+  const visualCardsHtml = items.map(it => {
+    if (it.isVacant) {
+      return `
+        <div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-weight:800;font-size:12.5px;color:#64748B;">Flat ${it.num}</div>
+          <span style="background:#E2E8F0;color:#475569;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;">${s.vacantLabel || 'Khali'}</span>
+        </div>
+      `;
+    }
+    if (it.pending > 0) {
+      // 🔴 RED HIGHLIGHT: GUEST SE PAISA LENA HAI
+      return `
+        <div style="background:#FEF2F2;border:2px solid #EF4444;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(239,68,68,0.12);">
+          <div>
+            <div style="font-weight:900;font-size:13px;color:#991B1B;display:flex;align-items:center;gap:6px;">
+              <span>Flat ${it.num} – ${escapeHtml(it.guestName)}</span>
+              ${it.isInfluencer ? '<span style="background:#6366F1;color:#fff;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:6px;">Influencer</span>' : ''}
+            </div>
+            <div style="font-size:11px;color:#B91C1C;font-weight:600;margin-top:1px;">
+              Total: ₹${it.total.toLocaleString('en-IN')} • Paid: ₹${it.paid.toLocaleString('en-IN')}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="background:#EF4444;color:#FFFFFF;font-size:11.5px;font-weight:900;padding:3px 9px;border-radius:8px;display:inline-block;letter-spacing:0.3px;">
+              ₹${it.pending.toLocaleString('en-IN')} LENA HAI 🔴
+            </span>
+          </div>
+        </div>
+      `;
+    } else {
+      // 🟢 GREEN HIGHLIGHT: FULLY PAID
+      return `
+        <div style="background:#F0FDF4;border:1.5px solid #22C55E;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-weight:800;font-size:12.5px;color:#166534;display:flex;align-items:center;gap:6px;">
+              <span>Flat ${it.num} – ${escapeHtml(it.guestName)}</span>
+              ${it.isInfluencer ? '<span style="background:#6366F1;color:#fff;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:6px;">Influencer</span>' : ''}
+            </div>
+            <div style="font-size:11px;color:#15803D;font-weight:500;margin-top:1px;">
+              Total: ₹${it.total.toLocaleString('en-IN')} • Full Paid
+            </div>
+          </div>
+          <span style="background:#16A34A;color:#FFFFFF;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;">
+            ₹0 DUE ✅
+          </span>
+        </div>
+      `;
+    }
+  }).join('');
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:720px;width:95%;max-height:92vh;overflow-y:auto;padding:24px 26px;border-radius:20px;box-shadow:0 24px 50px rgba(0,0,0,0.3);background:var(--card,#ffffff);border:1px solid var(--border,#E2E8F0);">
+      
+      <!-- Top Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;position:relative;">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+          <div style="width:40px;height:40px;border-radius:12px;background:#25D366;color:#ffffff;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;box-shadow:0 3px 10px rgba(37,211,102,0.35);">
+            📋
+          </div>
+          <div style="min-width:0;flex:1;">
+            <h2 style="margin:0;font-size:16px;font-weight:900;color:var(--text,#0F172A);letter-spacing:-0.2px;line-height:1.2;">
+              WhatsApp Booking Status
+            </h2>
+            <div style="font-size:11.5px;color:var(--muted,#64748B);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              Blossom Skyline (101–501) • ${dateFormatted}
+            </div>
+          </div>
+        </div>
+
+        <!-- Action / Close area: Clear separated layout so X never overlaps! -->
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <button type="button" onclick="window.copyBlossomStatusText()" style="background:#25D366;color:#ffffff;border:none;padding:6px 12px;border-radius:10px;font-size:11.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 2px 6px rgba(37,211,102,0.3);white-space:nowrap;letter-spacing:0.3px;">
+            📋 1-Click Copy
+          </button>
+          <button type="button" onclick="document.getElementById('blossomStatusModalOverlay').remove()" style="width:30px;height:30px;border-radius:50%;background:#F1F5F9;color:#64748B;border:1px solid #E2E8F0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:bold;flex-shrink:0;padding:0;line-height:1;" title="Close">✕</button>
+        </div>
+      </div>
+
+      <!-- 🔴 EXECUTIVE HIGHLIGHT BANNER: RED FOR PENDING DUES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div style="background:#FEF2F2;border:2px solid #EF4444;border-radius:12px;padding:12px 14px;box-shadow:0 2px 6px rgba(239,68,68,0.12);">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:#991B1B;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;">
+            <span>🔴</span> <span>Total Paisa Lena Hai (Pending):</span>
+          </div>
+          <div style="font-size:20px;font-weight:900;color:#DC2626;margin-top:3px;">
+            ₹${totalPending.toLocaleString('en-IN')}
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#B91C1C;margin-top:1px;">
+            ${pendingCount} Guests se payment lena baaki hai
+          </div>
+        </div>
+
+        <div style="background:#F0FDF4;border:1.5px solid #22C55E;border-radius:12px;padding:12px 14px;">
+          <div style="font-size:11px;font-weight:800;text-transform:uppercase;color:#166534;letter-spacing:0.5px;display:flex;align-items:center;gap:5px;">
+            <span>🟢</span> <span>Total Fully Paid:</span>
+          </div>
+          <div style="font-size:20px;font-weight:900;color:#16A34A;margin-top:3px;">
+            ₹${totalPaid.toLocaleString('en-IN')}
+          </div>
+          <div style="font-size:11px;font-weight:700;color:#15803D;margin-top:1px;">
+            ${paidCount} Guests poora pay kar chuke hain ✅
+          </div>
+        </div>
+      </div>
+
+      <!-- 🔴 VISUAL LIST OF FLATS: RED HIGHLIGHT FOR WHO OWES MONEY -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11.5px;font-weight:800;color:var(--text,#334155);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;">
+          <span>Flat-by-Flat Payment Status:</span>
+          <span style="font-size:11px;color:#DC2626;font-weight:800;">🔴 Red = Paisa Lena Hai</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:8px;">
+          ${visualCardsHtml}
+        </div>
+      </div>
+
+      <!-- Controls bar: Date & Filters -->
+      <div style="background:var(--bg,#F8FAFC);border:1px solid var(--border,#E2E8F0);padding:10px 14px;border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <label style="font-size:12px;font-weight:700;color:var(--text,#334155);">📅 Date:</label>
+          <input type="date" value="${repDate}" onchange="openBlossomSkylineDailyStatusModal(this.value)" style="padding:4px 10px;font-size:12.5px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;font-weight:600;color:var(--text,#0F172A);">
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;font-size:11.5px;font-weight:600;color:var(--text,#334155);flex-wrap:wrap;">
+          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+            <input type="checkbox" id="chkBlossomTags" ${s.includeTags ? 'checked' : ''} onchange="window.updateBlossomStatusText()">
+            <span>Owner Tags</span>
+          </label>
+          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Include 🔴 Red circle emoji on pending lines">
+            <input type="checkbox" id="chkBlossomRedEmoji" ${s.useRedEmoji ? 'checked' : ''} onchange="window.updateBlossomStatusText()">
+            <span>🔴 Red Marker</span>
+          </label>
+          <div style="display:inline-flex;align-items:center;gap:4px;">
+            <span style="font-size:11px;color:var(--muted,#64748B);">Vacant text:</span>
+            <select id="selBlossomVacant" onchange="window.updateBlossomStatusText()" style="padding:3px 8px;font-size:11.5px;font-weight:700;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:var(--text,#0F172A);">
+              <option value="Khali" ${s.vacantLabel === 'Khali' ? 'selected' : ''}>Khali</option>
+              <option value="Not Booked" ${s.vacantLabel === 'Not Booked' ? 'selected' : ''}>Not Booked</option>
+            </select>
+          </div>
+          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
+            <input type="checkbox" id="chkBlossomVillas" ${s.includeVillas ? 'checked' : ''} onchange="window.updateBlossomStatusText()">
+            <span>+ Villas</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Textarea with Live WhatsApp Message -->
+      <div style="position:relative;margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <label style="font-size:11px;font-weight:800;color:var(--muted,#64748B);text-transform:uppercase;">
+            WhatsApp Formatted Message (Editable):
+          </label>
+        </div>
+        <textarea id="blossomStatusText" rows="11" style="width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:13px;line-height:1.55;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border,#CBD5E1);background:#FFFFFF;color:#0F172A;resize:vertical;box-sizing:border-box;box-shadow:inset 0 1px 3px rgba(0,0,0,0.05);">${initialText}</textarea>
+      </div>
+
+      <!-- Quick Text helper chips -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+        <span style="font-size:11px;font-weight:700;color:var(--muted,#64748B);margin-right:2px;">Quick Insert:</span>
+        <button type="button" class="btn-sm" onclick="window.insertBlossomSnippet(' 🔴')" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:800;cursor:pointer;" title="Mark pending red">
+          + 🔴 Paisa Lena Hai
+        </button>
+        <button type="button" class="btn-sm" onclick="window.insertBlossomSnippet(' | ₹0 ✅')" style="background:#ECFDF5;border:1px solid #A7F3D0;color:#047857;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;cursor:pointer;">
+          + ₹0 ✅ (Fully Paid)
+        </button>
+        <button type="button" class="btn-sm" onclick="window.insertBlossomSnippet(' – Khali')" style="background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;cursor:pointer;">
+          + Khali
+        </button>
+        <button type="button" class="btn-sm" onclick="window.insertBlossomSnippet(' (Influencer)')" style="background:#EEF2FF;border:1px solid #C7D2FE;color:#4338CA;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:700;cursor:pointer;">
+          + (Influencer)
+        </button>
+      </div>
+
+      <!-- Action Footer -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-top:12px;border-top:1px solid var(--border,#E2E8F0);">
+        <div style="font-size:11.5px;color:var(--muted,#64748B);">
+          💡 Single-click: <strong>Copy Message</strong> karke direct WhatsApp mein paste karein
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="button" onclick="window.copyBlossomStatusText()" id="btnCopyBlossomStatus" style="background:linear-gradient(135deg, #25D366 0%, #128C7E 100%);color:#ffffff;border:none;padding:10px 24px;border-radius:10px;font-size:13.5px;font-weight:800;display:inline-flex;align-items:center;gap:8px;cursor:pointer;box-shadow:0 3px 12px rgba(37,211,102,0.4);transition:all 0.15s ease;">
+            📋 Copy Message
+          </button>
+          <button type="button" onclick="window.openWhatsAppWebBlossom()" style="background:#0F172A;color:#ffffff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;cursor:pointer;box-shadow:0 2px 6px rgba(15,23,42,0.2);">
+            💬 WhatsApp Web ➔
+          </button>
+          <button type="button" class="outline" onclick="document.getElementById('blossomStatusModalOverlay').remove()" style="padding:10px 16px;border-radius:10px;font-size:12.5px;font-weight:600;border:1px solid #CBD5E1;background:#fff;color:#475569;cursor:pointer;">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+window.updateBlossomStatusText = function() {
+  const chkTags = document.getElementById('chkBlossomTags');
+  const chkRed = document.getElementById('chkBlossomRedEmoji');
+  const selVacant = document.getElementById('selBlossomVacant');
+  const chkVillas = document.getElementById('chkBlossomVillas');
+  const txt = document.getElementById('blossomStatusText');
+  if (!txt) return;
+
+  const s = window._blossomStatusSettings;
+  s.includeTags = chkTags ? chkTags.checked : true;
+  s.useRedEmoji = chkRed ? chkRed.checked : true;
+  s.vacantLabel = selVacant ? selVacant.value : 'Khali';
+  s.includeVillas = chkVillas ? chkVillas.checked : false;
+
+  txt.value = generateBlossomStatusText(s.includeTags, s.vacantLabel, s.includeVillas, s.useRedEmoji);
+};
+
+window.insertBlossomSnippet = function(snippet) {
+  const txt = document.getElementById('blossomStatusText');
+  if (!txt) return;
+  const start = txt.selectionStart || txt.value.length;
+  const end = txt.selectionEnd || txt.value.length;
+  const val = txt.value;
+  txt.value = val.substring(0, start) + snippet + val.substring(end);
+  txt.focus();
+  txt.setSelectionRange(start + snippet.length, start + snippet.length);
+};
+
+window.copyBlossomStatusText = async function() {
+  const txt = document.getElementById('blossomStatusText');
+  const btn = document.getElementById('btnCopyBlossomStatus');
+  if (!txt) return;
+
+  try {
+    await navigator.clipboard.writeText(txt.value);
+    if (navigator.vibrate) navigator.vibrate(50);
+    if (btn) {
+      const oldHtml = btn.innerHTML;
+      btn.innerHTML = '✅ Copied to Clipboard!';
+      btn.style.background = '#059669';
+      setTimeout(() => {
+        btn.innerHTML = oldHtml;
+        btn.style.background = '#25D366';
+      }, 2500);
+    }
+    if (window.fsn && typeof window.fsn.success === 'function') {
+      window.fsn.success('Copied!', 'WhatsApp Booking Status copied. Paste into Booking Data group!');
+    }
+  } catch (e) {
+    txt.select();
+    document.execCommand('copy');
+    if (window.fsn) window.fsn.info('Copied', 'Text selected & copied.');
+  }
+};
+
+window.openWhatsAppWebBlossom = function() {
+  const txt = document.getElementById('blossomStatusText');
+  const text = txt ? txt.value : '';
+  window.copyBlossomStatusText();
+  // Open WhatsApp Web
+  window.open('https://web.whatsapp.com', '_blank');
+};
+
+window.openBlossomSkylineDailyStatusModal = openBlossomSkylineDailyStatusModal;

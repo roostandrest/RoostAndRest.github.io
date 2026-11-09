@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="beigeGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#F7F3EE"/>
+      <stop offset="100%" stop-color="#E5DDD3"/>
+    </radialGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#5A4A3A" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Circular Base -->
+  <circle cx="200" cy="200" r="185" fill="url(#beigeGrad)" filter="url(#softShadow)"/>
+  <circle cx="200" cy="200" r="172" fill="none" stroke="#D3C7B9" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+  <!-- Botanical Leaf Sprigs -->
+  <g stroke="#3A3228" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Main stem extending from roof right -->
+    <path d="M 235 155 Q 260 140 275 115 Q 285 95 292 78" />
+    <!-- Leaf 1 -->
+    <path d="M 252 142 Q 268 135 272 145 Q 262 148 252 142 Z" fill="#4A4035" />
+    <!-- Leaf 2 -->
+    <path d="M 268 124 Q 285 118 288 128 Q 278 130 268 124 Z" fill="#4A4035" />
+    <!-- Leaf 3 -->
+    <path d="M 280 102 Q 295 90 300 100 Q 290 106 280 102 Z" fill="#4A4035" />
+    <!-- Leaf 4 (Top tip) -->
+    <path d="M 292 78 Q 298 65 304 74 Q 300 83 292 78 Z" fill="#4A4035" />
+  </g>
+
+  <!-- Minimalist House Outline -->
+  <g stroke="#2C241E" stroke-width="4.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Roof with overhanging eaves -->
+    <path d="M 140 170 L 200 120 L 260 170" />
+    <!-- Chimney -->
+    <path d="M 235 140 L 235 125 L 247 125 L 247 150" />
+    <!-- House Body Walls -->
+    <path d="M 152 170 L 152 230 L 248 230 L 248 170" />
+    <!-- Door -->
+    <path d="M 188 230 L 188 200 L 212 200 L 212 230" />
+  </g>
+
+  <!-- Window Dots (4 dots grid) -->
+  <circle cx="170" cy="192" r="3" fill="#2C241E"/>
+  <circle cx="178" cy="192" r="3" fill="#2C241E"/>
+  <circle cx="170" cy="200" r="3" fill="#2C241E"/>
+  <circle cx="178" cy="200" r="3" fill="#2C241E"/>
+
+  <!-- Brand Typography -->
+  <text x="200" y="278" font-family="'Cinzel', 'Playfair Display', 'Georgia', serif" font-size="28" font-weight="700" letter-spacing="3.5" fill="#241C16" text-anchor="middle">
+    ROOST &amp; REST
+  </text>
+  
+  <text x="200" y="306" font-family="'Montserrat', 'Helvetica Neue', sans-serif" font-size="13" font-weight="600" letter-spacing="6" fill="#66594C" text-anchor="middle">
+    — STAYS —
+  </text>
+
+  <text x="200" y="328" font-family="'Montserrat', 'Helvetica Neue', sans-serif" font-size="9" font-weight="500" letter-spacing="2" fill="#8C7D6F" text-anchor="middle">
+    LUCKNOW • INDIA
+  </text>
+</svg>
