@@ -1,6 +1,6 @@
 /**
  * UHHS-OD & Payment Source Global Manager (v2 FIXED)
- * THE UNIQUE HAVEN HOMES PRIVATE LIMITED
+ * ROOST AND REST STAYS
  */
 
 const UHHS_PAYMENT_SOURCES = {
@@ -17,9 +17,9 @@ function getPaymentSourceDropdownHTML(selected = 'UHHS-OD', id = 'payment_source
                 💳 Payment Account / Source
             </label>
             <select id="${id}" name="payment_source" class="form-select form-control" style="border: 1.5px solid #0d6efd; font-weight: 600; width: 100%; max-width: 100%; box-sizing: border-box;" required>
-                <option value="UHHS-OD" ${selected === 'UHHS-OD' ? 'selected' : ''}>🏦 TUHH-OD (Overdraft Account)</option>
+                <option value="UHHS-OD" ${selected === 'UHHS-OD' ? 'selected' : ''}>🏦 Roost & Rest Bank Account</option>
                 <option value="COMPANY" ${selected === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-                <option value="FIROZ" ${selected === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+                <option value="FIROZ" ${selected === 'FIROZ' ? 'selected' : ''}>👤 Anwar Ahmad (Owner Direct)</option>
             </select>
         </div>
     `;

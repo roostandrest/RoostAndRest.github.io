@@ -26,10 +26,11 @@ async function renderReports() {
       roomsData = window._allRoomsCache;
     } else if (window.UHHS_PROPERTIES && window.UHHS_PROPERTIES.length > 0) {
       const UNIT_TO_ROOM = {
-        '101': 'VIL-108', '102': 'VIL-105', '103': 'VIL-106', '104': 'LUL-402',
-        '105': 'GOM-302', '106': 'GOM-301', '107': 'GOM-501', '108': 'GOM-102',
-        '109': 'GOM-401', '110': 'VIL-101', '111': 'GOM-202', '112': 'VIL-103',
-        '114': 'VIL-102', '115': 'GOM-201', '116': 'VIL-107', '117': 'GOM-101'
+        '101': 'RST-101', '102': 'RST-102', '103': 'RST-103', '104': 'RST-104',
+        '105': 'RST-105', '106': 'RST-106', '107': 'RST-107', '108': 'RST-108',
+        '109': 'RST-109', '110': 'RST-110', '111': 'RST-111', '112': 'RST-112',
+        '113': 'RST-113', '114': 'RST-114', '115': 'RST-115', '116': 'RST-116',
+        '117': 'RST-117', '118': 'RST-118'
       };
       roomsData = window.UHHS_PROPERTIES.map(p => ({
         room_id: p.room_id || UNIT_TO_ROOM[p.unit_no] || ('UHHS-' + p.unit_no),
@@ -45,18 +46,9 @@ async function renderReports() {
     .neq('is_cancelled', true).neq('verification_status', 'rejected');
 
   const LOCATION_ORDER = [
-    // 1. 9 properties Vikalp Khand (Flat 402 / GOM-402 directly beside Nawabi Flat 401)
-    'GOM-101', 'GOM-102', 'GOM-201', 'GOM-202', 'GOM-301', 'GOM-302', 'GOM-401', 'GOM-402', 'Flat 402', 'GOM-501',
-    // 2. 3 properties Vishesh Khand
-    'VIL-103', 'VIL-104', 'VIL-105',
-    // 3. Gomti Grand Villa
-    'VIL-101',
-    // 4. Whitehouse
-    'VIL-102',
-    // 5. Celebrity Garden
-    'LUL-402',
-    // 6. Madhav Kunj (4 properties)
-    'VIL-107', 'VIL-106', 'VIL-108', 'LUL-101'
+    'RST-101', 'RST-102', 'RST-103', 'RST-104', 'RST-105', 'RST-106',
+    'RST-107', 'RST-108', 'RST-109', 'RST-110', 'RST-111', 'RST-112',
+    'RST-113', 'RST-114', 'RST-115', 'RST-116', 'RST-117', 'RST-118'
   ];
   if (Array.isArray(roomsData)) {
     roomsData.sort((a, b) => {
@@ -157,12 +149,11 @@ async function renderReports() {
 
   // ─── Property selector (Grouped strictly location-wise) ───
   const CAL_LOCATION_GROUPS = [
-    { label: '📍 Vikalp Khand (9 Properties)', ids: ['GOM-101', 'GOM-102', 'GOM-201', 'GOM-202', 'GOM-301', 'GOM-302', 'GOM-401', 'GOM-402', 'Flat 402', 'GOM-501'] },
-    { label: '📍 Vishesh Khand (3 Properties)', ids: ['VIL-103', 'VIL-104', 'VIL-105'] },
-    { label: '📍 Gomti Grand Villa', ids: ['VIL-101'] },
-    { label: '📍 Whitehouse', ids: ['VIL-102'] },
-    { label: '📍 Celebrity Garden', ids: ['LUL-402'] },
-    { label: '📍 Madhav Kunj (4 Properties)', ids: ['VIL-107', 'VIL-106', 'VIL-108', 'LUL-101'] }
+    { label: '📍 All 18 Roost & Rest Properties', ids: LOCATION_ORDER },
+    { label: '📍 Gomti Nagar & City Centre', ids: ['RST-101', 'RST-102', 'RST-106', 'RST-108', 'RST-112', 'RST-118'] },
+    { label: '📍 Shaheed Path & LuLu Mall', ids: ['RST-104', 'RST-105'] },
+    { label: '📍 Amity University Campus', ids: ['RST-106', 'RST-109'] },
+    { label: '📍 Villas & Luxury Stays', ids: ['RST-103', 'RST-111', 'RST-118'] }
   ];
 
   let propOptions = '<option value="all">🏘️ All Properties (' + allRooms.length + ')</option>';

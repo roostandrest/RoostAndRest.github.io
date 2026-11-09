@@ -25,6 +25,15 @@
   <script>
     (function() {
       try {
+        // Auto-purge legacy TUHH cache on first load
+        if (!localStorage.getItem('roost_cache_flushed_v2')) {
+          [
+            'tuhh_showcase_data_v215', 'uhhs_showcase_data_v1', 'uhhs_showcase_data_v2',
+            'uh_airbnb_audited_cache', 'uhhs_properties_cache', 'hybrid_sync_cache',
+            'uh_airbnb_review_followups', 'all_properties_cache', 'rooms_cache'
+          ].forEach(k => localStorage.removeItem(k));
+          localStorage.setItem('roost_cache_flushed_v2', 'true');
+        }
         localStorage.removeItem('uhhs_theme');
         localStorage.removeItem('uh_theme');
         localStorage.setItem('uhhs_theme', 'light');
