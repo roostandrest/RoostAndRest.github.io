@@ -1388,7 +1388,7 @@ window.quickFillAdmin = function() {
   const em = document.getElementById('email');
   const pw = document.getElementById('password');
   if (em) em.value = 'admin@roostandrest.com';
-  if (pw) pw.value = 'Admin@Roost2026';
+  if (pw) pw.value = 'Airbnb.in1';
 };
 
 async function loginWithEmail() {

@@ -425,7 +425,7 @@ ON CONFLICT (user_id) DO UPDATE SET
   is_approved = true;
 
 -- ═══════════════════════════════════════════════════════════════════
--- 19. CREATE DEFAULT ADMIN USER IN AUTH (admin@roostandrest.com / Admin@Roost2026)
+-- 19. CREATE DEFAULT ADMIN USER IN AUTH (admin@roostandrest.com / Airbnb.in1)
 -- ═══════════════════════════════════════════════════════════════════
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -453,7 +453,7 @@ BEGIN
       'authenticated',
       'authenticated',
       'admin@roostandrest.com',
-      crypt('Admin@Roost2026', gen_salt('bf')),
+      crypt('Airbnb.in1', gen_salt('bf')),
       NOW(),
       '{"provider":"email","providers":["email"]}',
       '{"full_name":"Admin","name":"Admin"}',
@@ -464,7 +464,7 @@ BEGIN
   ELSE
     SELECT id INTO v_user_id FROM auth.users WHERE email = 'admin@roostandrest.com';
     UPDATE auth.users 
-    SET encrypted_password = crypt('Admin@Roost2026', gen_salt('bf')),
+    SET encrypted_password = crypt('Airbnb.in1', gen_salt('bf')),
         email_confirmed_at = NOW()
     WHERE id = v_user_id;
   END IF;
