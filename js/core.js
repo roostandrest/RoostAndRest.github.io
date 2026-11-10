@@ -6238,7 +6238,7 @@ window.printDocumentHTML = function(htmlContent, title = 'Document', options = {
 // ═══════════════════════════════════════════════════════════
 function renderAppMenu() {
   const shortName = (SESSION.displayName || 'System Admin').split('(')[0].trim();
-  const initial = shortName.charAt(0).toUpperCase() || 'P';
+  const initial = shortName.charAt(0).toUpperCase() || 'A';
   const roleLabel = ({
     'developer': 'Developer',
     'admin': 'Admin',

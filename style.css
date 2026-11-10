@@ -8712,6 +8712,267 @@ textarea:focus {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   📱 ROOST & REST NATIVE PWA MENU SCREEN (iOS / AIRBNB LUXE)
+   ═══════════════════════════════════════════════════════════ */
+.roost-menu-wrap {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 12px 14px 100px;
+}
+
+/* User Profile Header Pill */
+.roost-profile-card {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 14px 16px !important;
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 18px !important;
+  margin-bottom: 16px !important;
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.roost-profile-card:hover {
+  border-color: #CBD5E1 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+}
+
+.roost-profile-card:active {
+  transform: scale(0.99);
+}
+
+.roost-avatar-circle {
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  border-radius: 50% !important;
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 3px 10px var(--primary-glow) !important;
+  flex-shrink: 0 !important;
+}
+
+.roost-profile-info {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.roost-profile-name {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #0F172A !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.roost-profile-role {
+  font-size: 12px !important;
+  color: #64748B !important;
+  font-weight: 600 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  line-height: 1.2 !important;
+}
+
+.roost-profile-role span {
+  color: #10B981 !important;
+  font-size: 8px !important;
+  line-height: 1 !important;
+}
+
+.roost-chevron {
+  font-size: 18px !important;
+  color: #94A3B8 !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+
+/* Unified Menu Spotlight Search Bar */
+.roost-menu-search-bar {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 14px !important;
+  margin-bottom: 20px !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+  transition: all 0.2s ease !important;
+}
+
+.roost-menu-search-bar:focus-within {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important;
+}
+
+.roost-search-icon {
+  font-size: 18px !important;
+  color: #64748B !important;
+  flex-shrink: 0 !important;
+}
+
+#menuLiveSearch {
+  flex: 1 !important;
+  min-width: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  color: #0F172A !important;
+  padding: 0 !important;
+  height: auto !important;
+  min-height: unset !important;
+}
+
+#menuLiveSearch::placeholder {
+  color: #94A3B8 !important;
+}
+
+.roost-kbd-pill {
+  padding: 2.5px 8px !important;
+  background: #F1F5F9 !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 6px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #475569 !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", monospace !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  line-height: 1.2 !important;
+}
+
+/* Section Containers */
+.roost-menu-section {
+  margin-bottom: 22px !important;
+}
+
+.roost-section-header {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.8px !important;
+  color: #64748B !important;
+  text-transform: uppercase !important;
+  margin-bottom: 8px !important;
+  padding-left: 6px !important;
+}
+
+.roost-menu-group {
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+}
+
+/* Individual Interactive Menu Row */
+.roost-menu-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  padding: 13px 14px !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  text-decoration: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.roost-menu-group .roost-menu-row:last-child {
+  border-bottom: none !important;
+}
+
+.roost-menu-row:hover {
+  background: #F8FAFC !important;
+}
+
+.roost-menu-row:active {
+  background: #F1F5F9 !important;
+  transform: scale(0.995);
+}
+
+.roost-icon-box {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  border-radius: 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 18px !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.15s ease !important;
+}
+
+.roost-menu-row:hover .roost-icon-box {
+  transform: scale(1.05);
+}
+
+.roost-row-content {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+
+.roost-row-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #0F172A !important;
+  line-height: 1.25 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.roost-row-sub {
+  font-size: 11.5px !important;
+  color: #64748B !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.roost-menu-row .roost-chevron {
+  font-size: 17px !important;
+  color: #CBD5E1 !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+  transition: transform 0.15s ease, color 0.15s ease !important;
+}
+
+.roost-menu-row:hover .roost-chevron {
+  color: #64748B !important;
+  transform: translateX(2px);
+}
+
+/* Logout row special danger state */
+.roost-logout-row:hover {
+  background: #FEF2F2 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
    🛎️ AIRBNB-STYLE TODAY'S HOSTING FEED (DASHBOARD)
    ═══════════════════════════════════════════════════════════ */
 .hosting-feed-header {
