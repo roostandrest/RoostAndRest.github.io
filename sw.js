@@ -1,5 +1,5 @@
-const CACHE_NAME = 'roost-live-v587';
-const RUNTIME_CACHE = 'roost-runtime-v587';
+const CACHE_NAME = 'roost-live-v588';
+const RUNTIME_CACHE = 'roost-runtime-v588';
 
 const CORE_ASSETS = [
   './',

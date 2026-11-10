@@ -232,8 +232,9 @@ async function renderDailyReport(selectedDate) {
                   const paid = paidMapFull[b.booking_id] || 0;
                   const due = Math.max((b.total_amount || 0) - paid, 0);
                   const nights = b.check_in && b.check_out ? Math.max(1, Math.ceil((new Date(b.check_out) - new Date(b.check_in))/86400000)) : '-';
+                  const isRev = b.is_review_booking || (b.notes && b.notes.includes('Review Booking'));
                   return `<tr style="border-bottom:1px solid #F1F5F9;">
-                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong>${b.is_review_booking ? ' <span style="background:#7C3AED;color:#fff;padding:2px 7px;border-radius:10px;font-size:9.5px;font-weight:700;">REVIEW</span>' : ''}</td>
+                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong>${isRev ? ' <span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 7px;border-radius:6px;font-size:9.5px;font-weight:800;margin-left:4px;">⭐ Review Booking</span>' : ''}</td>
                     <td style="padding:10px 12px;color:#334155;">${b.rooms?.nickname || b.room_id}</td>
                     <td style="padding:10px 12px;text-align:center;color:#64748B;">${nights}</td>
                     <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.guest_phone || '-'}</td>
@@ -275,8 +276,9 @@ async function renderDailyReport(selectedDate) {
                 ${checkouts.map(b => {
                   const paid = paidMapFull[b.booking_id] || 0;
                   const due = Math.max((b.total_amount || 0) - paid, 0);
+                  const isRev = b.is_review_booking || (b.notes && b.notes.includes('Review Booking'));
                   return `<tr style="border-bottom:1px solid #F1F5F9;${due > 0 ? 'background:#FEF2F2;' : ''}">
-                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong></td>
+                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong>${isRev ? ' <span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 7px;border-radius:6px;font-size:9.5px;font-weight:800;margin-left:4px;">⭐ Review Booking</span>' : ''}</td>
                     <td style="padding:10px 12px;color:#334155;">${b.rooms?.nickname || b.room_id}</td>
                     <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.guest_phone || '-'}</td>
                     <td style="padding:10px 12px;color:#64748B;">${b.check_out_time || '11 AM'}</td>
@@ -316,8 +318,9 @@ async function renderDailyReport(selectedDate) {
                 ${staying.map(b => {
                   const paid = paidMapFull[b.booking_id] || 0;
                   const due = Math.max((b.total_amount || 0) - paid, 0);
+                  const isRev = b.is_review_booking || (b.notes && b.notes.includes('Review Booking'));
                   return `<tr style="border-bottom:1px solid #F1F5F9;">
-                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong></td>
+                    <td style="padding:10px 12px;"><strong>${b.guest_name}</strong>${isRev ? ' <span style="background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 7px;border-radius:6px;font-size:9.5px;font-weight:800;margin-left:4px;">⭐ Review Booking</span>' : ''}</td>
                     <td style="padding:10px 12px;color:#334155;">${b.rooms?.nickname || b.room_id}</td>
                     <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.check_in || '-'}</td>
                     <td style="padding:10px 12px;font-size:11.5px;color:#64748B;">${b.check_out || '-'}</td>
@@ -539,7 +542,8 @@ async function whatsappDailyReport(date) {
     checkins.forEach((b, i) => {
       const paid = paidMap[b.booking_id] || 0;
       const due = Math.max((b.total_amount||0) - paid, 0);
-      msg += (i+1) + '. ' + b.guest_name + NL;
+      const isRev = b.is_review_booking || (b.notes && b.notes.includes('Review Booking'));
+      msg += (i+1) + '. ' + b.guest_name + (isRev ? ' ⭐ [Review Booking]' : '') + NL;
       msg += '   ' + (b.rooms?.nickname || b.room_id) + NL;
       msg += '   Total: Rs.' + (b.total_amount||0).toLocaleString('en-IN');
       if (due > 0) msg += ' (Due: Rs.' + due.toLocaleString('en-IN') + ')';
@@ -550,7 +554,8 @@ async function whatsappDailyReport(date) {
   if (checkouts.length > 0) {
     msg += '*📤 CHECK-OUTS:*' + NL;
     checkouts.forEach((b, i) => {
-      msg += (i+1) + '. ' + b.guest_name + ' — ' + (b.rooms?.nickname || b.room_id) + NL;
+      const isRev = b.is_review_booking || (b.notes && b.notes.includes('Review Booking'));
+      msg += (i+1) + '. ' + b.guest_name + (isRev ? ' ⭐ [Review Booking]' : '') + ' — ' + (b.rooms?.nickname || b.room_id) + NL;
     });
     msg += NL;
   }
@@ -727,8 +732,12 @@ function computeBlossomUnitDetails() {
     }
 
     let gName = (activeBk.guest_name || '').trim();
-    const isInfluencer = activeBk.is_review_booking || /\binfluencer\b/i.test(gName) || /\binfluencer\b/i.test(activeBk.notes || '');
-    if (isInfluencer && !/\(influencer\)/i.test(gName)) {
+    const isRevStay = activeBk.is_review_booking || (activeBk.notes && activeBk.notes.includes('Review Booking'));
+    const isInfluencer = /\binfluencer\b/i.test(gName) || /\binfluencer\b/i.test(activeBk.notes || '');
+    if (isRevStay && !/\(review booking\)/i.test(gName)) {
+      const cleanBase = gName.replace(/\s*\(?\s*review\s*(booking)?\s*\)?/i, '').trim();
+      gName = cleanBase ? `${cleanBase} (Review Booking)` : 'Review Booking';
+    } else if (isInfluencer && !/\(influencer\)/i.test(gName)) {
       const cleanBase = gName.replace(/\s*\(?\s*influencer\s*\)?/i, '').trim();
       gName = cleanBase ? `${cleanBase} (Influencer)` : 'Influencer';
     }

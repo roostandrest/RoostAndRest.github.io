@@ -2171,7 +2171,7 @@ async function renderFYSummary(range = 'FY', propFilter = '', modeFilter = '') {
   ]);
 
   let fg = (gs.data || []).filter(g => g.check_in >= s && g.check_in <= e);
-  fg = fg.filter(g => g.guest_name && g.guest_name.toLowerCase().trim() !== 'pending' && !g.is_review_booking);
+  fg = fg.filter(g => g.guest_name && g.guest_name.toLowerCase().trim() !== 'pending');
   if (propFilter) fg = fg.filter(g => g.room_id === propFilter);
   if (modeFilter === 'Online') fg = fg.filter(g => g.booking_mode === 'Online-Airbnb');
   if (modeFilter === 'Offline') fg = fg.filter(g => g.booking_mode !== 'Online-Airbnb');
