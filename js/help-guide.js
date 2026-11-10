@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// ❓ ROOST AND REST STAYS (TUHH) — HELP CENTER & OPERATING GUIDE
+// ❓ ROOST AND REST STAYS (Roost & Rest) — HELP CENTER & OPERATING GUIDE
 // Complete Step-by-Step Software Manual, Workflows & Keyboard Shortcuts
 // ═══════════════════════════════════════════════════════════
 
@@ -16,13 +16,13 @@
     const SHORTCUTS_DATA = [
       { key: `${cmdSymbol}K`, single: '/', title: 'Command Palette / Universal Search', desc: 'Poore system me koi bhi guest name, phone, flat number, task ya screen 1 second me dhoondhein.', action: 'window.openCommandPalette()' },
       { key: `${altSymbol}O`, single: 'O', title: 'Today · Operations Hub', desc: 'Aaj ke check-ins, check-outs, in-house guests aur frontdesk execution queue.', action: 'window.openOperationsShortcut()' },
-      { key: `${altSymbol}H`, single: 'H', title: 'Executive Financial Dashboard', desc: 'Real-time Net Revenue, ADR, RevPAR, NOI, channels aur 19 properties leaderboard.', action: 'window.openDashboardShortcut()' },
+      { key: `${altSymbol}H`, single: 'H', title: 'Executive Financial Dashboard', desc: 'Real-time Net Revenue, ADR, RevPAR, NOI, channels aur 18 properties leaderboard.', action: 'window.openDashboardShortcut()' },
       { key: `${altSymbol}N`, single: 'N', title: 'New Booking Create Karein', desc: 'Naya reservation wizard kholein aur guest details enter karein.', action: 'window.openNewBookingShortcut()' },
       { key: `${cmdSymbol}S`, single: 'S', title: 'Save Booking / Form Instantly', desc: 'Booking form ya wizard open hone par turant save karein.', action: 'if(window.triggerSaveBookingShortcut) window.triggerSaveBookingShortcut()' },
       { key: 'E', single: 'E', title: 'Edit Selected Booking / Expenses', desc: 'Booking card ya drawer open hone par direct E dabakar edit karein.', action: 'if(window.editCurrentSelectedBooking) window.editCurrentSelectedBooking()' },
       { key: `${altSymbol}P`, single: 'P', title: 'Quick Payment / Add Payment', desc: 'Active booking ka payment add karein ya pending dues picker kholein.', action: 'window.openQuickPaymentShortcut()' },
       { key: `${altSymbol}D`, single: 'D', title: 'Duplicate Booking / Rebook', desc: 'Purane guest ki details clone karke nayi date par re-book karein.', action: 'window.duplicateExistingBookingShortcut()' },
-      { key: `${altSymbol}C`, single: 'C', title: 'Reservations Calendar', desc: 'Sabhi 19 properties ka multi-unit occupancy timeline grid dekhein.', action: 'window.openCalendarShortcut()' },
+      { key: `${altSymbol}C`, single: 'C', title: 'Reservations Calendar', desc: 'Sabhi 18 properties ka multi-unit occupancy timeline grid dekhein.', action: 'window.openCalendarShortcut()' },
       { key: `${altSymbol}B`, single: 'B', title: 'Bookings Management Hub', desc: 'All confirmed, active, check-in aur check-out bookings ki complete register.', action: 'window.openBookingsShortcut()' },
       { key: `${altSymbol}F`, single: 'F', title: 'Flats Status & Turnaround', desc: 'Real-time room cleanliness, dirty status aur turnaround Kanban board.', action: 'window.openFlatsShortcut()' },
       { key: `${altSymbol}U`, single: 'U', title: 'Units & Master Pricing', desc: '19 units ki live inventory, nightly rates, caretaker & manager contacts.', action: 'window.openUnitsShortcut()' },
@@ -46,7 +46,7 @@
         <div class="tuhh-help-hero">
           <div class="tuhh-help-hero-badge">
             <span class="tuhh-pulse-dot"></span>
-            <span>Roost And Rest Stays · Executive Operating Manual (19 Properties)</span>
+            <span>Roost And Rest Stays · Executive Operating Manual (18 Properties)</span>
           </div>
           <h1 class="tuhh-help-hero-title">Roost And Rest CRM Help Center & Operating Guide</h1>
           <p class="tuhh-help-hero-sub">
@@ -66,20 +66,7 @@
             </button>
           </div>
 
-          <!-- Quick Jump Navigation Pills -->
-          <div class="tuhh-help-quick-pills">
-            <span class="tuhh-help-quick-label">⚡ Quick Jump:</span>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('bookings')"><i class="ti ti-bed"></i> Booking Kaise Karein</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('calendar')"><i class="ti ti-calendar"></i> Calendar & iCal</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('analytics')"><i class="ti ti-chart-bar"></i> Executive Analytics</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('upi-sync')"><i class="ti ti-qrcode"></i> Zero-Fee UPI Sync</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('claims')"><i class="ti ti-scale"></i> Claims & OD Statement</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('expenses')"><i class="ti ti-receipt-2"></i> Expenses & Wi-Fi</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('hrms')"><i class="ti ti-id-badge-2"></i> Staff & Tasks</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('whatsapp')"><i class="ti ti-brand-whatsapp"></i> WhatsApp Hub</button>
-            <button type="button" class="tuhh-quick-pill" onclick="window.switchHelpTab('shortcuts')"><i class="ti ti-command"></i> All Shortcuts Matrix</button>
           </div>
-        </div>
 
         <!-- ─── TAB FILTER BAR ─── -->
         <div class="tuhh-help-nav-tabs">
@@ -124,7 +111,7 @@
               <div class="tuhh-section-icon" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-rocket"></i></div>
               <div>
                 <h2 class="tuhh-section-title">1. Daily Manager Routine (5-Minute Quick Start)</h2>
-                <p class="tuhh-section-subtitle">Rozana subah CRM open karke sabse pehle ye 4 steps follow karein across 19 properties:</p>
+                <p class="tuhh-section-subtitle">Rozana subah CRM open karke sabse pehle ye 4 steps follow karein across 18 properties:</p>
               </div>
             </div>
 
@@ -133,7 +120,7 @@
                 <div class="tuhh-step-num">Step 1</div>
                 <h3 class="tuhh-step-title">Today's Operations Queue</h3>
                 <p class="tuhh-step-desc">
-                  Top bar me <strong>All Properties (19)</strong> ya specific flat select karein. <strong>Today · Operations</strong> par dekhein ki aaj kin guests ka <strong>Check-in</strong> hai aur kinka <strong>Check-out</strong>.
+                  Top bar me <strong>All Properties (18)</strong> ya specific flat select karein. <strong>Today · Operations</strong> par dekhein ki aaj kin guests ka <strong>Check-in</strong> hai aur kinka <strong>Check-out</strong>.
                 </p>
                 <div class="tuhh-step-badge"><kbd>${altSymbol}O</kbd> Operations Hub</div>
               </div>
@@ -279,7 +266,7 @@
               <div class="tuhh-info-box">
                 <h4><i class="ti ti-refresh"></i> Airbnb Auto iCal Synchronization</h4>
                 <p>
-                  CRM me <strong>Multi-Property Realtime iCal Engine</strong> active hai. Jab bhi Airbnb par koi guest booking karta hai, dates automatically CRM me block ho jati hain to prevent double-booking across all 19 units.
+                  CRM me <strong>Multi-Property Realtime iCal Engine</strong> active hai. Jab bhi Airbnb par koi guest booking karta hai, dates automatically CRM me block ho jati hain to prevent double-booking across all 18 units.
                 </p>
                 <p>
                   Aap Calendar view par kisi bhi empty date par direct click karke instant reservation create kar sakte hain.
@@ -324,7 +311,7 @@
             <div style="margin-top:16px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
               <h4 style="margin:0 0 8px 0;font-size:14px;color:#0F172A;"><i class="ti ti-file-spreadsheet" style="color:#16A34A;"></i> Property Rankings &amp; Excel Download</h4>
               <p style="font-size:12.5px;color:#475569;margin:0 0 10px 0;">
-                Dashboard ke bottom me sabhi 19 properties ka real-time performance table hai. Aap ise <strong>By revenue</strong> ya <strong>By profit</strong> sort kar sakte hain aur top bar me <strong>⬇ Excel</strong> button par click karke complete report download kar sakte hain.
+                Dashboard ke bottom me sabhi 18 properties ka real-time performance table hai. Aap ise <strong>By revenue</strong> ya <strong>By profit</strong> sort kar sakte hain aur top bar me <strong>⬇ Excel</strong> button par click karke complete report download kar sakte hain.
               </p>
               <button type="button" class="tuhh-action-inline-btn" onclick="navigate('analytics')"><i class="ti ti-chart-bar"></i> Open Executive Dashboard (${altSymbol}H)</button>
             </div>
@@ -335,7 +322,7 @@
             <div class="tuhh-section-header">
               <div class="tuhh-section-icon" style="background:#FEF3C7;color:#D97706;"><i class="ti ti-qrcode"></i></div>
               <div>
-                <h2 class="tuhh-section-title">5. TUHH Zero-Fee UPI Auto-Sync Engine (Option A)</h2>
+                <h2 class="tuhh-section-title">5. Roost & Rest Zero-Fee UPI Auto-Sync Engine (Option A)</h2>
                 <p class="tuhh-section-subtitle">100% Free · 0% Payment Gateway Commission · 0-Day Instant Settlement:</p>
               </div>
             </div>
@@ -344,10 +331,10 @@
               <div class="tuhh-wf-card">
                 <div class="tuhh-wf-badge" style="background:#10B981;color:#fff;">0% Brokerage Advantage</div>
                 <div class="tuhh-wf-content">
-                  <h4>Razorpay vs TUHH Native UPI Engine:</h4>
+                  <h4>Razorpay vs Roost & Rest Native UPI Engine:</h4>
                   <ul>
                     <li><strong>Razorpay / Cashfree:</strong> 2% + 18% GST (₹5,000 transaction par ₹118 cut hota hai aur paisa T+2 working days me aata hai).</li>
-                    <li><strong>TUHH Native Engine:</strong> <strong>₹0 (100% Free)</strong>. Paisa seedha aapke TUHH Bank Account me 0 seconds me aata hai without any corporate KYC or monthly quota blocks.</li>
+                    <li><strong>Roost & Rest Native Engine:</strong> <strong>₹0 (100% Free)</strong>. Paisa seedha aapke Roost & Rest Bank Account me 0 seconds me aata hai without any corporate KYC or monthly quota blocks.</li>
                   </ul>
                 </div>
               </div>
@@ -421,7 +408,7 @@
               <div class="tuhh-card-compact">
                 <div class="tuhh-card-icon" style="background:#F0FDF4;color:#16A34A;"><i class="ti ti-wifi"></i></div>
                 <h4>Wi-Fi Plans &amp; Recharges</h4>
-                <p>Sabhi 19 properties ke Wi-Fi plan expiry dates aur bill payments <strong>Expenses &gt; Wi-Fi</strong> me track hote hain taaki guest stay me internet active rahe.</p>
+                <p>Sabhi 18 properties ke Wi-Fi plan expiry dates aur bill payments <strong>Expenses &gt; Wi-Fi</strong> me track hote hain taaki guest stay me internet active rahe.</p>
                 <div class="tuhh-card-link"><kbd>${altSymbol}X</kbd> Expenses & P&L</div>
               </div>
 

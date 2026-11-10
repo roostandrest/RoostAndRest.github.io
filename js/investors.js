@@ -899,7 +899,7 @@ async function renderInvestorReport(investorId, roomId, month) {
           <!-- Corporate Header Banner -->
           <div style="background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);color:#fff;padding:16px 20px;border-radius:10px;text-align:center;border-bottom:3px solid #EAB308;margin-bottom:10px;">
             <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;">
-              <img src='assets/logo.svg' onerror="this.src='assets/logo.svg'" alt="TUHH Logo" style="width:42px;height:42px;border-radius:8px;background:#fff;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
+              <img src='assets/logo.svg' onerror="this.src='assets/logo.svg'" alt="Roost & Rest Logo" style="width:42px;height:42px;border-radius:8px;background:#fff;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,0.2);" />
               <div style="text-align:left;">
                 <div style="font-size:15px;letter-spacing:1px;font-weight:900;color:#FFFFFF;text-transform:uppercase;line-height:1.2;">ROOST AND REST STAYS</div>
                 <div style="font-size:9px;color:#94A3B8;letter-spacing:0.8px;font-weight:600;margin-top:2px;">
@@ -964,7 +964,7 @@ async function renderInvestorReport(investorId, roomId, month) {
                   <td style="padding:6px 10px;border:1px solid #A7F3D0;text-align:right;font-weight:900;color:#059669;font-size:12.5px;">₹${profit.toLocaleString('en-IN')}</td>
                 </tr>
                 <tr style="background:#F8FAFC;">
-                  <td style="padding:6px 10px;border:1px solid #E2E8F0;font-weight:600;color:#475569;">TUHH Operator Fee (${COMPANY_PCT}%)</td>
+                  <td style="padding:6px 10px;border:1px solid #E2E8F0;font-weight:600;color:#475569;">Roost & Rest Operator Fee (${COMPANY_PCT}%)</td>
                   <td style="padding:6px 10px;border:1px solid #E2E8F0;text-align:right;color:#0F172A;font-weight:800;">₹${companyAmount.toLocaleString('en-IN')}</td>
                 </tr>
                 <tr style="background:#EEF2FF;">
@@ -2380,7 +2380,7 @@ async function _originalQuickWhatsAppInvestor(investorId) {
       'Kripya PDF check karein aur koi query ho toh batayein.' + NL + NL +
       '───────────────' + NL +
       '*Regards,*' + NL +
-      'Team TUHH' + NL +
+      'Team Roost & Rest' + NL +
       '📞 Mr. Shahanshah: 9807486555' + NL +
       '📞 Mr. Anwar Ahmad: 9807486555' + NL +
       '🌐 roostandrest.github.io';
@@ -2517,14 +2517,14 @@ window.sendPlainEmail = async function(investorId) {
     const isMultiEmail = invNamesEmail.length > 1;
     const perPersonPct = (100 / invNamesEmail.length).toFixed(2);
     
-    const subject = monthName + ' Monthly Report - ' + propNames + ' - TUHH';
+    const subject = monthName + ' Monthly Report - ' + propNames + ' - Roost & Rest';
     
     const body = 
       'Namaste ' + inv.name + ' ji,\n\n' +
       'Umeed hai aap kushal honge.\n\n' +
       'Aapki property "' + propNames + '" ki monthly financial summary ke liye ye email hai.\n\n' +
       '📅 Reporting Period: ' + monthName + '\n' +
-      '📊 Revenue Sharing Model: 70% Investor Pool, 30% TUHH\n' +
+      '📊 Revenue Sharing Model: 70% Investor Pool, 30% Roost & Rest\n' +
       (isMultiEmail 
         ? '👥 Investor Split:\n' + invNamesEmail.map(n => '   - ' + n + ': ' + perPersonPct + '% of investor pool').join('\n') + '\n\n'
         : '\n') +
@@ -2538,7 +2538,7 @@ window.sendPlainEmail = async function(investorId) {
       'Aapka support hamesha appreciated hai. Dhanyawad!\n\n' +
       '───────────────────────\n' +
       'Warm regards,\n\n' +
-      'Team TUHH\n' +
+      'Team Roost & Rest\n' +
       'ROOST AND REST STAYS\n' +
       'CIN: U55101UP2026PTC244637\n' +
       '📞 +91 9807486555\n' +

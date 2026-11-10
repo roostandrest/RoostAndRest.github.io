@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * ROOST AND REST STAYS (UHHS) — GST INVOICE & BILLING ENGINE
+ * ROOST AND REST STAYS (Roost & Rest) — GST INVOICE & BILLING ENGINE
  * Integrated into Bookings & Guest Ledger with CA Return Management
  * =====================================================================
  */
@@ -564,7 +564,7 @@ window.GST_ENGINE = (function() {
     const html = buildPrintableInvoiceHTML(inv);
     const cleanInvNo = String(inv.invoice_no || '').replace(/[\/\\:*?"<>|]/g, '-');
     const isGST = inv.is_gst_invoice === true;
-    const docTitle = `TUHH ${isGST ? 'GST Tax Invoice' : 'Without GST Invoice'} — ${cleanInvNo} — ${inv.guest_name || 'Guest'}`;
+    const docTitle = `Roost & Rest ${isGST ? 'GST Tax Invoice' : 'Without GST Invoice'} — ${cleanInvNo} — ${inv.guest_name || 'Guest'}`;
 
     window.printDocumentHTML(html, docTitle);
   }
@@ -848,7 +848,7 @@ Summary of Finalized Tax Invoices:
 • SGST: ₹${totalSGST.toLocaleString('en-IN')}
 • Total GST Output Tax: ₹${(totalCGST + totalSGST).toLocaleString('en-IN')}
 
-Generated automatically via TUHH Management Portal.`;
+Generated automatically via Roost & Rest Management Portal.`;
 
     navigator.clipboard.writeText(text).then(() => {
       alert('✅ CA Summary copied to clipboard! You can paste and send directly to your CA.');

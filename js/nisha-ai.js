@@ -5,7 +5,7 @@
 
    Features:
    ✅ 100% Free 24/7 Voice & Chat — Works with OR without Gemini API Key!
-   ✅ Instant Knowledge Base for all 19 properties, rates, amenities, rules & locations
+   ✅ Instant Knowledge Base for all 18 properties, rates, amenities, rules & locations
    ✅ Google Gemini 1.5/2.0 Flash integration when API key is provided
    ✅ Automatic Fallback: Never fails or blocks the user
    ✅ Mobile/Safari Audio Unlock: SpeechSynthesis works reliably across devices
@@ -548,7 +548,7 @@
         `- ${p.property_name} (${p.bhk}) | Up to ${p.max_guests} guests | Direct Rate: ₹${p.base_price.toLocaleString('en-IN')}/night | Area: ${p.area}`
       ).join('\n');
 
-      return `You are "Nisha" (निशा), the warm, charming, and highly professional AI Concierge & Reservation Manager for "Roost And Rest Stays" (TUHH) — Lucknow's premier luxury homestay and serviced villa brand.
+      return `You are "Nisha" (निशा), the warm, charming, and highly professional AI Concierge & Reservation Manager for "Roost And Rest Stays" (Roost & Rest) — Lucknow's premier luxury homestay and serviced villa brand.
 Today's Date: ${today}.
 Location: Lucknow, Uttar Pradesh, India.
 

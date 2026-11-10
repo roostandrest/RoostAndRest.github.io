@@ -1496,7 +1496,7 @@
             </div>
           </div>
 
-          <!-- Interactive Embedded Google Map fetched from UHHS -->
+          <!-- Interactive Embedded Google Map fetched from Roost & Rest -->
           <div class="luxe-map-embed-frame" style="width:100%;height:340px;border-top:1px solid var(--luxe-border);background:#e2e8f0;position:relative;">
             <iframe 
               src="${embedUrl}" 
@@ -1511,7 +1511,7 @@
           </div>
 
           <div style="background:#f8fafc; padding:12px 20px; font-size:12px; color:var(--luxe-muted); display:flex; align-items:center; gap:8px; border-top:1px solid var(--luxe-border);">
-            <span style="color:#059669; font-weight:800;">✓ Live UHHS Synced</span>
+            <span style="color:#059669; font-weight:800;">✓ Live Roost & Rest Synced</span>
             <span>· Exact arrival coordinates matched with owner &amp; host verified GPS pin.</span>
           </div>
         </div>
@@ -2265,7 +2265,7 @@
       const gstRate = this.gstRate || (base <= 7500 ? 5 : 18);
       const gstAmount = this.gstAmount || Math.round(baseTotal * (gstRate / 100));
       const amount = this.totalPayable || (baseTotal + gstAmount);
-      const bookingRef = 'UHHS-' + Date.now().toString().slice(-6);
+      const bookingRef = 'Roost & Rest-' + Date.now().toString().slice(-6);
 
       loadRazorpayScript(() => {
         if (typeof Razorpay === 'undefined') {
@@ -2353,7 +2353,7 @@
       const cgstAmount = this.cgstAmount || Math.round(gstAmount / 2);
       const sgstAmount = this.sgstAmount || (gstAmount - cgstAmount);
       const amount = this.totalPayable || (baseTotal + gstAmount);
-      const bookingId = 'UHHS-' + Date.now().toString().slice(-6);
+      const bookingId = 'Roost & Rest-' + Date.now().toString().slice(-6);
 
       let sbClient = window.sb;
       if (!sbClient && typeof supabase !== 'undefined' && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {

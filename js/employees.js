@@ -2934,7 +2934,7 @@ window.shareAdvancesWhatsApp = async function(targetEmpId = null) {
   topAdvs.forEach((a, i) => {
     const bal = Number(a.advance_amount || 0) - Number(a.repaid_amount || 0);
     const dt = a.date_given || (a.created_at || '').slice(0, 10);
-    msg += `${i + 1}. ${dt}: ₹${Number(a.advance_amount || 0).toLocaleString('en-IN')} (Repaid: ₹${Number(a.repaid_amount || 0).toLocaleString('en-IN')}, Due: ₹${bal.toLocaleString('en-IN')}) [${a.paid_by || 'TUHH'}]\n`;
+    msg += `${i + 1}. ${dt}: ₹${Number(a.advance_amount || 0).toLocaleString('en-IN')} (Repaid: ₹${Number(a.repaid_amount || 0).toLocaleString('en-IN')}, Due: ₹${bal.toLocaleString('en-IN')}) [${a.paid_by || 'Roost & Rest'}]\n`;
   });
   if (advs.length > 6) {
     msg += `_...and ${advs.length - 6} more historical entries_\n`;
@@ -3146,7 +3146,7 @@ window.printAdvancesReport = async function(targetEmpId = null) {
           <div>
             <div style="border-bottom:1px dashed #94A3B8;height:30px;margin-bottom:5px;"></div>
             <div style="font-weight:700;font-size:11px;color:#0F172A;">Authorized Signatory</div>
-            <div style="font-size:10px;color:#64748B;">Director / Finance TUHH</div>
+            <div style="font-size:10px;color:#64748B;">Director / Finance Roost & Rest</div>
           </div>
         </div>
       </div>

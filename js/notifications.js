@@ -449,7 +449,7 @@
       if (window.fsn) fsn.success('Push Active', '🔔 Mobile push notifications are already enabled!');
       // Show test notification
       showNativeNotification({
-        title: '🔔 TUHH Notifications Active',
+        title: '🔔 Roost & Rest Notifications Active',
         message: 'You will receive real-time alerts for New Bookings, Check-ins & Low Stock!',
         page: 'bookings'
       });
@@ -458,9 +458,9 @@
     try {
       const perm = await Notification.requestPermission();
       if (perm === 'granted') {
-        if (window.fsn) fsn.success('Enabled', '✅ Push notifications enabled for TUHH!');
+        if (window.fsn) fsn.success('Enabled', '✅ Push notifications enabled for Roost & Rest!');
         showNativeNotification({
-          title: '🔔 TUHH Mobile Alerts Enabled',
+          title: '🔔 Roost & Rest Mobile Alerts Enabled',
           message: 'Real-time alerts will now pop up on your device screen.',
           page: 'bookings'
         });

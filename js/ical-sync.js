@@ -128,10 +128,10 @@ window.ICAL_SYNC = {
     const lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//Roost And Rest Stays//TUHH Multi-Channel Master 2.0//EN',
+      'PRODID:-//Roost And Rest Stays//Roost & Rest Multi-Channel Master 2.0//EN',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
-      `X-WR-CALNAME:TUHH Master ${roomId}`
+      `X-WR-CALNAME:Roost & Rest Master ${roomId}`
     ];
 
     const nowStr = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
@@ -140,14 +140,14 @@ window.ICAL_SYNC = {
       if (!b.check_in || !b.check_out) return;
       const start = b.check_in.replace(/-/g, '');
       const end = b.check_out.replace(/-/g, '');
-      const uid = `tuhh-${b.booking_id}@uniquehavenhomes.com`;
+      const uid = `roost-${b.booking_id}@roostandrest.com`;
       lines.push(
         'BEGIN:VEVENT',
         `UID:${uid}`,
         `DTSTAMP:${nowStr}`,
         `DTSTART;VALUE=DATE:${start}`,
         `DTEND;VALUE=DATE:${end}`,
-        `SUMMARY:TUHH Reserved (${b.booking_mode || 'Direct'})`,
+        `SUMMARY:Roost & Rest Reserved (${b.booking_mode || 'Direct'})`,
         'STATUS:CONFIRMED',
         'END:VEVENT'
       );
@@ -476,7 +476,7 @@ window.renderIcalSync = async function() {
     <div class="card" style="border-left:4px solid #2563EB;background:#EFF6FF;">
       <div class="section-title" style="color:#1E40AF;">🔄 2-WAY CALENDAR SYNC (DOUBLE BOOKING PREVENTION)</div>
       <div style="line-height:1.8;font-size:13px;color:#1E3A8A;">
-        <div><strong>1. Import to TUHH:</strong> Neeche har flat me Airbnb iCal link aur Booking.com iCal link daal kar save karein.</div>
+        <div><strong>1. Import to Roost & Rest:</strong> Neeche har flat me Airbnb iCal link aur Booking.com iCal link daal kar save karein.</div>
         <div><strong>2. Export to OTAs:</strong> Har flat ka <strong>🟢 Master Calendar Feed</strong> copy karke Airbnb aur Booking.com ke "Import Calendar" me paste karein.</div>
         <div><strong>Result:</strong> Kisi bhi channel par booking aane se baki sab jagah dates instant auto-block ho jayengi!</div>
       </div>

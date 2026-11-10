@@ -124,7 +124,7 @@
       }
 
       // Log for developer & testing visibility
-      console.log(`[TUHH SMS Auth] Verification OTP for +${phone}: ${otp}`);
+      console.log(`[Roost & Rest SMS Auth] Verification OTP for +${phone}: ${otp}`);
 
       return {
         success: true,

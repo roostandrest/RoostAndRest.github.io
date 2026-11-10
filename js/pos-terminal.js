@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * ROOST AND REST STAYS (UHHS) — EXPRESS FRONT-DESK POS TERMINAL
+ * ROOST AND REST STAYS (Roost & Rest) — EXPRESS FRONT-DESK POS TERMINAL
  * Inspired by Enterprise Salon & Hotel Front-Desk Systems (Video Architecture)
  * Walk-In Bookings, Split Payments, Security Deposits & Instant Invoicing
  * =====================================================================

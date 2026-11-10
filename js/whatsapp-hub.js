@@ -32,19 +32,19 @@
     housekeeping_group_id: '120363426832875312@g.us', // Chinhat All booking offline
     investor_groups: {
       // Room IDs
-      'VIL-105': '120363427551867491@g.us', // The Yellow House -> UHHS Owners Group
-      'VIL-103': '120363427551867491@g.us', // The Pink House -> UHHS Owners Group
-      'VIL-104': '120363427551867491@g.us', // The Green House -> UHHS Owners Group
-      'VIL-106': '120363427551867491@g.us', // Green forest View -> UHHS Owners Group
-      'VIL-107': '120363427551867491@g.us', // The Velvet House -> UHHS Owners Group
-      'LUL-101': '120363427551867491@g.us', // The Luxe Haven (1BHK) -> UHHS Owners Group (Anwar & Shahenshah)
-      'LUL-402': '120363427551867491@g.us', // Celebrity Garden -> UHHS Owners Group
-      'VIL-103': '120363427551867491@g.us', // The Pink House -> UHHS Owners Group
-      'VIL-104': '120363427551867491@g.us', // The Green House -> UHHS Owners Group
-      'VIL-105': '120363427551867491@g.us', // The Yellow House -> UHHS Owners Group
-      'VIL-106': '120363427551867491@g.us', // Green Forest View -> UHHS Owners Group (Anwar & Shahenshah)
-      'VIL-107': '120363427551867491@g.us', // The Velvet House -> UHHS Owners Group (Anwar & Shahenshah)
-      'VIL-108': '120363427551867491@g.us', // Pink Paradise Villa -> UHHS Owners Group (Anwar & Shahenshah)
+      'VIL-105': '120363427551867491@g.us', // The Yellow House -> Roost & Rest Owners Group
+      'VIL-103': '120363427551867491@g.us', // The Pink House -> Roost & Rest Owners Group
+      'VIL-104': '120363427551867491@g.us', // The Green House -> Roost & Rest Owners Group
+      'VIL-106': '120363427551867491@g.us', // Green forest View -> Roost & Rest Owners Group
+      'VIL-107': '120363427551867491@g.us', // The Velvet House -> Roost & Rest Owners Group
+      'LUL-101': '120363427551867491@g.us', // The Luxe Haven (1BHK) -> Roost & Rest Owners Group (Anwar & Shahenshah)
+      'LUL-402': '120363427551867491@g.us', // Celebrity Garden -> Roost & Rest Owners Group
+      'VIL-103': '120363427551867491@g.us', // The Pink House -> Roost & Rest Owners Group
+      'VIL-104': '120363427551867491@g.us', // The Green House -> Roost & Rest Owners Group
+      'VIL-105': '120363427551867491@g.us', // The Yellow House -> Roost & Rest Owners Group
+      'VIL-106': '120363427551867491@g.us', // Green Forest View -> Roost & Rest Owners Group (Anwar & Shahenshah)
+      'VIL-107': '120363427551867491@g.us', // The Velvet House -> Roost & Rest Owners Group (Anwar & Shahenshah)
+      'VIL-108': '120363427551867491@g.us', // Pink Paradise Villa -> Roost & Rest Owners Group (Anwar & Shahenshah)
       'VIL-101': '120363412244446528@g.us', // Gomti Grand Villa -> Afzal & Hazi Group
       'VIL-102': '120363412244446528@g.us', // Royal White House -> Afzal & Hazi Group
       'GOM-102': '120363427249232463@g.us', // Black Beauty -> Alam Sahab
@@ -57,7 +57,7 @@
       'GOM-501': '120363411439466222@g.us', // Starlight Blue PentHouse -> Shahil Khan
 
       // Property & Group Names
-      'UHHS Owners Group': '120363427551867491@g.us',
+      'Roost & Rest Owners Group': '120363427551867491@g.us',
       'The Luxe Haven': '120363427551867491@g.us',
       'Pink Paradise Villa': '120363427551867491@g.us',
       'Pink Paradise': '120363427551867491@g.us',
@@ -71,21 +71,21 @@
       'Yellow House': '120363427551867491@g.us',
       'Anwar& Shahenshah': '120363427551867491@g.us',
       'Anwar & Shahenshah': '120363427551867491@g.us',
-      'UHHS — Sabir Bhai': '120363430510952329@g.us',
+      'Roost & Rest — Sabir Bhai': '120363430510952329@g.us',
       'Sabir Bhai': '120363430510952329@g.us',
-      'UHHS — Afzal & Hazi Group': '120363412244446528@g.us',
+      'Roost & Rest — Afzal & Hazi Group': '120363412244446528@g.us',
       'Afzal & Hazi Group': '120363412244446528@g.us',
-      'UHHS — Alam Sahab': '120363427249232463@g.us',
+      'Roost & Rest — Alam Sahab': '120363427249232463@g.us',
       'Alam Sahab': '120363427249232463@g.us',
-      'UHHS — Sanaul Mustafa': '120363426678446574@g.us',
+      'Roost & Rest — Sanaul Mustafa': '120363426678446574@g.us',
       'Sanaul Mustafa': '120363426678446574@g.us',
-      'UHHS — Afzal Khan': '120363411536897935@g.us',
+      'Roost & Rest — Afzal Khan': '120363411536897935@g.us',
       'Afzal Khan': '120363411536897935@g.us',
-      'UHHS — Ammy Papa': '120363412078246077@g.us',
+      'Roost & Rest — Ammy Papa': '120363412078246077@g.us',
       'Ammy Papa': '120363412078246077@g.us',
-      'UHHS — Shanu Bhaijaan': '120363409825792343@g.us',
+      'Roost & Rest — Shanu Bhaijaan': '120363409825792343@g.us',
       'Shanu Bhaijaan': '120363409825792343@g.us',
-      'UHHS — Shahil Khan': '120363411439466222@g.us',
+      'Roost & Rest — Shahil Khan': '120363411439466222@g.us',
       'Shahil Khan': '120363411439466222@g.us'
     },
 
@@ -599,7 +599,7 @@
       }
     }
 
-    // Special fallback for Yellow House / Villas / 1BHK Luxe Haven (Anwar & Shahenshah -> UHHS Owners Group)
+    // Special fallback for Yellow House / Villas / 1BHK Luxe Haven (Anwar & Shahenshah -> Roost & Rest Owners Group)
     if (!target && (roomId === 'VIL-105' || roomId === 'LUL-101' || roomId === 'LUL-402' || propDisplay.toLowerCase().includes('yellow') || propDisplay.toLowerCase().includes('luxe haven') || propDisplay.toLowerCase().includes('pink paradise') || propDisplay.toLowerCase().includes('velvet') || propDisplay.toLowerCase().includes('green forest') || roomId.startsWith('VIL-'))) {
       target = '120363427551867491@g.us';
     }
@@ -1319,7 +1319,7 @@ Roost And Rest Stays Property Management`;
             <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748B;text-align:center;padding:20px;">
               <div>
                 <div style="font-size:42px;margin-bottom:10px;">🤖</div>
-                <div style="font-weight:700;font-size:16px;color:#0F172A;">TUHH WhatsApp AI Agent Dashboard</div>
+                <div style="font-weight:700;font-size:16px;color:#0F172A;">Roost & Rest WhatsApp AI Agent Dashboard</div>
                 <div style="font-size:13px;color:#64748B;margin-top:6px;max-width:380px;line-height:1.5;">
                   Select an active guest chat on the left to see live messages, toggle between <b>AI Mode</b> and <b>Human Mode</b>, or send a manual reply.
                 </div>

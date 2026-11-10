@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * ROOST AND REST STAYS (UHHS)
+ * ROOST AND REST STAYS (Roost & Rest)
  * 💼 AIRBNB PAYOUTS, SECTION 194-O TDS & CA TAX AUDIT SUITE
  * =====================================================================
  * In-built Enterprise Tax & Payout reconciliation system for:
@@ -20,10 +20,10 @@ window.CA_AUDIT_PACK = (function() {
   const CO = {
     name:       'ROOST AND REST STAYS',
     tradeName:  'Roost And Rest Stays Homestays',
-    gstin:      '09ABECT9843K1Z7',
-    pan:        'ABECT9843K',
+    gstin: '09AARFR1234F1Z5',
+    pan: 'AARFR1234F',
     cin:        'U55101UP2026PTC244637',
-    bank:       'Current A/c 0550 (INR)',
+    bank: 'Roost&rest-Od Current A/c (INR)',
     tdsSection: 'Section 194-O (5.000% E-Commerce Operator TDS)'
   };
 
@@ -432,7 +432,7 @@ window.CA_AUDIT_PACK = (function() {
                 <span style="width:11px;height:11px;border-radius:50%;background:#10B981;display:inline-block;"></span>
               </div>
               <div style="display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#0F172A;">
-                <img src='assets/logo.svg' alt="TUHH" style="width:18px;height:18px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
+                <img src='assets/logo.svg' alt="Roost & Rest" style="width:18px;height:18px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
                 <span>${CO.name} · CA Tax &amp; Airbnb Payout Suite</span>
               </div>
             </div>

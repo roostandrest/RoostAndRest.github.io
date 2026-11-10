@@ -57,7 +57,7 @@ async function renderExpenses() {
   function normSource(raw) {
     if (!raw) return 'COMPANY';
     const s = String(raw).trim().toUpperCase();
-    if (s.includes('OD') || s.includes('UHHS') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
+    if (s.includes('OD') || s.includes('Roost & Rest') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
     if (s.includes('FIROZ') || s.includes('DIRECT')) return 'FIROZ';
     return 'COMPANY';
   }

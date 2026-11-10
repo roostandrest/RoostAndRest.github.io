@@ -1,5 +1,5 @@
 /**
- * UHHS Multi-Property iCal Sync Manager
+ * Roost & Rest Multi-Property iCal Sync Manager
  * Real-time booking sync from all properties via CORS proxies (same as ical-sync.js)
  */
 

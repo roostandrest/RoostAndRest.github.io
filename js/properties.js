@@ -500,7 +500,7 @@ function roomFormFields(r = {}, emps = []) {
     </div>
     <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;padding:14px;border-radius:12px;margin-bottom:14px;">
       <div style="font-size:12px;color:#64748B;margin-bottom:12px;line-height:1.5;">
-        Paste external calendar export iCal (.ics) links below for each channel. TUHH auto-imports bookings and blocks dates across all channels to prevent double bookings.
+        Paste external calendar export iCal (.ics) links below for each channel. Roost & Rest auto-imports bookings and blocks dates across all channels to prevent double bookings.
       </div>
 
       <!-- Airbnb -->
@@ -563,7 +563,7 @@ function roomFormFields(r = {}, emps = []) {
     ${r.room_id ? `
     <div class="form-group" style="background:#F0FDF4;padding:14px;border-radius:12px;border:1.5px solid #BBF7D0;margin-bottom:14px;">
       <label style="font-weight:800;color:#166534;font-size:13px;display:flex;align-items:center;gap:6px;">
-        <span>🟢</span> TUHH 2-Way Master Calendar Export Feed (Copy &amp; Paste to OTAs)
+        <span>🟢</span> Roost & Rest 2-Way Master Calendar Export Feed (Copy &amp; Paste to OTAs)
       </label>
       <div style="display:flex;gap:8px;margin-top:6px;">
         <input readonly value="https://airbnbmanager.github.io/calendar.html?export_ical=${r.room_id}" style="background:#fff;font-size:12px;font-family:monospace;flex:1;font-weight:700;color:#166534;" />

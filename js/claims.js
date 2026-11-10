@@ -83,7 +83,7 @@ window.renderClaims = async function() {
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <button onclick="openUhhsDepositModal()" style="background:#92400E;color:#fff;font-weight:700;">📥 Deposit Entry (Roost Bank)</button>
-          <button onclick="showUhhsStatementModal()" style="background:#0F766E;color:#fff;font-weight:600;">📜 TUHH Ledger</button>
+          <button onclick="showUhhsStatementModal()" style="background:#0F766E;color:#fff;font-weight:600;">📜 Roost Bank Ledger</button>
           <button onclick="showCompanyLedgerModal()" style="background:#EA580C;color:#fff;font-weight:600;">🏢 Company Ledger</button>
           <button onclick="generateClaimReport()" style="background:#8B5CF6;color:#fff;font-weight:600;">📊 Claim Report Statement</button>
           <button onclick="copyClaimWhatsAppText()" style="background:#25D366;color:#fff;font-weight:600;">📱 WhatsApp Summary</button>
@@ -191,7 +191,7 @@ window.renderClaims = async function() {
 
         <!-- OFFICIAL CERTIFICATE STAMP (SHOWN IN EXPORTED PROOF) -->
         <div id="todayProofOfficialSeal" style="display:none;padding:6px 14px;background:#0F172A;color:#FFFFFF;border-radius:8px;border:1.5px solid #334155;text-align:right;">
-          <div style="color:#FCD34D;font-size:11.5px;font-weight:800;letter-spacing:0.3px;">🏛️ TUHH OFFICIAL STATEMENT</div>
+          <div style="color:#FCD34D;font-size:11.5px;font-weight:800;letter-spacing:0.3px;">🏛️ ROOST & REST OFFICIAL STATEMENT</div>
           <div style="font-size:10px;color:#94A3B8;margin-top:1px;">Verified Daily Financial Statement · Zero Discrepancy</div>
         </div>
       </div>
@@ -243,7 +243,7 @@ window.renderClaims = async function() {
         <div class="today-proof-closing-col" style="background:linear-gradient(135deg,#0F172A,#1E293B);color:#ffffff;border-radius:10px;padding:12px 14px;border:1.5px solid #334155;">
           <div style="font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;" id="today-proof-closing-title">💰 Closing Running Balance</div>
           <div style="font-size:22px;font-weight:900;color:#4ADE80;margin-top:4px;" id="today-proof-closing-bal">₹0</div>
-          <div style="font-size:11px;color:#CBD5E1;margin-top:2px;" id="today-proof-status-label">🛡️ Verified by TUHH Engine</div>
+          <div style="font-size:11px;color:#CBD5E1;margin-top:2px;" id="today-proof-status-label">🛡️ Verified by Roost & Rest Engine</div>
         </div>
       </div>
 
@@ -1023,7 +1023,7 @@ window.bulkUpdateRange = async function(targetStatus) {
   await loadClaimsData();
 };
 
-// 7. UHHS Deposit Entry Modal & Ledger Popup
+// 7. Roost & Rest Deposit Entry Modal & Ledger Popup
 window.openUhhsDepositModal = function() {
   if (window.cbDepositToODModal) window.cbDepositToODModal();
 };
@@ -1590,7 +1590,7 @@ window.exportUhhsLedgerPDF = function(fDate, tDate, totalInflow, totalOutflow, n
   const escapeHtml = str => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const cleanFDate = String(safeFDate || 'Start').replace(/[\/\\:*?"<>|]/g, '-');
   const cleanTDate = String(safeTDate || 'End').replace(/[\/\\:*?"<>|]/g, '-');
-  const title = `TUHH_OD_Ledger_Statement_${cleanFDate}_to_${cleanTDate}`;
+  const title = `Roost_OD_Ledger_Statement_${cleanFDate}_to_${cleanTDate}`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -1872,7 +1872,7 @@ window.printClaimReportStatement = function() {
   const cleanPayer = String(payerLabel || 'All').trim().replace(/[\/\\:*?"<>|]/g, '-').replace(/\s+/g, '_');
   const cleanFDate = String(fDate || 'Start').replace(/[\/\\:*?"<>|]/g, '-');
   const cleanTDate = String(tDate || 'End').replace(/[\/\\:*?"<>|]/g, '-');
-  const pdfTitle = `TUHH_Claim_Statement_${cleanPayer}_${cleanFDate}_to_${cleanTDate}`;
+  const pdfTitle = `Roost_Claim_Statement_${cleanPayer}_${cleanFDate}_to_${cleanTDate}`;
   const html = `
     <!DOCTYPE html>
     <html>
@@ -2102,7 +2102,7 @@ window.exportCompanyLedgerPDF = async function(fDate, tDate) {
   const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const cleanFDate = String(fromD).replace(/[\/\\:*?"<>|]/g, '-');
   const cleanTDate = String(toD).replace(/[\/\\:*?"<>|]/g, '-');
-  const title = `TUHH_Company_Payments_Ledger_${cleanFDate}_to_${cleanTDate}`;
+  const title = `Roost_Company_Payments_Ledger_${cleanFDate}_to_${cleanTDate}`;
 
   const html =
     '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title><style>' +
@@ -2229,7 +2229,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
 
     // Build dedicated 460px mobile portrait voucher container
     const voucher = document.createElement('div');
-    voucher.id = 'tuhh-mobile-statement-export';
+    voucher.id = 'roost-mobile-statement-export';
     voucher.style.cssText = [
       'position: fixed',
       'left: -9999px',
@@ -2278,7 +2278,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
           ${closeBalStr}
         </div>
         <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.08);padding:4px 12px;border-radius:999px;font-size:10.5px;color:#e2e8f0;font-weight:600;">
-          ${isRange ? `🛡️ Opening Balance: ${openBalStr} · Audit Verified` : '🛡️ Verified by TUHH Engine · Zero Manual Adjustments'}
+          ${isRange ? `🛡️ Opening Balance: ${openBalStr} · Audit Verified` : '🛡️ Verified by Roost & Rest Engine · Zero Manual Adjustments'}
         </div>
       </div>
 
@@ -2364,7 +2364,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
         </div>
         <div style="text-align:right;">
           <strong style="color:#0284c7;">ROOST AND REST STAYS</strong><br>
-          <span style="color:#94a3b8;font-size:9.5px;">TUHH Financial Engine</span>
+          <span style="color:#94a3b8;font-size:9.5px;">Roost & Rest Financial Engine</span>
         </div>
       </div>
     `;
@@ -2380,8 +2380,8 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
     document.body.removeChild(voucher);
 
     const dlName = isRange
-      ? `TUHH_OD_Statement_${state.startDate || 'Start'}_to_${state.endDate || 'End'}.png`
-      : `TUHH_OD_Daily_Closing_Statement_${state.selectedDate || 'Today'}.png`;
+      ? `Roost_OD_Statement_${state.startDate || 'Start'}_to_${state.endDate || 'End'}.png`
+      : `Roost_OD_Daily_Closing_Statement_${state.selectedDate || 'Today'}.png`;
     const link = document.createElement('a');
     link.download = dlName;
     link.href = canvas.toDataURL('image/png');
@@ -2456,7 +2456,7 @@ window.shareTodayBalanceWhatsApp = function() {
     `• Running OD Balance: ${closeBal}`,
     '────────────────────────────',
     '_🛡️ Owner Assurance: Automatically compiled from verified Roost-Bank bank receipts & claims._',
-    '_Generated by TUHH Financial Engine_'
+    '_Generated by Roost & Rest Financial Engine_'
   ].filter(Boolean).join('\n') : [
     '🏦 *ROOST AND REST STAYS*',
     '📊 *DAILY Roost-Bank CLOSING & BALANCE STATEMENT*',
@@ -2477,7 +2477,7 @@ window.shareTodayBalanceWhatsApp = function() {
     (inVal === '₹0' && outVal === '₹0') ? '_(No new entries recorded yet today. Previous running balance carried forward)_' : '',
     '────────────────────────────',
     '_🛡️ Owner Assurance: Automatically compiled from Roost-Bank bank receipts & verified vendor claims._',
-    '_Generated by TUHH Financial Engine_'
+    '_Generated by Roost & Rest Financial Engine_'
   ].filter(Boolean).join('\n');
 
   if (navigator.clipboard && navigator.clipboard.writeText) {

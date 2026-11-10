@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 // 📥 AIRBNB LISTING & FOOTAGE (PHOTOS) IMPORTER
 // 1-Click Import: High-Res Photos, Title, Description, Specs & Amenities
-// ROOST AND REST STAYS (TUHH)
+// ROOST AND REST STAYS (Roost & Rest)
 // ═══════════════════════════════════════════════════════════
 
 window.AIRBNB_IMPORTER = {

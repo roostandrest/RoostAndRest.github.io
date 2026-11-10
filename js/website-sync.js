@@ -4,7 +4,7 @@
    2. Live Availability: Supabase bookings → card badges
    ══════════════════════════════════════════════════════════════ */
 
-// ─── PROPERTY DATA: All 19 Properties with GPS Coordinates ───
+// ─── PROPERTY DATA: All 18 Properties with GPS Coordinates ───
 const PROPERTY_PINS = [
   // ─── 9 FLATS IN VIKALP KHAND (GOMTI NAGAR / CHINHAT) ───
   {

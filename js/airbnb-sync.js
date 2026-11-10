@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════════════
 // 🔄 AIRBNB CSV SYNC & RECONCILIATION — Professional Edition
-// ROOST AND REST STAYS (TUHH)
+// ROOST AND REST STAYS (Roost & Rest)
 // ═══════════════════════════════════════════════════════════
 
 (function() {

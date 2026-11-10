@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * ROOST AND REST STAYS (UHHS) — BOOKING RECEIPT & ADVANCE VOUCHER ENGINE
+ * ROOST AND REST STAYS (Roost & Rest) — BOOKING RECEIPT & ADVANCE VOUCHER ENGINE
  * Non-GST Guest Confirmation Receipt, Advance Payment Voucher & Quotation
  * =====================================================================
  */
@@ -2439,7 +2439,7 @@ ${propertiesList}
     } else if (data?.minCheckIn) {
       datePart = formatDate(data.minCheckIn);
     }
-    return `TUHH Group Receipt — ${guest} (${count} Homestays)${datePart ? ' — ' + datePart : ''}`;
+    return `Roost & Rest Group Receipt — ${guest} (${count} Homestays)${datePart ? ' — ' + datePart : ''}`;
   }
 
   function getMultiReceiptFilename(data) {
@@ -2449,7 +2449,7 @@ ${propertiesList}
     const maxD = sanitizeFilename(data?.maxCheckOut || '');
     const dateRange = (minD && maxD) ? `${minD}_to_${maxD}` : (minD || '');
     const grpId = sanitizeFilename(data?.stayGroupId || 'Group');
-    const parts = ['TUHH_Group_Receipt', guest, `${count}Properties`];
+    const parts = ['Roost_Group_Receipt', guest, `${count}Properties`];
     if (dateRange) parts.push(dateRange);
     parts.push(grpId);
     return parts.join('_') + '.pdf';

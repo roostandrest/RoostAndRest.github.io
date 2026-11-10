@@ -5,9 +5,9 @@
  */
 
 // Advance can come from:
-// 1. Company (TUHH PVT LTD - business fund)
+// 1. Company (ROOST AND REST STAYS - business fund)
 // 2-4. Personal (owner/manager's own money)
-const CA_OWNERS = ['🏢 Company (TUHH PVT LTD)', 'Anwar', 'Shahenshah', 'Praveen'];
+const CA_OWNERS = ['🏢 Company (ROOST AND REST STAYS)', 'Anwar', 'Shahenshah', 'Praveen'];
 
 window.renderCompanyAdvances = async function() {
   if (!['owner', 'admin', 'developer', 'manager'].includes(SESSION.role)) {

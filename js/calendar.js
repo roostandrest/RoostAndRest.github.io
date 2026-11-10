@@ -33,7 +33,7 @@ async function renderReports() {
         '117': 'RST-117', '118': 'RST-118'
       };
       roomsData = window.UHHS_PROPERTIES.map(p => ({
-        room_id: p.room_id || UNIT_TO_ROOM[p.unit_no] || ('UHHS-' + p.unit_no),
+        room_id: p.room_id || UNIT_TO_ROOM[p.unit_no] || ('Roost & Rest-' + p.unit_no),
         unit_no: p.unit_no,
         nickname: p.nickname || p.property_name,
         property_name: p.property_name

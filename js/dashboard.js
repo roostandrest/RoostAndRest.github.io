@@ -503,7 +503,7 @@ async function renderDashboard() {
       return s + (due > 0 ? due : 0);
     }, 0);
 
-    // --- HOMEYHUTS / TUHH VACATION RENTAL ANALYTICS CALCULATIONS ---
+    // --- HOMEYHUTS / Roost & Rest VACATION RENTAL ANALYTICS CALCULATIONS ---
     const totalBookedNights = monthCheckinBookings.reduce((s, b) => s + Math.max(1, Math.round((new Date(b.check_out || b.check_in) - new Date(b.check_in)) / 86400000)), 0);
     const hhAdr = totalBookedNights > 0 ? Math.round(monthRevenue / totalBookedNights) : (monthRevenue > 0 ? Math.round(monthRevenue / Math.max(1, monthCheckinBookings.length)) : 0);
     const totalAvailRoomNights = Math.max(1, totalProps * periodDays);
@@ -2273,7 +2273,7 @@ window.renderExecutiveDashboard = async function () {
               <span class="hh-mac-dot green"></span>
             </div>
             <div class="hh-mac-title" style="display:flex;align-items:center;gap:7px;">
-              <img src='assets/logo.svg' alt="TUHH" style="width:17px;height:17px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
+              <img src='assets/logo.svg' alt="Roost & Rest" style="width:17px;height:17px;border-radius:4px;object-fit:cover;" onerror="this.outerHTML='🏠'" />
               <span>Roost And Rest · Analytics</span>
             </div>
             <div class="hh-mac-live-badge">
@@ -2450,7 +2450,7 @@ window.renderExecutiveDashboard = async function () {
                 </div>
 
                 <!-- KPI 5: RevPAR -->
-                <div class="hh-kpi-card-v2" title="Revenue Per Available Room night across all 19 units = Net Revenue ÷ Available Capacity Nights (or ADR × Occupancy)">
+                <div class="hh-kpi-card-v2" title="Revenue Per Available Room night across all 18 units = Net Revenue ÷ Available Capacity Nights (or ADR × Occupancy)">
                   <div>
                     <div class="hh-kpi-header" style="margin-bottom:2px;font-weight:800;color:#0F172A;">RevPAR</div>
                     <div style="font-size:11px;color:#64748B;font-weight:600;margin-bottom:8px;line-height:1.2;">Revenue per available fleet room night</div>

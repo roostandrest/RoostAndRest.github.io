@@ -8,7 +8,7 @@
 
   const STORAGE_KEY = 'roost_showcase_data_v1';
 
-  // Purge legacy TUHH cache
+  // Purge legacy Roost & Rest cache
   try {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('tuhh_showcase_data_v215');

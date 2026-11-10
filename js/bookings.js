@@ -1583,7 +1583,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
       <div class="header-card" style="background:#0F172A;color:#FFFFFF;padding:16px 20px;border-radius:8px;margin-bottom:14px;border:1px solid #1E293B;">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
           <div style="display:flex;align-items:center;gap:14px;">
-            <img src="assets/logo.svg" alt="TUHH Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='assets/logo.svg';" />
+            <img src="assets/logo.svg" alt="Roost & Rest Logo" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1.5px solid rgba(255,255,255,0.25);" onerror="this.onerror=null;this.src='assets/logo.svg';" />
             <div>
               <div style="font-size:18px;font-weight:900;letter-spacing:0.5px;color:#FFFFFF;">ROOST AND REST STAYS</div>
               <div style="font-size:12.5px;font-weight:700;color:#FCD34D;margin-top:2px;letter-spacing:0.3px;">OFFICIAL GUEST STATEMENT OF ACCOUNT & LEDGER (अतिथि खाता विवरण)</div>
@@ -1591,7 +1591,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
             </div>
           </div>
           <div style="text-align:right;font-size:10px;color:#94A3B8;line-height:1.45;flex-shrink:0;">
-            <div>STATEMENT REF: <strong style="color:#FFFFFF;">#TUHH-STMT-${escapeHtml(cleanGuestName)}</strong></div>
+            <div>STATEMENT REF: <strong style="color:#FFFFFF;">#RST-STMT-${escapeHtml(cleanGuestName)}</strong></div>
             <div style="margin-top:2px;">GENERATED: <strong style="color:#FFFFFF;">${todayDateStr}</strong></div>
             <div style="margin-top:6px;">
               <span style="background:${totalDue > 0 ? '#DC2626' : '#166534'};color:#FFFFFF;padding:3px 10px;border-radius:4px;font-weight:800;font-size:11px;letter-spacing:0.3px;">
@@ -6768,7 +6768,7 @@ async function exportBookingsPDF() {
   const todayIso = new Date().toISOString().slice(0, 10);
   const propClean = prop ? '_' + String(prop).replace(/[\/\\:*?"<>|]/g, '-').replace(/\s+/g, '_') : '';
   const periodClean = (!propClean && period) ? '_' + String(period).replace(/[\/\\:*?"<>|]/g, '-').replace(/\s+/g, '_') : '';
-  const pdfDocTitle = `TUHH_Bookings_Report${propClean || periodClean}_${todayIso}`;
+  const pdfDocTitle = `Roost_Bookings_Report${propClean || periodClean}_${todayIso}`;
 
   const html = `<!DOCTYPE html>
 <html>
@@ -8784,7 +8784,7 @@ window.showSecurityDepositModal = async function(bkId) {
   setTimeout(async () => {
     if (window.populateReceivedByDropdown) {
       await window.populateReceivedByDropdown(document.getElementById('mSecReceivedBy'), sec.mode || 'UPI', sec.receivedBy || '', document.getElementById('mSecReceivedByCustom'));
-      const isSecOD = (sec.receivedBy || '').toUpperCase().includes('OD') || (sec.receivedBy || '').toUpperCase().includes('UHHS') || (sec.receivedBy || '').toUpperCase().includes('TUHH');
+      const isSecOD = (sec.receivedBy || '').toUpperCase().includes('OD') || (sec.receivedBy || '').toUpperCase().includes('Roost & Rest') || (sec.receivedBy || '').toUpperCase().includes('Roost & Rest');
       const defaultRefBy = sec.refundedBy || (isSecOD ? 'ROOST-BANK' : '');
       await window.populateReceivedByDropdown(document.getElementById('mSecRefBy'), sec.refundMode || 'UPI', defaultRefBy, document.getElementById('mSecRefByCustom'));
     }
@@ -8923,7 +8923,7 @@ window.submitSecurityRefund = async function(bkId) {
     refundDate: refDate,
     refundAmount: net,
     refundMode: refMode,
-    refundedBy: refBy || (((currentSec.receivedBy || '').toUpperCase().includes('OD') || (currentSec.receivedBy || '').toUpperCase().includes('UHHS') || (currentSec.receivedBy || '').toUpperCase().includes('TUHH')) ? 'ROOST-BANK' : ''),
+    refundedBy: refBy || (((currentSec.receivedBy || '').toUpperCase().includes('OD') || (currentSec.receivedBy || '').toUpperCase().includes('Roost & Rest') || (currentSec.receivedBy || '').toUpperCase().includes('Roost & Rest')) ? 'ROOST-BANK' : ''),
     deductedAmount: ded,
     deductionReason: reason,
     notes: refNotes || currentSec.notes || ''
@@ -9626,7 +9626,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         const safeName = (guest || roomShort || 'Stay').replace(/\s+/g, '_');
-        a.download = `TUHH_QR_${safeName}_Rs${amt}.png`;
+        a.download = `Roost_QR_${safeName}_Rs${amt}.png`;
         document.body.appendChild(a);
         a.click();
         a.remove();

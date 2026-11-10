@@ -1,6 +1,6 @@
 /**
  * =====================================================================
- * ROOST AND REST STAYS (UHHS) — SMART BOOKING SYSTEM (Next-Gen)
+ * ROOST AND REST STAYS (Roost & Rest) — SMART BOOKING SYSTEM (Next-Gen)
  * Developer: Praveen Singh
  * Zero-Error, Fast, Mobile-First Booking Engine & Command Center
  * =====================================================================
@@ -1739,7 +1739,7 @@ window.openBookingDrawer = async function(bookingId) {
                 ${payments.map(p => {
                   const timeStr = window.formatDateTimeStamp ? window.formatDateTimeStamp(p.paid_at || p.created_at || p.payment_date, { withSeconds: true }) : (p.payment_date || '');
                   const loggedBy = window._userNameCache?.[p.created_by] || (p.created_by ? 'Staff' : 'System');
-                  const isOD = (p.received_by || '').includes('OD') || (p.received_by || '').includes('UHHS');
+                  const isOD = (p.received_by || '').includes('OD') || (p.received_by || '').includes('Roost & Rest');
                   return `
                     <div style="background:#F8FAFC;border:1px solid var(--border-light);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
                       <div style="flex:1;">
@@ -2242,7 +2242,7 @@ window.toggleClassicBookingView = function() {
 window.sendWhatsAppToGuest = function(phone, name, bookingId) {
   const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
   const target = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
-  const msg = encodeURIComponent(`Hi ${name || 'Guest'}, greetings from Roost And Rest Stays (TUHH Lucknow)! We are pleased to host you. Please let us know if you need any assistance with your stay.`);
+  const msg = encodeURIComponent(`Hi ${name || 'Guest'}, greetings from Roost And Rest Stays (Roost & Rest Lucknow)! We are pleased to host you. Please let us know if you need any assistance with your stay.`);
   window.open(`https://wa.me/${target}?text=${msg}`, '_blank');
 };
 

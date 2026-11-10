@@ -1772,7 +1772,7 @@ function renderShell(content, activePage = 'dashboard') {
     laundry: { title: 'Laundry Management', sub: 'Linen dispatches & vendor tracking', icon: '🧺' },
     store: { title: 'Inventory & Store', sub: 'Supplies, toiletries & stock levels', icon: '📦' },
     'airbnb-sync': { title: 'Airbnb Sync & Financial Audit', sub: 'Monthly payouts reconciliation, exact earnings & calendar sync', icon: '🔄' },
-    rooms: { title: 'Properties & Units', sub: '19 homestays details & amenities', icon: '🏢' },
+    rooms: { title: 'Properties & Units', sub: '18 homestays details & amenities', icon: '🏢' },
     'showcase-admin': { title: 'Website Showcase & Media CMS', sub: 'Airbnb-style room photos, videos, pricing & maps', icon: '🌐' },
     'property-setup': { title: 'Property Setup', sub: 'Configure rooms, units & pricing', icon: '🏗️' },
     'whatsapp-hub': { title: 'WhatsApp Communications', sub: 'Guest templates & automated messaging', icon: '📱' },
@@ -5964,7 +5964,7 @@ window.printDocumentHTML = function(htmlContent, title = 'Document', options = {
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           navigator.share({
             files: [file],
-            title: title || 'TUHH Document'
+            title: title || 'Roost & Rest Document'
           }).catch(() => {});
           return;
         }
@@ -6252,197 +6252,197 @@ function renderAppMenu() {
   const totalProps = (window._globalRoomsList || []).length || 18;
 
   const html = `
-    <div class="tuhh-menu-wrap">
+    <div class="roost-menu-wrap">
       <!-- Profile Header Card -->
-      <div class="tuhh-profile-card" onclick="window.openPreferences && window.openPreferences()">
-        <div class="tuhh-avatar-circle">${initial}</div>
-        <div class="tuhh-profile-info">
-          <div class="tuhh-profile-name">${escapeHtml(shortName)}</div>
-          <div class="tuhh-profile-role"><span>●</span> ${roleLabel} · Account &amp; Settings</div>
+      <div class="roost-profile-card" onclick="window.openPreferences && window.openPreferences()">
+        <div class="roost-avatar-circle">${initial}</div>
+        <div class="roost-profile-info">
+          <div class="roost-profile-name">${escapeHtml(shortName)}</div>
+          <div class="roost-profile-role"><span>●</span> ${roleLabel} · Account &amp; Settings</div>
         </div>
-        <i class="ti ti-chevron-right tuhh-chevron"></i>
+        <i class="ti ti-chevron-right roost-chevron"></i>
       </div>
 
       <!-- Realtime Search Bar (Single Unified Search) -->
-      <div class="tuhh-menu-search-bar">
-        <i class="ti ti-search tuhh-search-icon"></i>
+      <div class="roost-menu-search-bar">
+        <i class="ti ti-search roost-search-icon"></i>
         <input type="text" id="menuLiveSearch" placeholder="Search pages, features, actions..." oninput="window.filterAppMenuRows(this.value)" autocomplete="off" />
-        <kbd class="tuhh-kbd-pill" onclick="window.openCommandPalette && window.openCommandPalette()" title="Press Ctrl+K">⌘K</kbd>
+        <kbd class="roost-kbd-pill" onclick="window.openCommandPalette && window.openCommandPalette()" title="Press Ctrl+K">⌘K</kbd>
       </div>
 
       <!-- SECTION 1: HOSPITALITY OPERATIONS -->
-      <div class="tuhh-menu-section">
-        <div class="tuhh-section-header">HOSPITALITY OPERATIONS</div>
-        <div class="tuhh-menu-group">
-          <div class="tuhh-menu-row" onclick="navigate('bookings')">
-            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#2563EB;"><i class="ti ti-calendar-check"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Bookings &amp; Reservations</div>
-              <div class="tuhh-row-sub">Guest register, check-ins, checkouts &amp; invoices</div>
+      <div class="roost-menu-section">
+        <div class="roost-section-header">HOSPITALITY OPERATIONS</div>
+        <div class="roost-menu-group">
+          <div class="roost-menu-row" onclick="navigate('bookings')">
+            <div class="roost-icon-box" style="background:#EFF6FF;color:#2563EB;"><i class="ti ti-calendar-check"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Bookings &amp; Reservations</div>
+              <div class="roost-row-sub">Guest register, check-ins, checkouts &amp; invoices</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('calendar')">
-            <div class="tuhh-icon-box" style="background:#F0FDF4;color:#16A34A;"><i class="ti ti-calendar"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Calendar &amp; Availability</div>
-              <div class="tuhh-row-sub">Monthly occupancy grid, nightly rates &amp; slot blocks</div>
+          <div class="roost-menu-row" onclick="navigate('calendar')">
+            <div class="roost-icon-box" style="background:#F0FDF4;color:#16A34A;"><i class="ti ti-calendar"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Calendar &amp; Availability</div>
+              <div class="roost-row-sub">Monthly occupancy grid, nightly rates &amp; slot blocks</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('rooms')">
-            <div class="tuhh-icon-box" style="background:#FDF4FF;color:#A855F7;"><i class="ti ti-building"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Properties &amp; Units (${totalProps})</div>
-              <div class="tuhh-row-sub">19 homestays, amenities, pricing &amp; website showcase</div>
+          <div class="roost-menu-row" onclick="navigate('rooms')">
+            <div class="roost-icon-box" style="background:#FDF4FF;color:#A855F7;"><i class="ti ti-building"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Properties &amp; Units (${totalProps})</div>
+              <div class="roost-row-sub">18 homestays, amenities, pricing &amp; website showcase</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('whatsapp-hub')">
-            <div class="tuhh-icon-box" style="background:#ECFDF5;color:#059669;"><i class="ti ti-brand-whatsapp"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">WhatsApp Communications</div>
-              <div class="tuhh-row-sub">Automated guest check-in, Wi-Fi password &amp; review links</div>
+          <div class="roost-menu-row" onclick="navigate('whatsapp-hub')">
+            <div class="roost-icon-box" style="background:#ECFDF5;color:#059669;"><i class="ti ti-brand-whatsapp"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">WhatsApp Communications</div>
+              <div class="roost-row-sub">Automated guest check-in, Wi-Fi password &amp; review links</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
         </div>
       </div>
 
       <!-- SECTION 2: FINANCE, CLAIMS & AUDIT -->
-      <div class="tuhh-menu-section">
-        <div class="tuhh-section-header">FINANCE, CLAIMS &amp; AUDIT</div>
-        <div class="tuhh-menu-group">
-          <div class="tuhh-menu-row" onclick="navigate('claims')">
-            <div class="tuhh-icon-box" style="background:#EEF2FF;color:#4F46E5;"><i class="ti ti-building-bank"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Roost-Bank &amp; Claims Hub</div>
-              <div class="tuhh-row-sub">Overdraft balance, daily closing statement &amp; vendor claims</div>
+      <div class="roost-menu-section">
+        <div class="roost-section-header">FINANCE, CLAIMS &amp; AUDIT</div>
+        <div class="roost-menu-group">
+          <div class="roost-menu-row" onclick="navigate('claims')">
+            <div class="roost-icon-box" style="background:#EEF2FF;color:#4F46E5;"><i class="ti ti-building-bank"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Roost-Bank &amp; Claims Hub</div>
+              <div class="roost-row-sub">Overdraft balance, daily closing statement &amp; vendor claims</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('investors')">
-            <div class="tuhh-icon-box" style="background:#FEF3C7;color:#D97706;"><i class="ti ti-chart-pie"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Investor Reports &amp; P&amp;L</div>
-              <div class="tuhh-row-sub">3-page audited statements, 70/30 share &amp; payouts</div>
+          <div class="roost-menu-row" onclick="navigate('investors')">
+            <div class="roost-icon-box" style="background:#FEF3C7;color:#D97706;"><i class="ti ti-chart-pie"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Investor Reports &amp; P&amp;L</div>
+              <div class="roost-row-sub">3-page audited statements, 70/30 share &amp; payouts</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('expenses')">
-            <div class="tuhh-icon-box" style="background:#FFF1F2;color:#E11D48;"><i class="ti ti-receipt-2"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Company Expenses &amp; Outflows</div>
-              <div class="tuhh-row-sub">Wi-Fi recharge, maintenance, staff claims &amp; bills</div>
+          <div class="roost-menu-row" onclick="navigate('expenses')">
+            <div class="roost-icon-box" style="background:#FFF1F2;color:#E11D48;"><i class="ti ti-receipt-2"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Company Expenses &amp; Outflows</div>
+              <div class="roost-row-sub">Wi-Fi recharge, maintenance, staff claims &amp; bills</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('laundry')">
-            <div class="tuhh-icon-box" style="background:#F0F9FF;color:#92400E;"><i class="ti ti-wash-machine"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Laundry &amp; Linen Tracker</div>
-              <div class="tuhh-row-sub">Vendor dispatches, count audit &amp; settlement</div>
+          <div class="roost-menu-row" onclick="navigate('laundry')">
+            <div class="roost-icon-box" style="background:#F0F9FF;color:#92400E;"><i class="ti ti-wash-machine"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Laundry &amp; Linen Tracker</div>
+              <div class="roost-row-sub">Vendor dispatches, count audit &amp; settlement</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('ca-audit')">
-            <div class="tuhh-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-briefcase"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">CA Audit Pack &amp; GST</div>
-              <div class="tuhh-row-sub">Bank Reconciliation (BRS), GST reports &amp; compliance</div>
+          <div class="roost-menu-row" onclick="navigate('ca-audit')">
+            <div class="roost-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-briefcase"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">CA Audit Pack &amp; GST</div>
+              <div class="roost-row-sub">Bank Reconciliation (BRS), GST reports &amp; compliance</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
         </div>
       </div>
 
       <!-- SECTION 3: TEAM & FIELD OPERATIONS -->
-      <div class="tuhh-menu-section">
-        <div class="tuhh-section-header">TEAM &amp; FIELD OPERATIONS</div>
-        <div class="tuhh-menu-group">
-          <div class="tuhh-menu-row" onclick="navigate('attendance')">
-            <div class="tuhh-icon-box" style="background:#ECFDF5;color:#059669;"><i class="ti ti-clipboard-check"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Staff Attendance &amp; Shifts</div>
-              <div class="tuhh-row-sub">Daily check-in logs, shifts &amp; monthly reports</div>
+      <div class="roost-menu-section">
+        <div class="roost-section-header">TEAM &amp; FIELD OPERATIONS</div>
+        <div class="roost-menu-group">
+          <div class="roost-menu-row" onclick="navigate('attendance')">
+            <div class="roost-icon-box" style="background:#ECFDF5;color:#059669;"><i class="ti ti-clipboard-check"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Staff Attendance &amp; Shifts</div>
+              <div class="roost-row-sub">Daily check-in logs, shifts &amp; monthly reports</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('tasks')">
-            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#3B82F6;"><i class="ti ti-checklist"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Tasks &amp; Housekeeping</div>
-              <div class="tuhh-row-sub">Room cleaning checklists &amp; caretaker tasks</div>
+          <div class="roost-menu-row" onclick="navigate('tasks')">
+            <div class="roost-icon-box" style="background:#EFF6FF;color:#3B82F6;"><i class="ti ti-checklist"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Tasks &amp; Housekeeping</div>
+              <div class="roost-row-sub">Room cleaning checklists &amp; caretaker tasks</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('advance')">
-            <div class="tuhh-icon-box" style="background:#FEF3C7;color:#B45309;"><i class="ti ti-gift"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Staff Advances &amp; Petrol Claims</div>
-              <div class="tuhh-row-sub">Salary linked advances &amp; field travel claims</div>
+          <div class="roost-menu-row" onclick="navigate('advance')">
+            <div class="roost-icon-box" style="background:#FEF3C7;color:#B45309;"><i class="ti ti-gift"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Staff Advances &amp; Petrol Claims</div>
+              <div class="roost-row-sub">Salary linked advances &amp; field travel claims</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
         </div>
       </div>
 
       <!-- SECTION 4: SUPPORT & SYSTEM -->
-      <div class="tuhh-menu-section">
-        <div class="tuhh-section-header">SUPPORT &amp; SYSTEM</div>
-        <div class="tuhh-menu-group">
-          <div class="tuhh-menu-row" onclick="navigate('help')">
-            <div class="tuhh-icon-box" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-help-circle"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Help Center &amp; Operating Guide</div>
-              <div class="tuhh-row-sub">Step-by-step CRM manual, workflows &amp; shortcut keys</div>
+      <div class="roost-menu-section">
+        <div class="roost-section-header">SUPPORT &amp; SYSTEM</div>
+        <div class="roost-menu-group">
+          <div class="roost-menu-row" onclick="navigate('help')">
+            <div class="roost-icon-box" style="background:#EFF6FF;color:#92400E;"><i class="ti ti-help-circle"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Help Center &amp; Operating Guide</div>
+              <div class="roost-row-sub">Step-by-step CRM manual, workflows &amp; shortcut keys</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="window.notifications && window.notifications.openPanel()">
-            <div class="tuhh-icon-box" style="background:#FFFBEB;color:#F59E0B;"><i class="ti ti-bell"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Notifications &amp; Alerts ${notifCount > 0 ? `<span class="homeyhuts-badge-pill">${notifCount}</span>` : ''}</div>
-              <div class="tuhh-row-sub">Pending approvals, reminders &amp; alerts</div>
+          <div class="roost-menu-row" onclick="window.notifications && window.notifications.openPanel()">
+            <div class="roost-icon-box" style="background:#FFFBEB;color:#F59E0B;"><i class="ti ti-bell"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Notifications &amp; Alerts ${notifCount > 0 ? `<span class="homeyhuts-badge-pill">${notifCount}</span>` : ''}</div>
+              <div class="roost-row-sub">Pending approvals, reminders &amp; alerts</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('user-mgmt')">
-            <div class="tuhh-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-users"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">User Management &amp; Permissions</div>
-              <div class="tuhh-row-sub">Staff logins, role-based access &amp; security</div>
+          <div class="roost-menu-row" onclick="navigate('user-mgmt')">
+            <div class="roost-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-users"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">User Management &amp; Permissions</div>
+              <div class="roost-row-sub">Staff logins, role-based access &amp; security</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row" onclick="navigate('settings')">
-            <div class="tuhh-icon-box" style="background:#F8FAFC;color:#64748B;"><i class="ti ti-settings"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title">Global Settings &amp; Brand</div>
-              <div class="tuhh-row-sub">System configuration, API keys &amp; company profile</div>
+          <div class="roost-menu-row" onclick="navigate('settings')">
+            <div class="roost-icon-box" style="background:#F8FAFC;color:#64748B;"><i class="ti ti-settings"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Global Settings &amp; Brand</div>
+              <div class="roost-row-sub">System configuration, API keys &amp; company profile</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron"></i>
+            <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="tuhh-menu-row tuhh-logout-row" onclick="document.getElementById('logoutBtn')?.click()">
-            <div class="tuhh-icon-box" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-logout"></i></div>
-            <div class="tuhh-row-content">
-              <div class="tuhh-row-title" style="color:#DC2626;font-weight:700;">Logout Session</div>
-              <div class="tuhh-row-sub">Sign out from this device safely</div>
+          <div class="roost-menu-row roost-logout-row" onclick="document.getElementById('logoutBtn')?.click()">
+            <div class="roost-icon-box" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-logout"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title" style="color:#DC2626;font-weight:700;">Logout Session</div>
+              <div class="roost-row-sub">Sign out from this device safely</div>
             </div>
-            <i class="ti ti-chevron-right tuhh-chevron" style="color:#DC2626;"></i>
+            <i class="ti ti-chevron-right roost-chevron" style="color:#DC2626;"></i>
           </div>
         </div>
       </div>
@@ -6454,8 +6454,8 @@ window.renderAppMenu = renderAppMenu;
 
 window.filterAppMenuRows = function(query) {
   const q = (query || '').toLowerCase().trim();
-  const rows = document.querySelectorAll('.tuhh-menu-row, .homeyhuts-menu-row');
-  const sections = document.querySelectorAll('.tuhh-menu-section');
+  const rows = document.querySelectorAll('.roost-menu-row, .homeyhuts-menu-row');
+  const sections = document.querySelectorAll('.roost-menu-section');
   let visibleCount = 0;
   
   rows.forEach(row => {
@@ -6466,7 +6466,7 @@ window.filterAppMenuRows = function(query) {
   });
 
   sections.forEach(sec => {
-    const visibleInSec = sec.querySelectorAll('.tuhh-menu-row:not([style*="display: none"]), .homeyhuts-menu-row:not([style*="display: none"])').length;
+    const visibleInSec = sec.querySelectorAll('.roost-menu-row:not([style*="display: none"]), .homeyhuts-menu-row:not([style*="display: none"])').length;
     sec.style.display = visibleInSec > 0 ? 'block' : 'none';
   });
 
@@ -6476,7 +6476,7 @@ window.filterAppMenuRows = function(query) {
       emptyState = document.createElement('div');
       emptyState.id = 'menuEmptySearchNotice';
       emptyState.className = 'homeyhuts-menu-empty-notice';
-      const container = document.querySelector('.tuhh-menu-wrap') || document.querySelector('.homeyhuts-menu-list');
+      const container = document.querySelector('.roost-menu-wrap') || document.querySelector('.homeyhuts-menu-list');
       if (container) container.appendChild(emptyState);
     }
     emptyState.style.display = 'block';

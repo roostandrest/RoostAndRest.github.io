@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// 👥 EMPLOYEE LEDGER — TUHH Clean HRMS & Payroll System
+// 👥 EMPLOYEE LEDGER — Roost & Rest HRMS & Payroll System
 // Month filter + Salary Calculation (Fixed / Per Flat) + Advance Tracker
 // ═══════════════════════════════════════════════════════════
 
@@ -870,7 +870,7 @@ window.paySalaryModal = function(empId, empName, suggestedAmount) {
       <div class="form-group">
         <label style="font-weight:700;">Paid By *</label>
         <select id="paySalBy">
-          <option value="Company">🏢 TUHH Company Account</option>
+          <option value="Company">🏢 Roost & Rest Company Account</option>
           
         </select>
       </div>
@@ -1017,7 +1017,7 @@ window.giveAdvanceModal = async function(empId, empName) {
       <div class="form-group">
         <label style="font-weight:700;">Given By *</label>
         <select id="advBy">
-          <option value="COMPANY">🏢 TUHH Company Account</option>
+          <option value="COMPANY">🏢 Roost & Rest Company Account</option>
           
         </select>
       </div>
@@ -1140,7 +1140,7 @@ window.viewEmpHistory = async function(empId, empName) {
   document.body.appendChild(modal);
 };
 
-console.log('✅ Employee Ledger v3 (TUHH Clean HRMS + Per-Flat Cleaning + Advance Tracker) loaded');
+console.log('✅ Employee Ledger v3 (Roost & Rest HRMS + Per-Flat Cleaning + Advance Tracker) loaded');
 
 
 // ═══════════════════════════════════════════════════════════
