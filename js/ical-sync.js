@@ -169,12 +169,12 @@ window.ICAL_SYNC = {
 
       // Fetch ALL active bookings for this room in DB (not just online channels)
       const { data: existing } = await sb.from('guest_register')
-        .select('booking_id, ical_uid, airbnb_confirmation_code, check_in, check_out, booking_mode, is_cancelled, guest_name, total_amount')
+        .select('booking_id, airbnb_confirmation_code, check_in, check_out, booking_mode, is_cancelled, guest_name, total_amount')
         .eq('room_id', room.room_id)
         .neq('is_cancelled', true);
       
-      const existingUids = new Set((existing || []).filter(e => e.ical_uid).map(e => e.ical_uid));
       const existingCodes = new Set((existing || []).filter(e => e.airbnb_confirmation_code).map(e => e.airbnb_confirmation_code));
+      const existingBookingIds = new Set((existing || []).filter(e => e.booking_id).map(e => e.booking_id));
 
       const isBcom = channelName === 'Booking.com';
       const bookingMode = isBcom ? 'Online-Booking.com' : 'Online-Airbnb';
@@ -208,8 +208,7 @@ window.ICAL_SYNC = {
           // If this is an actual online reservation, link the confirmation code to the existing booking if missing
           if (event.confirmationCode && !activeOverlap.airbnb_confirmation_code) {
             await sb.from('guest_register').update({
-              airbnb_confirmation_code: event.confirmationCode,
-              ical_uid: event.uid || activeOverlap.ical_uid
+              airbnb_confirmation_code: event.confirmationCode
             }).eq('booking_id', activeOverlap.booking_id);
           }
           result.skipped++;
@@ -217,8 +216,13 @@ window.ICAL_SYNC = {
         }
 
         // 2. Already synced check
-        if (existingUids.has(event.uid)) { result.skipped++; continue; }
+        const blockId = `BLK_ABNB_${room.room_id}_${event.checkIn.replace(/-/g, '')}_${event.checkOut.replace(/-/g, '')}`;
+        const bookingId = event.confirmationCode 
+          ? `BK_ABNB_${event.confirmationCode}`
+          : `BK_SYNC_${room.room_id}_${event.checkIn.replace(/-/g, '')}`;
+
         if (event.confirmationCode && existingCodes.has(event.confirmationCode)) { result.skipped++; continue; }
+        if (existingBookingIds.has(blockId) || existingBookingIds.has(bookingId)) { result.skipped++; continue; }
 
         // 3. Handle Blocked / Unavailable slots (Auto-fill on calendar, skip if previously deleted by user)
         const isBlockSlot = event.isBlocked || (!event.confirmationCode && (!event.summary || event.summary.toLowerCase().includes('not available') || event.summary.toLowerCase().includes('blocked')));
@@ -230,7 +234,7 @@ window.ICAL_SYNC = {
             continue;
           }
 
-          const blockId = `BLK_${room.room_id}_${event.checkIn.replace(/-/g, '')}_${event.checkOut.replace(/-/g, '')}`;
+          // blockId already computed above
           const { data: existingBlock } = await sb.from('guest_register')
             .select('booking_id')
             .eq('booking_id', blockId)
@@ -240,21 +244,24 @@ window.ICAL_SYNC = {
             await sb.from('guest_register').insert({
               booking_id: blockId,
               room_id: room.room_id,
-              guest_name: '🔒 Blocked Slot',
+              property_name: room.property_name || room.nickname,
+              guest_name: '🔒 Airbnb Blocked',
               check_in: event.checkIn,
               check_out: event.checkOut,
               total_amount: 0,
-              advance_amount: 0,
-              due_amount: 0,
+              paid_amount: 0,
+              balance_amount: 0,
+              payout_amount: 0,
               booking_mode: 'Offline-Blocked',
               payment_status: 'Settled',
               verification_status: 'approved',
-              ical_uid: event.uid || `blk_${blockSig}`,
+              status: 'confirmed',
               synced_from_ical: true,
               booked_by: 'iCal Auto-Block',
               notes: 'Auto-blocked from Airbnb calendar'
             });
             result.imported++;
+            existingBookingIds.add(blockId);
           } else {
             result.skipped++;
           }
@@ -262,10 +269,7 @@ window.ICAL_SYNC = {
         }
 
         // 4. Handle REALTIME Online Booking
-        // Use deterministic booking ID so repeat syncs NEVER create duplicate rows!
-        const bookingId = event.confirmationCode 
-          ? `BK_ABNB_${event.confirmationCode}`
-          : `BK_SYNC_${room.room_id}_${event.checkIn.replace(/-/g, '')}`;
+        // Deterministic bookingId already computed above
 
         // SAFETY: If booking already exists (e.g. from Gmail Sync), DO NOT overwrite authentic guest details!
         const { data: existingBooking } = await sb.from('guest_register')
@@ -284,17 +288,22 @@ window.ICAL_SYNC = {
         const { error } = await sb.from('guest_register').insert({
           booking_id: bookingId,
           room_id: room.room_id,
+          property_name: room.property_name || room.nickname,
           guest_name: guestName,
           check_in: event.checkIn,
           check_out: event.checkOut,
           total_amount: 0, // No fake amounts: iCal has no price data, exact payout comes from CSV or Gmail
-          per_day_rate: 0,
+          paid_amount: 0,
+          balance_amount: 0,
+          payout_amount: 0,
           booking_mode: bookingMode,
           payment_status: 'Pending CSV Payout',
           verification_status: 'approved',
+          status: 'confirmed',
           guests: null,
-          ical_uid: event.uid,
           airbnb_confirmation_code: event.confirmationCode || null,
+          airbnb_reservation_code: event.confirmationCode || null,
+          guest_phone: event.phoneEnd ? `+91 XXXXX ${event.phoneEnd}` : null,
           phone: event.phoneEnd ? `+91 XXXXX ${event.phoneEnd}` : null,
           synced_from_ical: true,
           booked_by: 'iCal Sync',
@@ -303,8 +312,8 @@ window.ICAL_SYNC = {
 
         if (!error) {
           result.created++;
-          existingCodes.add(event.confirmationCode);
-          existingUids.add(event.uid);
+          if (event.confirmationCode) existingCodes.add(event.confirmationCode);
+          existingBookingIds.add(bookingId);
         } else {
           result.skipped++;
         }
