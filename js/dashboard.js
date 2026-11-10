@@ -3204,8 +3204,8 @@ window.copyIdPendingText = copyIdPendingText;
 // ONLINE USERS MODAL
 // ═══════════════════════════════════════════════════════════
 async function showActiveUsersModal() {
-  if (SESSION.role !== 'developer') {
-    if (window.fsn) fsn.error('Denied', 'Only Developer can view online users');
+  if (!['developer', 'owner', 'admin'].includes(SESSION.role) && !window.isMasterUser?.()) {
+    if (window.fsn) fsn.error('Denied', 'Only Admin, Owner or Developer can view online users');
     return;
   }
   const users = await getActiveUsers();

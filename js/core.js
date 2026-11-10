@@ -215,39 +215,57 @@ window.syncTopbarPropertySelect = function() {
 };
 
 // ═══════════════════════════════════════════════════════════
-// 🔐 ROLE PERMISSION HELPERS
+// 🔐 ROLE PERMISSION HELPERS (Admin & Anwar have 100% Supreme Full Permissions)
 // ═══════════════════════════════════════════════════════════
+window.isMasterUser = function() {
+  if (!window.SESSION) return false;
+  const role = (SESSION.role || '').toLowerCase();
+  const name = (SESSION.displayName || '').toLowerCase();
+  const email = (SESSION.email || '').toLowerCase();
+  const uid = (SESSION.userId || '').toLowerCase();
+  return ['developer', 'owner', 'admin'].includes(role) ||
+         uid === 'roost_owner_anwar' ||
+         name.includes('anwar') || name.includes('admin') ||
+         email.includes('anwar') || email.includes('admin');
+};
+
 window.canDelete = function() {
-  return SESSION.role === 'developer';
+  if (window.isMasterUser && window.isMasterUser()) return true;
+  return ['developer', 'owner', 'admin'].includes(SESSION.role);
 };
 
 window.canEdit = function() {
-  return ['developer', 'admin', 'moderator'].includes(SESSION.role);
+  if (window.isMasterUser && window.isMasterUser()) return true;
+  return ['developer', 'owner', 'admin', 'moderator', 'manager'].includes(SESSION.role);
 };
 
 window.canView = function() {
-  return ['developer', 'owner', 'admin', 'moderator', 'subowner', 'booking_staff', 'viewer'].includes(SESSION.role);
+  return true;
 };
 
 window.isReadOnly = function() {
+  if (window.isMasterUser && window.isMasterUser()) return false;
   return ['subowner', 'viewer'].includes(SESSION.role);
 };
 
 window.canModerate = function() {
-  // Booking, ID upload, attendance, WhatsApp
-  return ['developer', 'admin', 'moderator'].includes(SESSION.role);
+  if (window.isMasterUser && window.isMasterUser()) return true;
+  return ['developer', 'owner', 'admin', 'moderator', 'manager'].includes(SESSION.role);
 };
 
 window.canManageUsers = function() {
-  return ['developer', 'admin'].includes(SESSION.role);
+  if (window.isMasterUser && window.isMasterUser()) return true;
+  return ['developer', 'owner', 'admin'].includes(SESSION.role);
 };
 
 window.canManageFinance = function() {
+  if (window.isMasterUser && window.isMasterUser()) return true;
   return ['developer', 'owner', 'admin'].includes(SESSION.role);
 };
 
 window.canManageStaff = function() {
-  return ['developer', 'owner', 'admin'].includes(SESSION.role);
+  if (window.isMasterUser && window.isMasterUser()) return true;
+  return ['developer', 'owner', 'admin', 'manager'].includes(SESSION.role);
 };
 
 // 👑 IDENTIFY DEVELOPER (Developer Group / Master System Recipient)
@@ -1054,6 +1072,8 @@ async function logout() {
 
 // ============ LOGIN ============
 function renderLogin() {
+  document.body.classList.add('is-login-screen');
+  document.body.classList.remove('is-logged-in');
   // Hide mobile bottom nav and install bar on login screen
   const botNav = document.getElementById('pwa-bottom-nav');
   if (botNav) botNav.style.display = 'none';
@@ -1452,6 +1472,12 @@ window.getTablerIcon = getTablerIcon;
 
 function renderShell(content, activePage = 'dashboard') {
   window.renderShell = renderShell;
+  document.body.classList.remove('is-login-screen');
+  document.body.classList.add('is-logged-in');
+  const botNav = document.getElementById('pwa-bottom-nav');
+  if (botNav) {
+    botNav.style.removeProperty('display');
+  }
   if (SESSION.investorId) { appEl.innerHTML = content; return; }
   const show = ['developer', 'admin', 'owner', 'moderator', 'subowner', 'viewer', 'booking_staff', 'manager', 'checkin_manager', 'caretaker'].includes(SESSION.role);
   const isCheckinMgr = SESSION.role === 'checkin_manager' || SESSION.role === 'caretaker';
@@ -1858,8 +1884,13 @@ function renderShell(content, activePage = 'dashboard') {
     document.querySelectorAll('#pwa-bottom-nav .pwa-nav-item, .bottom-nav a').forEach(btn => {
       const p = btn.dataset.page;
       const isAct = (p === targetSidebarKey) ||
-        (p === 'calendar' && targetSidebarKey === 'bookings') ||
-        (p === 'flats' && targetSidebarKey === 'rooms');
+        (p === 'dashboard' && (targetSidebarKey === 'dashboard' || activePage === 'dashboard' || activePage === 'dailyReport')) ||
+        (p === 'bookings' && (targetSidebarKey === 'bookings' || activePage === 'calendar' || activePage === 'pendingApprovals')) ||
+        (p === 'rooms' && (targetSidebarKey === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin')) ||
+        (p === 'flats' && (targetSidebarKey === 'rooms' || activePage === 'flats')) ||
+        (p === 'expenses' && (targetSidebarKey === 'expenses' || activePage === 'claims' || activePage === 'reimbursements')) ||
+        (p === 'employees' && (targetSidebarKey === 'employees' || activePage === 'attendance' || activePage === 'tasks')) ||
+        (p === 'menu' && (activePage === 'menu' || targetSidebarKey === 'settings' || targetSidebarKey === 'help' || targetSidebarKey === 'user-mgmt'));
       if (isAct) btn.classList.add('active');
       else btn.classList.remove('active');
     });
@@ -2450,8 +2481,13 @@ function navigate(page) {
   const targetBottomKey = (typeof PAGE_TO_SIDEBAR_MAP !== 'undefined' && PAGE_TO_SIDEBAR_MAP[page]) ? PAGE_TO_SIDEBAR_MAP[page] : page;
   document.querySelectorAll('.bottom-nav a[data-page], .pwa-bottom-nav .pwa-nav-item[data-page]').forEach(a => {
     const isAct = (a.dataset.page === targetBottomKey) ||
-      (a.dataset.page === 'calendar' && targetBottomKey === 'bookings') ||
-      (a.dataset.page === 'flats' && targetBottomKey === 'rooms');
+      (a.dataset.page === 'dashboard' && (targetBottomKey === 'dashboard' || page === 'dailyReport')) ||
+      (a.dataset.page === 'bookings' && (targetBottomKey === 'bookings' || page === 'calendar' || page === 'pendingApprovals')) ||
+      (a.dataset.page === 'rooms' && (targetBottomKey === 'rooms' || page === 'flats' || page === 'showcase-admin')) ||
+      (a.dataset.page === 'flats' && (targetBottomKey === 'rooms' || page === 'flats')) ||
+      (a.dataset.page === 'expenses' && (targetBottomKey === 'expenses' || page === 'claims' || page === 'reimbursements')) ||
+      (a.dataset.page === 'employees' && (targetBottomKey === 'employees' || page === 'attendance' || page === 'tasks')) ||
+      (a.dataset.page === 'menu' && (page === 'menu' || targetBottomKey === 'settings' || targetBottomKey === 'help' || targetBottomKey === 'user-mgmt'));
     if (isAct) a.classList.add('active');
     else a.classList.remove('active');
   });
@@ -3824,7 +3860,7 @@ async function rejectUser(userId) {
 }
 
 async function deleteUser(userId, name) {
-  if (window.canDelete && !window.canDelete()) { fsn.error('Denied', 'Only Super Admin / Developer can delete users'); return; }
+  if (window.canDelete && !window.canDelete()) { fsn.error('Denied', 'Only Super Admin / Owner / Developer can delete users'); return; }
   if (!confirm(`Delete user "${name}"?\n\nProfile + pending entry delete hogi. Auth user remain karega.`)) return;
   try {
     const { error: delErr } = await sb.from('profiles').delete().eq('user_id', userId);
@@ -5160,7 +5196,7 @@ window.chartCard = function(canvasId, title, height) {
 // ═══════════════════════════════════════════════════════════
 window.forceLogoutUser = async function(userId, name) {
   if (!window.canDelete || !window.canDelete()) {
-    if (window.fsn) fsn.error('Denied', 'Only Developer can force logout users');
+    if (window.fsn) fsn.error('Denied', 'Only Super Admin / Owner / Developer can force logout users');
     return;
   }
   if (userId === SESSION.userId) {
@@ -5204,7 +5240,7 @@ window.forceLogoutUser = async function(userId, name) {
 
 window.forceLogoutAll = async function() {
   if (!window.canDelete || !window.canDelete()) {
-    if (window.fsn) fsn.error('Denied', 'Only Developer can force logout users');
+    if (window.fsn) fsn.error('Denied', 'Only Super Admin / Owner / Developer can force logout users');
     return;
   }
   if (!confirm('Force logout ALL users (except yourself)?\n\nAll other devices and tabs will be logged out immediately.')) return;

@@ -14,10 +14,12 @@
   'use strict';
 
   function isDeveloperRecipient() {
+    if (window.isMasterUser && window.isMasterUser()) return true;
+    if (['owner', 'admin', 'developer'].includes(window.SESSION?.role)) return true;
     if (typeof window.isDeveloperUser === 'function') {
       return window.isDeveloperUser(window.SESSION?.userId, window.SESSION?.email, window.SESSION?.displayName, window.SESSION?.role);
     }
-    return window.SESSION?.role === 'developer';
+    return ['developer', 'owner', 'admin'].includes(window.SESSION?.role);
   }
 
   // ═════════════════════════════════════════════════════════════

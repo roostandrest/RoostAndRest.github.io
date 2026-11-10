@@ -228,7 +228,7 @@ async function renderManageEmployees() {
           <div class="sub" style="margin-top:4px;">
             General Manager: <strong>Anwar Ahmad & Operations Team</strong> &bull; On-ground operational staff: Caretakers, Cleaning Staff & Maids
           </div>
-          ${SESSION.role === 'developer' ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">ID Proof Storage: ${(storageInfo?.files || 0)} files &bull; Limit: ${storageInfo?.label || '1 GB'}</div>` : ''}
+          ${['developer','owner','admin'].includes(SESSION.role) || (window.isMasterUser && window.isMasterUser()) ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">ID Proof Storage: ${(storageInfo?.files || 0)} files &bull; Limit: ${storageInfo?.label || '1 GB'}</div>` : ''}
         </div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">

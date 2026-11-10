@@ -418,8 +418,8 @@ window.renderIcalSync = async function() {
       </div>
     </div>`;
   
-  if (!['developer', 'owner'].includes(SESSION.role)) {
-    renderShell('<div class="card"><div class="error">❌ Only Owner/Developer</div></div>', 'ical-sync');
+  if (!['developer', 'owner', 'admin'].includes(SESSION.role) && !window.isMasterUser?.()) {
+    renderShell('<div class="card"><div class="error">❌ Only Owner/Admin/Developer</div></div>', 'ical-sync');
     return;
   }
   

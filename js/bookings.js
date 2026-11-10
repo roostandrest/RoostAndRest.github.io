@@ -5,7 +5,8 @@
 
 // ═══ APPROVAL WORKFLOW HELPERS ═══
 function isTrustedUser() {
-  return ['developer', 'owner'].includes(SESSION.role);
+  if (window.isMasterUser && window.isMasterUser()) return true;
+  return ['developer', 'owner', 'admin'].includes(SESSION.role);
 }
 // ═══ LOYALTY TIER SYSTEM ═══
 window._guestStaysCache = window._guestStaysCache || {};
@@ -3191,7 +3192,7 @@ async function renderAddBooking(prefillOpts) {
         </div>
       </div>
 
-      ${['developer','admin','manager'].includes(SESSION.role) ? `
+      ${['developer','owner','admin','manager'].includes(SESSION.role) || (window.isMasterUser && window.isMasterUser()) ? `
       <div class="form-group" style="padding:12px;background:#F0F7FF;border-radius:8px;border:1px solid #3B82F6;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
           <input type="checkbox" id="showToInvestor" checked onchange="toggleHideReason()" style="width:18px;height:18px;" />
@@ -5134,7 +5135,7 @@ async function editBooking(bkId) {
         </div>
       </div>
 
-      ${['developer','admin','manager'].includes(SESSION.role) ? `
+      ${['developer','owner','admin','manager'].includes(SESSION.role) || (window.isMasterUser && window.isMasterUser()) ? `
       <div class="form-group" style="padding:12px;background:#F0F7FF;border-radius:8px;border:1px solid #3B82F6;">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:600;">
           <input type="checkbox" id="editShowToInvestor" ${b.show_to_investor !== false ? 'checked' : ''} onchange="toggleEditHideReason()" style="width:18px;height:18px;" />
