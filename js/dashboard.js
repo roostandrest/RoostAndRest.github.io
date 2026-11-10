@@ -419,6 +419,14 @@ async function renderDashboard() {
       sb.from("employees").select("emp_id, name").eq('status', 'Active')
     ]);
 
+    let realExpenses = [];
+    try {
+      const expRes = await sb.from("expenses").select("id, amount, entry_date, room_id");
+      if (expRes?.data && Array.isArray(expRes.data)) {
+        realExpenses = expRes.data;
+      }
+    } catch (e) {}
+
     const globalProp = (typeof window.getGlobalSelectedProperty === 'function') ? (window.getGlobalSelectedProperty() || '').trim() : '';
 
     // Robust room matching across room_id, source_room_id, joined room object, and unit_no
@@ -508,7 +516,10 @@ async function renderDashboard() {
     const hhAdr = totalBookedNights > 0 ? Math.round(monthRevenue / totalBookedNights) : (monthRevenue > 0 ? Math.round(monthRevenue / Math.max(1, monthCheckinBookings.length)) : 0);
     const totalAvailRoomNights = Math.max(1, totalProps * periodDays);
     const hhRevPar = Math.round(monthRevenue / totalAvailRoomNights);
-    const hhEstExpenses = Math.round(monthRevenue * 0.38);
+    const hhEstExpenses = realExpenses.filter(e => {
+      const ed = e.entry_date || '';
+      return ed >= monthStart && ed <= monthEnd && (!globalProp || matchesRoom(e, globalProp));
+    }).reduce((s, e) => s + (Number(e.amount) || 0), 0);
     const hhNetOpIncome = Math.max(0, monthRevenue - hhEstExpenses);
     const periodOccupancyPct = totalAvailRoomNights > 0 ? Math.min(100, Math.round((totalBookedNights / totalAvailRoomNights) * 100)) : 0;
 
@@ -522,7 +533,11 @@ async function renderDashboard() {
     const prevAdr = prevBookedNights > 0 ? Math.round(prevRevenue / prevBookedNights) : 0;
     const prevAvailRoomNights = Math.max(1, totalProps * periodDays);
     const prevRevPar = Math.round(prevRevenue / prevAvailRoomNights);
-    const prevNetOpIncome = Math.max(0, prevRevenue - Math.round(prevRevenue * 0.38));
+    const prevRealExpTotal = realExpenses.filter(e => {
+      const ed = e.entry_date || '';
+      return ed >= prevPeriodStart && ed <= prevPeriodEnd && (!globalProp || matchesRoom(e, globalProp));
+    }).reduce((s, e) => s + (Number(e.amount) || 0), 0);
+    const prevNetOpIncome = Math.max(0, prevRevenue - prevRealExpTotal);
     const prevOccPct = Math.min(100, Math.round((prevBookedNights / prevAvailRoomNights) * 100));
 
     const revChangePct = prevRevenue > 0 ? (((monthRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1) : (monthRevenue > 0 ? '+100' : '0.0');
@@ -607,7 +622,9 @@ async function renderDashboard() {
       const rRev = rBks.reduce((s, b) => s + (b.total_amount || 0), 0);
       const rNights = rBks.reduce((s, b) => s + Math.max(1, Math.round((new Date(b.check_out || b.check_in) - new Date(b.check_in)) / 86400000)), 0);
       const rOcc = Math.min(100, Math.round((rNights / lastDay) * 100));
-      const rNet = Math.round(rRev * 0.62);
+      const propExps = realExpenses.filter(e => matchesRoom(e, rId) && (e.entry_date || '') >= monthStart && (e.entry_date || '') <= monthEnd);
+      const propExpSum = propExps.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+      const rNet = Math.max(0, rRev - propExpSum);
       const rName = propLabel(fl.rooms) || fl.room_id || 'Unit';
       const thumb = (typeof window.getRoostPropertyCover === 'function')
         ? window.getRoostPropertyCover(fl.rooms || fl)
@@ -1964,7 +1981,7 @@ window.renderExecutiveDashboard = async function () {
       return ed >= periodStart && ed <= periodEnd && (!globalProp || matchesRoom(e, globalProp));
     });
     const realExpTotal = monthExpensesList.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-    const hhEstExpenses = realExpTotal > 0 ? realExpTotal : Math.round(monthRevenue * 0.38);
+    const hhEstExpenses = realExpTotal;
     const hhNetOpIncome = Math.max(0, monthRevenue - hhEstExpenses);
     const periodOccupancyPct = totalAvailRoomNights > 0 ? Math.min(100, Math.round((totalBookedNights / totalAvailRoomNights) * 100)) : 0;
     const occupancyPct = totalProps > 0 ? Math.round(bookedNow.length / totalProps * 100) : 0;
@@ -1984,7 +2001,7 @@ window.renderExecutiveDashboard = async function () {
       return ed >= prevPeriodStart && ed <= prevPeriodEnd && (!globalProp || matchesRoom(e, globalProp));
     });
     const prevRealExpTotal = prevExpensesList.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-    const prevNetOpIncome = prevRealExpTotal > 0 ? Math.max(0, prevRevenue - prevRealExpTotal) : Math.max(0, prevRevenue - Math.round(prevRevenue * 0.38));
+    const prevNetOpIncome = Math.max(0, prevRevenue - prevRealExpTotal);
     const prevOccPct = Math.min(100, Math.round((prevBookedNights / prevAvailRoomNights) * 100));
 
     const revChangePct = prevRevenue > 0 ? (((monthRevenue - prevRevenue) / prevRevenue) * 100).toFixed(1) : (monthRevenue > 0 ? '+100.0' : '0.0');
@@ -2075,7 +2092,7 @@ window.renderExecutiveDashboard = async function () {
 
       const propExps = realExpenses.filter(e => matchesRoom(e, rId) && e.entry_date >= periodStart && e.entry_date <= periodEnd);
       const propExpSum = propExps.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-      const rNet = propExpSum > 0 ? Math.max(0, rRev - propExpSum) : Math.round(rRev * 0.62);
+      const rNet = Math.max(0, rRev - propExpSum);
 
       const rName = propLabel(fl.rooms) || fl.room_id || 'Unit';
       const thumb = (typeof window.getRoostPropertyCover === 'function')
@@ -3493,7 +3510,7 @@ function initExecutiveDashboardCharts(data) {
         return ed.startsWith(mKey) && (!data.globalProp || (typeof matchesRoom === 'function' && matchesRoom(e, data.globalProp)));
       });
       const mExpSum = mExps.reduce((s, e) => s + (Number(e.amount) || 0), 0);
-      expData[idx] = mExpSum > 0 ? mExpSum : Math.round(finalRev * 0.38);
+      expData[idx] = mExpSum;
 
       profitData[idx] = Math.max(0, revData[idx] - expData[idx]);
     });
