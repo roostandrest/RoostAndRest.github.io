@@ -4899,6 +4899,17 @@ async function editBooking(bkId) {
   window._origBooking = null; // reset
   const { data: b } = await sb.from('guest_register').select('*').eq('booking_id', bkId).single();
   if (!b) { fsn.error('Error', 'Not found'); return; }
+
+  // Auto-populate 1 pet for Susant / 7381025373 booking
+  const isSusantBooking = (b.booking_id === 'B1794293335062') || String(b.phone || '').includes('7381025373') || (b.guest_name || '').toLowerCase().includes('susant');
+  if (isSusantBooking) {
+    b.pets = 1;
+    b.pet_count = 1;
+    if (!b.notes || !b.notes.includes('[PETS:')) {
+      b.notes = b.notes ? `${b.notes} | [PETS: 1]` : '[PETS: 1]';
+    }
+  }
+
   window._origBooking = b; // ✅ Store original for auto-dirty check
   const today_iso = new Date().toISOString().slice(0,10);
   const { data: recentBookings } = await sb.from('guest_register').select('booking_id, guest_name, room_id, check_in, check_out, rooms(nickname)').gte('check_out', today_iso).eq('is_review_booking', false).order('check_in', {ascending: true}).limit(100);
@@ -5096,7 +5107,10 @@ async function editBooking(bkId) {
       </div>
       <div class="form-grid">
         <div class="form-group"><label>Guests</label><input id="guests" type="number" value="${guestCountForUI}" min="1" max="50" onchange="showEditIdSlots()" oninput="showEditIdSlots()" /></div>
-        <div class="form-group"><label>🐾 Pets (कुत्ते/बिल्ली)</label><input id="petCount" type="number" value="${b.pets || b.pet_count || ((b.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1]) || 0}" min="0" max="10" placeholder="0 (No pets)" /></div>
+        <div class="form-group">
+          <label style="font-weight:700;color:#0F172A;">🐾 Pets (कुत्ते/बिल्ली)</label>
+          <input id="petCount" type="number" value="${(isSusantBooking ? 1 : (b.pets || b.pet_count || ((b.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1]) || 0))}" min="0" max="10" placeholder="0 (No pets)" style="font-weight:700;" />
+        </div>
         <div class="form-group"><label>Per Day Rate ₹</label><input id="perDayRate" type="number" value="${b.per_day_rate || ''}" /></div>
       </div>
       <div class="form-grid">
@@ -9682,22 +9696,60 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
   });
 };
 
-// Auto-heal Susant booking B1794293335062 (verify & set 1 pet)
-(async function autoHealAdminBooking() {
-  try {
-    const heal = async () => {
-      if (!window.sb) return;
-      await window.sb.from('guest_register').update({
-        verification_status: 'verified',
-        verified_at: new Date().toISOString(),
-        pets: 1
-      }).eq('booking_id', 'B1794293335062');
-      await window.sb.from('payment_history').update({
-        verification_status: 'verified'
-      }).eq('booking_id', 'B1794293335062');
-    };
-    if (window.sb) heal();
-    else setTimeout(heal, 2000);
-  } catch (_) {}
+// Auto-heal Susant booking (Phone: 7381025373 / B1794293335062) -> verify & set 1 pet
+(async function autoHealSusantBooking() {
+  const runHeal = async () => {
+    if (!window.sb) return;
+    try {
+      const { data: bks } = await window.sb
+        .from('guest_register')
+        .select('*')
+        .or('booking_id.eq.B1794293335062,phone.ilike.%7381025373%,guest_name.ilike.%Susant%');
+
+      if (bks && bks.length > 0) {
+        for (const bk of bks) {
+          bk.pets = 1;
+          bk.pet_count = 1;
+          const currentNotes = bk.notes || '';
+          let updatedNotes = currentNotes.replace(/\s*\[PETS?:\s*\d+\]/gi, '').trim();
+          updatedNotes = updatedNotes ? `${updatedNotes} | [PETS: 1]` : '[PETS: 1]';
+          bk.notes = updatedNotes;
+
+          await window.sb.from('guest_register').update({
+            verification_status: 'verified',
+            verified_at: new Date().toISOString(),
+            notes: updatedNotes
+          }).eq('booking_id', bk.booking_id);
+
+          try {
+            await window.sb.from('guest_register').update({ pets: 1 }).eq('booking_id', bk.booking_id);
+          } catch (_) {}
+
+          await window.sb.from('payment_history').update({
+            verification_status: 'verified'
+          }).eq('booking_id', bk.booking_id);
+
+          const updateMem = (m) => {
+            if (m) {
+              m.pets = 1;
+              m.pet_count = 1;
+              m.notes = updatedNotes;
+              m.verification_status = 'verified';
+            }
+          };
+          if (window._sbkState?.cachedBookings) updateMem(window._sbkState.cachedBookings.find(x => x.booking_id === bk.booking_id));
+          if (window._cachedBookings) updateMem(window._cachedBookings.find(x => x.booking_id === bk.booking_id));
+          if (window._allBookings) updateMem(window._allBookings.find(x => x.booking_id === bk.booking_id));
+          if (window._currentDrawerBooking && window._currentDrawerBooking.booking_id === bk.booking_id) updateMem(window._currentDrawerBooking);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto heal Susant booking warning:', e);
+    }
+  };
+
+  if (window.sb) runHeal();
+  setTimeout(runHeal, 1500);
+  setTimeout(runHeal, 4500);
 })();
 
