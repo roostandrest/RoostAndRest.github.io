@@ -42,7 +42,7 @@
       "name": "Today's Operations",
       "short_name": "Operations",
       "description": "Today's check-ins, check-outs and in-house stays",
-      "url": "./index.html#dashboard",
+      "url": "./index.html#bookings",
       "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     },
     {

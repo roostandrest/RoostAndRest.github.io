@@ -122,7 +122,7 @@ window.handleGlobalPropertyFilterChange = function(roomId) {
 
   // Refresh current view if applicable
   const curHash = (window.location.hash || '').replace('#', '').trim();
-  const curPage = curHash || window.SESSION?.currentPage || 'dashboard';
+  const curPage = curHash || window.SESSION?.currentPage || 'bookings';
 
   if (curPage === 'bookings' && typeof window.renderSmartManageBookings === 'function') {
     window.renderSmartManageBookings(false);
@@ -418,7 +418,7 @@ let SESSION = {
   empId: null,
   investorId: null,
   displayName: null,
-  currentPage: 'dashboard',
+  currentPage: 'bookings',
   bookingFilter: 'All',
   bookingPropFilter: '',
   bookingDateFilter: '',
@@ -953,8 +953,12 @@ async function loadProfile(userId) {
     try { window.UserPageAudit?.trackVisit(userId, SESSION.displayName, p.role, 'checkin'); } catch(e) {}
   } else {
     const hashPage = (window.location.hash || '').replace('#', '').trim();
-    const lastPage = localStorage.getItem('uh_last_page');
+    // Default to 'bookings' (Today Operations: check-in / check-out). Never auto-load dashboard on boot.
+    if (hashPage === 'today' && window.setBookingTab) {
+      window.setBookingTab('today');
+    }
     const cleanHash = (hashPage && hashPage !== 'dashboard' && hashPage !== 'today') ? hashPage : '';
+    const lastPage = localStorage.getItem('uh_last_page');
     const cleanLast = (lastPage && lastPage !== 'dashboard' && lastPage !== 'today') ? lastPage : '';
     const targetPage = cleanHash || cleanLast || 'bookings';
     navigate(targetPage);
@@ -1063,7 +1067,7 @@ async function logout() {
   await sb.auth.signOut();
   SESSION = {
     userId: null, role: null, empId: null, investorId: null,
-    displayName: null, currentPage: 'dashboard',
+    displayName: null, currentPage: 'bookings',
     bookingFilter: 'All', bookingPropFilter: '', bookingDateFilter: '',
     bookingDateFrom: '', bookingDateTo: '', bookingSearch: ''
   };
@@ -1470,7 +1474,7 @@ function getTablerIcon(key) {
 }
 window.getTablerIcon = getTablerIcon;
 
-function renderShell(content, activePage = 'dashboard') {
+function renderShell(content, activePage = 'bookings') {
   window.renderShell = renderShell;
   document.body.classList.remove('is-login-screen');
   document.body.classList.add('is-logged-in');
@@ -1500,15 +1504,8 @@ function renderShell(content, activePage = 'dashboard') {
   // ═══════════════════════════════════════════════════════════
   const UHHS_HUBS = [
     {
-      id: 'dashboard',
-      label: '🏠 Today · Operations',
-      page: 'dashboard',
-      pages: ['dashboard', 'dailyReport'],
-      tabs: []
-    },
-    {
       id: 'bookings',
-      label: '📅 Bookings / Calendar',
+      label: '📅 Today · Operations',
       page: 'bookings',
       pages: ['bookings', 'calendar', 'reports', 'pendingApprovals', 'shifts', 'guest-crm'],
       tabs: [
@@ -1516,6 +1513,13 @@ function renderShell(content, activePage = 'dashboard') {
         { id: 'calendar', label: '🗓️ Calendar' },
         { id: 'pendingApprovals', label: '🟡 Approvals' }
       ]
+    },
+    {
+      id: 'dashboard',
+      label: '📊 Executive Dashboard',
+      page: 'dashboard',
+      pages: ['dashboard', 'dailyReport'],
+      tabs: []
     },
     {
       id: 'rooms',
@@ -1597,6 +1601,7 @@ function renderShell(content, activePage = 'dashboard') {
 
   // Single Source of Truth for mapping every page/sub-tab to its parent sidebar key
   const PAGE_TO_SIDEBAR_MAP = {
+    today: 'bookings',
     dashboard: 'dashboard',
     dailyReport: 'dashboard',
 
@@ -1657,8 +1662,8 @@ function renderShell(content, activePage = 'dashboard') {
   if (isAdmin || isOwner) {
     // 👑 OWNER (Mr. Anwar Ahmad) / DEVELOPER / ADMIN — Supreme Full Access to everything
     nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
+      ['bookings', 'Today · Operations'],
+      ['dashboard', 'Executive Dashboard'],
       ['rooms', 'Properties'],
       ['expenses', 'Expenses'],
       ['analytics', 'Finances'],
@@ -1670,8 +1675,8 @@ function renderShell(content, activePage = 'dashboard') {
     ];
   } else if (SESSION.role === 'moderator') {
     nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
+      ['bookings', 'Today · Operations'],
+      ['dashboard', 'Executive Dashboard'],
       ['rooms', 'Properties'],
       ['employees', 'HRMS & Tasks'],
       ['whatsapp-hub', 'WhatsApp Hub'],
@@ -1679,31 +1684,31 @@ function renderShell(content, activePage = 'dashboard') {
     ];
   } else if (isCheckinMgr || isCheckin) {
     nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
+      ['bookings', 'Today · Operations'],
+      ['dashboard', 'Executive Dashboard'],
       ['rooms', 'Properties'],
       ['whatsapp-hub', 'WhatsApp Hub'],
       ['help', 'Help & Guide'],
     ];
   } else if (isBookingStaff) {
     nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
+      ['bookings', 'Today · Operations'],
+      ['dashboard', 'Executive Dashboard'],
       ['rooms', 'Properties'],
       ['whatsapp-hub', 'WhatsApp Hub'],
       ['help', 'Help & Guide'],
     ];
   } else if (isViewer) {
     nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
+      ['bookings', 'Today · Operations'],
+      ['dashboard', 'Executive Dashboard'],
       ['rooms', 'Properties'],
       ['help', 'Help & Guide'],
     ];
   } else {
     nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
+      ['bookings', 'Today · Operations'],
+      ['dashboard', 'Executive Dashboard'],
       ['rooms', 'Properties'],
       ['expenses', 'Expenses'],
       ['analytics', 'Finances'],
@@ -1881,16 +1886,27 @@ function renderShell(content, activePage = 'dashboard') {
     });
 
     // 5. Update mobile bottom nav (HomeyHuts / Airbnb 5-tab capsule pill)
+    const isTodayTab = (activePage === 'bookings' && (!window._sbkState || window._sbkState.activeTab === 'today'));
     document.querySelectorAll('#pwa-bottom-nav .pwa-nav-item, .bottom-nav a').forEach(btn => {
       const p = btn.dataset.page;
-      const isAct = (p === targetSidebarKey) ||
-        (p === 'dashboard' && (targetSidebarKey === 'dashboard' || activePage === 'dashboard' || activePage === 'dailyReport')) ||
-        (p === 'bookings' && (targetSidebarKey === 'bookings' || activePage === 'calendar' || activePage === 'pendingApprovals')) ||
-        (p === 'rooms' && (targetSidebarKey === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin')) ||
-        (p === 'flats' && (targetSidebarKey === 'rooms' || activePage === 'flats')) ||
-        (p === 'expenses' && (targetSidebarKey === 'expenses' || activePage === 'claims' || activePage === 'reimbursements')) ||
-        (p === 'employees' && (targetSidebarKey === 'employees' || activePage === 'attendance' || activePage === 'tasks')) ||
-        (p === 'menu' && (activePage === 'menu' || targetSidebarKey === 'settings' || targetSidebarKey === 'help' || targetSidebarKey === 'user-mgmt'));
+      let isAct = false;
+      if (p === 'today') {
+        isAct = isTodayTab;
+      } else if (p === 'bookings') {
+        isAct = (activePage === 'bookings' && !isTodayTab) || activePage === 'calendar' || activePage === 'pendingApprovals';
+      } else if (p === 'dashboard') {
+        isAct = (activePage === 'dashboard' || activePage === 'dailyReport');
+      } else if (p === 'rooms' || p === 'flats') {
+        isAct = (targetSidebarKey === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin');
+      } else if (p === 'expenses') {
+        isAct = (targetSidebarKey === 'expenses' || activePage === 'claims' || activePage === 'reimbursements');
+      } else if (p === 'employees') {
+        isAct = (targetSidebarKey === 'employees' || activePage === 'attendance' || activePage === 'tasks');
+      } else if (p === 'menu') {
+        isAct = (activePage === 'menu' || targetSidebarKey === 'settings' || targetSidebarKey === 'help' || targetSidebarKey === 'user-mgmt');
+      } else {
+        isAct = (p === targetSidebarKey);
+      }
       if (isAct) btn.classList.add('active');
       else btn.classList.remove('active');
     });
@@ -1922,7 +1938,7 @@ function renderShell(content, activePage = 'dashboard') {
       <!-- ─── SIDEBAR ─── -->
       <aside class="sidebar" id="sidebarEl">
         <div class="sidebar-top">
-          <div class="sidebar-brand" onclick="navigate('dashboard')" title="ROOST AND REST STAYS">
+          <div class="sidebar-brand" onclick="navigate('bookings')" title="ROOST AND REST STAYS">
             <div class="brand-logo-wrap">
               <img src="assets/logo.svg" alt="ROOST AND REST" class="brand-logo" />
             </div>
@@ -1979,7 +1995,7 @@ function renderShell(content, activePage = 'dashboard') {
         <header class="app-topbar">
           <div class="topbar-left">
             <button type="button" class="sidebar-toggle-btn" id="hamburgerBtn" aria-label="Toggle Navigation" title="Toggle Navigation"><i class="ti ti-menu-2"></i></button>
-            <div class="topbar-brand-group" onclick="navigate('dashboard')">
+            <div class="topbar-brand-group" onclick="navigate('bookings')" style="cursor:pointer;">
               <img src="assets/logo.svg" alt="Roost & Rest" class="topbar-brand-logo" style="width:34px;height:34px;min-width:34px;max-width:34px;max-height:34px;border-radius:10px;object-fit:cover;flex-shrink:0;" />
               <div class="topbar-brand-titles">
                 <span class="topbar-brand-main">ROOST &amp; REST</span>
@@ -1995,8 +2011,8 @@ function renderShell(content, activePage = 'dashboard') {
             ${(() => {
               const topKey = PAGE_TO_SIDEBAR_MAP[activePage] || (activePage === 'reports' ? 'bookings' : activePage);
               return `
-                <a href="javascript:void(0)" onclick="navigate('dashboard')" class="${topKey==='dashboard'?'active':''}"><i class="ti ti-calendar-event"></i> Today</a>
-                <a href="javascript:void(0)" onclick="navigate('bookings')" class="${topKey==='bookings'?'active':''}"><i class="ti ti-calendar-check"></i> Bookings &amp; Calendar</a>
+                <a href="javascript:void(0)" onclick="if(window.setBookingTab) window.setBookingTab('today'); navigate('bookings');" class="${(topKey==='bookings'||topKey==='today')?'active':''}"><i class="ti ti-calendar-event"></i> Today (Operations)</a>
+                <a href="javascript:void(0)" onclick="navigate('dashboard')" class="${topKey==='dashboard'?'active':''}"><i class="ti ti-chart-bar"></i> Executive Dashboard</a>
                 <a href="javascript:void(0)" onclick="navigate('rooms')" class="${topKey==='rooms'?'active':''}"><i class="ti ti-building-community"></i> Properties</a>
                 <a href="javascript:void(0)" onclick="navigate('expenses')" class="${topKey==='expenses'?'active':''}"><i class="ti ti-receipt-2"></i> Expenses</a>
                 <a href="javascript:void(0)" onclick="navigate('analytics')" class="${topKey==='analytics'?'active':''}"><i class="ti ti-wallet"></i> Finances</a>
@@ -2447,7 +2463,9 @@ function renderShell(content, activePage = 'dashboard') {
 
 function navigate(page) {
   SESSION.currentPage = page;
-  try { localStorage.setItem('uh_last_page', page); } catch(e) {}
+  if (page !== 'dashboard') {
+    try { localStorage.setItem('uh_last_page', page); } catch(e) {}
+  }
   if (window.trackPageVisit) window.trackPageVisit(page);
   // 🧭 USER AUDIT PAGE TRACKER — Instant per-user page visit recording
   try {
@@ -2479,15 +2497,27 @@ function navigate(page) {
 
   // Update active state on bottom navigation
   const targetBottomKey = (typeof PAGE_TO_SIDEBAR_MAP !== 'undefined' && PAGE_TO_SIDEBAR_MAP[page]) ? PAGE_TO_SIDEBAR_MAP[page] : page;
+  const isTodayTab = (page === 'bookings' && (!window._sbkState || window._sbkState.activeTab === 'today'));
   document.querySelectorAll('.bottom-nav a[data-page], .pwa-bottom-nav .pwa-nav-item[data-page]').forEach(a => {
-    const isAct = (a.dataset.page === targetBottomKey) ||
-      (a.dataset.page === 'dashboard' && (targetBottomKey === 'dashboard' || page === 'dailyReport')) ||
-      (a.dataset.page === 'bookings' && (targetBottomKey === 'bookings' || page === 'calendar' || page === 'pendingApprovals')) ||
-      (a.dataset.page === 'rooms' && (targetBottomKey === 'rooms' || page === 'flats' || page === 'showcase-admin')) ||
-      (a.dataset.page === 'flats' && (targetBottomKey === 'rooms' || page === 'flats')) ||
-      (a.dataset.page === 'expenses' && (targetBottomKey === 'expenses' || page === 'claims' || page === 'reimbursements')) ||
-      (a.dataset.page === 'employees' && (targetBottomKey === 'employees' || page === 'attendance' || page === 'tasks')) ||
-      (a.dataset.page === 'menu' && (page === 'menu' || targetBottomKey === 'settings' || targetBottomKey === 'help' || targetBottomKey === 'user-mgmt'));
+    const p = a.dataset.page;
+    let isAct = false;
+    if (p === 'today') {
+      isAct = isTodayTab;
+    } else if (p === 'bookings') {
+      isAct = (page === 'bookings' && !isTodayTab) || page === 'calendar' || page === 'pendingApprovals';
+    } else if (p === 'dashboard') {
+      isAct = (page === 'dashboard' || page === 'dailyReport');
+    } else if (p === 'rooms' || p === 'flats') {
+      isAct = (targetBottomKey === 'rooms' || page === 'flats' || page === 'showcase-admin');
+    } else if (p === 'expenses') {
+      isAct = (targetBottomKey === 'expenses' || page === 'claims' || page === 'reimbursements');
+    } else if (p === 'employees') {
+      isAct = (targetBottomKey === 'employees' || page === 'attendance' || page === 'tasks');
+    } else if (p === 'menu') {
+      isAct = (page === 'menu' || targetBottomKey === 'settings' || targetBottomKey === 'help' || targetBottomKey === 'user-mgmt');
+    } else {
+      isAct = (p === targetBottomKey);
+    }
     if (isAct) a.classList.add('active');
     else a.classList.remove('active');
   });
@@ -2512,6 +2542,10 @@ function navigate(page) {
   window._laundryProp = globalProp ? globalProp : 'All';
 
   const map = {
+    today: () => {
+      if (window.setBookingTab) window.setBookingTab('today');
+      return (window.renderSmartManageBookings || window.renderManageBookings || renderManageBookings)();
+    },
     menu: () => (window.renderAppMenu || renderAppMenu)(),
     investors: () => (window.renderManageInvestors || renderManageInvestors)(),
     dashboard: () => (window.renderFullDashboardAnalytics || window.renderDashboard || renderDashboard)(),
@@ -2599,7 +2633,7 @@ window.manualRefreshCurrentPage = function() {
     btn.classList.add('spinning');
     btn.disabled = true;
   }
-  const cur = SESSION.currentPage || 'dashboard';
+  const cur = SESSION.currentPage || 'bookings';
   console.log('🔄 Manually refreshing page data:', cur);
   try {
     navigate(cur);
@@ -4522,7 +4556,7 @@ async function getActiveUsers() {
       // Re-render current page
       setTimeout(() => {
         try {
-          const currentPage = SESSION.currentPage || 'dashboard';
+          const currentPage = SESSION.currentPage || 'bookings';
           if (typeof navigate === 'function') navigate(currentPage);
         } catch(e) { console.warn('PTR refresh failed', e); }
         setTimeout(() => {
@@ -5134,7 +5168,7 @@ window.chartCard = function(canvasId, title, height) {
   if (typeof navigate === 'function' && !window._navigateWrapped) {
     const _origNavigate = window.navigate || navigate;
     window.navigate = function(page) {
-      const current = SESSION.currentPage || 'dashboard';
+      const current = SESSION.currentPage || 'bookings';
       if (current !== page) {
         NAV_HISTORY.push(current);
         // Push state to browser history
@@ -5160,10 +5194,10 @@ window.chartCard = function(canvasId, title, height) {
         if (map && map[prevPage]) map[prevPage]();
       }
     } else {
-      // No history — go to dashboard instead of closing
-      try { history.pushState({ page: 'dashboard' }, '', '#dashboard'); } catch(e) {}
-      if (typeof navigate === 'function' && SESSION.currentPage !== 'dashboard') {
-        navigate('dashboard');
+      // No history — go to bookings instead of dashboard
+      try { history.pushState({ page: 'bookings' }, '', '#bookings'); } catch(e) {}
+      if (typeof navigate === 'function' && SESSION.currentPage !== 'bookings') {
+        navigate('bookings');
       }
     }
   });
@@ -6344,6 +6378,15 @@ function renderAppMenu() {
             <div class="roost-row-content">
               <div class="roost-row-title">Anwar OD &amp; Claims Hub</div>
               <div class="roost-row-sub">Anwar OD balance, daily closing statement &amp; vendor claims</div>
+            </div>
+            <i class="ti ti-chevron-right roost-chevron"></i>
+          </div>
+
+          <div class="roost-menu-row" onclick="navigate('dashboard')">
+            <div class="roost-icon-box" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-chart-bar"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title">Executive Dashboard &amp; Analytics</div>
+              <div class="roost-row-sub">Dual-channel performance, monthly revenue &amp; bar charts</div>
             </div>
             <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
