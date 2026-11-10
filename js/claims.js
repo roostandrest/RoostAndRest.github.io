@@ -1165,7 +1165,7 @@ window.showUhhsStatementModal = async function() {
           <div style="font-size:12px;color:#64748B;">
             Period Net Balance: <strong style="color:${netBalance>=0?'#059669':'#DC2626'};font-size:13px;">₹${netBalance.toLocaleString('en-IN')}</strong>
           </div>
-          <button type="button" class="modal-close" onclick="window.closeUhhsStatementModal()" style="background:#64748B;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-weight:700;font-size:12px;cursor:pointer;">
+          <button type="button" onclick="window.closeUhhsStatementModal()" style="background:#475569;color:#ffffff;border:none;padding:8px 18px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);transition:background 0.15s ease;" onmouseover="this.style.background='#334155'" onmouseout="this.style.background='#475569'">
             ✕ Close Ledger
           </button>
         </div>
