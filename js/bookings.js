@@ -5794,6 +5794,12 @@ async function delBooking(bkId, guestName, roomId) {
 
     // 5. Delete from active payment_history & guest_register (Photos kept safe so Praveen can restore)
     await sb.from('payment_history').delete().eq('booking_id', bkId);
+    // Record dismissed block tombstone if this was a blocked slot
+    if (String(bkId).startsWith('BLK_') || bk?.booking_mode === 'Offline-Blocked' || (bk?.guest_name && bk.guest_name.toLowerCase().includes('blocked'))) {
+      if (typeof window.dismissBlockedSlot === 'function' && bk) {
+        window.dismissBlockedSlot(bk.room_id || roomId, bk.check_in, bk.check_out, bk.ical_uid);
+      }
+    }
     const { error: delErr } = await sb.from('guest_register').delete().eq('booking_id', bkId);
     if (delErr) {
       if (window.fsn) fsn.error('Error', '❌ Delete failed: ' + delErr.message);

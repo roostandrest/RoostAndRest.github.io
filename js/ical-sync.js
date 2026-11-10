@@ -220,16 +220,44 @@ window.ICAL_SYNC = {
         if (existingUids.has(event.uid)) { result.skipped++; continue; }
         if (event.confirmationCode && existingCodes.has(event.confirmationCode)) { result.skipped++; continue; }
 
-        // 3. Skip Blocked / Unavailable slots completely
-        // USER DIRECTIVE: ONLY sync real Online bookings, NEVER insert offline/blocked slots into DB!
-        if (event.isBlocked) {
-          result.skipped++;
-          continue;
-        }
+        // 3. Handle Blocked / Unavailable slots (Auto-fill on calendar, skip if previously deleted by user)
+        const isBlockSlot = event.isBlocked || (!event.confirmationCode && (!event.summary || event.summary.toLowerCase().includes('not available') || event.summary.toLowerCase().includes('blocked')));
+        if (isBlockSlot) {
+          // Check if this blocked slot was dismissed/deleted by user
+          const blockSig = `${room.room_id}_${event.checkIn}_${event.checkOut}`;
+          if (window.isBlockDismissed && await window.isBlockDismissed(room.room_id, event.checkIn, event.checkOut, event.uid)) {
+            result.skipped++;
+            continue;
+          }
 
-        // Must NOT be an unavailable/blocked placeholder
-        if (!event.confirmationCode && (!event.summary || event.summary.toLowerCase().includes('not available') || event.summary.toLowerCase().includes('blocked'))) {
-          result.skipped++;
+          const blockId = `BLK_${room.room_id}_${event.checkIn.replace(/-/g, '')}_${event.checkOut.replace(/-/g, '')}`;
+          const { data: existingBlock } = await sb.from('guest_register')
+            .select('booking_id')
+            .eq('booking_id', blockId)
+            .maybeSingle();
+
+          if (!existingBlock) {
+            await sb.from('guest_register').insert({
+              booking_id: blockId,
+              room_id: room.room_id,
+              guest_name: '🔒 Blocked Slot',
+              check_in: event.checkIn,
+              check_out: event.checkOut,
+              total_amount: 0,
+              advance_amount: 0,
+              due_amount: 0,
+              booking_mode: 'Offline-Blocked',
+              payment_status: 'Settled',
+              verification_status: 'approved',
+              ical_uid: event.uid || `blk_${blockSig}`,
+              synced_from_ical: true,
+              booked_by: 'iCal Auto-Block',
+              notes: 'Auto-blocked from Airbnb calendar'
+            });
+            result.imported++;
+          } else {
+            result.skipped++;
+          }
           continue;
         }
 

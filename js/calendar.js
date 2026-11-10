@@ -956,9 +956,9 @@ async function renderReports() {
       border: 1px dashed rgba(71, 85, 105, 0.35);
       background: #F8FAFC;
     }
-    .cal-date-num { font-size: 11.5px; font-weight: 700; color: #334155; padding: 3px 4px 0; line-height: 1.25;
+    .cal-date-num { font-size: 12px; font-weight: 800; color: #0F172A; padding: 3px 4px 0; line-height: 1.25;
     }
-    .cal-rate { font-size: 9.5px; color: #059669; font-weight: 700; text-align: center; padding-bottom: 4px; line-height: 1.25;
+    .cal-rate { font-size: 11px; color: #047857; font-weight: 800; text-align: center; padding-bottom: 4px; line-height: 1.25;
     }
     .cal-pill {
       flex: 1;
@@ -1087,6 +1087,15 @@ window.calOpenWhatsApp = function(bkId, btn) {
 };
 
 window.calDeleteBooking = async function(bkId, guestName, roomId) {
+  // If deleting a blocked slot, record in dismissed blocks so auto-sync never re-blocks it
+  if (String(bkId).startsWith('BLK_') || (guestName && guestName.toLowerCase().includes('blocked'))) {
+    try {
+      const { data: bRow } = await sb.from('guest_register').select('room_id, check_in, check_out, ical_uid').eq('booking_id', bkId).maybeSingle();
+      if (bRow && window.dismissBlockedSlot) {
+        window.dismissBlockedSlot(bRow.room_id || roomId, bRow.check_in, bRow.check_out, bRow.ical_uid);
+      }
+    } catch(e) {}
+  }
   if (typeof window.archiveAndSoftDeleteBooking === 'function') {
     const ok = await window.archiveAndSoftDeleteBooking(bkId, guestName, roomId);
     if (ok) {
@@ -1560,6 +1569,9 @@ window.calConvertBlockToBooking = async function(blkId, roomId, checkIn, checkOu
 
   try {
     // Delete the blocked slot from DB
+    if (window.dismissBlockedSlot) {
+      window.dismissBlockedSlot(roomId, checkIn, checkOut, blkId);
+    }
     await sb.from('guest_register').delete().eq('booking_id', blkId);
   } catch (e) {
     console.warn('[UHH] Could not delete block before convert:', e);

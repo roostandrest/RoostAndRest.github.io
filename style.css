@@ -27,15 +27,15 @@
   --card-bg: #ffffff;
 
   /* High-Contrast Luxury Typography — HomeyHuts Exact Neutral Tokens */
-  --text: #1C1917; /* HomeyHuts Neutral 900 */
-  --text-primary: #1C1917;
-  --text-secondary: #57534E; /* HomeyHuts Neutral 600 */
-  --text-muted: #78716C; /* HomeyHuts Neutral 500 */
-  --muted: #57534E;
+  --text: #0F172A; /* HomeyHuts Neutral 900 */
+  --text-primary: #0F172A;
+  --text-secondary: #334155; /* HomeyHuts Neutral 600 */
+  --text-muted: #64748B; /* HomeyHuts Neutral 500 */
+  --muted: #475569;
 
   /* Crisp Border Tokens — HomeyHuts Exact Neutral Scales */
-  --border: #E7E2DA; /* HomeyHuts Neutral 100 */
-  --border-color: #E7E2DA;
+  --border: #E2E8F0; /* HomeyHuts Neutral 100 */
+  --border-color: #E2E8F0;
   --border-strong: #D6CEBE; /* HomeyHuts Neutral 300 */
   --border-light: #F3EFEA; /* HomeyHuts Neutral 50 */
 
