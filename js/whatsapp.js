@@ -75,7 +75,7 @@ async function buildMessageData(bkId) {
       const p = cleanPhone(e.phone);
       if (!p || p.length < 10) return false;
 
-      // 3. Must NOT be manager (Praveen Singh has dedicated Property Manager section)
+      // 3. Must NOT be manager (Roost & Rest Tech has dedicated Property Manager section)
       const roleStr = String(e.role || '').toLowerCase();
       const nameStr = String(e.name || '').toLowerCase();
       if (nameStr.includes('praveen') || roleStr.includes('manager')) return false;

@@ -32,7 +32,7 @@ async function renderExpenses() {
       sb.from('guest_register').select('booking_id, check_in, total_amount'),
       sb.from('rooms').select('room_id, nickname, unit_no').order('unit_no'),
       sb.from('reimbursements').select('*').order('expense_date', { ascending: false }),
-      sb.from('maintenance_log').select('*').gt('cost', 0).order('reported_date', { ascending: false }),
+      sb.from('maintenance_log').select('*').gt('cost', 0).order('created_at', { ascending: false }),
       sb.from('laundry_payments').select('*, laundry_records(vendor_name, room_id)').order('payment_date', { ascending: false }),
       sb.from('advance_tracker').select('*, employees(name, role)').order('date_given', { ascending: false }),
       sb.from('employees').select('emp_id, name, role, phone, salary').order('name')

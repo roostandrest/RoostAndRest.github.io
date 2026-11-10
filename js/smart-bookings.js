@@ -1,7 +1,7 @@
 /**
  * =====================================================================
  * ROOST AND REST STAYS (Roost & Rest) — SMART BOOKING SYSTEM (Next-Gen)
- * Developer: Praveen Singh
+ * Developer: Roost & Rest Tech
  * Zero-Error, Fast, Mobile-First Booking Engine & Command Center
  * =====================================================================
  */

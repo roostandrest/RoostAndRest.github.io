@@ -183,7 +183,10 @@
     ]);
 
     let rooms = roomsRes.data || [];
-    let allExpenses = allExpensesRes.data || [];
+    let allExpenses = (allExpensesRes.data || []).map(e => ({
+      ...e,
+      month: e.month || (e.expense_date ? String(e.expense_date).slice(0, 7) : '')
+    }));
     let investorLinks = investorLinksRes.data || [];
     let payments = paymentsRes.data || [];
 

@@ -1,7 +1,7 @@
 /**
  * 🔔 USER AUDIT & REAL-TIME LOGIN NOTIFICATION SYSTEM
  * ROOST AND REST STAYS
- * Developer: Praveen Singh
+ * Developer: Roost & Rest Tech
  * 
  * Features:
  * 1. Real-time Login Alerts to Praveen (Developer) when any user logs in

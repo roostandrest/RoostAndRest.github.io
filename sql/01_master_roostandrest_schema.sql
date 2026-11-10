@@ -2,7 +2,7 @@
 -- ROOST AND REST — 1-CLICK MASTER DATABASE SCHEMA MIGRATION
 -- Project: https://lfxeacasgyofsyxthman.supabase.co
 -- Owner / Director: Anwar Ahmad (+91 9807486555 / roostandrestlucknow@gmail.com)
--- Developer: Praveen Singh (praveensinghaws@gmail.com)
+-- Developer: Roost & Rest Tech (tech@roostandrest.com)
 -- ═══════════════════════════════════════════════════════════════════
 -- Instructions:
 -- 1. Open Supabase Dashboard → SQL Editor → New Query
@@ -434,7 +434,7 @@ ON CONFLICT (key) DO UPDATE SET
 -- ═══════════════════════════════════════════════════════════════════
 INSERT INTO public.profiles (user_id, display_name, role, is_approved)
 VALUES
-  ('c6343844-a307-4668-9b16-1947a0c0f8fa', 'Praveen Singh', 'developer', true),
+  ('c6343844-a307-4668-9b16-1947a0c0f8fa', 'Roost & Rest Tech', 'developer', true),
   ('roost_owner_anwar', 'Anwar Ahmad', 'owner', true)
 ON CONFLICT (user_id) DO UPDATE SET
   role = EXCLUDED.role,

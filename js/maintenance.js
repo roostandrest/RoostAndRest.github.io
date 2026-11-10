@@ -22,7 +22,7 @@ async function renderMaintenanceLog() {
   const priorityFilter = (window._maintPriority || 'All').trim();
 
   const [{ data: logs }, { data: rooms }, { data: emps }] = await Promise.all([
-    sb.from('maintenance_log').select('*').order('reported_date', { ascending: false }),
+    sb.from('maintenance_log').select('*').order('created_at', { ascending: false }),
     sb.from('rooms').select('room_id, nickname, unit_no').order('room_id'),
     sb.from('employees').select('emp_id, name').eq('status', 'Active')
   ]);
@@ -35,7 +35,7 @@ async function renderMaintenanceLog() {
   // Apply filters (Safe Case-Insensitive 'ALL' handling)
   let filtered = logs || [];
   if (monthFilter && monthFilter.toUpperCase() !== 'ALL') {
-    filtered = filtered.filter(l => (l.reported_date || '').startsWith(monthFilter));
+    filtered = filtered.filter(l => (l.reported_date || (l.created_at || '').slice(0, 10)).startsWith(monthFilter));
   }
   if (statusFilter && statusFilter.toUpperCase() !== 'ALL') {
     filtered = filtered.filter(l => (l.status || 'Pending') === statusFilter);
@@ -55,7 +55,7 @@ async function renderMaintenanceLog() {
   const urgent = filtered.filter(l => l.priority === '🔴 Urgent' && (l.status || 'Pending') !== 'Resolved' && l.status !== 'Verified').length;
 
   // Month options (from data)
-  const months = [...new Set((logs || []).map(l => (l.reported_date || '').slice(0, 7)).filter(Boolean))].sort().reverse();
+  const months = [...new Set((logs || []).map(l => (l.reported_date || (l.created_at || '').slice(0, 10)).slice(0, 7)).filter(Boolean))].sort().reverse();
 
   renderShell(`
     <div class="card" style="margin-bottom:12px;padding:14px 16px;">
@@ -144,7 +144,7 @@ async function renderMaintenanceLog() {
             <td style="font-size:11px;">${empMap[l.assigned_to] || l.vendor_name || '-'}</td>
             <td>₹${Number(l.cost || 0).toLocaleString('en-IN')}</td>
             <td><span class="badge ${statusClass}" style="font-size:10px;">${status}</span></td>
-            <td style="font-size:11px;">${l.reported_date || '-'}</td>
+            <td style="font-size:11px;">${l.reported_date || (l.created_at || '').slice(0, 10) || '-'}</td>
             <td>${(() => {
               const getPath = (p) => p.includes('/id-proofs/') ? p.split('/id-proofs/')[1] : p;
               const btns = [];
@@ -430,25 +430,17 @@ async function saveMaintenance() {
     return;
   }
 
-  const { data: newMaint, error } = await sb.from('maintenance_log').insert({
-    payment_source: document.getElementById('mPaymentSource')?.value || 'ROOST-BANK',
+  const insertPayload = {
     room_id: document.getElementById('mRoom').value || null,
-    issue_type: getMaintType(),
-    priority: document.getElementById('mPriority').value,
-    description: desc,
-    cost: cost,
-    reported_date: document.getElementById('mDate').value,
-    assigned_to: document.getElementById('mAssigned').value || null,
-    vendor_name: document.getElementById('mVendor').value.trim() || null,
+    property_name: (window.UHHS_PROPERTIES && window.UHHS_PROPERTIES.find(p => p.room_id === document.getElementById('mRoom').value) || {}).property_name || '',
+    issue: desc || 'Maintenance Issue',
+    priority: document.getElementById('mPriority').value || 'Normal',
     status: document.getElementById('mStatus').value || 'Pending',
-    claim_status: 'unclaimed',
-    photo_before: billPhotoUrl,
-    payment_photo: payPhotoUrl,
-    notes: document.getElementById('mNotes').value.trim() || null,
-    paid_by: cost > 0 ? (document.getElementById('mPaymentSource')?.value || 'ROOST-BANK') : null,
-    payment_mode: cost > 0 ? payMode : null,
-    payment_date: cost > 0 ? (payDate || new Date().toISOString().slice(0,10)) : null
-  }).select().single();
+    cost: cost,
+    reported_by: document.getElementById('mAssigned')?.value || (window.SESSION ? window.SESSION.displayName : 'Anwar Ahmad'),
+    created_at: document.getElementById('mDate')?.value ? new Date(document.getElementById('mDate').value).toISOString() : new Date().toISOString()
+  };
+  const { data: newMaint, error } = await sb.from('maintenance_log').insert(insertPayload).select().single();
 
   // Cash Book no longer tracks maintenance (separate module)
 
@@ -549,7 +541,7 @@ async function editMaintenance(id) {
         </div>
         <div class="form-group">
           <label>Reported Date</label>
-          <input id="mDate" type="date" value="${m.reported_date || ''}">
+          <input id="mDate" type="date" value="${m.reported_date || (m.created_at || '').slice(0, 10) || ''}">
         </div>
       </div>
       <div class="form-grid">
@@ -695,37 +687,15 @@ async function updateMaintenance() {
 
   const status = document.getElementById('mStatus').value;
   const updateObj = {
-    room_id: document.getElementById('mRoom').value || null,
-    issue_type: getMaintType(),
+    issue: desc || 'Maintenance Issue',
     priority: document.getElementById('mPriority').value,
-    description: desc,
+    status: status,
     cost: parseFloat(document.getElementById('mCost').value) || 0,
-    reported_date: document.getElementById('mDate').value,
-    resolved_date: document.getElementById('mResolvedDate').value || null,
-    assigned_to: document.getElementById('mAssigned').value || null,
-    vendor_name: document.getElementById('mVendor').value.trim() || null,
-    status,
-    photo_after: photoAfterUrl,
-    payment_photo: paymentPhotoUrl,
-    notes: document.getElementById('mNotes').value.trim() || null,
-    paid_by: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentSourceEdit')?.value || 'ROOST-BANK') : null,
-    payment_mode: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentMode')?.value || null) : null,
-    payment_date: (parseFloat(document.getElementById('mCost').value) || 0) > 0 ? (document.getElementById('mPaymentDate')?.value || null) : null
+    reported_by: document.getElementById('mAssigned').value || null
   };
-
-  // Validation
-  const _cost = parseFloat(document.getElementById('mCost').value) || 0;
-  if (_cost > 0 && !updateObj.payment_mode) {
-    document.getElementById('mErr').innerHTML = '<div class="error">⚠️ Payment Mode required hai (cost > 0)</div>';
-    return;
+  if (status === 'Resolved' || status === 'Verified') {
+    updateObj.resolved_at = new Date().toISOString();
   }
-
-  // Auto-set resolved date if status changed to resolved
-  if ((status === 'Resolved' || status === 'Verified') && !updateObj.resolved_date) {
-    updateObj.resolved_date = new Date().toISOString().slice(0, 10);
-  }
-
-  updateObj.payment_source = document.getElementById('mPaymentSourceEdit')?.value || 'ROOST-BANK';
   const { error } = await sb.from('maintenance_log').update(updateObj).eq('id', id);
   if (error) {
     document.getElementById('mErr').innerHTML = '<div class="error">' + error.message + '</div>';

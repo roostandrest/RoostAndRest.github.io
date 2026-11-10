@@ -1,7 +1,7 @@
 /**
  * ===================================
  * ROOST AND REST STAYS — Core Module
- * Developer: Praveen Singh
+ * Developer: Roost & Rest Tech
  * ===================================
  */
 
@@ -258,7 +258,7 @@ window.isDeveloperUser = function(userId, email, displayName, role) {
   const em = (email || window.SESSION?.email || '').toLowerCase();
   const name = (displayName || window.SESSION?.displayName || '').toLowerCase();
   if (uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa') return true;
-  if (em === 'praveensinghaws@gmail.com' || em.includes('praveensingh')) return true;
+  if (em === 'tech@roostandrest.com' || em.includes('praveensingh')) return true;
   if (name.includes('praveen')) return true;
   return false;
 };
@@ -1728,7 +1728,7 @@ function renderShell(content, activePage = 'dashboard') {
 
   // Custom badge overrides (per user)
   const CUSTOM_BADGES = {
-    'c6343844-a307-4668-9b16-1947a0c0f8fa': 'Manager',      // praveensinghaws@gmail.com
+    'c6343844-a307-4668-9b16-1947a0c0f8fa': 'Manager',      // tech@roostandrest.com
     'e3717cbd-da9a-495e-a940-2995021e8ca2': 'Developer',    // admin@roostandrest.github.io
   };
   const displayBadge = CUSTOM_BADGES[SESSION.userId] || roleLabel;
@@ -1739,7 +1739,7 @@ function renderShell(content, activePage = 'dashboard') {
     const email = (s.email || '').toLowerCase().trim();
     const uid = (s.userId || '').toLowerCase().trim();
     const name = (s.displayName || '').toLowerCase().trim();
-    return email === 'praveensinghaws@gmail.com' ||
+    return email === 'tech@roostandrest.com' ||
            uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa' ||
            s.role === 'developer' ||
            name.includes('praveen');
@@ -2990,12 +2990,16 @@ async function renderUserManagement() {
     sb.from('employees').select('emp_id, name, phone, role, is_active')
   ]);
 
-  const userList = (profiles || []).map(u => {
+  let userList = (profiles || []).map(u => {
     if ((u.display_name || '').toLowerCase().includes('praveen') || u.role === 'developer') {
       return { ...u, display_name: 'Roost & Rest Tech' };
     }
     return u;
   });
+  // Hide developer row from general user management table unless viewed by dev
+  if (!window.isDeveloperUser || !window.isDeveloperUser()) {
+    userList = userList.filter(u => u.role !== 'developer');
+  }
   const pendingRequests = (allPending || []).filter(p => p.status === 'Pending');
   const employees = allEmployees || [];
 

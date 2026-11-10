@@ -10010,3 +10010,194 @@ textarea:focus {
 
 
 
+
+
+/* ═══════════════════════════════════════════════════════════
+   🌟 ROOST & REST — ULTRA HIGH-CONTRAST LUXURY SIDEBAR DRAWER
+   Guarantees pristine crisp white/gold typography across all
+   themes (light & dark), all viewports (desktop, tablet, mobile)
+   ═══════════════════════════════════════════════════════════ */
+aside.sidebar,
+.sidebar,
+.sidebar.mobile-drawer-open,
+.sidebar.open {
+  background: #1C1917 !important; /* Rich obsidian espresso */
+  color: #F8FAFC !important;
+  border-right: 1px solid rgba(245, 158, 11, 0.15) !important;
+  box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5) !important;
+  z-index: 100001 !important;
+}
+
+/* Sidebar Brand Header */
+.sidebar-brand .brand-name,
+.sidebar.mobile-drawer-open .sidebar-brand .brand-name,
+.sidebar.open .sidebar-brand .brand-name {
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+}
+.sidebar-brand .brand-sub,
+.sidebar.mobile-drawer-open .sidebar-brand .brand-sub,
+.sidebar.open .sidebar-brand .brand-sub {
+  color: #F59E0B !important; /* Warm amber gold */
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+}
+.sidebar-close-btn {
+  color: #F8FAFC !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar User Profile Card */
+.sidebar-user-card,
+.sidebar.mobile-drawer-open .sidebar-user-card,
+.sidebar.open .sidebar-user-card {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(245, 158, 11, 0.2) !important;
+  border-radius: 12px !important;
+}
+.sidebar-user-card .user-avatar {
+  background: linear-gradient(135deg, #B45309, #D97706) !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+}
+.sidebar-user-card .user-name,
+.sidebar.mobile-drawer-open .sidebar-user-card .user-name,
+.sidebar.open .sidebar-user-card .user-name {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+.sidebar-user-card .user-role-badge,
+.sidebar.mobile-drawer-open .sidebar-user-card .user-role-badge,
+.sidebar.open .sidebar-user-card .user-role-badge {
+  background: rgba(245, 158, 11, 0.2) !important;
+  color: #FCD34D !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  font-weight: 700 !important;
+}
+.sidebar-user-card .user-notif-btn {
+  color: #F8FAFC !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Sidebar Nav Links — Inactive Items (Crisp, High Contrast Silver-White) */
+.sidebar .sidebar-nav a,
+.sidebar-nav a,
+.sidebar nav a,
+.sidebar.mobile-drawer-open .sidebar-nav a,
+.sidebar.open .sidebar-nav a {
+  color: #F1F5F9 !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  background: transparent !important;
+  text-decoration: none !important;
+  opacity: 0.95 !important;
+  transition: all 0.15s ease !important;
+}
+.sidebar .sidebar-nav a span,
+.sidebar .sidebar-nav a .nav-label,
+.sidebar-nav a span,
+.sidebar-nav a .nav-label,
+.sidebar.mobile-drawer-open .sidebar-nav a span,
+.sidebar.mobile-drawer-open .sidebar-nav a .nav-label,
+.sidebar.open .sidebar-nav a span,
+.sidebar.open .sidebar-nav a .nav-label {
+  color: #F1F5F9 !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+.sidebar .sidebar-nav a .nav-icon,
+.sidebar-nav a .nav-icon,
+.sidebar.mobile-drawer-open .sidebar-nav a .nav-icon,
+.sidebar.open .sidebar-nav a .nav-icon {
+  color: #F59E0B !important; /* Rich amber icon */
+  font-size: 1.15rem !important;
+  opacity: 1 !important;
+}
+
+/* Sidebar Nav Links — Hover */
+.sidebar .sidebar-nav a:hover,
+.sidebar-nav a:hover,
+.sidebar nav a:hover,
+.sidebar.mobile-drawer-open .sidebar-nav a:hover,
+.sidebar.open .sidebar-nav a:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+  transform: translateX(3px) !important;
+}
+.sidebar .sidebar-nav a:hover span,
+.sidebar .sidebar-nav a:hover .nav-label,
+.sidebar-nav a:hover span,
+.sidebar-nav a:hover .nav-label {
+  color: #FFFFFF !important;
+}
+.sidebar .sidebar-nav a:hover .nav-icon,
+.sidebar-nav a:hover .nav-icon {
+  color: #FCD34D !important;
+}
+
+/* Sidebar Nav Links — Active Item (Luxury Warm Amber Gradient) */
+.sidebar .sidebar-nav a.active,
+.sidebar-nav a.active,
+.sidebar nav a.active,
+.sidebar.mobile-drawer-open .sidebar-nav a.active,
+.sidebar.open .sidebar-nav a.active {
+  background: linear-gradient(135deg, #B45309 0%, #78350F 100%) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.45) !important;
+  border-left: 3px solid #F59E0B !important;
+}
+.sidebar .sidebar-nav a.active span,
+.sidebar .sidebar-nav a.active .nav-label,
+.sidebar-nav a.active span,
+.sidebar-nav a.active .nav-label {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+.sidebar .sidebar-nav a.active .nav-icon,
+.sidebar-nav a.active .nav-icon {
+  color: #FFFFFF !important;
+}
+
+/* Nav Section Headings */
+.sidebar .nav-section-heading,
+.nav-section-heading,
+.sidebar.mobile-drawer-open .nav-section-heading,
+.sidebar.open .nav-section-heading {
+  color: #CBD5E1 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  opacity: 0.85 !important;
+}
+
+/* Sidebar Footer & Action Buttons */
+.sidebar-footer,
+.sidebar.mobile-drawer-open .sidebar-footer,
+.sidebar.open .sidebar-footer {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.sidebar-footer button,
+.sidebar-action-btn,
+.sidebar.mobile-drawer-open .sidebar-action-btn,
+.sidebar.open .sidebar-action-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #F8FAFC !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  font-weight: 600 !important;
+}
+.sidebar-footer button:hover,
+.sidebar-action-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+}
+.sidebar-footer button.logout-btn:hover {
+  background: rgba(220, 38, 38, 0.3) !important;
+  color: #FCA5A5 !important;
+  border-color: rgba(220, 38, 38, 0.5) !important;
+}

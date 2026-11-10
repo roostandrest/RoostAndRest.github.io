@@ -380,7 +380,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             pSecRefunds
         ] = await Promise.all([
             client.from('reimbursements').select('*').gte('expense_date', CHECKPOINT_START).lte('expense_date', dayBefore),
-            client.from('maintenance_log').select('*').gte('reported_date', CHECKPOINT_START).lte('reported_date', dayBefore),
+            client.from('maintenance_log').select('*').gte('created_at', CHECKPOINT_START).lte('created_at', dayBefore),
             client.from('laundry_payments').select('*').gte('payment_date', CHECKPOINT_START).lte('payment_date', dayBefore),
             client.from('advance_tracker').select('*').gte('date_given', CHECKPOINT_START).lte('date_given', dayBefore),
             client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover').gte('advance_date', CHECKPOINT_START).lte('advance_date', dayBefore),
@@ -425,8 +425,8 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     let qReimb = client.from('reimbursements').select('*').gte('expense_date', startDate);
     if (endDate) qReimb = qReimb.lte('expense_date', endDate);
 
-    let qMaint = client.from('maintenance_log').select('*').gte('reported_date', startDate);
-    if (endDate) qMaint = qMaint.lte('reported_date', endDate);
+    let qMaint = client.from('maintenance_log').select('*').gte('created_at', startDate);
+    if (endDate) qMaint = qMaint.lte('created_at', endDate);
 
     let qLaund = client.from('laundry_payments').select('*').gte('payment_date', startDate);
     if (endDate) qLaund = qLaund.lte('payment_date', endDate);
@@ -481,7 +481,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
         txns.push({
             id: m.id,
             source: 'maintenance_log',
-            date: m.reported_date,
+            date: m.reported_date || (m.created_at || '').slice(0, 10),
             type: 'EXPENSE',
             desc: `Maintenance: ${m.issue_type || ''} - ${m.description || ''}`,
             amount: parseFloat(m.cost || 0),
