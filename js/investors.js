@@ -1228,7 +1228,7 @@ async function renderInvestorReport(investorId, roomId, month) {
               CIN: U55101UP2026PTC244637 · Registered with Dept. of Tourism, Govt. of Uttar Pradesh &amp; ROC Kanpur
             </div>
             <div style="color:#94A3B8;font-size:8.5px;margin-top:2px;">
-              Regd. Office: P NO 39 &amp; 40 RADHIKAPURI, INDIRA NAGAR TAKROHI, Lucknow, Uttar Pradesh - 226016
+              Regd. Office: 10222/470, IMPIRIYAL APARTMENT, INDIRA NAGAR MAIN ROAD, Lucknow, Uttar Pradesh - 226016
             </div>
             <div style="color:#94A3B8;font-size:8.5px;margin-top:2px;">
               Official Portal: <span style="color:#FDE047;">roostandrest.github.io</span> · Direct Phone / WhatsApp: <span style="color:#FFFFFF;">+91 9807486555</span>

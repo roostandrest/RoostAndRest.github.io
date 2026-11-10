@@ -14,12 +14,20 @@
   'use strict';
 
   function isDeveloperRecipient() {
-    if (window.isMasterUser && window.isMasterUser()) return true;
-    if (['owner', 'admin', 'developer'].includes(window.SESSION?.role)) return true;
-    if (typeof window.isDeveloperUser === 'function') {
-      return window.isDeveloperUser(window.SESSION?.userId, window.SESSION?.email, window.SESSION?.displayName, window.SESSION?.role);
-    }
-    return ['developer', 'owner', 'admin'].includes(window.SESSION?.role);
+    if (!window.SESSION) return false;
+    const role = (window.SESSION.role || '').toLowerCase().trim();
+    const name = (window.SESSION.displayName || '').toLowerCase().trim();
+    const email = (window.SESSION.email || '').toLowerCase().trim();
+
+    // Explicitly exclude Anwar and normal owners/staff so they NEVER get login popups
+    if (name.includes('anwar') || email.includes('anwar')) return false;
+    if (['owner', 'manager', 'staff', 'employee', 'cleaner', 'subowner', 'investor', 'viewer'].includes(role)) return false;
+
+    // ONLY Admin user receives login alert notifications
+    if (role === 'admin' || role === 'developer') return true;
+    if (name === 'admin' || email.includes('admin')) return true;
+
+    return false;
   }
 
   // ═════════════════════════════════════════════════════════════

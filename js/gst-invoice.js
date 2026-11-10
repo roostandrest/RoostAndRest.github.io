@@ -11,12 +11,13 @@ window.GST_ENGINE = (function () {
   // 1. COMPANY MASTER CONFIG
   const CO = {
     name: 'ROOST AND REST STAYS',
-    tradeName: 'Roost And Rest Stays Homestays',
-    gstin: '09AAMCT8448C1ZX',
-    pan: 'AAMCT8448C',
-    cin: 'U55101UP2026PTC244637',
+    tradeName: 'ROOTS & REST STAYS',
+    legalName: 'ANWAR AHMAD',
+    gstin: '09BQVPA3404Q1ZB',
+    pan: 'BQVPA3404Q',
     sac: '996311', // Accommodation services in homestays / guest houses
-    address: 'Plot No.: 39 & 40, Radhikapuri Colony, Takrohi, Indira Nagar, Lucknow - 226016',
+    address: '10222/470, Impiriyal Apartment, Indira Nagar Main Road, Lucknow, Uttar Pradesh – 226016',
+    regdAddress: 'Khalil Nagar, Fatehpur, Uttar Pradesh – 212601',
     state: 'Uttar Pradesh',
     stateCode: '09',
     phone: '+91 9807486555',
@@ -309,7 +310,7 @@ window.GST_ENGINE = (function () {
         : `<strong>Billing Mode:</strong> Direct Accommodation / Non-GST Supply`}
             </div>
             <div style="color:#444;font-size:9px;">
-              <strong>CIN:</strong> ${CO.cin} &nbsp;|&nbsp; <strong>PAN:</strong> ${CO.pan}
+              <strong>GSTIN:</strong> ${CO.gstin} &nbsp;|&nbsp; <strong>PAN:</strong> ${CO.pan} (Prop. ${CO.legalName})
             </div>
           </div>
         </div>
@@ -533,7 +534,7 @@ window.GST_ENGINE = (function () {
             <tr><td style="color:#444;width:95px;padding:1px 0;">Name:</td><td style="font-weight:800;color:#000;">${CO.name}</td></tr>
             <tr><td style="color:#444;padding:1px 0;">IFSC Code:</td><td style="font-weight:800;color:#000;font-family:monospace;letter-spacing:0.5px;">SBIN0018189</td></tr>
             <tr><td style="color:#444;padding:1px 0;">Account No:</td><td style="font-weight:800;color:#000;font-family:monospace;letter-spacing:0.5px;">20292764916</td></tr>
-            <tr><td style="color:#444;padding:1px 0;">Bank:</td><td style="font-weight:700;color:#000;">State Bank of India, Takrohi, Lucknow</td></tr>
+            <tr><td style="color:#444;padding:1px 0;">Bank:</td><td style="font-weight:700;color:#000;">State Bank of India, Lucknow</td></tr>
             <tr><td style="color:#444;padding:1px 0;">UPI / PhonePe:</td><td style="font-weight:700;color:#000;">9807486555</td></tr>
           </table>
         </div>

@@ -2118,7 +2118,7 @@
               </div>
               <div class="bank-row">
                 <span class="bank-label">Branch</span>
-                <span class="bank-val">Takrohi, Lucknow</span>
+                <span class="bank-val">Indira Nagar, Lucknow</span>
               </div>
               <div class="bank-row">
                 <span class="bank-label">PhonePe / UPI Linked</span>
@@ -2522,8 +2522,8 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
             <div>
               <div style="font-size:16px; font-weight:800; color:#0f172a; letter-spacing:0.5px;">ROOST AND REST STAYS</div>
               <div style="font-size:11px; color:#64748b; margin-top:2px;">
-                CIN: U55101UP2026PTC244637 · ROC Kanpur<br>
-                Reg. Off: P NO 39 &amp; 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, UP 226016<br>
+                GSTIN: 09BQVPA3404Q1ZB · PAN: BQVPA3404Q (Prop. Anwar Ahmad)<br>
+                Reg. Off: 10222/470, Impiriyal Apartment, Indira Nagar Main Road, Lucknow, UP 226016<br>
                 SAC Code: <strong>996311</strong> (Short-Stay Accommodation Services)
               </div>
             </div>
@@ -4389,8 +4389,8 @@ Direct Booking & Photo Album: ${shareUrl}`;
       const recipient = details.email || (this.guestProfile && this.guestProfile.email) || '';
       const subject = `Official GST Tax Invoice & Confirmation - Ref: ${details.bookingId} - ${details.propertyName}`;
       const body = `ROOST AND REST STAYS
-CIN: U55101UP2026PTC244637 · ROC Kanpur
-Registered Office: P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, UP 226016 - India
+GSTIN: 09BQVPA3404Q1ZB · PAN: BQVPA3404Q (Prop. Anwar Ahmad)
+Registered Office: 10222/470, Impiriyal Apartment, Indira Nagar Main Road, Lucknow, UP 226016 - India
 GST SAC Code: 996311 (Short-Stay Accommodation Services)
 Director, Owner & Helpline: +91 9807486555 (Mr. Anwar Ahmad)
 

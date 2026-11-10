@@ -4191,7 +4191,7 @@ async function renderSettings() {
             </button>
           </div>
           <input type="text" id="brand_registered_office_map_link" value="${(setMap['registered_office_map_link'] || 'https://www.google.com/maps?q=26.897965,81.010463').replace(/"/g, '&quot;')}" placeholder="https://www.google.com/maps?q=26.897965,81.010463" />
-          <small style="color:var(--muted);">Jab aap Radhikapuri Takrohi address par hon, tab "Capture My GPS Location" par click karein ya Google Maps se pin link paste karein.</small>
+          <small style="color:var(--muted);">Jab aap Impiriyal Apartment Indira Nagar office par hon, tab "Capture My GPS Location" par click karein ya Google Maps se pin link paste karein.</small>
         </div>
 
         <div class="form-group">

@@ -416,7 +416,7 @@ Save our contact — we'd love to host you again!
 Warm regards,
 *Team Roost And Rest Stays*
 📞 9807486555
-📍 Reg. Off: P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow`;
+📍 Reg. Off: 10222/470, Impiriyal Apartment, Indira Nagar Main Road, Lucknow`;
 }
 
 // ═══ 6b. AIRBNB REVIEW REQUEST ═══

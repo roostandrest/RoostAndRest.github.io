@@ -860,7 +860,7 @@
               `• 🛡️ **24x7 Support & Helpline:**\n` +
               `  📱 **Mr. Anwar Ahmad: +91 9807486555**\n\n` +
               `🏢 **Company:** ROOST AND REST STAYS\n` +
-              `📍 **Office:** Radhikapuri, Indira Nagar, Lucknow`,
+              `📍 **Office:** 10222/470, Impiriyal Apartment, Indira Nagar Main Road, Lucknow`,
         actions: [{ label: '📲 Call / WhatsApp Mr. Anwar Ahmad (+91 9807486555)', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to inquire about Roost And Rest Stays booking.` }],
         quickReplies: ['Rates list dikhao 💰', 'Gomti Grand Villa ₹8,000', 'Book now 📅']
       };

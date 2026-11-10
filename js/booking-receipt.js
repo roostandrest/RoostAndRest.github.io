@@ -12,15 +12,18 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
   const CO = {
     name:       'ROOST AND REST STAYS',
     tradeName:  'Roost And Rest Stays Homestays',
-    cin:        'U55101UP2026PTC244637',
-    pan:        'ABECT9843K',
-    address:    'P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, Uttar Pradesh – 226016',
+    legalName:  'ANWAR AHMAD',
+    gstTradeName: 'ROOTS & REST STAYS',
+    gstin:      '09BQVPA3404Q1ZB',
+    pan:        'BQVPA3404Q',
+    address:    '10222/470, Impiriyal Apartment, Indira Nagar Main Road, Lucknow, Uttar Pradesh – 226016',
+    regdAddress:'Khalil Nagar, Fatehpur, Uttar Pradesh – 212601',
     phone:      '+91 9807486555',
     phone2:     '+91 9807486555',
     managerPhone: '+91 9807486555',
     managerName: 'Mr. Anwar Ahmad',
     owners: [
-      { name: 'Mr. Anwar Ahmad (Owner & Director)', phone: '+91 9807486555' }
+      { name: 'Mr. Anwar Ahmad (Proprietor)', phone: '+91 9807486555' }
     ],
     email:      'theroostandrestlucknow@gmail.com',
     web:        'roostandrest.github.io'
@@ -321,7 +324,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
     const checkOutTime = formatTime(booking.check_out_time || '11:00');
     const todayStr = formatDate(new Date().toISOString().slice(0, 10));
 
-    const receiptNo = options.receiptNo || `UHH-REC/${booking.booking_id}`;
+    const receiptNo = options.receiptNo || `RR-REC/${booking.booking_id}`;
     const liveNotesInput = (typeof document !== 'undefined') ? document.getElementById('receiptCustomNotesInput') : null;
     const rawNotes = options.customNotes !== undefined ? options.customNotes : (liveNotesInput ? liveNotesInput.value : (booking.notes || ''));
     const customNotes = cleanNotes(rawNotes);
@@ -637,8 +640,8 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
         <!-- Signature & Seal -->
         <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:3px;border-top:1px solid #CBD5E1;">
           <div style="font-size:8px;color:#94A3B8;line-height:1.35;">
-            <strong style="color:#475569;">${CO.name}</strong><br>
-            CIN: ${CO.cin} · PAN: ${CO.pan} · Website: <a href="https://${CO.web}" style="color:#64748B;text-decoration:none;">${CO.web}</a>
+            <strong style="color:#475569;">${CO.name}</strong> (Prop. ${CO.legalName})<br>
+            GSTIN: ${CO.gstin} · PAN: ${CO.pan} · Website: <a href="https://${CO.web}" style="color:#64748B;text-decoration:none;">${CO.web}</a>
           </div>
 
           <div style="text-align:right;">
@@ -1145,7 +1148,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     const customNotes = cleanNotes(rawNotes);
     const bookedBy = isMulti ? (data.primaryBooking?.booked_by || '') : (data.booking?.booked_by || '');
 
-    const receiptNo = isMulti ? `UHH-GRP/${data.stayGroupId || 'GROUP'}` : `UHH-REC/${data.booking?.booking_id || 'SLIP'}`;
+    const receiptNo = isMulti ? `RR-GRP/${data.stayGroupId || 'GROUP'}` : `RR-REC/${data.booking?.booking_id || 'SLIP'}`;
     const todayStr = formatDate(new Date().toISOString().slice(0, 10));
 
     let logoSrc = 'assets/logo.svg';
@@ -1446,8 +1449,8 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- Footer Signature & Stamp -->
         <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1.5px solid #0F172A;padding-top:8px;">
           <div style="font-size:10px;color:#64748B;line-height:1.35;">
-            <strong style="color:#0F172A;">${CO.name}</strong><br>
-            CIN: ${CO.cin} · PAN: ${CO.pan}<br>
+            <strong style="color:#0F172A;">${CO.name}</strong> (Prop. ${CO.legalName})<br>
+            GSTIN: ${CO.gstin} · PAN: ${CO.pan}<br>
             Website: ${CO.web}
           </div>
           <div style="text-align:right;">
@@ -2049,7 +2052,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     } = data;
 
     const todayStr = formatDate(new Date().toISOString().slice(0, 10));
-    const receiptNo = options.receiptNo || `UHH-GRP/${stayGroupId || 'RECEIPT'}`;
+    const receiptNo = options.receiptNo || `RR-GRP/${stayGroupId || 'RECEIPT'}`;
     const groupNotes = data.customNotes || Array.from(new Set((bookings || []).map(b => cleanNotes(b.notes)).filter(Boolean))).join(' · ');
     const rawMulti = options.customNotes !== undefined ? options.customNotes : (groupNotes || primaryBooking?.notes || '');
     const customNotes = cleanNotes(rawMulti);
@@ -2335,8 +2338,8 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- Signature & Seal -->
         <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-top:3px;border-top:1px solid #CBD5E1;">
           <div style="font-size:8px;color:#94A3B8;line-height:1.35;">
-            <strong style="color:#475569;">${CO.name}</strong><br>
-            CIN: ${CO.cin} · PAN: ${CO.pan} · Website: <a href="https://${CO.web}" style="color:#64748B;text-decoration:none;">${CO.web}</a>
+            <strong style="color:#475569;">${CO.name}</strong> (Prop. ${CO.legalName})<br>
+            GSTIN: ${CO.gstin} · PAN: ${CO.pan} · Website: <a href="https://${CO.web}" style="color:#64748B;text-decoration:none;">${CO.web}</a>
           </div>
 
           <div style="text-align:right;">
