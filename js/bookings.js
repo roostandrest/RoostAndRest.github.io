@@ -4485,7 +4485,8 @@ async function saveBooking() {
       insertObj.security_deposit_notes = secData.notes;
     }
 
-    let { error } = await sb.from('guest_register').insert(insertObj);
+    let res = window.safeDbInsert ? await window.safeDbInsert('guest_register', insertObj) : await sb.from('guest_register').insert(insertObj);
+    let error = res?.error;
     if (isMissingColumnError(error)) {
       console.warn('Native security deposit columns not yet migrated in Supabase, falling back to notes tag:', error.message);
       delete insertObj.security_deposit_amount;
@@ -5946,7 +5947,8 @@ window.restoreDeletedBooking = async function(bkId) {
     }
 
     // 3. Re-insert booking row
-    const { error: insErr } = await sb.from('guest_register').insert(envelope.booking_data);
+    const insRes = window.safeDbInsert ? await window.safeDbInsert('guest_register', envelope.booking_data) : await sb.from('guest_register').insert(envelope.booking_data);
+    const insErr = insRes?.error;
     if (insErr) throw insErr;
 
     // 4. Re-insert payments if any

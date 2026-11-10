@@ -324,54 +324,70 @@ window.safeDbInsert = async function(table, payload) {
   if (!window.sb) throw new Error('Supabase client not initialized');
   let p = Array.isArray(payload) ? payload.map(x => ({ ...x })) : { ...payload };
   let attempts = 0;
-  while (attempts < 8) {
+  let lastRes = null;
+  while (attempts < 25) {
     attempts++;
-    const res = await window.sb.from(table).insert(p);
-    if (!res || !res.error) return res || { data: null, error: null };
-    
-    const errMsg = res.error.message || '';
-    const match = errMsg.match(/Could not find the '([^']+)' column/i) ||
-                  errMsg.match(/column '([^']+)' does not exist/i) ||
-                  errMsg.match(/column "([^"]+)" does not exist/i) ||
-                  errMsg.match(/column "([^"]+)" of relation/i);
-                  
-    if (match && match[1]) {
-      const badCol = match[1];
-      console.warn(`[safeDbInsert] Auto-stripped missing column '${badCol}' from table '${table}':`, errMsg);
-      if (Array.isArray(p)) {
-        p.forEach(row => { if (row && typeof row === 'object') delete row[badCol]; });
-      } else if (p && typeof p === 'object') {
-        delete p[badCol];
+    try {
+      const res = await window.sb.from(table).insert(p);
+      lastRes = res;
+      if (!res || !res.error) return res || { data: null, error: null };
+      
+      const errMsg = res.error?.message || '';
+      const match = errMsg.match(/Could not find the '([^']+)' column/i) ||
+                    errMsg.match(/column '([^']+)' does not exist/i) ||
+                    errMsg.match(/column "([^"]+)" does not exist/i) ||
+                    errMsg.match(/column "([^"]+)" of relation/i);
+                    
+      if (match && match[1]) {
+        const badCol = match[1];
+        console.warn(`[safeDbInsert] Auto-stripped missing column '${badCol}' from table '${table}':`, errMsg);
+        if (Array.isArray(p)) {
+          p.forEach(row => { if (row && typeof row === 'object') delete row[badCol]; });
+        } else if (p && typeof p === 'object') {
+          delete p[badCol];
+        }
+        continue;
       }
-      continue;
+      return res;
+    } catch (err) {
+      lastRes = { data: null, error: err };
+      return lastRes;
     }
-    return res;
   }
+  return lastRes || { data: null, error: new Error('Exceeded max schema retry attempts') };
 };
 
 window.safeDbUpdate = async function(table, payload, matchCol, matchVal) {
   if (!window.sb) throw new Error('Supabase client not initialized');
   let p = { ...payload };
   let attempts = 0;
-  while (attempts < 8) {
+  let lastRes = null;
+  while (attempts < 25) {
     attempts++;
-    const res = await window.sb.from(table).update(p).eq(matchCol, matchVal);
-    if (!res || !res.error) return res || { data: null, error: null };
-    
-    const errMsg = res.error.message || '';
-    const match = errMsg.match(/Could not find the '([^']+)' column/i) ||
-                  errMsg.match(/column '([^']+)' does not exist/i) ||
-                  errMsg.match(/column "([^"]+)" does not exist/i) ||
-                  errMsg.match(/column "([^"]+)" of relation/i);
-                  
-    if (match && match[1]) {
-      const badCol = match[1];
-      console.warn(`[safeDbUpdate] Auto-stripped missing column '${badCol}' from table '${table}':`, errMsg);
-      delete p[badCol];
-      continue;
+    try {
+      const res = await window.sb.from(table).update(p).eq(matchCol, matchVal);
+      lastRes = res;
+      if (!res || !res.error) return res || { data: null, error: null };
+      
+      const errMsg = res.error?.message || '';
+      const match = errMsg.match(/Could not find the '([^']+)' column/i) ||
+                    errMsg.match(/column '([^']+)' does not exist/i) ||
+                    errMsg.match(/column "([^"]+)" does not exist/i) ||
+                    errMsg.match(/column "([^"]+)" of relation/i);
+                    
+      if (match && match[1]) {
+        const badCol = match[1];
+        console.warn(`[safeDbUpdate] Auto-stripped missing column '${badCol}' from table '${table}':`, errMsg);
+        delete p[badCol];
+        continue;
+      }
+      return res;
+    } catch (err) {
+      lastRes = { data: null, error: err };
+      return lastRes;
     }
-    return res;
   }
+  return lastRes || { data: null, error: new Error('Exceeded max schema retry attempts') };
 };
 
 const appEl = document.getElementById("app");

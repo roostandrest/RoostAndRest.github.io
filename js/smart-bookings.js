@@ -3391,6 +3391,12 @@ window.saveSmartBooking = async function() {
       smartNotes = smartNotes ? `${smartNotes} | [PETS: ${rawPetCount}]` : `[PETS: ${rawPetCount}]`;
     }
 
+    const idTypeVal = document.getElementById('idType')?.value || 'Aadhar';
+    const idNoVal = document.getElementById('idNo')?.value?.trim();
+    if (idNoVal) {
+      smartNotes = smartNotes ? `${smartNotes} | [ID: ${idTypeVal} - ${idNoVal}]` : `[ID: ${idTypeVal} - ${idNoVal}]`;
+    }
+
     const approvalObj = (typeof approvalMeta === 'function') ? approvalMeta() : {
       created_by: SESSION.userId,
       verification_status: (window.isMasterUser && window.isMasterUser()) ? 'verified' : 'pending',
@@ -3408,21 +3414,13 @@ window.saveSmartBooking = async function() {
       check_out: co,
       check_in_time: document.getElementById('checkInTime')?.value || '14:00',
       check_out_time: document.getElementById('checkOutTime')?.value || '11:00',
-      checkout_confirmed: checkoutConfirmed,
       guests: parseInt(document.getElementById('guests')?.value) || 2,
-      pets: rawPetCount,
       booking_mode: isOnline ? 'Online-Airbnb' : 'Offline',
       airbnb_confirmation_code: airbnbCode,
       is_review_booking: isReview,
       total_amount: tot,
       per_day_rate: perDayRate,
       payment_status: payStatus,
-      id_proof_type: document.getElementById('idType')?.value || 'Aadhar',
-      id_proof_no: document.getElementById('idNo')?.value?.trim() || null,
-      id_proof_photo_path: photos.firstPath,
-      id_proof_photo_paths: photos.allPaths,
-      id_proof_front_paths: photos.frontPaths,
-      id_proof_back_paths: photos.backPaths,
       has_vehicle: !!(document.getElementById('vehicleNumber')?.value?.trim()),
       vehicle_name: document.getElementById('vehicleName')?.value?.trim() || null,
       vehicle_number: document.getElementById('vehicleNumber')?.value?.trim() || null,
@@ -3430,22 +3428,22 @@ window.saveSmartBooking = async function() {
       booked_by: window.getCurrentUserAuditName ? window.getCurrentUserAuditName() : (SESSION.displayName || SESSION.role || 'Staff')
     };
 
-    const { error: insErr } = window.safeDbInsert ? await window.safeDbInsert('guest_register', insertObj) : await sb.from('guest_register').insert(insertObj);
+    const res = window.safeDbInsert ? await window.safeDbInsert('guest_register', insertObj) : await sb.from('guest_register').insert(insertObj);
+    const insErr = res?.error;
     if (insErr) throw insErr;
 
     // Record payment if advance > 0
     if (adv > 0) {
       const payObj = {
-        ...approvalObj,
         booking_id: bkId,
         amount: adv,
-        payment_mode: advMode,
         payment_date: new Date().toISOString().slice(0, 10),
-        paid_at: new Date().toISOString(),
-        received_by: receivedBy,
-        handover_status: advMode === 'Cash' ? 'in_hand' : 'handed_over',
-        notes: 'Advance booking deposit',
-        created_by: SESSION.userId || null
+        payment_mode: advMode,
+        payment_method: advMode,
+        payment_type: 'Advance',
+        notes: receivedBy ? `Advance booking deposit (Received by: ${receivedBy})` : 'Advance booking deposit',
+        recorded_by: SESSION?.displayName || SESSION?.role || 'Staff',
+        verification_status: approvalObj.verification_status || 'verified'
       };
       if (window.safeDbInsert) {
         await window.safeDbInsert('payment_history', payObj);
@@ -3787,18 +3785,14 @@ window.saveMultiSmartBooking = async function() {
         check_out: co,
         check_in_time: checkInTime,
         check_out_time: checkOutTime,
-        checkout_confirmed: 'yes',
         guests: r.guests,
         booking_mode: 'Offline',
         total_amount: r.total_amount,
         payment_status: payStatus,
-        stay_group_id: stayGroupId,
-        id_proof_type: idType,
-        id_proof_no: idNo,
         has_vehicle: !!vehicleNumber,
         vehicle_name: vehicleName,
         vehicle_number: vehicleNumber,
-        notes: `Multi-Property Booking (${roomItems.length} Homestays: ${roomItems.map(x => x.room_name).join(', ')}). ${notes}`.trim(),
+        notes: `Multi-Property Booking [Group: ${stayGroupId}] (${roomItems.length} Homestays: ${roomItems.map(x => x.room_name).join(', ')})${idNo ? ` | [ID: ${idType} - ${idNo}]` : ''}. ${notes}`.trim(),
         booked_by: window.getCurrentUserAuditName ? window.getCurrentUserAuditName() : (SESSION?.displayName || SESSION?.role || 'Staff')
       };
     });
@@ -3844,14 +3838,13 @@ window.saveMultiSmartBooking = async function() {
           const payPayload = {
             booking_id: cbk.booking_id,
             amount: roomAdv,
-            payment_mode: advMode,
-            received_by: advReceivedBy,
             payment_date: payDate,
-            paid_at: new Date().toISOString(),
-            handover_status: handoverStatus,
-            notes: `Advance for ${roomObj?.room_name || cbk.room_id} (Group: ${stayGroupId})`,
-            created_by: SESSION?.userId || null,
-            ...meta
+            payment_mode: advMode,
+            payment_method: advMode,
+            payment_type: 'Advance',
+            notes: `Advance for ${roomObj?.room_name || cbk.room_id} (Group: ${stayGroupId}${advReceivedBy ? ` · Received by: ${advReceivedBy}` : ''})`,
+            recorded_by: SESSION?.displayName || SESSION?.role || 'Staff',
+            verification_status: meta?.verification_status || 'verified'
           };
 
           const pRes = window.safeDbInsert ? await window.safeDbInsert('payment_history', payPayload) : await sb.from('payment_history').insert(payPayload);
