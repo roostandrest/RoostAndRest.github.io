@@ -141,24 +141,24 @@
   SYNC.getRoomIdByListing = function(listingName) {
     if (!listingName) return null;
     const l = listingName.toLowerCase();
-    if (l.includes('pink paradise') || l.includes('vil-108') || l.includes('villa (eight)')) return 'VIL-108';
-    if (l.includes('yellow house') || l.includes('vil-105') || l.includes('villa (five)')) return 'VIL-105';
-    if (l.includes('green forest') || l.includes('vil-106') || l.includes('villa (six)')) return 'VIL-106';
-    if (l.includes('celebrity') || l.includes('lul-402') || l.includes('flat402')) return 'LUL-402';
-    if (l.includes('unique') || l.includes('gom-302') || l.includes('flat302')) return 'GOM-302';
-    if (l.includes('light green') || l.includes('gom-301') || l.includes('flat301')) return 'GOM-301';
-    if (l.includes('starlight') || l.includes('penthouse') || l.includes('gom-501') || l.includes('flat501')) return 'GOM-501';
-    if (l.includes('black beauty') || l.includes('gom-102') || l.includes('flat102')) return 'GOM-102';
-    if (l.includes('nawabi') || l.includes('gom-401') || l.includes('flat401')) return 'GOM-401';
-    if (l.includes('gomti grand') || l.includes('vil-101') || l.includes('villa (one)')) return 'VIL-101';
-    if (l.includes('green house') || l.includes('vil-104') || l.includes('villa (four)')) return 'VIL-104';
-    if (l.includes('pink house') || l.includes('vil-103') || l.includes('villa (three)')) return 'VIL-103';
-    if (l.includes('brown') || l.includes('gom-202') || l.includes('flat202')) return 'GOM-202';
-    if (l.includes('velvet') || l.includes('vil-107') || l.includes('villa (seven)')) return 'VIL-107';
-    if (l.includes('royal white') || l.includes('vil-102') || l.includes('villa (two)')) return 'VIL-102';
-    if (l.includes('dark blue') || l.includes('gom-201') || l.includes('flat201')) return 'GOM-201';
-    if (l.includes('redrose') || l.includes('gom-101') || l.includes('flat101')) return 'GOM-101';
-    if (l.includes('luxe haven') || l.includes('lul-101') || l.includes('1bhk') || l.includes('1798067011361845302')) return 'LUL-101';
+    if (l.includes('awadh abode') || l.includes('rst-101')) return 'RST-101';
+    if (l.includes('green leaf') || l.includes('greenleaf') || l.includes('rst-102')) return 'RST-102';
+    if (l.includes('moon light') || l.includes('moonlight') || l.includes('rst-103')) return 'RST-103';
+    if (l.includes('palladium') || l.includes('rst-104')) return 'RST-104';
+    if (l.includes('peaceful nest') || l.includes('rst-105')) return 'RST-105';
+    if (l.includes('awadh retreat') || l.includes('rst-106')) return 'RST-106';
+    if (l.includes('comfort corner') || l.includes('rst-107')) return 'RST-107';
+    if (l.includes('cozy corner') || l.includes('rst-108')) return 'RST-108';
+    if (l.includes('eighteenth') || l.includes('rst-109')) return 'RST-109';
+    if (l.includes('family fun') || l.includes('rst-110')) return 'RST-110';
+    if (l.includes('grand alcove') || l.includes('krishnam') || l.includes('rst-111')) return 'RST-111';
+    if (l.includes('luxe haven') || l.includes('rst-112')) return 'RST-112';
+    if (l.includes('monarch') || l.includes('rst-113')) return 'RST-113';
+    if (l.includes('nestora') || l.includes('rst-114')) return 'RST-114';
+    if (l.includes('nivora') || l.includes('rst-115')) return 'RST-115';
+    if (l.includes('rustic') || l.includes('anjuman') || l.includes('rst-116')) return 'RST-116';
+    if (l.includes('zenvana') || l.includes('rst-117')) return 'RST-117';
+    if (l.includes('nawab house') || l.includes('presidential') || l.includes('rst-118')) return 'RST-118';
     return null;
   };
 
@@ -455,8 +455,10 @@
         codeAgg[code].netAmountSum += amt;
 
         const typeLower = type.toLowerCase();
-        if (type === 'Reservation') {
-          codeAgg[code].reservationRow = r;
+        if (type === 'Reservation' || typeLower.includes('co-host payout') || typeLower.includes('cohost')) {
+          if (!codeAgg[code].reservationRow || type === 'Reservation') {
+            codeAgg[code].reservationRow = r;
+          }
         } else if (typeLower.includes('host-remitted') || typeLower.includes('remitted tax')) {
           codeAgg[code].hostRemittedTax += amt;
         } else if (typeLower.includes('tax withholding') || typeLower.includes('withheld') || typeLower.includes('tds')) {
