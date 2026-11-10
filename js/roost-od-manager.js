@@ -912,6 +912,7 @@ window.UHHSODManager = {
     getDeposits: getAllODDeposits,
     getLedgerData: getLedgerData
 };
+window.RoostODManager = window.UHHSODManager;
 
 // =========================================================================
 // 📡 Cross-module "data changed" broadcaster — lets Claims Manager (and
@@ -1529,4 +1530,4 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
     });
 }
 
-console.log("✅ Anwar OD Global Manager loaded & Global Modals Attached!");
+console.log("✅ Anwar OD Global Manager loaded & Global Modals Attached! (Roost & Rest)");

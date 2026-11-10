@@ -392,12 +392,13 @@ window.safeDbUpdate = async function(table, payload, matchCol, matchVal) {
 
 const appEl = document.getElementById("app");
 const BRAND = window.BRAND_NAME || "ROOST AND REST";
-const COMPANY_LEGAL_NAME = window.COMPANY_NAME || "ROOST AND REST STAYS";
+if (!window.COMPANY_LEGAL_NAME) {
+  window.COMPANY_LEGAL_NAME = window.COMPANY_NAME || "ROOST AND REST STAYS";
+}
 const COMPANY_CIN = "ROOST-REST-LUCKNOW-2026";
 const COMPANY_ROC = "Lucknow";
 const COMPANY_REG_ADDRESS = "Lucknow, Uttar Pradesh - India";
 window.BRAND = BRAND;
-window.COMPANY_LEGAL_NAME = COMPANY_LEGAL_NAME;
 window.COMPANY_CIN = COMPANY_CIN;
 window.COMPANY_ROC = COMPANY_ROC;
 window.COMPANY_REG_ADDRESS = COMPANY_REG_ADDRESS;

@@ -1,5 +1,5 @@
-const CACHE_NAME = 'roost-live-v590';
-const RUNTIME_CACHE = 'roost-runtime-v590';
+const CACHE_NAME = 'roost-live-v591';
+const RUNTIME_CACHE = 'roost-runtime-v591';
 
 const CORE_ASSETS = [
   './',
@@ -36,7 +36,8 @@ const CORE_ASSETS = [
   './js/reconciliation.js',
   './js/notifications.js',
   './js/claims.js',
-  './js/uhhs-od-manager.js',
+  './js/roost-od-manager.js',
+  './js/roost-config.js',
   './js/company-advances.js',
   './js/analytics.js',
   './js/showcase-data.js',

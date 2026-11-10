@@ -4,13 +4,14 @@
  */
 
 (function() {
-  if (!window.UHHS_PROPERTIES) {
-    console.error('❌ uhhs-config.js not loaded');
+  const propList = window.ROOST_PROPERTIES || window.UHHS_PROPERTIES;
+  if (!propList) {
+    console.error('❌ roost-config.js not loaded');
     return;
   }
 
   const MULTI_SYNC = window.MULTI_SYNC = {
-    properties: UHHS_PROPERTIES,
+    properties: propList,
     syncResults: {},
     allBookings: [],
     blockedDates: [],
