@@ -595,12 +595,6 @@ html, body, #app {
   font-weight: 700;
 }
 
-@media (max-width: 1400px) {
-  .topbar-desktop-nav {
-    display: none !important;
-  }
-}
-
 /* Medium screens (1025-1280px): compact nav, hide emoji */
 @media (min-width: 1025px) and (max-width: 1280px) {
   .topbar-desktop-nav a {
@@ -617,6 +611,12 @@ html, body, #app {
   .app-topbar {
     padding: 0 16px !important;
     gap: 8px !important;
+  }
+}
+
+@media (max-width: 1400px) {
+  .topbar-desktop-nav {
+    display: none !important;
   }
 }
 
