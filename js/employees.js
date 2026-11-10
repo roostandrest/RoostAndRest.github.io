@@ -3208,9 +3208,8 @@ async function renderAddAdv() {
         <div class="form-group">
           <label>Payment Source / Account *</label>
           <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-            <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
-            <option value="ANWAR">👤 Anwar (Direct Personal)</option>
+            <option value="Roost and Rest" selected>🏦 Roost and Rest (Online / Company A/c)</option>
+            <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
           </select>
         </div>
       </div>
@@ -3231,7 +3230,7 @@ async function saveAdv() {
     if (_btn) { _btn.disabled = false; _btn.textContent = '💾 Save Advance'; }
     return;
   }
-  const paidByVal = document.getElementById('aPaidBy')?.value || 'ROOST-BANK';
+  const paidByVal = document.getElementById('aPaidBy')?.value || 'Roost and Rest';
   const dateVal = document.getElementById('aDate').value || null;
 
   // 🚨 DUPLICATE ADVANCE CHECK
@@ -3326,9 +3325,8 @@ async function editAdv(id) {
         </div>
         <div class="form-group"><label>Payment Source / Account *</label>
           <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-            <option value="COMPANY" ${a.paid_by === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="ROOST-BANK" ${a.paid_by === 'ROOST-BANK' || !a.paid_by ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-            <option value="ANWAR" ${a.paid_by === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
+            <option value="Roost and Rest" ${!String(a.paid_by || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+            <option value="Anwar OD" ${String(a.paid_by || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
           </select>
         </div>
       </div>
@@ -3345,7 +3343,7 @@ async function updAdv(id) {
     repaid_amount: parseFloat(document.getElementById('aRep').value) || 0,
     repaid_date: document.getElementById('aRepDate').value || null,
     payment_mode: document.getElementById('aMode').value || null,
-    paid_by: document.getElementById('aPaidBy')?.value || 'ROOST-BANK',
+    paid_by: document.getElementById('aPaidBy')?.value || 'Roost and Rest',
     reason: document.getElementById('aReason').value.trim() || null
   }).eq('id', id);
   if (window.notifyDataChanged) window.notifyDataChanged();

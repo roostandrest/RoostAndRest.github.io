@@ -4,22 +4,22 @@
  */
 
 const UHHS_PAYMENT_SOURCES = {
-    OD: 'Roost&rest-Od',
-    ANWAR: 'Anwar'
+    ONLINE: 'Roost and Rest',
+    OFFLINE: 'Anwar OD'
 };
 
-// 1. Payment Source Dropdown HTML Generator (strictly Roost&rest-Od and Anwar)
-function getPaymentSourceDropdownHTML(selected = 'Roost&rest-Od', id = 'payment_source') {
-    const s = String(selected || 'Roost&rest-Od').toUpperCase();
-    const isAnwar = s.includes('ANWAR') || s.includes('COMPANY') || (s.includes('CASH') && !s.includes('OD'));
+// 1. Payment Source Dropdown HTML Generator (strictly Roost and Rest and Anwar OD)
+function getPaymentSourceDropdownHTML(selected = 'Roost and Rest', id = 'payment_source') {
+    const s = String(selected || 'Roost and Rest').toUpperCase();
+    const isAnwar = s.includes('ANWAR') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'));
     return `
         <div class="form-group mb-2">
             <label class="form-label fw-bold" style="font-size:13px; color:#333;">
                 💳 Payment Account / Source
             </label>
             <select id="${id}" name="payment_source" class="form-select form-control" style="border: 1.5px solid #B45309; font-weight: 700; width: 100%; max-width: 100%; box-sizing: border-box;" required>
-                <option value="Roost&rest-Od" ${!isAnwar ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-                <option value="Anwar" ${isAnwar ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+                <option value="Roost and Rest" ${!isAnwar ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+                <option value="Anwar OD" ${isAnwar ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
             </select>
         </div>
     `;
@@ -27,11 +27,11 @@ function getPaymentSourceDropdownHTML(selected = 'Roost&rest-Od', id = 'payment_
 
 // 2. Badge UI Helper for Table Display
 function getPaymentSourceBadge(source) {
-    const s = (source || 'Roost&rest-Od').toUpperCase();
-    if (s.includes('OD') || s.includes('BANK') || s.includes('ROOST')) {
-        return `<span style="background-color:#B45309; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 Roost&rest-Od</span>`;
+    const s = (source || 'Roost and Rest').toUpperCase();
+    if (s.includes('ANWAR') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'))) {
+        return `<span style="background-color:#2C241E; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">💵 Anwar OD</span>`;
     } else {
-        return `<span style="background-color:#2C241E; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">👤 Anwar</span>`;
+        return `<span style="background-color:#B45309; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 Roost and Rest</span>`;
     }
 }
 

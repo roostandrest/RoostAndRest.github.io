@@ -23,7 +23,7 @@ window.CA_AUDIT_PACK = (function() {
     gstin: '09AARFR1234F1Z5',
     pan: 'AARFR1234F',
     cin:        'U55101UP2026PTC244637',
-    bank: 'Roost&rest-Od Current A/c (INR)',
+    bank: 'Roost and Rest Current A/c (INR)',
     tdsSection: 'Section 194-O (5.000% E-Commerce Operator TDS)'
   };
 

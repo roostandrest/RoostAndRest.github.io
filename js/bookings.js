@@ -958,8 +958,8 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
     }, 0);
 
     const modalUpiQrString = totalDue > 0
-      ? `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR&tn=${encodeURIComponent('Roost And Rest Stay Statement ' + (resolvedGuestName || 'Guest'))}`
-      : `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&cu=INR&tn=${encodeURIComponent('Roost And Rest')}`;
+      ? `upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&am=${totalDue}&cu=INR&tn=${encodeURIComponent('Roost And Rest Stay Statement ' + (resolvedGuestName || 'Guest'))}`
+      : `upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&cu=INR&tn=${encodeURIComponent('Roost And Rest')}`;
     const modalQrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=2&color=0F172A&bgcolor=FFFFFF&data=${encodeURIComponent(modalUpiQrString)}`;
 
     // Filter Banner Text
@@ -1045,13 +1045,13 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
             </div>
             <div style="flex:1;min-width:230px;">
               <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:6px;font-size:12px;margin-bottom:10px;">
-                <div><span style="color:#64748B;font-size:11px;">Beneficiary:</span> <strong style="color:#0F172A;">Mr. Anwar Ahmad</strong></div>
-                <div><span style="color:#64748B;font-size:11px;">Official UPI ID:</span> <strong style="color:#4338CA;font-family:monospace;font-size:12.5px;">9807486555@upi</strong></div>
-                <div><span style="color:#64748B;font-size:11px;">PhonePe / Mobile:</span> <strong style="color:#0F172A;">9807486555</strong></div>
+                <div><span style="color:#64748B;font-size:11px;">Beneficiary:</span> <strong style="color:#0F172A;">Roost and Rest (Company A/c)</strong></div>
+                <div><span style="color:#64748B;font-size:11px;">Official UPI ID:</span> <strong style="color:#4338CA;font-family:monospace;font-size:12.5px;">roostandrest@icici</strong></div>
+                <div><span style="color:#64748B;font-size:11px;">Account:</span> <strong style="color:#0F172A;">Roost and Rest Stays</strong></div>
                 <div><span style="color:#64748B;font-size:11px;">Auto-coded Due:</span> <strong style="color:#DC2626;">₹${totalDue.toLocaleString('en-IN')}</strong></div>
               </div>
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                <button type="button" class="btn-sm" style="background:#4338CA;color:#FFFFFF;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="navigator.clipboard.writeText('9807486555@upi'); if (window.fsn?.success) { fsn.success('Copied', 'UPI ID 9807486555@upi copied!'); } else { alert('Copied 9807486555@upi'); }">
+                <button type="button" class="btn-sm" style="background:#4338CA;color:#FFFFFF;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;" onclick="navigator.clipboard.writeText('roostandrest@icici'); if (window.fsn?.success) { fsn.success('Copied', 'UPI ID roostandrest@icici copied!'); } else { alert('Copied roostandrest@icici'); }">
                   📋 Copy UPI ID
                 </button>
                 <a href="${modalUpiQrString}" style="background:linear-gradient(135deg, #059669, #10B981);color:#FFFFFF;padding:6px 14px;border-radius:6px;font-size:11.5px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(5,150,105,0.25);">
@@ -1352,7 +1352,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
       txt += `${i + 1}. ${formatDateDisplay(b.check_in)} -> ${formatDateDisplay(b.check_out)} (${propLabel(b.rooms) || b.room_id}) | Billed: Rs.${(b.total_amount || 0).toLocaleString('en-IN')} | Paid: Rs.${pd.toLocaleString('en-IN')} | Due: Rs.${d.toLocaleString('en-IN')}\n`;
     });
     txt += `\nNet Balance Due: Rs.${totDue.toLocaleString('en-IN')}\n`;
-    txt += `UPI: 9807486555@upi (Mr. Anwar Ahmad) | Contact: 9807486555\n`;
+    txt += `UPI: roostandrest@icici (Roost and Rest Company A/c) | Helpline: 9807486555\n`;
 
     navigator.clipboard.writeText(txt).then(() => {
       fsn.success('Copied', 'Guest statement copied to clipboard!');
@@ -1547,8 +1547,8 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
   });
 
   const upiQrString = totalDue > 0
-    ? `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR&tn=${encodeURIComponent('Roost And Rest Stay Statement ' + (guestName || 'Guest'))}`
-    : `upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&cu=INR&tn=${encodeURIComponent('Roost And Rest')}`;
+    ? `upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&am=${totalDue}&cu=INR&tn=${encodeURIComponent('Roost And Rest Stay Statement ' + (guestName || 'Guest'))}`
+    : `upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&cu=INR&tn=${encodeURIComponent('Roost And Rest')}`;
   const qrImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=2&color=0F172A&bgcolor=FFFFFF&data=${encodeURIComponent(upiQrString)}`;
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(pdfTitle)}</title>
@@ -1760,14 +1760,14 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
             <div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:6px;font-size:11px;">
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Beneficiary / Receiver</div>
-                <div style="font-size:12px;font-weight:800;color:#0F172A;margin-top:1px;">Mr. Anwar Ahmad</div>
+                <div style="font-size:12px;font-weight:800;color:#0F172A;margin-top:1px;">Roost and Rest (Company A/c)</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Official UPI ID</div>
-                <div style="font-size:12.5px;font-weight:800;color:#4338CA;font-family:monospace;margin-top:1px;">9807486555@upi</div>
+                <div style="font-size:12.5px;font-weight:800;color:#4338CA;font-family:monospace;margin-top:1px;">roostandrest@icici</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
-                <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">PhonePe / GPay / Mobile</div>
+                <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Helpline / Mobile</div>
                 <div style="font-size:12px;font-weight:700;color:#0F172A;margin-top:1px;">+91 82996 00709</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
@@ -1922,12 +1922,12 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     `━━━━━━━━━━━━━━━━━━━━━━━━━━${NL}` +
     dueLine + `${NL}` +
     `*Payment Account (UPI):*${NL}` +
-    `• UPI ID: 9807486555@upi${NL}` +
-    `• Receiver: Mr. Anwar Ahmad (PhonePe / GPay: 9807486555)${NL}` +
-    (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=9807486555@upi&pn=Anwar%20Ahmad%20Roost&am=${totalDue}&cu=INR${NL}` : '') +
+    `• UPI ID: roostandrest@icici${NL}` +
+    `• Receiver: Roost and Rest (Company Account)${NL}` +
+    (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&am=${totalDue}&cu=INR${NL}` : '') +
     `${NL}` +
     `*Helpline:*${NL}` +
-    `• Mr. Anwar Ahmad: 9807486555${NL}${NL}` +
+    `• Roost and Rest Stays: 9807486555 / 8299600709${NL}${NL}` +
     `ROOST AND REST STAYS`;
 
   const shareModal = document.createElement('div');
@@ -6076,10 +6076,10 @@ window.openDeletedBookingsVaultModal = async function() {
 // ============ PAYMENT MODAL ============
 
 
-// ═══ Cash Book: Payment Received By helpers (strictly Roost&rest-Od and Anwar) ═══
+// ═══ Cash Book: Payment Received By helpers (strictly Roost and Rest and Anwar OD) ═══
 async function loadReceiveByHolders() {
   return {
-    owners: ['Roost&rest-Od', 'Anwar'],
+    owners: ['Roost and Rest', 'Anwar OD'],
     manager: [],
     employees: []
   };
@@ -6089,13 +6089,14 @@ async function loadReceiveByHolders() {
 window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, customEl) {
   if (!selectEl) return;
   const s = String(currentVal || '').toUpperCase();
-  const isAnwar = s.includes('ANWAR') || (mode === 'Cash' && !s.includes('OD') && !s.includes('BANK'));
+  const isCash = (mode === 'Cash');
+  const isAnwar = s.includes('ANWAR') || (isCash && !s.includes('ROOST') && !s.includes('BANK'));
 
   selectEl.innerHTML = `
-    <option value="Roost&rest-Od" ${!isAnwar ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-    <option value="Anwar" ${isAnwar ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+    <option value="Roost and Rest" ${!isAnwar ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+    <option value="Anwar OD" ${isAnwar ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
   `;
-  selectEl.value = isAnwar ? 'Anwar' : 'Roost&rest-Od';
+  selectEl.value = isAnwar ? 'Anwar OD' : 'Roost and Rest';
   if (customEl) customEl.style.display = 'none';
 };
 
@@ -6127,17 +6128,9 @@ window.onPayModeChange = async function() {
   const receivedByEl = document.getElementById('payReceivedBy');
   const custom = document.getElementById('payReceivedByCustom');
   if (!receivedByEl) return;
-  let curr = typeof getReceiverValue === 'function' ? getReceiverValue('payReceivedBy', 'payReceivedByCustom') : receivedByEl.value;
-  if (mode === 'UPI') {
-    // When UPI is selected, auto-default to Anwar
-    if (!curr || curr === 'Cash') {
-      curr = 'Anwar';
-    }
-  }
+  let curr = (mode === 'Cash') ? 'Anwar OD' : 'Roost and Rest';
   await window.populateReceivedByDropdown(receivedByEl, mode, curr, custom);
-  if (mode === 'UPI' && (!receivedByEl.value || receivedByEl.value === '')) {
-    receivedByEl.value = 'Anwar';
-  }
+  receivedByEl.value = curr;
 };
 
 // ═══ Security Deposit Dropdown Handlers (New & Edit Booking) ═══
@@ -8159,10 +8152,10 @@ window.onAdvanceModeChange = async function() {
   
   const isCash = (mode === 'Cash');
   dropdown.innerHTML = `
-    <option value="Roost&rest-Od" ${!isCash ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-    <option value="Anwar" ${isCash ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+    <option value="Roost and Rest" ${!isCash ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+    <option value="Anwar OD" ${isCash ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
   `;
-  dropdown.value = isCash ? 'Anwar' : 'Roost&rest-Od';
+  dropdown.value = isCash ? 'Anwar OD' : 'Roost and Rest';
   if (custom) { custom.style.display = 'none'; custom.value = ''; }
 };
 
@@ -8173,7 +8166,7 @@ window.onAdvReceivedByChange = function() {
 
 window.getAdvReceivedBy = function() {
   const dropdown = document.getElementById('advReceivedBy');
-  return dropdown?.value || 'Roost&rest-Od';
+  return dropdown?.value || 'Roost and Rest';
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -8195,10 +8188,10 @@ window.onEditPayModeChange = async function() {
   
   const isCash = (mode === 'Cash');
   dropdown.innerHTML = `
-    <option value="Roost&rest-Od" ${!isCash ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-    <option value="Anwar" ${isCash ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+    <option value="Roost and Rest" ${!isCash ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+    <option value="Anwar OD" ${isCash ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
   `;
-  dropdown.value = isCash ? 'Anwar' : 'Roost&rest-Od';
+  dropdown.value = isCash ? 'Anwar OD' : 'Roost and Rest';
   if (custom) { custom.style.display = 'none'; custom.value = ''; }
 };
 
@@ -8207,7 +8200,7 @@ window.onEditReceivedByChange = function() {
   if (custom) { custom.style.display = 'none'; custom.value = ''; }
 };
 
-console.log('✅ Payment Received-By (Roost&rest-Od & Anwar) module loaded');
+console.log('✅ Payment Received-By (Roost and Rest & Anwar OD) module loaded');
 
 // ═══════════════════════════════════════════════════════════
 // 🌟 RETURNING GUEST AUTO-DETECTION & 1-CLICK AUTO-FILL ENGINE
@@ -8987,24 +8980,24 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     }
   }
 
-  // Payees Definition
+  // Payees Definition (Strictly 2 Accounts: Roost and Rest Company Account & Anwar OD)
   const PAYEES = {
-    anwar: {
-      id: 'anwar',
-      name: 'Mr. Anwar Ahmad',
-      upiId: '9807486555@upi',
-      phone: '+91 82996 00709',
-      label: 'Mr. Anwar Ahmad (Default)'
-    },
     roost_bank: {
       id: 'roost_bank',
-      name: 'Roost&rest-Od (Company Current A/c)',
-      upi: 'roostandrest@icici',
-      note: 'Roost&rest-Od Official Account',
-      label: 'Roost&rest-Od'
+      name: 'Roost and Rest Stays',
+      upiId: 'roostandrest@icici',
+      note: 'Roost and Rest Official Account',
+      label: 'Roost and Rest (Company Account - Default)'
     },
+    anwar: {
+      id: 'anwar',
+      name: 'Anwar OD',
+      upiId: '9807486555@upi',
+      phone: '+91 82996 00709',
+      label: 'Anwar OD'
+    }
   };
-  let currentPayee = 'anwar';
+  let currentPayee = 'roost_bank';
 
   // 2. Remove existing overlay if any
   document.getElementById('customPaymentQrOverlay')?.remove();
@@ -9086,17 +9079,17 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
           </div>
         </div>
 
-        <!-- 3. Receiving Account (Default: Anwar Ahmad) -->
+        <!-- 3. Receiving Account (Default: Roost and Rest Company Account) -->
         <div>
-          <label style="display:block;font-size:10.5px;font-weight:700;color:#64748B;margin-bottom:3px;">Receiving Account (Default: Anwar Ahmad)</label>
+          <label style="display:block;font-size:10.5px;font-weight:700;color:#64748B;margin-bottom:3px;">Receiving Account (Company: Roost and Rest)</label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-            <button type="button" id="cpqrPayeeAnwar" style="padding:6px 8px;border-radius:8px;border:2px solid #4F46E5;background:#EEF2FF;cursor:pointer;text-align:left;box-shadow:0 2px 6px rgba(79,70,229,0.15);transition:all 0.2s;">
-              <div style="font-size:11px;font-weight:800;color:#312E81;">👑 Anwar (Default)</div>
-              <div style="font-size:9.5px;color:#4338CA;font-family:monospace;margin-top:1px;font-weight:700;">9807486555@upi</div>
+            <button type="button" id="cpqrPayeeRoostBank" style="padding:6px 8px;border-radius:8px;border:2px solid #4F46E5;background:#EEF2FF;cursor:pointer;text-align:left;box-shadow:0 2px 6px rgba(79,70,229,0.15);transition:all 0.2s;">
+              <div style="font-size:11px;font-weight:800;color:#312E81;">🏢 Roost and Rest (Default)</div>
+              <div style="font-size:9.5px;color:#4338CA;font-family:monospace;margin-top:1px;font-weight:700;">roostandrest@icici</div>
             </button>
-            <button type="button" id="cpqrPayeeRoostBank" style="padding:6px 8px;border-radius:8px;border:1.5px solid #CBD5E1;background:#FFFFFF;cursor:pointer;text-align:left;transition:all 0.2s;">
-              <div style="font-size:11px;font-weight:800;color:#0F172A;">🏢 Roost&rest-Od</div>
-              <div style="font-size:9.5px;color:#64748B;font-family:monospace;margin-top:1px;">roostandrest@icici</div>
+            <button type="button" id="cpqrPayeeAnwar" style="padding:6px 8px;border-radius:8px;border:1.5px solid #CBD5E1;background:#FFFFFF;cursor:pointer;text-align:left;transition:all 0.2s;">
+              <div style="font-size:11px;font-weight:800;color:#0F172A;">💵 Anwar OD</div>
+              <div style="font-size:9.5px;color:#64748B;font-family:monospace;margin-top:1px;">9807486555@upi</div>
             </button>
           </div>
         </div>
@@ -9153,7 +9146,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span style="color:#64748B;font-weight:600;">👤 Payee (UPI):</span>
-              <span id="cpqrCardPayee" style="font-weight:700;color:#0F172A;">Mr. Anwar Ahmad (9807486555@upi)</span>
+              <span id="cpqrCardPayee" style="font-weight:700;color:#0F172A;">Roost and Rest Stays (roostandrest@icici)</span>
             </div>
           </div>
         </div>

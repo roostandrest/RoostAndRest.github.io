@@ -165,9 +165,8 @@ window.renderAddReimbursement = async function() {
       <div class="form-group">
         <label style="font-weight:700;font-size:14px;color:#1e293b;">💳 Payment Source / Account *</label>
         <select id="rPaymentSource" style="width:100%;padding:10px 12px;font-size:14px;font-weight:600;border:1.5px solid #0d6efd;border-radius:8px;background:#ffffff;color:#0f172a;">
-          <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
-          <option value="ANWAR">👤 Anwar (Direct Personal)</option>
+          <option value="Roost and Rest" selected>🏦 Roost and Rest (Online / Company A/c)</option>
+          <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
         </select>
       </div>
 
@@ -251,7 +250,7 @@ window.saveReimbursement = async function() {
   const fromProp = document.getElementById('rFromText').value.trim() || null;
   const toProp = document.getElementById('rToText').value.trim() || null;
   const notes = document.getElementById('rNotes').value.trim();
-  const paymentSource = document.getElementById('rPaymentSource')?.value || 'ROOST-BANK';
+  const paymentSource = document.getElementById('rPaymentSource')?.value || 'Roost and Rest';
 
   if (!date || !cat || !desc || amt <= 0) {
     document.getElementById('rErr').innerHTML = '<div class="error">Date, Category, Description, Amount required</div>';
@@ -439,8 +438,8 @@ window.editReimbursement = async function(id) {
       <div class="form-group">
         <label style="font-weight:700;font-size:14px;color:#1e293b;">💳 Payment Source / Account *</label>
         <select id="rPaymentSource" style="width:100%;padding:10px 12px;font-size:14px;font-weight:700;border:1.5px solid #B45309;border-radius:8px;background:#ffffff;color:#0f172a;">
-          <option value="Roost&rest-Od" ${rec.payment_source !== 'Anwar' && rec.payment_source !== 'COMPANY' ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-          <option value="Anwar" ${rec.payment_source === 'Anwar' || rec.payment_source === 'COMPANY' ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+          <option value="Roost and Rest" ${!String(rec.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+          <option value="Anwar OD" ${String(rec.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
         </select>
       </div>
       <div class="form-group">
@@ -498,7 +497,7 @@ window.updateReimbursement = async function() {
   const toProp = document.getElementById('rToText').value.trim() || null;
   const status = document.getElementById('rStatus').value;
   const notes = document.getElementById('rNotes').value.trim();
-  const paymentSource = document.getElementById('rPaymentSource')?.value || 'ROOST-BANK';
+  const paymentSource = document.getElementById('rPaymentSource')?.value || 'Roost and Rest';
 
   if (!date || !cat || !desc || amt <= 0) {
     document.getElementById('rErr').innerHTML = '<div class="error">Date, Category, Description, Amount required</div>';

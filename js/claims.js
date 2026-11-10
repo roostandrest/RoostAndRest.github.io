@@ -35,10 +35,10 @@ window._claimsState = {
 
 // 1. Normalizers
 function normalizePaymentSource(rawVal) {
-  if (!rawVal) return 'Roost&rest-Od';
+  if (!rawVal) return 'Roost and Rest';
   const s = String(rawVal).trim().toUpperCase();
-  if (s.includes('ANWAR') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'))) return 'Anwar';
-  return 'Roost&rest-Od';
+  if (s.includes('ANWAR') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'))) return 'Anwar OD';
+  return 'Roost and Rest';
 }
 
 function normalizeStatus(st) {
@@ -308,13 +308,11 @@ window.renderClaims = async function() {
           <input id="cfToDate" type="date" value="${window._claimsState.toDate}" onchange="updateClaimsFilter()">
         </div>
         <div>
-          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">👤 Paid By (Payer)</label>
+          <label style="font-size:11px;font-weight:700;color:#64748B;display:block;margin-bottom:3px;">👤 Paid By (Account)</label>
           <select id="cfPaidBy" onchange="updateClaimsFilter()">
-            <option value="all" ${window._claimsState.paidByFilter==='all'?'selected':''}>All Payers</option>
-            <option value="ROOST-BANK" ${window._claimsState.paidByFilter==='ROOST-BANK'?'selected':''}>🏦 Roost-Bank</option>
-            <option value="COMPANY" ${window._claimsState.paidByFilter==='COMPANY'?'selected':''}>🏢 COMPANY</option>
-            <option value="ANWAR" ${window._claimsState.paidByFilter==='ANWAR'?'selected':''}>👤 ANWAR</option>
-            <option value="OTHER" ${window._claimsState.paidByFilter==='OTHER'?'selected':''}>⚠️ OTHER</option>
+            <option value="all" ${window._claimsState.paidByFilter==='all'?'selected':''}>All Accounts</option>
+            <option value="Roost and Rest" ${window._claimsState.paidByFilter==='Roost and Rest'?'selected':''}>🏦 Roost and Rest (Online / Company A/c)</option>
+            <option value="Anwar OD" ${window._claimsState.paidByFilter==='Anwar OD'?'selected':''}>💵 Anwar OD (Offline / Cash A/c)</option>
           </select>
         </div>
         <div>
@@ -1244,9 +1242,8 @@ window.openReimbursementEditModal = async function(id) {
         <div style="margin-bottom:14px;">
           <label style="font-weight:700;font-size:12.5px;color:#0F172A;display:block;margin-bottom:4px;">💳 Payment Account / Source *</label>
           <select id="ledgerEditSource" style="width:100%;padding:8px;border:1.5px solid #0D6EFD;border-radius:6px;font-weight:600;background:#F8FAFC;box-sizing:border-box;">
-            <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-            <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="ANWAR" ${rec.payment_source === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
+            <option value="Roost and Rest" ${!String(rec.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+            <option value="Anwar OD" ${String(rec.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
           </select>
         </div>
 
@@ -1280,7 +1277,7 @@ window.saveReimbursementFromLedger = async function(id) {
   const amt = parseFloat(document.getElementById('ledgerEditAmt')?.value) || 0;
   const cat = document.getElementById('ledgerEditCat')?.value;
   const desc = document.getElementById('ledgerEditDesc')?.value?.trim();
-  const paymentSource = document.getElementById('ledgerEditSource')?.value || 'ROOST-BANK';
+  const paymentSource = document.getElementById('ledgerEditSource')?.value || 'Roost and Rest';
   const notes = document.getElementById('ledgerEditNotes')?.value?.trim();
 
   if (!date || amt <= 0 || !desc) {

@@ -53,13 +53,12 @@ async function renderExpenses() {
   (emps || []).forEach(e => { if (e.emp_id) empMap[e.emp_id] = e; });
   window._allEmployeesList = emps || [];
 
-  // Helper normalizer for payment source (OD vs Company/Anwar)
+  // Helper normalizer for payment source (Online Roost and Rest vs Offline Anwar OD)
   function normSource(raw) {
-    if (!raw) return 'COMPANY';
+    if (!raw) return 'Roost and Rest';
     const s = String(raw).trim().toUpperCase();
-    if (s.includes('OD') || s.includes('Roost & Rest') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
-    if (s.includes('ANWAR') || s.includes('DIRECT')) return 'ANWAR';
-    return 'COMPANY';
+    if (s.includes('ANWAR') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'))) return 'Anwar OD';
+    return 'Roost and Rest';
   }
 
   // Build Master Unified Expenses Collection
@@ -221,8 +220,8 @@ async function renderExpenses() {
   const thisMonthList = masterList.filter(item => item.monthYm === cm);
   const thisMonthExps = thisMonthList;
   const totalMonthExp = thisMonthList.reduce((s, x) => s + x.amount, 0);
-  const totalOdExp = thisMonthList.filter(x => x.paidBy === 'ROOST-BANK').reduce((s, x) => s + x.amount, 0);
-  const totalCompanyExp = thisMonthList.filter(x => x.paidBy !== 'ROOST-BANK').reduce((s, x) => s + x.amount, 0);
+  const totalOdExp = thisMonthList.filter(x => x.paidBy === 'Roost and Rest').reduce((s, x) => s + x.amount, 0);
+  const totalCompanyExp = thisMonthList.filter(x => x.paidBy === 'Anwar OD').reduce((s, x) => s + x.amount, 0);
   const pendingStaffAdvs = masterList.filter(x => x.channel === 'advance' && !x.raw?.is_deducted).reduce((s, x) => s + x.amount, 0);
   const pendingStaffAdvances = pendingStaffAdvs;
 
@@ -269,7 +268,7 @@ async function renderExpenses() {
       } else {
         rec.otherSpends += item.amount;
       }
-      if (item.paidBy === 'ROOST-BANK') rec.odPaid += item.amount;
+      if (item.paidBy === 'Roost and Rest') rec.odPaid += item.amount;
       else rec.companyPaid += item.amount;
       rec.totalOutflow += item.amount;
     }
@@ -336,12 +335,12 @@ async function renderExpenses() {
 
       <!-- Row 2: Payment Source Quick Breakdown Badges -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:8px;">
-        <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('ROOST-BANK')" title="Click to filter by Roost-Bank">
-          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏦 Roost Bank Paid</span>
+        <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('Roost and Rest')" title="Click to filter by Roost and Rest">
+          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏦 Roost and Rest (Online)</span>
           <span style="font-size:13px;font-weight:800;color:#059669;">₹${totalOdExp.toLocaleString('en-IN')}</span>
         </div>
-        <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('COMPANY')" title="Click to filter by Cash/Company">
-          <span style="font-size:11.5px;font-weight:700;color:#475569;">🏢 Company / Anwar</span>
+        <div style="background:#F8FAFC;padding:8px 12px;border-radius:8px;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesBySource('Anwar OD')" title="Click to filter by Anwar OD">
+          <span style="font-size:11.5px;font-weight:700;color:#475569;">💵 Anwar OD (Offline)</span>
           <span style="font-size:13px;font-weight:800;color:#D97706;">₹${totalCompanyExp.toLocaleString('en-IN')}</span>
         </div>
         <div style="background:#FAF5FF;padding:8px 12px;border-radius:8px;border:1px solid #F3E8FF;display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="window.filterExpensesByChannel('advance')" title="Click to filter by Staff Advances">
@@ -384,8 +383,8 @@ async function renderExpenses() {
           <label style="display:block;font-size:11px;font-weight:700;color:#64748B;margin-bottom:3px;">Account / Paid By</label>
           <select id="expSourceFilter" onchange="applyExpenseFilters()" style="width:100%;box-sizing:border-box;padding:7px 8px;font-size:12px;border:1px solid #CBD5E1;border-radius:8px;">
             <option value="all">All Accounts</option>
-            <option value="ROOST-BANK">🏦 Roost-Bank</option>
-            <option value="COMPANY">🏢 Company / Cash</option>
+            <option value="Roost and Rest">🏦 Roost and Rest</option>
+            <option value="Anwar OD">💵 Anwar OD</option>
           </select>
         </div>
 
@@ -449,10 +448,7 @@ function applyExpenseFilters() {
     list = list.filter(e => e.channel === channelVal);
   }
   if (sourceVal !== 'all') {
-    list = list.filter(e => {
-      if (sourceVal === 'ROOST-BANK') return e.paidBy === 'ROOST-BANK';
-      return e.paidBy !== 'ROOST-BANK';
-    });
+    list = list.filter(e => e.paidBy === sourceVal);
   }
   if (staffVal !== 'all') {
     list = list.filter(e => (e.staffName || '').toLowerCase().includes(staffVal.toLowerCase()));
@@ -530,8 +526,8 @@ function applyExpenseFilters() {
                   <td style="font-size:12px;white-space:nowrap;">${escapeHtml(item.roomLabel || 'General')}</td>
                   <td style="font-size:12px;font-weight:600;white-space:nowrap;">${escapeHtml(item.staffName || '-')}</td>
                   <td>
-                    <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:${item.paidBy === 'ROOST-BANK' ? '#E0F2FE' : '#FEF3C7'};color:${item.paidBy === 'ROOST-BANK' ? '#0369A1' : '#92400E'};white-space:nowrap;">
-                      ${item.paidBy === 'ROOST-BANK' ? '🏦 Roost-Bank' : '🏢 COMPANY (Anwar)'}
+                    <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:6px;background:${item.paidBy === 'Roost and Rest' ? '#E0F2FE' : '#FEF3C7'};color:${item.paidBy === 'Roost and Rest' ? '#0369A1' : '#92400E'};white-space:nowrap;">
+                      ${item.paidBy === 'Roost and Rest' ? '🏦 Roost and Rest' : '💵 Anwar OD'}
                     </span>
                   </td>
                   <td style="font-weight:800;color:#DC2626;font-size:13.5px;white-space:nowrap;">
@@ -677,8 +673,8 @@ window.openStaffAdvanceModal = async function(preselectedEmpId = '') {
             <div class="form-group">
               <label style="font-size:12.5px;font-weight:700;">Paid From (Source) *</label>
               <select id="advPaidBy" style="width:100%;padding:9px;border:1.5px solid #B45309;border-radius:10px;font-weight:700;">
-                <option value="Roost&rest-Od">🏦 Roost&rest-Od (Company Current A/c)</option>
-                <option value="Anwar">👤 Anwar (Owner / Cash)</option>
+                <option value="Roost and Rest">🏦 Roost and Rest (Online / Company A/c)</option>
+                <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
               </select>
             </div>
             <div class="form-group">
@@ -799,8 +795,8 @@ window.openLaundryQuickModal = async function() {
             <div class="form-group">
               <label style="font-size:12.5px;font-weight:700;">Paid Via *</label>
               <select id="lqPaidBy" style="width:100%;padding:9px;border:1.5px solid #B45309;border-radius:10px;font-weight:700;">
-                <option value="Roost&rest-Od">🏦 Roost&rest-Od (Company Current A/c)</option>
-                <option value="Anwar">👤 Anwar (Owner / Cash)</option>
+                <option value="Roost and Rest">🏦 Roost and Rest (Online / Company A/c)</option>
+                <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
               </select>
             </div>
             <div class="form-group">
@@ -2898,17 +2894,17 @@ window.onExpPayModeChange = async function() {
   
   const isCash = (mode === 'Cash');
   dropdown.innerHTML = `
-    <option value="Roost&rest-Od" ${!isCash ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-    <option value="Anwar" ${isCash ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+    <option value="Roost and Rest" ${!isCash ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+    <option value="Anwar OD" ${isCash ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
   `;
-  dropdown.value = isCash ? 'Anwar' : 'Roost&rest-Od';
+  dropdown.value = isCash ? 'Anwar OD' : 'Roost and Rest';
   
   if (custom) { custom.style.display = 'none'; custom.value = ''; }
 };
 
 window.getExpPaidBy = function() {
   const dropdown = document.getElementById('exPaidBy');
-  return dropdown?.value || 'Roost&rest-Od';
+  return dropdown?.value || 'Roost and Rest';
 };
 
 // ═══════════════════════════════════════════════════════════

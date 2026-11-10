@@ -356,9 +356,8 @@ window.renderAddLaundry = async function() {
                 <div class="form-group">
           <label>Payment Source / Account <span class="warn">*</span></label>
           <select id="lPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-            <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="ROOST-BANK" selected>🏦 ROOST-BANK (Overdraft Account)</option>
-            <option value="ANWAR">👤 Anwar (Direct Personal)</option>
+            <option value="Roost and Rest" selected>🏦 Roost and Rest (Online / Company A/c)</option>
+            <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
           </select>
         </div>
         <div class="form-group">
@@ -609,7 +608,7 @@ window.saveLaundry = async function() {
     total_amount: total,
     payment_mode: payMode,
     payment_status: paymentStatus,
-    payment_source: document.getElementById('lPaymentSource')?.value || 'ROOST-BANK',
+    payment_source: document.getElementById('lPaymentSource')?.value || 'Roost and Rest',
     paid_amount: paidAmt,
     notes: notes,
     bill_photo: billPhotoPath
@@ -726,9 +725,8 @@ window.editLaundry = async function(id) {
                 <div class="form-group">
           <label>Payment Source / Account <span class="warn">*</span></label>
           <select id="lPaymentSourceEdit" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-            <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 ROOST-BANK (Overdraft Account)</option>
-            <option value="ANWAR" ${rec.payment_source === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
+            <option value="Roost and Rest" ${!String(rec.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+            <option value="Anwar OD" ${String(rec.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
           </select>
         </div>
         <div class="form-group">
@@ -872,7 +870,7 @@ window.updateLaundry = async function() {
     total_amount: total,
     payment_mode: payMode,
     payment_status: paymentStatus,
-    payment_source: document.getElementById('lPaymentSourceEdit')?.value || 'ROOST-BANK',
+    payment_source: document.getElementById('lPaymentSourceEdit')?.value || 'Roost and Rest',
     paid_amount: paidAmt,
     notes: notes,
     bill_photo: billPhotoPath
@@ -1295,9 +1293,8 @@ window.addLaundryPayment = async function(recordId, dueAmount) {
       </div>
             <div class="form-group"><label>Payment Source / Account *</label>
         <select id="lpPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-          <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="ROOST-BANK" selected>🏦 ROOST-BANK (Overdraft Account)</option>
-          <option value="ANWAR">👤 Anwar (Direct Personal)</option>
+          <option value="Roost and Rest" selected>🏦 Roost and Rest (Online / Company A/c)</option>
+          <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
         </select>
       </div>
       <div class="form-group"><label>Amount ₹ *</label><input id="lpAmt" type="number" value="${dueAmount}" min="0"></div>
@@ -1375,7 +1372,7 @@ window.saveLaundryPayment = async function(recordId) {
   const { error } = await sb.from('laundry_payments').insert({
     record_id: recordId,
     amount, payment_date: date, payment_mode: mode, notes,
-    payment_source: document.getElementById('lpPaymentSource')?.value || 'ROOST-BANK',
+    payment_source: document.getElementById('lpPaymentSource')?.value || 'Roost and Rest',
     payment_photo: paymentPhotoPath,
     claim_status: 'unclaimed'
   });
@@ -1489,9 +1486,8 @@ window.editLaundryPayment = async function(paymentId, recordId) {
       </div>
             <div class="form-group"><label>Payment Source / Account *</label>
         <select id="lpPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-          <option value="COMPANY" ${pay.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="ROOST-BANK" ${pay.payment_source === 'ROOST-BANK' || !pay.payment_source ? 'selected' : ''}>🏦 ROOST-BANK (Overdraft Account)</option>
-          <option value="ANWAR" ${pay.payment_source === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
+          <option value="Roost and Rest" ${!String(pay.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+          <option value="Anwar OD" ${String(pay.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
         </select>
       </div>
       <div class="form-group"><label>Amount ₹ *</label><input id="lpEditAmt" type="number" value="${pay.amount}" min="0"></div>
@@ -1525,7 +1521,7 @@ window.updateLaundryPayment = async function(paymentId, recordId) {
     return;
   }
 
-  const paymentSource = document.getElementById('lpPaymentSource')?.value || 'ROOST-BANK';
+  const paymentSource = document.getElementById('lpPaymentSource')?.value || 'Roost and Rest';
 
   const { error } = await sb.from('laundry_payments').update({
     amount, payment_date: date, payment_mode: mode, notes,

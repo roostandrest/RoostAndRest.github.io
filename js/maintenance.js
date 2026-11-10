@@ -221,8 +221,8 @@ async function renderAddMaintenance() {
                     <div class="form-group">
             <label>Payment Source / Account <span class="warn">*</span></label>
             <select id="mPaymentSource" style="border: 1.5px solid #B45309; font-weight: 700; width:100%; padding:9px; border-radius:8px;">
-              <option value="Roost&rest-Od" selected>🏦 Roost&rest-Od (Company Current A/c)</option>
-              <option value="Anwar">👤 Anwar (Owner / Cash)</option>
+              <option value="Roost and Rest" selected>🏦 Roost and Rest (Online / Company A/c)</option>
+              <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
             </select>
           </div>
           <div class="form-group">
@@ -517,8 +517,8 @@ async function editMaintenance(id) {
           <div class="form-group">
             <label>Payment Source / Account <span class="warn">*</span></label>
             <select id="mPaymentSourceEdit" style="border: 1.5px solid #B45309; font-weight: 700; width:100%; padding:9px; border-radius:8px;">
-              <option value="Roost&rest-Od" ${m.payment_source !== 'Anwar' && m.payment_source !== 'COMPANY' ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
-              <option value="Anwar" ${m.payment_source === 'Anwar' || m.payment_source === 'COMPANY' ? 'selected' : ''}>👤 Anwar (Owner / Cash)</option>
+              <option value="Roost and Rest" ${!String(m.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
+              <option value="Anwar OD" ${String(m.payment_source || '').toUpperCase().includes('ANWAR') ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
             </select>
           </div>
           <div class="form-group">

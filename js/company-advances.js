@@ -7,7 +7,7 @@
 // Advance can come from:
 // 1. Company (ROOST AND REST STAYS - business fund)
 // 2. Personal (owner's own money)
-const CA_OWNERS = ['🏢 Company (ROOST AND REST STAYS)', 'Anwar'];
+const CA_OWNERS = ['Roost and Rest', 'Anwar OD'];
 
 window.renderCompanyAdvances = async function() {
   if (!['owner', 'admin', 'developer', 'manager'].includes(SESSION.role)) {
@@ -149,9 +149,8 @@ async function renderCANew(tabs) {
       <div class="form-group">
         <label>Payment Source / Account *</label>
         <select id="caPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
-          <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-          <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
-          <option value="ANWAR">👤 Anwar (Direct Personal)</option>
+          <option value="Roost and Rest" selected>🏦 Roost and Rest (Online / Company A/c)</option>
+          <option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>
         </select>
       </div>
       <div class="form-grid">
@@ -201,7 +200,7 @@ window.saveNewAdvance = async function() {
     return;
   }
   
-  const paymentSource = document.getElementById('caPaymentSource')?.value || 'ROOST-BANK';
+  const paymentSource = document.getElementById('caPaymentSource')?.value || 'Roost and Rest';
 
   try {
     // 🚨 DUPLICATE ADVANCE CHECK
