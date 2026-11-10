@@ -2994,6 +2994,29 @@ async function renderUserManagement() {
   if (!window.isDeveloperUser || !window.isDeveloperUser()) {
     userList = userList.filter(u => u.role !== 'developer');
   }
+
+  // Deduplicate users defensively by normalized display_name / email / user_id
+  const seenUsers = new Map();
+  userList.forEach(u => {
+    const key = (u.display_name || '').trim().toLowerCase();
+    if (!key) {
+      seenUsers.set(u.user_id || u.id, u);
+      return;
+    }
+    if (!seenUsers.has(key)) {
+      seenUsers.set(key, u);
+    } else {
+      const existing = seenUsers.get(key);
+      // Prefer active/logged in profile or owner role
+      const isCurrentBetter = (!existing.last_seen && u.last_seen) ||
+                              (existing.role !== 'owner' && u.role === 'owner') ||
+                              (!existing.is_approved && u.is_approved);
+      if (isCurrentBetter) {
+        seenUsers.set(key, u);
+      }
+    }
+  });
+  userList = Array.from(seenUsers.values());
   const pendingRequests = (allPending || []).filter(p => p.status === 'Pending');
   const employees = allEmployees || [];
 
@@ -3442,29 +3465,31 @@ async function renderUserManagement() {
                           </span>
                         `}
                       </td>
-                      <td class="table-actions" style="text-align:right;">
-                        <button class="btn-sm" onclick="changeUserRole('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')">🔧 Role</button>
-                        ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
-                          <button class="btn-sm" onclick="window.openUserAuditModal('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}', '${u.role}')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-weight:700;" title="View Monthly Audit & Pages Visited">📊 Audit</button>
-                        ` : ''}
-                        ${!isCurrentUser ? `
-                          ${u.isFiredStaff && u.is_approved ? `
-                            <button class="btn-sm danger" onclick="window.terminateStaffAccess('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')"
-                              style="background:#DC2626;color:#fff;font-weight:700;" title="Terminate login access while preserving historical data">
-                              🚫 Block
-                            </button>
-                          ` : `
-                            <button class="btn-sm" onclick="toggleUserActive('${u.user_id}', ${u.is_approved ? 'true' : 'false'}, '${(u.display_name || '').replace(/'/g, "\\'")}')"
-                              style="${u.is_approved ? 'background:#FFFBEB;color:#B45309;border:1px solid #FCD34D;' : 'background:#ECFDF5;color:#047857;border:1px solid #6EE7B7;'}"
-                              title="${u.is_approved ? 'Suspend Access' : 'Restore Access'}">
-                              ${u.is_approved ? '⏸️ Suspend' : '▶️ Activate'}
-                            </button>
-                          `}
-                          ${window.canDelete && window.canDelete() ? `
-                            <button class="btn-sm" style="background:#f59e0b;color:#fff;" onclick="forceLogoutUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" title="Force Logout">🚪</button>
-                            <button class="btn-sm danger" onclick="deleteUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" title="Delete User Profile">🗑️</button>
+                      <td style="text-align:right;white-space:nowrap;">
+                        <div style="display:inline-flex;gap:6px;align-items:center;justify-content:flex-end;">
+                          <button class="btn-sm" onclick="changeUserRole('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" style="min-width:auto;min-height:32px;padding:5px 10px;font-size:12px;font-weight:700;border-radius:6px;background:#F3F4F6;color:#374151;border:1px solid #D1D5DB;">🔧 Role</button>
+                          ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
+                            <button class="btn-sm" onclick="window.openUserAuditModal('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}', '${u.role}')" style="min-width:auto;min-height:32px;padding:5px 10px;font-size:12px;border-radius:6px;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;font-weight:700;" title="View Monthly Audit & Pages Visited">📊 Audit</button>
                           ` : ''}
-                        ` : ''}
+                          ${!isCurrentUser ? `
+                            ${u.isFiredStaff && u.is_approved ? `
+                              <button class="btn-sm danger" onclick="window.terminateStaffAccess('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')"
+                                style="min-width:auto;min-height:32px;padding:5px 10px;font-size:12px;border-radius:6px;background:#DC2626;color:#fff;font-weight:700;" title="Terminate login access while preserving historical data">
+                                🚫 Block
+                              </button>
+                            ` : `
+                              <button class="btn-sm" onclick="toggleUserActive('${u.user_id}', ${u.is_approved ? 'true' : 'false'}, '${(u.display_name || '').replace(/'/g, "\\'")}')"
+                                style="min-width:auto;min-height:32px;padding:5px 10px;font-size:12px;border-radius:6px;${u.is_approved ? 'background:#FFFBEB;color:#B45309;border:1px solid #FCD34D;' : 'background:#ECFDF5;color:#047857;border:1px solid #6EE7B7;'}font-weight:700;"
+                                title="${u.is_approved ? 'Suspend Access' : 'Restore Access'}">
+                                ${u.is_approved ? '⏸️ Suspend' : '▶️ Activate'}
+                              </button>
+                            `}
+                            ${window.canDelete && window.canDelete() ? `
+                              <button class="btn-sm" style="min-width:auto;min-height:32px;padding:5px 8px;font-size:12px;border-radius:6px;background:#f59e0b;color:#fff;border:none;" onclick="forceLogoutUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" title="Force Logout">🚪</button>
+                              <button class="btn-sm danger" onclick="deleteUser('${u.user_id}','${(u.display_name || '').replace(/'/g, "\\'")}')" style="min-width:auto;min-height:32px;padding:5px 8px;font-size:12px;border-radius:6px;" title="Delete User Profile">🗑️</button>
+                            ` : ''}
+                          ` : ''}
+                        </div>
                       </td>
                     </tr>
                   `;
