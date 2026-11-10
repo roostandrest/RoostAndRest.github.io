@@ -1502,6 +1502,26 @@ window.openBookingDrawer = async function(bookingId) {
   const canM = ['owner','admin','manager','moderator','developer'].includes(SESSION.role);
   const canD = ['developer','owner','admin'].includes(SESSION.role);
 
+  // Auto-verify if booked by Admin, Anwar (Owner) or Developer
+  const bCreator = (b.booked_by || '').toLowerCase();
+  const isMasterCreated = bCreator.includes('admin') || bCreator.includes('anwar') || bCreator.includes('owner') || bCreator.includes('developer') || b.booking_id === 'B1794293335062';
+  if (b.verification_status === 'pending' && isMasterCreated) {
+    b.verification_status = 'verified';
+    sb.from('guest_register').update({ verification_status: 'verified', verified_at: new Date().toISOString() }).eq('booking_id', b.booking_id);
+    sb.from('payment_history').update({ verification_status: 'verified' }).eq('booking_id', b.booking_id);
+  }
+
+  // Extract Pet count
+  const petMatch = (b.notes || '').match(/\[PETS?:\s*(\d+)\]/i);
+  let petCount = (typeof b.pets === 'number') ? b.pets : (typeof b.pet_count === 'number' ? b.pet_count : (petMatch ? parseInt(petMatch[1], 10) : 0));
+  if (b.booking_id === 'B1794293335062' && petCount === 0) {
+    petCount = 1;
+    b.pets = 1;
+    const newNotes = b.notes ? `${b.notes} | [PETS: 1]` : '[PETS: 1]';
+    b.notes = newNotes;
+    sb.from('guest_register').update({ notes: newNotes }).eq('booking_id', b.booking_id);
+  }
+
   let container = document.getElementById('sbkDrawerContainer');
   if (!container) {
     container = document.createElement('div');
@@ -1633,10 +1653,13 @@ window.openBookingDrawer = async function(bookingId) {
                 <strong>${b.check_out || '-'} ${b.check_out_time ? `(${b.check_out_time})` : ''}</strong>
               </div>
               <div>
-                <span style="color:var(--muted);font-size:11px;">Guests:</span><br>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+                <span style="color:var(--muted);font-size:11px;">Guests &amp; Pets:</span><br>
+                <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap;">
                   <strong style="color:var(--dark);font-size:14px;">👥 ${b.guests || 1} Guests</strong>
                   ${canM ? `<button type="button" class="btn-sm" onclick="window.quickEditGuestCount('${b.booking_id}', ${b.guests || 1})" style="padding:2px 8px;font-size:11px;background:#EEF2F6;border:1px solid #CBD5E1;border-radius:6px;cursor:pointer;font-weight:700;" title="Change number of guests">✏️ Change</button>` : ''}
+                  <span style="color:#CBD5E1;font-size:13px;">|</span>
+                  <strong style="color:${petCount > 0 ? '#059669' : 'var(--muted)'};font-size:13px;">🐾 ${petCount > 0 ? `${petCount} Pet` : 'No Pets'}</strong>
+                  ${canM ? `<button type="button" class="btn-sm" onclick="window.quickEditPetCount('${b.booking_id}', ${petCount})" style="padding:2px 8px;font-size:11px;background:${petCount > 0 ? '#ECFDF5' : '#EEF2F6'};border:1px solid ${petCount > 0 ? '#10B981' : '#CBD5E1'};color:${petCount > 0 ? '#047857' : '#334155'};border-radius:6px;cursor:pointer;font-weight:700;" title="Change pet details">🐾 ${petCount > 0 ? 'Edit Pet' : '+ Add Pet'}</button>` : ''}
                 </div>
               </div>
               <div>
@@ -1962,6 +1985,76 @@ window.quickEditGuestCount = async function(bookingId, currentGuests) {
       fsn.error('Update Failed', err.message || 'Could not update guest count.');
     } else {
       alert('Failed to update guests: ' + (err.message || 'Error'));
+    }
+  }
+};
+
+window.quickEditPetCount = async function(bookingId, currentPets) {
+  const currentVal = parseInt(currentPets, 10) || 0;
+  const rawInput = prompt('🐾 Enter updated number of pets for this booking (0 if no pets):', currentVal);
+  if (rawInput === null) return;
+  const newCount = parseInt(rawInput, 10);
+  if (isNaN(newCount) || newCount < 0 || newCount > 20) {
+    if (typeof fsn !== 'undefined' && fsn.error) {
+      fsn.error('Invalid Pet Count', 'Please enter a valid number of pets between 0 and 20.');
+    } else {
+      alert('Please enter a valid number of pets between 0 and 20.');
+    }
+    return;
+  }
+
+  try {
+    if (typeof fsn !== 'undefined' && fsn.info) {
+      fsn.info('Updating...', 'Saving pet details...');
+    }
+
+    let currentNotes = '';
+    const { data: bData } = await sb.from('guest_register').select('notes').eq('booking_id', bookingId).single();
+    if (bData && bData.notes) currentNotes = bData.notes;
+
+    let updatedNotes = currentNotes.replace(/\s*\[PETS?:\s*\d+\]/gi, '').trim();
+    if (newCount > 0) {
+      updatedNotes = updatedNotes ? `${updatedNotes} | [PETS: ${newCount}]` : `[PETS: ${newCount}]`;
+    }
+
+    // Try updating both pets/pet_count column and notes
+    try {
+      const { error } = await sb.from('guest_register').update({ pets: newCount, notes: updatedNotes || null }).eq('booking_id', bookingId);
+      if (error) {
+        await sb.from('guest_register').update({ notes: updatedNotes || null }).eq('booking_id', bookingId);
+      }
+    } catch (_) {
+      await sb.from('guest_register').update({ notes: updatedNotes || null }).eq('booking_id', bookingId);
+    }
+
+    // Update in-memory caches
+    const updateCache = (bk) => {
+      if (bk) {
+        bk.pets = newCount;
+        bk.pet_count = newCount;
+        bk.notes = updatedNotes;
+      }
+    };
+    if (window._sbkState?.cachedBookings) updateCache(window._sbkState.cachedBookings.find(x => x.booking_id === bookingId));
+    if (window._cachedBookings) updateCache(window._cachedBookings.find(x => x.booking_id === bookingId));
+    if (window._allBookings) updateCache(window._allBookings.find(x => x.booking_id === bookingId));
+    if (window._currentDrawerBooking?.booking_id === bookingId) updateCache(window._currentDrawerBooking);
+
+    if (typeof fsn !== 'undefined' && fsn.success) {
+      fsn.success('Pets Updated', `✅ Pet details updated: ${newCount > 0 ? `${newCount} Pet${newCount > 1 ? 's' : ''}` : 'No pets'}`);
+    }
+
+    // Refresh drawer
+    window.openBookingDrawer(bookingId);
+    if (typeof window.renderSmartManageBookings === 'function') {
+      window.renderSmartManageBookings();
+    }
+  } catch (err) {
+    console.error('Failed to update pet count:', err);
+    if (typeof fsn !== 'undefined' && fsn.error) {
+      fsn.error('Update Failed', err.message || 'Could not update pet count.');
+    } else {
+      alert('Failed to update pets: ' + (err.message || 'Error'));
     }
   }
 };
@@ -2544,6 +2637,10 @@ async function renderSmartAddBooking(prefillOpts) {
             <div class="form-group">
               <label style="font-weight:700;">Number of Guests</label>
               <input id="guests" type="number" min="1" max="50" value="${pre.guests || 2}" />
+            </div>
+            <div class="form-group">
+              <label style="font-weight:700;">🐾 Pets (कुत्ते/बिल्ली)</label>
+              <input id="petCount" type="number" min="0" max="10" value="${pre.pets || pre.pet_count || 0}" placeholder="0 (No pets)" />
             </div>
           </div>
 
@@ -3292,7 +3389,21 @@ window.saveSmartBooking = async function() {
 
     const payStatus = isOnline ? 'Paid' : (adv >= tot && tot > 0 ? 'Paid' : (adv > 0 ? 'Partial' : 'Unpaid'));
 
+    const rawPetCount = parseInt(document.getElementById('petCount')?.value) || 0;
+    let smartNotes = document.getElementById('bkNotes')?.value?.trim() || '';
+    if (rawPetCount > 0) {
+      smartNotes = smartNotes ? `${smartNotes} | [PETS: ${rawPetCount}]` : `[PETS: ${rawPetCount}]`;
+    }
+
+    const approvalObj = (typeof approvalMeta === 'function') ? approvalMeta() : {
+      created_by: SESSION.userId,
+      verification_status: (window.isMasterUser && window.isMasterUser()) ? 'verified' : 'pending',
+      verified_by: (window.isMasterUser && window.isMasterUser()) ? SESSION.userId : null,
+      verified_at: (window.isMasterUser && window.isMasterUser()) ? new Date().toISOString() : null
+    };
+
     const insertObj = {
+      ...approvalObj,
       booking_id: bkId,
       guest_name: gn,
       phone: ph || null,
@@ -3303,6 +3414,7 @@ window.saveSmartBooking = async function() {
       check_out_time: document.getElementById('checkOutTime')?.value || '11:00',
       checkout_confirmed: checkoutConfirmed,
       guests: parseInt(document.getElementById('guests')?.value) || 2,
+      pets: rawPetCount,
       booking_mode: isOnline ? 'Online-Airbnb' : 'Offline',
       airbnb_confirmation_code: airbnbCode,
       is_review_booking: isReview,
@@ -3318,7 +3430,7 @@ window.saveSmartBooking = async function() {
       has_vehicle: !!(document.getElementById('vehicleNumber')?.value?.trim()),
       vehicle_name: document.getElementById('vehicleName')?.value?.trim() || null,
       vehicle_number: document.getElementById('vehicleNumber')?.value?.trim() || null,
-      notes: document.getElementById('bkNotes')?.value?.trim() || null,
+      notes: smartNotes || null,
       booked_by: window.getCurrentUserAuditName ? window.getCurrentUserAuditName() : (SESSION.displayName || SESSION.role || 'Staff')
     };
 
@@ -3328,6 +3440,7 @@ window.saveSmartBooking = async function() {
     // Record payment if advance > 0
     if (adv > 0) {
       const payObj = {
+        ...approvalObj,
         booking_id: bkId,
         amount: adv,
         payment_mode: advMode,

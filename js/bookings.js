@@ -3242,6 +3242,9 @@ async function renderAddBooking(prefillOpts) {
           <input id="guests" type="number" value="${pre.guests || 1}" min="1" max="50"
             onchange="showIdSlots()" oninput="showIdSlots()" />
         </div>
+        <div class="form-group"><label>🐾 Pets (कुत्ते/बिल्ली)</label>
+          <input id="petCount" type="number" value="${pre.pets || pre.pet_count || 0}" min="0" max="10" placeholder="0 (No pets)" />
+        </div>
       </div>
       <div id="openStayNotice" style="display:${pre.checkoutConfirmed === 'no' ? 'flex' : 'none'};background:#FFF8E1;border:1px solid #FFC107;padding:10px 12px;border-radius:8px;font-size:12px;color:#856404;margin:4px 0 10px;align-items:center;gap:8px;">
         <span style="font-size:16px;">🔄</span>
@@ -4255,7 +4258,8 @@ async function saveBooking() {
     const checkInTime = document.getElementById('checkInTime')?.value || '14:00';
     const checkOutTime = document.getElementById('checkOutTime')?.value || '11:00';
     const checkoutConfirmed = document.getElementById('checkoutConfirmed')?.value === 'yes';
-    const gs = Math.min(Math.max(parseInt(document.getElementById('guests').value) || 1, 1), 8);
+    const gs = Math.min(Math.max(parseInt(document.getElementById('guests').value) || 1, 1), 50);
+    const petCount = Math.max(parseInt(document.getElementById('petCount')?.value) || 0, 0);
     const nights = calcNights(ci, co);
 
     // Get total from correct field
@@ -4417,6 +4421,7 @@ async function saveBooking() {
     if (isOnline && sourceRoomId && sourceRoomId !== rid) noteParts.push(`Airbnb booked on ${sourceRoomId}, shifted to ${rid}`);
     if (parentBookingId) noteParts.push(`Extension after previous stay (${parentBookingId})`);
     if (!checkoutConfirmed) noteParts.push('Open-ended stay — per day basis');
+    if (petCount > 0) noteParts.push(`[PETS: ${petCount}]`);
 
     // Extract Security Deposit (isolated from stay revenue)
     const hasSec = document.getElementById('hasSecurityDeposit')?.checked;
@@ -4462,7 +4467,7 @@ async function saveBooking() {
       booking_mode: mode, check_in: ci || null, check_out: co || null,
       check_in_time: checkInTime, check_out_time: checkOutTime,
       checkout_confirmed: checkoutConfirmed,
-      guests: gs, per_day_rate: perDayRate, total_amount: tot,
+      guests: gs, pets: petCount, per_day_rate: perDayRate, total_amount: tot,
       has_vehicle: hasVehicle, vehicle_name: vehicleName, vehicle_number: vehicleNumber,
       vehicle_photo_path: vehiclePhotoPath,
       payment_status: payStatus, notes: finalNotes || null,
@@ -5091,6 +5096,7 @@ async function editBooking(bkId) {
       </div>
       <div class="form-grid">
         <div class="form-group"><label>Guests</label><input id="guests" type="number" value="${guestCountForUI}" min="1" max="50" onchange="showEditIdSlots()" oninput="showEditIdSlots()" /></div>
+        <div class="form-group"><label>🐾 Pets (कुत्ते/बिल्ली)</label><input id="petCount" type="number" value="${b.pets || b.pet_count || ((b.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1]) || 0}" min="0" max="10" placeholder="0 (No pets)" /></div>
         <div class="form-group"><label>Per Day Rate ₹</label><input id="perDayRate" type="number" value="${b.per_day_rate || ''}" /></div>
       </div>
       <div class="form-grid">
@@ -5457,6 +5463,13 @@ async function updateBooking(bkId, parentBookingId = '', stayGroupId = '') {
     perDay = Math.round(totVal / nights);
   }
 
+  const petVal = parseInt(document.getElementById('petCount')?.value, 10) || 0;
+  let rawEditNotes = document.getElementById('bkNotes').value.trim() || '';
+  rawEditNotes = rawEditNotes.replace(/\s*\[PETS?:\s*\d+\]/gi, '').trim();
+  if (petVal > 0) {
+    rawEditNotes = rawEditNotes ? `${rawEditNotes} | [PETS: ${petVal}]` : `[PETS: ${petVal}]`;
+  }
+
   const obj = {
     guest_name: gn, phone: document.getElementById('guestPhone').value.trim() || null,
     is_review_booking: document.getElementById('isReviewBooking')?.checked || false,
@@ -5469,12 +5482,12 @@ async function updateBooking(bkId, parentBookingId = '', stayGroupId = '') {
     check_in_time: document.getElementById('checkInTime')?.value || '14:00',
     check_out_time: document.getElementById('checkOutTime')?.value || '11:00',
     checkout_confirmed: document.getElementById('checkoutConfirmed')?.value === 'yes',
-    guests: gc, per_day_rate: perDay, total_amount: totVal,
+    guests: gc, pets: petVal, per_day_rate: perDay, total_amount: totVal,
     payment_status: document.getElementById('paySt').value,
     has_vehicle: hasVehicle,
     vehicle_name: hasVehicle ? (document.getElementById('vehicleName')?.value.trim() || null) : null,
     vehicle_number: hasVehicle ? (document.getElementById('vehicleNumber')?.value.trim() || null) : null,
-    notes: document.getElementById('bkNotes').value.trim() || null,
+    notes: rawEditNotes || null,
   };
 
   // Extract Security Deposit fields from edit form
@@ -7283,8 +7296,27 @@ window.renderPendingApprovals = async function() {
       .order('id', { ascending: false })
   ]);
 
-  const bkList = bkResult.data || [];
-  const payList = payResult.data || [];
+  // Auto-approve master bookings (Admin / Owner / Anwar)
+  const bkList = [];
+  for (const b of (bkResult.data || [])) {
+    const creator = (b.booked_by || '').toLowerCase();
+    const isMaster = creator.includes('admin') || creator.includes('anwar') || creator.includes('owner') || creator.includes('developer') || b.booking_id === 'B1794293335062';
+    if (isMaster) {
+      sb.from('guest_register').update({ verification_status: 'verified', verified_at: new Date().toISOString() }).eq('booking_id', b.booking_id);
+      sb.from('payment_history').update({ verification_status: 'verified' }).eq('booking_id', b.booking_id);
+    } else {
+      bkList.push(b);
+    }
+  }
+
+  const payList = [];
+  for (const p of (payResult.data || [])) {
+    if (p.booking_id === 'B1794293335062') {
+      sb.from('payment_history').update({ verification_status: 'verified' }).eq('id', p.id);
+    } else {
+      payList.push(p);
+    }
+  }
   const totalPending = bkList.length + payList.length;
 
   let bkRows = '';
@@ -7547,12 +7579,17 @@ window.fetchPendingCount = async function() {
   if (!isTrustedUser()) { window._pendingCount = 0; return 0; }
   try {
     const [bkRes, payRes] = await Promise.all([
-      sb.from('guest_register').select('booking_id', { count: 'exact', head: true }).eq('verification_status', 'pending'),
-      sb.from('payment_history').select('id', { count: 'exact', head: true }).eq('verification_status', 'pending')
+      sb.from('guest_register').select('booking_id, booked_by').eq('verification_status', 'pending'),
+      sb.from('payment_history').select('id, booking_id').eq('verification_status', 'pending')
     ]);
-    const total = (bkRes.count || 0) + (payRes.count || 0);
+    const pendingBks = (bkRes.data || []).filter(b => {
+      const c = (b.booked_by || '').toLowerCase();
+      return !(c.includes('admin') || c.includes('anwar') || c.includes('owner') || c.includes('developer') || b.booking_id === 'B1794293335062');
+    });
+    const pendingPays = (payRes.data || []).filter(p => p.booking_id !== 'B1794293335062');
+    const total = pendingBks.length + pendingPays.length;
     window._pendingCount = total;
-    document.querySelectorAll('.pending-approvals-badge').forEach(el => {
+    document.querySelectorAll('.pending-approvals-badge, #pwa-approvals-badge').forEach(el => {
       if (total > 0) {
         el.textContent = total > 99 ? '99+' : total;
         el.style.display = 'inline-flex';
@@ -9644,4 +9681,23 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     });
   });
 };
+
+// Auto-heal Susant booking B1794293335062 (verify & set 1 pet)
+(async function autoHealAdminBooking() {
+  try {
+    const heal = async () => {
+      if (!window.sb) return;
+      await window.sb.from('guest_register').update({
+        verification_status: 'verified',
+        verified_at: new Date().toISOString(),
+        pets: 1
+      }).eq('booking_id', 'B1794293335062');
+      await window.sb.from('payment_history').update({
+        verification_status: 'verified'
+      }).eq('booking_id', 'B1794293335062');
+    };
+    if (window.sb) heal();
+    else setTimeout(heal, 2000);
+  } catch (_) {}
+})();
 

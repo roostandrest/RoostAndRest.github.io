@@ -430,7 +430,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
               ${escapeHtml(booking.guest_name || 'Valued Guest')}
             </div>
             <div style="font-size:10px;color:#334155;line-height:1.5;">
-              📱 Phone: <strong>${escapeHtml(booking.phone || 'N/A')}</strong> &nbsp;|&nbsp; 👥 Guests: <strong>${booking.guests || 1} Person${(booking.guests || 1) > 1 ? 's' : ''}</strong><br>
+              📱 Phone: <strong>${escapeHtml(booking.phone || 'N/A')}</strong> &nbsp;|&nbsp; 👥 Guests: <strong>${booking.guests || 1} Person${(booking.guests || 1) > 1 ? 's' : ''}</strong>${(booking.pets || booking.pet_count || ((booking.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1])) > 0 ? ` &nbsp;|&nbsp; 🐾 Pets: <strong>${(booking.pets || booking.pet_count || ((booking.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1]))} Pet</strong>` : ''}<br>
               ${booking.booked_by ? `✍️ Booked By: <strong>${escapeHtml(booking.booked_by)}</strong> &nbsp;|&nbsp; ` : ''}
               ${booking.created_at ? `🕒 Booked On: <strong>${formatDateTime(booking.created_at)}</strong> &nbsp;|&nbsp; ` : ''}
               ${booking.id_proof_type ? `🪪 ID Type: <strong>${escapeHtml(booking.id_proof_type)}</strong>` : ''}
@@ -696,7 +696,7 @@ Thank you for choosing *Roost And Rest Stays*. Your direct reservation has been 
 
 📅 *Check-in:* ${checkInDate} at ${checkInTime}
 📅 *Check-out:* ${checkOutDate} at ${checkOutTime}
-🌙 *Duration:* ${nights} Night(s) · ${booking.guests || 1} Guest(s)
+🌙 *Duration:* ${nights} Night(s) · ${booking.guests || 1} Guest(s)${(booking.pets || booking.pet_count || ((booking.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1])) > 0 ? ` · 🐾 ${(booking.pets || booking.pet_count || ((booking.notes||'').match(/\[PETS?:\s*(\d+)\]/i)?.[1]))} Pet(s)` : ''}
 
 💰 *PAYMENT BREAKDOWN:*
 ━━━━━━━━━━━━━━━━━━━━
