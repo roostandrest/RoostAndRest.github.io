@@ -1,7 +1,8 @@
 -- ═══════════════════════════════════════════════════════════════════
 -- ROOST AND REST — 1-CLICK MASTER DATABASE SCHEMA MIGRATION
 -- Project: https://lfxeacasgyofsyxthman.supabase.co
--- Owner / Director: Anwar Ahmad (+91 9807486555 / roostandrestlucknow@gmail.com)
+-- Owner / Director / Support / Helpline: Mr. Anwar Ahmad (+91 9807486555 / roostandrestlucknow@gmail.com)
+-- Developer: Roost and Rest IT Team
 -- Developer: Roost & Rest Tech (tech@roostandrest.com)
 -- ═══════════════════════════════════════════════════════════════════
 -- Instructions:

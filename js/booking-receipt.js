@@ -18,9 +18,9 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
     phone:      '+91 9807486555',
     phone2:     '+91 82996 00709',
     managerPhone: '+91 9807486555',
-    managerName: 'Anwar Ahmad',
+    managerName: 'Mr. Anwar Ahmad',
     owners: [
-      { name: 'Mr. Anwar Ahmad', phone: '+91 82996 00709' }
+      { name: 'Mr. Anwar Ahmad (Owner & Director)', phone: '+91 9807486555 / +91 82996 00709' }
     ],
     email:      'theroostandrestlucknow@gmail.com',
     web:        'roostandrest.github.io'
@@ -609,7 +609,7 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
         <!-- 📞 Management & Support Contacts Strip -->
         <div style="border:1px solid #E2E8F0;border-radius:5px;padding:3px 8px;background:#F8FAFC;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;flex-wrap:wrap;gap:4px;">
           <div>
-            👑 <strong>Company Owners &amp; Directors:</strong>
+            👑 <strong>Owner, Director &amp; 24x7 Helpline:</strong>
           </div>
           <div>
             ${CO.owners.map(o => `<strong>${o.name}:</strong> 📞 <a href="tel:${o.phone.replace(/[^0-9+]/g,'')}" style="color:#0F172A;text-decoration:none;font-weight:700;">${o.phone}</a>`).join(' &nbsp;|&nbsp; ')}
@@ -707,8 +707,8 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
 ▪️ *Balance Due:* ₹${balanceDue.toLocaleString('en-IN')} ${balanceDue > 0 ? '⚠️ (Payable at Check-in)' : '✅ (Fully Cleared)'}
 ━━━━━━━━━━━━━━━━━━━━${secAmount > 0 ? `\n🛡️ *Security Deposit Policy:* ₹${secAmount.toLocaleString('en-IN')} is 100% refundable at check-out post room & inventory inspection.\n` : ''}${payHistoryText}${customNotes ? `\n\n📝 *Special Request & Notes:* ${customNotes}` : ''}
 
-👑 *Company Owner / Director:*
-• Mr. Anwar Ahmad: +91 82996 00709
+👑 *Company Owner, Director & Helpline:*
+• Mr. Anwar Ahmad: +91 9807486555 / +91 82996 00709
 
 📋 *Key Check-in Instructions:*
 • Valid Govt ID (Aadhaar / DL / Passport) mandatory for all guests.
@@ -1426,12 +1426,12 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- Support Strip -->
         <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
           <div>
-            👑 <strong>Director / Owner:</strong> Anwar Ahmad<br>
-            📞 <a href="tel:+918299600709" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
+            👑 <strong>Director &amp; Owner:</strong> Mr. Anwar Ahmad<br>
+            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 9807486555</a>
           </div>
           <div>
-            🛡️ <strong>Support &amp; Helpline:</strong> Operations<br>
-            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 9807486555</a>
+            🛡️ <strong>Support &amp; Helpline:</strong> Mr. Anwar Ahmad<br>
+            📞 <a href="tel:+918299600709" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
           </div>
         </div>
 
@@ -2310,7 +2310,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- 📞 Management & Support Contacts Strip -->
         <div style="border:1px solid #E2E8F0;border-radius:5px;padding:3px 8px;background:#F8FAFC;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;font-size:9px;flex-wrap:wrap;gap:4px;">
           <div>
-            👑 <strong>Company Owners &amp; Directors:</strong>
+            👑 <strong>Owner, Director &amp; 24x7 Helpline:</strong>
           </div>
           <div>
             ${CO.owners.map(o => `<strong>${o.name}:</strong> 📞 <a href="tel:${o.phone.replace(/[^0-9+]/g,'')}" style="color:#0F172A;text-decoration:none;font-weight:700;">${o.phone}</a>`).join(' &nbsp;|&nbsp; ')}
@@ -2416,8 +2416,8 @@ ${propertiesList}
 ▪️ *Balance Due at Check-in:* ₹${balanceDue.toLocaleString('en-IN')} ${balanceDue > 0 ? '⚠️ (Payable upon arrival)' : '✅ (Fully Cleared)'}
 ━━━━━━━━━━━━━━━━━━━━${payHistoryText}${groupNotes ? `\n\n📝 *Special Note:* ${groupNotes}` : ''}
 
-👑 *Company Owner / Director:*
-• Mr. Anwar Ahmad: +91 82996 00709
+👑 *Company Owner, Director & Helpline:*
+• Mr. Anwar Ahmad: +91 9807486555 / +91 82996 00709
 
 📋 *Key Check-in Instructions:*
 • Original Govt ID (Aadhaar / DL / Passport) mandatory for all adult guests.

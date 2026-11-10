@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════
-   ROOST AND REST HOMES — Smart Chat Widget (Nisha AI Text Chat)
+   ROOST AND REST HOMES — Smart Chat Widget (Roost & Rest AI Chat)
 
    Features:
    ✅ Smart FAQ with live Supabase rates
@@ -21,7 +21,7 @@
   let _leadData    = {};
   let _step        = 'init'; // init | greet | ask_requirement | show_props | ask_name | ask_phone | done
   let _history     = [];
-  let _autoVoice   = true;   // Auto-speak Nisha's replies using Sarvam AI Bulbul voice
+  let _autoVoice   = true;   // Auto-speak AI replies using Sarvam AI Bulbul voice
   let _currentSpeakingBtn = null;
   let _voiceTurn   = false;  // Whether current turn was started by voice mic
 
@@ -851,17 +851,17 @@
       };
     }
 
-    // 25. HOSTS, FOUNDERS & CONTACT DETAILS
-    if (/host|owner|contact|phone|number|call|baat karni/i.test(msg)) {
+    // 25. DIRECTOR, OWNER & HELPLINE CONTACT DETAILS
+    if (/host|owner|contact|phone|number|call|baat karni|director|support|helpline/i.test(msg)) {
       return {
-        text: `📞 **Roost And Rest Stays — Host & Booking Contacts:**\n\n` +
-              `• ⭐ **Mr. Anwar Ahmad (Superhost & Owner):**\n` +
-              `  📱 **+91 82996 00709**\n\n` +
-              `• 🛡️ **Roost & Rest Operations & Support:**\n` +
-              `  📱 **+91 9807486555**\n\n` +
+        text: `📞 **Roost And Rest Stays — Director, Owner & Helpline Contacts:**\n\n` +
+              `• 👑 **Mr. Anwar Ahmad (Director & Owner):**\n` +
+              `  📱 **+91 9807486555** / **+91 82996 00709**\n\n` +
+              `• 🛡️ **24x7 Support & Helpline:**\n` +
+              `  📱 **Mr. Anwar Ahmad: +91 9807486555**\n\n` +
               `🏢 **Company:** ROOST AND REST STAYS\n` +
               `📍 **Office:** Radhikapuri, Indira Nagar, Lucknow`,
-        actions: [{ label: '📲 Call / WhatsApp Support (+91 9807486555)', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to inquire about Roost And Rest Stays booking.` }],
+        actions: [{ label: '📲 Call / WhatsApp Mr. Anwar Ahmad (+91 9807486555)', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to inquire about Roost And Rest Stays booking.` }],
         quickReplies: ['Rates list dikhao 💰', 'Gomti Grand Villa ₹8,000', 'Book now 📅']
       };
     }
@@ -1175,8 +1175,8 @@
     // 32. GREETINGS
     if (/^(hi|hello|hii|hey|helo|namaste|namaskar|pranam|good morning|good evening|kya haal)\b/i.test(msg) || raw.length < 3) {
       return {
-        text: `Namaste! 🙏 Main **Nisha** hoon, **Roost And Rest Stays, Lucknow** ki verified AI concierge.\n\n` +
-              `Main aapki turant sahayata kar sakti hoon:\n` +
+        text: `Namaste! 🙏 Welcome to **Roost And Rest Stays, Lucknow**.\n\n` +
+              `Main aapki 24/7 AI Concierge hoon. Main aapki turant sahayata kar sakti hoon:\n` +
               `• 🏡 **Gomti Grand Villa (₹8,000)** & Royal White House (₹12,000)\n` +
               `• 🏢 **3BHK Luxury Flats (₹4,500/night)** in Gomti Nagar\n` +
               `• 🕐 **Check-in / Check-out & Rules (100% Couple Friendly)**\n` +
@@ -1868,7 +1868,7 @@
     bar.classList.add(state);
 
     if (state === 'speaking') {
-      if (textEl) textEl.innerHTML = `<span class="uhh-mini-wave"><span></span><span></span><span></span></span> ${msg || 'Nisha bol rahi hain…'}`;
+      if (textEl) textEl.innerHTML = `<span class="uhh-mini-wave"><span></span><span></span><span></span></span> ${msg || 'Bol rahe hain…'}`;
       if (interruptBtn) {
         interruptBtn.style.display = 'inline-flex';
         interruptBtn.textContent = '⏹️ Ruk jao / Boliye';
@@ -1919,7 +1919,7 @@
       (transcript) => {
         if (micBtn) micBtn.classList.remove('listening');
         if (input) input.placeholder = 'Type ya 🎙️ bol kar poochhein…';
-        updateVoiceStatus('processing', 'Nisha soch rahi hain…');
+        updateVoiceStatus('processing', 'Soch rahe hain…');
         if (transcript && transcript.trim()) {
           if (input) input.value = transcript.trim();
           _voiceTurn = true;
@@ -1950,9 +1950,9 @@
     const wrap = document.createElement('div');
     wrap.id = 'uhh-chat-btn-wrap';
     wrap.innerHTML = `
-      <button id="uhh-chat-btn" class="uhh-chat-unified-btn" aria-label="Chat with Nisha AI — Roost And Rest Stays">
+      <button id="uhh-chat-btn" class="uhh-chat-unified-btn" aria-label="Chat with AI Concierge — Roost And Rest Stays">
         <span class="uhh-chat-btn-sparkle">✨</span>
-        <span class="uhh-chat-btn-title">Nisha AI Concierge</span>
+        <span class="uhh-chat-btn-title">AI Concierge</span>
         <span class="uhh-chat-btn-pill">💬 Ask</span>
         <span class="uhh-chat-badge">1</span>
       </button>
@@ -1999,7 +1999,7 @@
         </div>
         <div class="uhh-chat-header-info">
           <div class="uhh-chat-header-name">
-            <span>Nisha — AI Concierge</span>
+            <span>Roost &amp; Rest — AI Concierge</span>
             <svg class="uhh-wa-verified-badge" width="15" height="15" viewBox="0 0 24 24" fill="#00A884"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
           </div>
           <div class="uhh-chat-header-status" id="uhh-chat-header-status">Roost And Rest Stays · Online</div>
@@ -2084,7 +2084,7 @@
         if (!window.nishaAI) return;
         window.nishaAI.unlockAudio();
 
-        // If Nisha is currently speaking, barge in and start listening immediately!
+        // If AI is currently speaking, barge in and start listening immediately!
         if (window.nishaAI.isSpeaking) {
           interruptNishaAndListen();
           return;
@@ -2110,14 +2110,14 @@
       window.nishaAI.onStateChange = (state, extra) => {
         const headerStatus = document.getElementById('uhh-chat-header-status');
         if (state === 'speaking') {
-          if (headerStatus) { headerStatus.textContent = '🔊 Nisha bol rahi hain…'; headerStatus.classList.remove('typing'); }
-          updateVoiceStatus('speaking', '🔊 Nisha bol rahi hain…');
+          if (headerStatus) { headerStatus.textContent = '🔊 Bol rahe hain…'; headerStatus.classList.remove('typing'); }
+          updateVoiceStatus('speaking', '🔊 Bol rahe hain…');
         } else if (state === 'listening') {
           if (headerStatus) { headerStatus.textContent = '🎙️ Listening to you…'; headerStatus.classList.remove('typing'); }
-          updateVoiceStatus('listening', extra ? `🎙️ "${extra}…"` : '🎙️ Sun rahi hoon… Boliye');
+          updateVoiceStatus('listening', extra ? `🎙️ "${extra}…"` : '🎙️ Sun rahe hain… Boliye');
         } else if (state === 'processing') {
           if (headerStatus) { headerStatus.textContent = 'typing…'; headerStatus.classList.add('typing'); }
-          updateVoiceStatus('processing', 'Nisha soch rahi hain…');
+          updateVoiceStatus('processing', 'Soch rahe hain…');
         } else if (state === 'idle') {
           if (headerStatus) { headerStatus.textContent = 'Roost And Rest Stays · Online'; headerStatus.classList.remove('typing'); }
           updateVoiceStatus('idle');
@@ -2133,7 +2133,7 @@
     input.addEventListener('input', () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 80) + 'px';
-      // If user starts typing while Nisha is speaking, stop Nisha
+      // If user starts typing while AI is speaking, stop speech
       if (window.nishaAI && window.nishaAI.isSpeaking) {
         window.nishaAI.stopSpeaking();
         updateVoiceStatus('idle');
@@ -2143,7 +2143,7 @@
     // Send greeting after short delay
     setTimeout(() => {
       addBotMessage({
-        text: 'Namaste! 🙏 Main **Nisha** hoon, aapki 24/7 AI Concierge at **Roost And Rest Stays**.\n\nLucknow mein luxury homestays, private pool villas, live availability ya **15% direct discount** ke liye batayein — kaise madad karoon?',
+        text: 'Namaste! 🙏 Welcome to **Roost And Rest Stays**.\n\nMain aapki 24/7 AI Concierge hoon. Lucknow mein luxury homestays, private pool villas, live availability ya **15% direct discount** ke liye batayein — kaise madad karoon?',
         quickReplies: [
           '💰 Rates & Pricing',
           '🏢 3BHK Luxury Flats',
@@ -2250,7 +2250,7 @@
       // WhatsApp Voice Note Preview Bar
       html += `
         <div class="uhh-wa-voice-note">
-          <button class="uhh-speak-msg-btn" title="Nisha ki Sarvam Bulbul voice me suniye" aria-label="Listen Voice Note">
+          <button class="uhh-speak-msg-btn" title="Voice note suniye" aria-label="Listen Voice Note">
             <span class="uhh-spk-ico">▶</span>
             <span class="uhh-spk-txt">Suniye</span>
           </button>
@@ -2307,7 +2307,7 @@
             spkBtn.querySelector('.uhh-spk-txt').textContent = 'Bol rahi hain…';
             spkBtn.querySelector('.uhh-spk-ico').textContent = '⏹️';
             _currentSpeakingBtn = spkBtn;
-            updateVoiceStatus('speaking', '🔊 Nisha bol rahi hain…');
+            updateVoiceStatus('speaking', '🔊 Bol rahe hain…');
 
             window.nishaAI.speak(cleanSpeech, () => {
               spkBtn.classList.remove('speaking');

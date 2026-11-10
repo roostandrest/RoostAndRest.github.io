@@ -1,5 +1,5 @@
 /* ══════════════════════════════════════════════════════════════════════
-   ROOST AND REST HOMES — "NISHA" AI ENGINE (NEXT-GEN)
+   ROOST AND REST HOMES — AI CONCIERGE ENGINE
    Standalone, 100% Free 24/7 AI Voice & Text Concierge
    Dual-Core Brain: Instant Lucknow Homestays Knowledge Base + Google Gemini AI
 
@@ -204,14 +204,14 @@
             guest_name: cleanName,
             phone: cleanPhone,
             interested_property: propName,
-            source: 'nisha_ai_voice_chat',
+            source: 'ai_concierge',
             notes: noteText,
             status: 'new'
           });
         }
 
         const adminMsg = encodeURIComponent(
-          `🔔 *New Lead Captured by Nisha AI*\n\n` +
+          `🔔 *New Lead Captured by AI Concierge*\n\n` +
           `👤 *Guest Name:* ${cleanName}\n` +
           `📱 *Phone:* ${cleanPhone || 'Not given'}\n` +
           `🏠 *Interested Property:* ${propName}\n` +
@@ -529,7 +529,7 @@
 
       // 10. Greetings
       if (/^(hi|hello|hey|namaste|pranam|good morning|good evening|kaise ho|नमस्ते|हेलो|हाय|प्रणाम|कैसी हो|सुप्रभात)/i.test(q)) {
-        return `Namaste ji! 🙏 Main Nisha hoon — Roost And Rest Stays Lucknow ki AI Concierge. Lucknow me best 3BHK flat ya luxury villa booking ke baare me aap mujhse kuch bhi pooch sakte hain! Aaj main aapki kya madad kar sakti hoon?`;
+        return `Namaste ji! 🙏 Welcome to Roost And Rest Stays Lucknow. Lucknow me best 3BHK flat ya luxury villa booking ke baare me aap mujhse kuch bhi pooch sakte hain! Aaj main aapki kya madad kar sakti hoon?`;
       }
 
       // Default warm fallback
@@ -546,7 +546,7 @@
         `- ${p.property_name} (${p.bhk}) | Up to ${p.max_guests} guests | Direct Rate: ₹${p.base_price.toLocaleString('en-IN')}/night | Area: ${p.area}`
       ).join('\n');
 
-      return `You are "Nisha" (निशा), the warm, charming, and highly professional AI Concierge & Reservation Manager for "Roost And Rest Stays" (Roost & Rest) — Lucknow's premier luxury homestay and serviced villa brand.
+      return `You are the warm, charming, and highly professional AI Concierge & Reservation Manager for "Roost And Rest Stays" (Roost & Rest) — Lucknow's premier luxury homestay and serviced villa brand.
 Today's Date: ${today}.
 Location: Lucknow, Uttar Pradesh, India.
 
@@ -758,7 +758,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
       }
 
       // ── BARGE-IN INTERRUPTION ──
-      // If Nisha is currently speaking when user activates mic or speaks, stop Nisha immediately!
+      // If AI is currently speaking when user activates mic or speaks, stop immediately!
       if (this.isSpeaking) {
         this.stopSpeaking();
       }
@@ -777,7 +777,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           if (this.onStateChange) this.onStateChange('listening');
         };
 
-        // Barge-in: if user starts making sound or speaking while Nisha was speaking, immediately silence Nisha!
+        // Barge-in: if user starts making sound or speaking while AI was speaking, immediately silence!
         reco.onspeechstart = () => {
           if (this.isSpeaking) {
             this.stopSpeaking();
@@ -1280,8 +1280,9 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
   }
 
   // Export globally
-  window.NishaAIEngine = NishaAIEngine;
-  window.nishaAI = new NishaAIEngine();
+  window.AIConciergeEngine = NishaAIEngine;
+  window.aiConcierge = new NishaAIEngine();
+  window.nishaAI = window.aiConcierge;
 
 })(typeof window !== 'undefined' ? window : this);
 

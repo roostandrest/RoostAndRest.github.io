@@ -1,7 +1,7 @@
 /**
  * ===================================
  * ROOST AND REST STAYS — Core Module
- * Developer: Roost & Rest Tech
+ * Developer: Roost and Rest IT Team
  * ===================================
  */
 
@@ -1466,8 +1466,8 @@ function renderShell(content, activePage = 'dashboard') {
 
   let nav;
 
-  // Settings visible to admin and developer only (NOT plain owner)
-  const showSettings = isAdmin;
+  // Settings visible to admin, developer and owner (Mr. Anwar Ahmad)
+  const showSettings = isAdmin || isOwner;
 
   // ═══════════════════════════════════════════════════════════
   // 🏛️ Roost And Rest CRM POWER HUBS CONFIGURATION (Hub & Tab Architecture)
@@ -1627,27 +1627,9 @@ function renderShell(content, activePage = 'dashboard') {
   };
   window.PAGE_TO_SIDEBAR_MAP = PAGE_TO_SIDEBAR_MAP;
 
-  // 👑 OWNER ROLE: Filter out restricted tabs from hub definitions
-  if (isPureOwner) {
-    // Remove Laundry tab from Expenses hub
-    const expHub = UHHS_HUBS.find(h => h.id === 'expenses');
-    if (expHub) expHub.tabs = expHub.tabs.filter(t => t.id !== 'laundry');
-  }
-
-  // Minimal, uncluttered left drawer list as requested by user
-  if (isPureOwner) {
-    // 👑 OWNER ROLE (Anwar) — Full business access, restricted admin pages
-    // Hidden: User Management, Laundry, HRMS & Tasks, WhatsApp Hub, Help & Guide
-    nav = [
-      ['dashboard', 'Today · Operations'],
-      ['bookings', 'Bookings / Calendar'],
-      ['rooms', 'Properties'],
-      ['expenses', 'Expenses'],
-      ['analytics', 'Finances'],
-      ['settings', 'Global Settings'],
-    ];
-  } else if (isAdmin) {
-    // 🛠️ DEVELOPER / ADMIN — Full access to everything
+  // Navigation Drawer Menu
+  if (isAdmin || isOwner) {
+    // 👑 OWNER (Mr. Anwar Ahmad) / DEVELOPER / ADMIN — Supreme Full Access to everything
     nav = [
       ['dashboard', 'Today · Operations'],
       ['bookings', 'Bookings / Calendar'],
@@ -2433,15 +2415,6 @@ function renderShell(content, activePage = 'dashboard') {
 }
 
 function navigate(page) {
-  // 🔒 OWNER ROLE PAGE GUARD — block restricted pages for 'owner' role
-  if (SESSION.role === 'owner') {
-    const OWNER_BLOCKED = ['user-mgmt', 'employees', 'attendance', 'att-summary', 'tasks', 'employee-ledger', 'advance', 'sop', 'whatsapp-hub', 'whatsapp', 'help', 'laundry'];
-    if (OWNER_BLOCKED.includes(page)) {
-      if (window.fsn) fsn.error('Access Restricted', 'This page is not available for your role.');
-      else alert('Access Restricted: This page is not available for your role.');
-      return;
-    }
-  }
   SESSION.currentPage = page;
   try { localStorage.setItem('uh_last_page', page); } catch(e) {}
   if (window.trackPageVisit) window.trackPageVisit(page);
@@ -2925,7 +2898,7 @@ function showPhotoViewer(url, path) {
 // ============ USER MANAGEMENT (Admin Only) ============
 window.getRoleBadgeHTML = function(role) {
   const map = {
-    developer: { label: '🔴 Developer', bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5' },
+    developer: { label: '🔴 Roost and Rest IT Team', bg: '#FEE2E2', color: '#991B1B', border: '#FCA5A5' },
     admin: { label: '🔵 Admin', bg: '#EDE9FE', color: '#5B21B6', border: '#C4B5FD' },
     owner: { label: '👑 Owner', bg: '#FEF3C7', color: '#92400E', border: '#FCD34D' },
     manager: { label: '👔 Manager', bg: '#DBEAFE', color: '#1E40AF', border: '#93C5FD' },
@@ -3719,7 +3692,7 @@ function showRolePickerModal(userId, name, callback) {
         <label style="font-weight:700;font-size:13px;display:block;margin-bottom:6px;">Select Role *</label>
         <select id="rolePickerSel" style="width:100%;font-size:14px;padding:9px;border:1px solid #D1D5DB;border-radius:8px;background:#fff;">
           <option value="">-- Choose Access Level --</option>
-          <option value="developer">🔴 Developer (Full Master Access + Delete)</option>
+          <option value="developer">🔴 Roost and Rest IT Team (Master Tech Access)</option>
           <option value="admin">🔵 Admin (Full Operations & Settings)</option>
           <option value="owner">👑 Owner (Full Properties, Financials, Bookings)</option>
           <option value="manager">👔 Manager (Operations, Turnarounds & Bookings)</option>
@@ -3746,9 +3719,9 @@ function showRolePickerModal(userId, name, callback) {
 
   document.getElementById('rolePickerSel').onchange = function() {
     const desc = {
-      developer: '🔴 Developer: Master super-admin privileges including database record deletion, user management, and raw data access.',
+      developer: '🔴 Roost and Rest IT Team: Master technical access, database management, CRM maintenance, and IT infrastructure.',
       admin: '🔵 Admin: Complete management permissions across bookings, calendars, flats status, staff, expenses, and system settings.',
-      owner: '👑 Owner: High-level property oversight, bookings, cash flow, payouts, WhatsApp dispatch, and full revenue visibility.',
+      owner: '👑 Owner (Mr. Anwar Ahmad): Supreme master oversight, all properties, HRMS, financials, bookings, settings, and company management.',
       manager: '👔 Manager: Daily operational lead: housekeeping turnarounds, booking verification, staff tasks, and guest communications.',
       moderator: '🟡 Moderator: Bookings management, guest verification, ID proof uploads, and automated WhatsApp messaging.',
       booking_staff: '📋 Booking Staff: Front-desk operations, adding new bookings, check-in flow, and collecting advance payments.',
@@ -4042,20 +4015,20 @@ async function renderSettings() {
           <div class="form-group">
             <label>Owner &amp; Director Phone (Mr. Anwar Ahmad)</label>
             <input type="text" id="brand_owner_phone_1" value="${(setMap['owner_phone_1'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
-            <small style="color:var(--muted);">Director escalation &amp; primary owner contact</small>
+            <small style="color:var(--muted);">Director &amp; Owner: Mr. Anwar Ahmad (+91 9807486555)</small>
           </div>
           <div class="form-group">
-            <label>Manager Phone</label>
+            <label>Support &amp; Helpline Phone (Mr. Anwar Ahmad)</label>
             <input type="text" id="brand_owner_phone_2" value="${(setMap['owner_phone_2'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
-            <small style="color:var(--muted);">Operational and escalation contact</small>
+            <small style="color:var(--muted);">Support &amp; Helpline: Mr. Anwar Ahmad (+91 9807486555 / +91 82996 00709)</small>
           </div>
         </div>
 
         <div class="form-grid" style="margin-top:10px;">
           <div class="form-group">
-            <label>Developer &amp; Technical Support (Roost &amp; Rest Tech)</label>
+            <label>Developer &amp; Technical Support (Roost and Rest IT Team)</label>
             <input type="text" id="brand_manager_phone" value="${(setMap['manager_phone'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
-            <small style="color:var(--muted);">Master system administrator &amp; developer support</small>
+            <small style="color:var(--muted);">Roost and Rest IT Team &bull; System administrator &amp; developer support</small>
           </div>
           <div class="form-group">
             <label>Default Check-in / Check-out Times</label>

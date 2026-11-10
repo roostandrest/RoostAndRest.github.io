@@ -4392,7 +4392,7 @@ Direct Booking & Photo Album: ${shareUrl}`;
 CIN: U55101UP2026PTC244637 · ROC Kanpur
 Registered Office: P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, UP 226016 - India
 GST SAC Code: 996311 (Short-Stay Accommodation Services)
-Helpline: +91 9807486555 (Anwar Ahmad)
+Director, Owner & Helpline: +91 9807486555 (Mr. Anwar Ahmad)
 
 ==================================================
 OFFICIAL GST TAX INVOICE & BOOKING PASS

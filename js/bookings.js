@@ -130,9 +130,9 @@ window.rejectBooking = async function(bkId) {
   if (window.closeBookingDrawer) closeBookingDrawer();
 };
 
-// ─── FOUNDER SPECIAL DISCOUNT MODAL (Mr. Anwar Ahmad) ───
+// ─── OWNER SPECIAL DISCOUNT MODAL (Mr. Anwar Ahmad) ───
 window.openFounderDiscountModal = async function(bkId) {
-  if (!isTrustedUser()) { fsn.error('Denied', 'Only founders/owners can apply special discounts'); return; }
+  if (!isTrustedUser()) { fsn.error('Denied', 'Only Owner (Mr. Anwar Ahmad) can apply special discounts'); return; }
   
   let b = null;
   if (window._sbkState && window._sbkState.cachedBookings) {
@@ -1352,7 +1352,7 @@ async function showGuestLedger(guestName, bookingId, phone, airbnbCode, initialF
       txt += `${i + 1}. ${formatDateDisplay(b.check_in)} -> ${formatDateDisplay(b.check_out)} (${propLabel(b.rooms) || b.room_id}) | Billed: Rs.${(b.total_amount || 0).toLocaleString('en-IN')} | Paid: Rs.${pd.toLocaleString('en-IN')} | Due: Rs.${d.toLocaleString('en-IN')}\n`;
     });
     txt += `\nNet Balance Due: Rs.${totDue.toLocaleString('en-IN')}\n`;
-    txt += `UPI: roostandrest@icici (Roost and Rest Company A/c) | Helpline: 9807486555\n`;
+    txt += `UPI: roostandrest@icici (Roost and Rest Company A/c) | Owner & Helpline: Mr. Anwar Ahmad (9807486555)\n`;
 
     navigator.clipboard.writeText(txt).then(() => {
       fsn.success('Copied', 'Guest statement copied to clipboard!');
@@ -1767,8 +1767,8 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
                 <div style="font-size:12.5px;font-weight:800;color:#4338CA;font-family:monospace;margin-top:1px;">roostandrest@icici</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
-                <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Helpline / Mobile</div>
-                <div style="font-size:12px;font-weight:700;color:#0F172A;margin-top:1px;">+91 82996 00709</div>
+                <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Director, Owner &amp; Helpline</div>
+                <div style="font-size:12px;font-weight:700;color:#0F172A;margin-top:1px;">Mr. Anwar Ahmad: +91 9807486555</div>
               </div>
               <div style="background:#FFFFFF;padding:6px 10px;border-radius:6px;border:1px solid #E2E8F0;">
                 <div style="font-size:9px;text-transform:uppercase;font-weight:700;color:#64748B;">Auto-coded Due Amount</div>
@@ -1926,8 +1926,8 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     `• Receiver: Roost and Rest (Company Account)${NL}` +
     (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&am=${totalDue}&cu=INR${NL}` : '') +
     `${NL}` +
-    `*Helpline:*${NL}` +
-    `• Roost and Rest Stays: 9807486555 / 8299600709${NL}${NL}` +
+    `*Owner, Director & Helpline:*${NL}` +
+    `• Mr. Anwar Ahmad: 9807486555 / 8299600709${NL}${NL}` +
     `ROOST AND REST STAYS`;
 
   const shareModal = document.createElement('div');

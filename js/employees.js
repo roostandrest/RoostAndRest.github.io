@@ -792,7 +792,7 @@ async function renderAddEmp() {
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:20px;">ℹ️</span>
         <div style="font-size:12.5px;color:#1E3A8A;line-height:1.4;">
-          <strong>Manager Note:</strong> <strong>Anwar Ahmad</strong> is the primary Owner & Manager across all properties. On-ground staff roles should be assigned as <strong>Caretaker</strong>, <strong>Cleaning Staff</strong>, or <strong>Maid</strong>.
+          <strong>Owner Note:</strong> <strong>Mr. Anwar Ahmad</strong> is the sole Owner & Director of Roost and Rest across all properties. On-ground staff roles should be assigned as <strong>Caretaker</strong>, <strong>Cleaning Staff</strong>, or <strong>Maid</strong>.
         </div>
       </div>
     </div>
@@ -1134,7 +1134,7 @@ async function editEmp(id) {
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:20px;">ℹ️</span>
         <div style="font-size:12.5px;color:#1E3A8A;line-height:1.4;">
-          <strong>Manager Note:</strong> <strong>Anwar Ahmad</strong> is the primary Owner & Manager across all properties. On-ground staff roles should be assigned as <strong>Caretaker</strong>, <strong>Cleaning Staff</strong>, or <strong>Maid</strong>.
+          <strong>Owner Note:</strong> <strong>Mr. Anwar Ahmad</strong> is the sole Owner & Director of Roost and Rest across all properties. On-ground staff roles should be assigned as <strong>Caretaker</strong>, <strong>Cleaning Staff</strong>, or <strong>Maid</strong>.
         </div>
       </div>
     </div>

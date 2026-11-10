@@ -1,7 +1,7 @@
 /**
  * 🔔 USER AUDIT & REAL-TIME LOGIN NOTIFICATION SYSTEM
  * ROOST AND REST STAYS
- * Developer: Roost & Rest Tech
+ * Developer: Roost and Rest IT Team
  * 
  * Features:
  * 1. Real-time Login Alerts to Admin / Developer when any user logs in

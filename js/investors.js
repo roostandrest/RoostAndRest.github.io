@@ -1186,8 +1186,8 @@ async function renderInvestorReport(investorId, roomId, month) {
                 <div style="font-size:9px;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:16px;">
                   Prepared &amp; Audited By:
                 </div>
-                <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Nisha Khan</div>
-                <div style="font-weight:800;font-size:11px;color:#0F172A;">NISHA KHAN</div>
+                <div style="font-family:'Brush Script MT', cursive, sans-serif;font-size:18px;color:#1E3A8A;margin-bottom:2px;">Roost and Rest</div>
+                <div style="font-weight:800;font-size:11px;color:#0F172A;">ACCOUNTS CONTROLLER</div>
                 <div style="font-size:9px;color:#475569;">Accounts &amp; Audit Controller</div>
                 <div style="font-size:8px;color:#64748B;">Roost And Rest Stays Pvt. Ltd.</div>
               </div>
@@ -2017,7 +2017,7 @@ window.shareInvestorReportWA = async function(investorId, roomId, selMonth) {
       'Complete audited 3-page statement generated.' + NL +
       'PDF statement available via CRM portal.' + NL + NL +
       '━━━━━━━━━━━━━━━━━━━━━' + NL +
-      'Verified by: Nisha Khan (Accounts Controller)' + NL +
+      'Verified by: Accounts Controller (Roost and Rest)' + NL +
       'Approved by: Anwar Ahmad (Director & Asset Operations)' + NL +
       '📞 +91 9807486555 · 🌐 roostandrest.github.io';
 
@@ -2177,7 +2177,7 @@ async function renderFriendsReport(investorId, roomId, month) {
         <img src='assets/logo.svg' onerror="this.src='assets/logo.svg'" alt="Logo" style="width:40px;height:40px;border-radius:8px;background:#fff;padding:3px;margin-bottom:6px;" />
         <div style="font-size:11px;color:#E2E8F0;letter-spacing:2px;font-weight:800;margin-bottom:6px;text-transform:uppercase;">${BRAND.toUpperCase()}</div>
         <div style="font-size:12px;line-height:1.8;color:#94A3B8;">
-          <div><strong style="color:#fff;">Prepared By:</strong> NISHA KHAN</div>
+          <div><strong style="color:#fff;">Prepared By:</strong> ACCOUNTS CONTROLLER</div>
           <div><strong style="color:#fff;">Operator:</strong> ${BRAND}</div>
           <div><strong style="color:#fff;">Report Date:</strong> ${today}</div>
         </div>
