@@ -445,16 +445,25 @@ let SESSION = {
 window.SESSION = SESSION;
 
 
+function hideSplash() {
+  const splash = document.getElementById('splashScreen');
+  if (!splash) return;
+  splash.classList.add('hide');
+  setTimeout(() => { if (splash && splash.parentNode) splash.remove(); }, 350);
+}
+window.hideSplash = hideSplash;
+
 // ============ INIT ============
 async function init() {
   try {
-    await swUpdateCheck();
+    swUpdateCheck().catch(e => console.warn('SW check background warning:', e));
     versionNotice();
 
     const { data: { session } } = await sb.auth.getSession();
-    if (!session) { renderLogin(); return; }
+    if (!session) { hideSplash(); renderLogin(); return; }
     await loadProfile(session.user.id);
   } catch (err) {
+    hideSplash();
     showError("Setup incomplete. config.js check karo.", err);
   }
 }
@@ -1092,6 +1101,7 @@ async function logout() {
 
 // ============ LOGIN ============
 function renderLogin() {
+  if (typeof hideSplash === 'function') hideSplash();
   document.body.classList.add('is-login-screen');
   document.body.classList.remove('is-logged-in');
   // Hide mobile bottom nav and install bar on login screen
@@ -1492,6 +1502,7 @@ window.getTablerIcon = getTablerIcon;
 
 function renderShell(content, activePage = 'bookings') {
   window.renderShell = renderShell;
+  if (typeof hideSplash === 'function') hideSplash();
   document.body.classList.remove('is-login-screen');
   document.body.classList.add('is-logged-in');
   const botNav = document.getElementById('pwa-bottom-nav');
@@ -4593,20 +4604,16 @@ async function getActiveUsers() {
 // 🎯 SPLASH SCREEN — Hide after app boots
 // ═══════════════════════════════════════════════════════════
 (function(){
-  function hideSplash() {
-    const splash = document.getElementById('splashScreen');
-    if (!splash) return;
-    splash.classList.add('hide');
-    setTimeout(() => splash.remove(), 500);
-  }
-  // Hide after DOM ready + minimum 800ms for branding
-  if (document.readyState === 'complete') {
-    setTimeout(hideSplash, 800);
+  // Fast trigger - hide splash immediately when DOM is ready
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(() => { if (typeof window.hideSplash === 'function') window.hideSplash(); }, 200);
   } else {
-    window.addEventListener('load', () => setTimeout(hideSplash, 800));
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => { if (typeof window.hideSplash === 'function') window.hideSplash(); }, 200);
+    });
   }
-  // Failsafe — hide after 5s no matter what
-  setTimeout(hideSplash, 5000);
+  // Absolute failsafe — hide after 1.5s max
+  setTimeout(() => { if (typeof window.hideSplash === 'function') window.hideSplash(); }, 1500);
 })();
 
 // ═══════════════════════════════════════════════════════════
