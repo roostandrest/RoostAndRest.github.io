@@ -95,13 +95,7 @@ async function renderReports() {
   } catch(e) {}
 
   const isReviewedBooking = (b) => {
-    if (!b) return false;
-    const bSrc = (typeof window.getBookingSource === 'function') ? window.getBookingSource(b) : null;
-    const isOnlineAirbnb = bSrc ? (bSrc.type === 'airbnb') : (b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code);
-    if (!isOnlineAirbnb) return false;
-    if (Number(b.client_rating || 0) >= 4) return true;
-    if (reviewFollowupsMap[b.booking_id] && reviewFollowupsMap[b.booking_id].status === 'review_received') return true;
-    return false;
+    return false; // Disabled: Clean calendar display without star clutter on online bookings
   };
 
   const reviewCount = realMb.filter(isReviewedBooking).length;
@@ -820,18 +814,17 @@ async function renderReports() {
         const paymentTitle = isBlocked ? 'Blocked' : (isDue ? `⚠️ ₹${Math.round(dueAmt).toLocaleString('en-IN')} Due` : '✓ Paid in Full');
 
         cellsHtml += `
-          <div class="cal-day booked ${isToday ? 'today' : ''} ${isBlocked ? 'is-blocked-day' : ''}" onclick="showBookingPopup('${r.room_id}','${ds}'${overlapCount <= 1 && bk && bk.booking_id ? `,'${bk.booking_id}'` : ''})" title="${overlapTitle} • ${paymentTitle}${hasReview ? ' • ⭐ 5-Star Review Verified' : ''}" style="position:relative;">
+          <div class="cal-day booked ${isToday ? 'today' : ''} ${isBlocked ? 'is-blocked-day' : ''}" onclick="showBookingPopup('${r.room_id}','${ds}'${overlapCount <= 1 && bk && bk.booking_id ? `,'${bk.booking_id}'` : ''})" title="${overlapTitle} • ${paymentTitle}" style="position:relative;">
             <div style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:1px 3px 0;box-sizing:border-box;">
               <div class="cal-date-num">${d}</div>
               <div style="display:flex;align-items:center;gap:2px;margin-left:auto;">
                 ${overlapCount > 1 ? `<span style="background:#DC2626;color:#fff;border-radius:50%;min-width:14px;height:14px;padding:0 2px;display:inline-flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:800;" title="${overlapCount} bookings on this date">${overlapCount}</span>` : ''}
-                ${hasReview && overlapCount <= 1 ? `<span style="font-size:9.5px;line-height:1;" title="⭐ 5-Star Review Verified!">⭐</span>` : ''}
                 ${payTagHtml}
               </div>
             </div>
-            <div class="cal-pill ${isBlocked ? 'blocked' : ''}" style="background:${bg};border-radius:${borderRadius};${hasReview ? 'box-shadow:0 0 0 1.5px #F59E0B;' : ''}">
-              ${isSameDay ? `<span class="cal-avatar" style="background:rgba(255,255,255,0.25);color:#fff;">⚡</span>` : (showAvatar ? `<span class="cal-avatar" style="${hasReview ? 'background:#FEF3C7;color:#D97706;' : ''}">${hasReview ? '⭐' : guestInitial}</span>` : '')}
-              ${isSameDay ? `<span class="cal-name" title="Day Use: ${(bk.check_in_time||'09:30').slice(0,5)} to ${(bk.check_out_time||'16:30').slice(0,5)}">${firstName} (Day)</span>` : (!isBlocked ? `<span class="cal-name">${firstName}${hasReview ? ' ⭐' : ''}</span>` : '')}
+            <div class="cal-pill ${isBlocked ? 'blocked' : ''}" style="background:${bg};border-radius:${borderRadius};">
+              ${isSameDay ? `<span class="cal-avatar" style="background:rgba(255,255,255,0.25);color:#fff;">⚡</span>` : (showAvatar ? `<span class="cal-avatar">${guestInitial}</span>` : '')}
+              ${isSameDay ? `<span class="cal-name" title="Day Use: ${(bk.check_in_time||'09:30').slice(0,5)} to ${(bk.check_out_time||'16:30').slice(0,5)}">${firstName} (Day)</span>` : (!isBlocked ? `<span class="cal-name">${firstName}</span>` : '')}
               ${isBlocked ? `<span class="cal-name">🔒 Blocked</span>` : ''}
             </div>
           </div>`;
