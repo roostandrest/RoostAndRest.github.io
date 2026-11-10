@@ -18,3 +18,4 @@
 ## 4. No Fake Financial Multipliers
 - Never hardcode mock operational expense fallbacks (e.g. `* 0.38` or `* 0.62`) in analytics or dashboards.
 - All metrics (Revenue, Profit, Expenses) must derive 100% from actual database rows (`expenses`, `guest_register`, `payment_history`). If zero expenses are recorded in DB, expenses must strictly show as ₹0.
+
