@@ -250,7 +250,7 @@
     const intlPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
     const pName = propName || 'Roost And Rest Stays';
 
-    const msg = `Namaste ${guestName || 'Guest'} ji! 🙏✨\n\nThank you for choosing *${pName}* (Roost And Rest Stays) for your recent stay! We hope you and your companions had a truly memorable and 5-star experience. 🌸\n\nAgar aapko hamari hospitality aur service pasand aayi, to kripya 1 minute nikal kar Airbnb par apna *5-Star Review* zaroor share karein. Aapka review hamari poori hosting team ke liye bohot anmol hai! ⭐⭐⭐⭐⭐\n\n👉 *Click here to leave your review:* \n${reviewLink}\n\nLooking forward to hosting you again soon!\nWarm Regards,\n*Roost And Rest Stays*\n📞 Support: +91 9194109911`;
+    const msg = `Namaste ${guestName || 'Guest'} ji! 🙏✨\n\nThank you for choosing *${pName}* (Roost And Rest Stays) for your recent stay! We hope you and your companions had a truly memorable and 5-star experience. 🌸\n\nAgar aapko hamari hospitality aur service pasand aayi, to kripya 1 minute nikal kar Airbnb par apna *5-Star Review* zaroor share karein. Aapka review hamari poori hosting team ke liye bohot anmol hai! ⭐⭐⭐⭐⭐\n\n👉 *Click here to leave your review:* \n${reviewLink}\n\nLooking forward to hosting you again soon!\nWarm Regards,\n*Roost And Rest Stays*\n📞 Support: +91 9807486555 (Mr. Anwar Ahmad)`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=${intlPhone}&text=${encodeURIComponent(msg)}`;
     window.open(waUrl, '_blank');

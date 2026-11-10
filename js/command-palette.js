@@ -1955,13 +1955,13 @@
         </div>
 
         <textarea class="voice-transcript-box" id="voiceTranscriptBox" rows="3"
-          placeholder="Boliye ya type karein (e.g. 'गेस्ट नेम प्रवीण सिंह मोबाइल 9454470872 हेरेड प्रॉपर्टी')"
+          placeholder="Boliye ya type karein (e.g. 'गेस्ट नेम अमित वर्मा मोबाइल 9807486555 हेरेड प्रॉपर्टी')"
           oninput="processVoiceCommand(this.value)"
           style="width:100%;box-sizing:border-box;background:#1E293B;color:#F1F5F9;border:1.5px solid #334155;border-radius:10px;padding:10px 12px;font-size:13px;font-family:inherit;resize:none;outline:none;margin:10px 0 8px 0;line-height:1.5;"></textarea>
 
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;width:100%;">
-          <button type="button" style="background:#334155;color:#E2E8F0;border:1px solid #475569;padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;" onclick="const t='गेस्ट नेम प्रवीण सिंह मोबाइल नंबर 9454470872 हेरेड प्रॉपर्टी रहेंगी।';document.getElementById('voiceTranscriptBox').value=t;processVoiceCommand(t);">
-            ⚡ Test 1: प्रवीण सिंह (RedRose)
+          <button type="button" style="background:#334155;color:#E2E8F0;border:1px solid #475569;padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;" onclick="const t='गेस्ट नेम अमित वर्मा मोबाइल नंबर 9807486555 हेरेड प्रॉपर्टी रहेंगी।';document.getElementById('voiceTranscriptBox').value=t;processVoiceCommand(t);">
+            ⚡ Test 1: अमित वर्मा (RedRose)
           </button>
           <button type="button" style="background:#334155;color:#E2E8F0;border:1px solid #475569;padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;" onclick="const t='गेस्ट राहुल शर्मा फोन 9876543210 येलो हाउस 2 रात रेट 3500 एडवांस 2000';document.getElementById('voiceTranscriptBox').value=t;processVoiceCommand(t);">
             ⚡ Test 2: राहुल शर्मा (Yellow House)
@@ -2386,14 +2386,14 @@
     else if (advMatch2 && !isYearOrDateDigit(advMatch2[1])) parsed.advance = advMatch2[1];
 
     // 6. Match Guest Name (Hindi Devanagari & English)
-    // Pattern A: Prefix like "लांगेस्ट नाम राजीव तलवार", "गेस्ट नेम प्रवीण सिंह", "गेस्ट नाम राहुल", "नाम अमित", "guest name John"
+    // Pattern A: Prefix like "लांगेस्ट नाम राजीव तलवार", "गेस्ट नेम अमित वर्मा", "गेस्ट नाम राहुल", "नाम अमित", "guest name John"
     const prefixNameRegex = /(?:(?:लांगेस्ट|लॉन्गस्ट|लॉन्गेस्ट|गेस्ट|गस्ट|कस्टमर|क्लाइंट|यात्री|guest|customer|client)\s*(?:नेम|नाम|name)?|(?:नेम|नाम|name|naam)|for|booked\s*for|booking\s*for)\s*[:=\-]?\s*([a-zA-Z\u0900-\u097F\s\.\'\-]+?)(?=\s+(?:बुकिंग|booking|डेट|date|तारीख|tarikh|from|to|से|तक|चेक\s*इन|check\s*in|चेक\s*आउट|check\s*out|मोबाइल|फोन|नंबर|phone|mobile|number|mob|\d+|प्रॉपर्टी|property|रूम|room|कमरा|फ्लैट|flat|विला|villa|हाउस|house|होटल|hotel|रेट|rate|किराया|rent|price|प्राइस|एडवांस|advance|टोकन|token|जमा|कल|आज|परसों|today|tomorrow|night|nights|नाइट|नाइट्स|रात|रातें|दिन|din|day|days|(?:का|की|के|ने)\s+(?:बुकिंग|कमरा|stay))|[\,\.\।\:\;\-\n]|$)/i;
     const prefixMatch = normText.match(prefixNameRegex);
 
     if (prefixMatch && prefixMatch[1] && prefixMatch[1].trim()) {
       parsed.guestName = formatGuestName(prefixMatch[1]);
     } else {
-      // Pattern B: Postfix particle like "प्रवीण सिंह का बुकिंग", "Rahul Sharma ki booking"
+      // Pattern B: Postfix particle like "अमित वर्मा का बुकिंग", "Rahul Sharma ki booking"
       const postfixMatch = normText.match(/([a-zA-Z\u0900-\u097F\s\.\'\-]{2,30}?)\s+(?:का|की|के|ने|ka|ki|ke|ne)\s+(?:बुकिंग|booking|कमरा|stay|room|staying)/i);
       if (postfixMatch && postfixMatch[1] && postfixMatch[1].trim()) {
         parsed.guestName = formatGuestName(postfixMatch[1]);
@@ -2407,7 +2407,7 @@
             parsed.guestName = formatGuestName(words.join(' '));
           }
         } else if (parsed.phone) {
-          // Pattern D: Context before phone number (e.g. "प्रवीण सिंह मोबाइल 9454470872")
+          // Pattern D: Context before phone number (e.g. "अमित वर्मा मोबाइल 9807486555")
           const parts = normText.split(parsed.phone);
           if (parts[0]) {
             let candidate = parts[0].replace(/(?:मोबाइल|फोन|नंबर|phone|mobile|number|का|की|ke|ka|ki)\s*$/i, '').trim();

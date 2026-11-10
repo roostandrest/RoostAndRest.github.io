@@ -362,7 +362,7 @@
         }
       }
     } catch (err) {
-      console.warn('[NishaAI] Supabase dynamic rates sync error:', err);
+      console.warn('[AIConcierge] Supabase dynamic rates sync error:', err);
     }
 
     // 3. Fallback rates if Supabase is offline
@@ -1187,9 +1187,9 @@
     }
 
     // 33. DYNAMIC INTELLIGENT AI FALLBACK
-    if (window.nishaAI) {
+    if (window.aiConcierge) {
       try {
-        const smartReply = await window.nishaAI.sendMessage(raw);
+        const smartReply = await window.aiConcierge.sendMessage(raw);
         if (smartReply && smartReply.trim()) {
           return {
             text: smartReply,
@@ -1883,9 +1883,9 @@
   }
 
   // ── BARGE-IN INTERRUPTION HANDLER ───────────────────────────────
-  function interruptNishaAndListen() {
-    if (window.nishaAI) {
-      window.nishaAI.stopSpeaking();
+  function interruptAIAndListen() {
+    if (window.aiConcierge) {
+      window.aiConcierge.stopSpeaking();
     }
     if (_currentSpeakingBtn) {
       _currentSpeakingBtn.classList.remove('speaking');
@@ -1902,11 +1902,11 @@
 
   // ── START LISTENING VIA MICROPHONE ──────────────────────────────
   function startListeningMode() {
-    if (!window.nishaAI || !_chatOpen) return;
-    window.nishaAI.unlockAudio();
+    if (!window.aiConcierge || !_chatOpen) return;
+    window.aiConcierge.unlockAudio();
 
-    if (window.nishaAI.isSpeaking) {
-      window.nishaAI.stopSpeaking();
+    if (window.aiConcierge.isSpeaking) {
+      window.aiConcierge.stopSpeaking();
     }
 
     const micBtn = document.getElementById('uhh-chat-mic-btn');
@@ -1915,7 +1915,7 @@
     if (input) input.placeholder = '🎙️ Sun rahi hoon… Boliye (Listening…)';
     updateVoiceStatus('listening', 'Sun rahi hoon… Boliye');
 
-    window.nishaAI.startListening(
+    window.aiConcierge.startListening(
       (transcript) => {
         if (micBtn) micBtn.classList.remove('listening');
         if (input) input.placeholder = 'Type ya 🎙️ bol kar poochhein…';
@@ -1970,7 +1970,7 @@
     _chatOpen = true;
     document.getElementById('uhh-chat-btn')?.querySelector('.uhh-chat-badge')?.remove();
 
-    if (window.nishaAI) window.nishaAI.unlockAudio();
+    if (window.aiConcierge) window.aiConcierge.unlockAudio();
     syncCatalogRatesFromDB(true).catch(() => {});
 
     // 1. Create or show Backdrop Overlay
@@ -2049,11 +2049,11 @@
         if (_autoVoice) {
           voiceToggle.classList.remove('muted');
           voiceToggle.textContent = '🔊';
-          if (window.nishaAI) window.nishaAI.unlockAudio();
+          if (window.aiConcierge) window.aiConcierge.unlockAudio();
         } else {
           voiceToggle.classList.add('muted');
           voiceToggle.textContent = '🔈';
-          if (window.nishaAI) window.nishaAI.stopSpeaking();
+          if (window.aiConcierge) window.aiConcierge.stopSpeaking();
           if (_currentSpeakingBtn) {
             _currentSpeakingBtn.classList.remove('speaking');
             const txt = _currentSpeakingBtn.querySelector('.uhh-spk-txt');
@@ -2072,7 +2072,7 @@
     if (interruptBtn) {
       interruptBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        interruptNishaAndListen();
+        interruptAIAndListen();
       });
     }
 
@@ -2081,18 +2081,18 @@
     const input = panel.querySelector('#uhh-chat-input');
     if (micBtn) {
       micBtn.addEventListener('click', () => {
-        if (!window.nishaAI) return;
-        window.nishaAI.unlockAudio();
+        if (!window.aiConcierge) return;
+        window.aiConcierge.unlockAudio();
 
         // If AI is currently speaking, barge in and start listening immediately!
-        if (window.nishaAI.isSpeaking) {
-          interruptNishaAndListen();
+        if (window.aiConcierge.isSpeaking) {
+          interruptAIAndListen();
           return;
         }
 
         // If currently listening, toggle off
-        if (window.nishaAI.isListening) {
-          window.nishaAI.stopListening();
+        if (window.aiConcierge.isListening) {
+          window.aiConcierge.stopListening();
           micBtn.classList.remove('listening');
           input.placeholder = 'Type a message...';
           updateVoiceStatus('idle');
@@ -2106,8 +2106,8 @@
     }
 
     // Hook engine state change to keep UI in sync
-    if (window.nishaAI) {
-      window.nishaAI.onStateChange = (state, extra) => {
+    if (window.aiConcierge) {
+      window.aiConcierge.onStateChange = (state, extra) => {
         const headerStatus = document.getElementById('uhh-chat-header-status');
         if (state === 'speaking') {
           if (headerStatus) { headerStatus.textContent = '🔊 Bol rahe hain…'; headerStatus.classList.remove('typing'); }
@@ -2134,8 +2134,8 @@
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 80) + 'px';
       // If user starts typing while AI is speaking, stop speech
-      if (window.nishaAI && window.nishaAI.isSpeaking) {
-        window.nishaAI.stopSpeaking();
+      if (window.aiConcierge && window.aiConcierge.isSpeaking) {
+        window.aiConcierge.stopSpeaking();
         updateVoiceStatus('idle');
       }
     });
@@ -2161,9 +2161,9 @@
 
   function closeChat() {
     _chatOpen = false;
-    if (window.nishaAI) {
-      window.nishaAI.stopSpeaking();
-      window.nishaAI.stopListening();
+    if (window.aiConcierge) {
+      window.aiConcierge.stopSpeaking();
+      window.aiConcierge.stopListening();
     }
     const backdrop = document.getElementById('uhh-chat-backdrop');
     if (backdrop) {
@@ -2285,11 +2285,11 @@
       const spkBtn = msg.querySelector('.uhh-speak-msg-btn');
       if (spkBtn) {
         const toggleSpeakThis = () => {
-          if (!window.nishaAI) return;
-          window.nishaAI.unlockAudio();
+          if (!window.aiConcierge) return;
+          window.aiConcierge.unlockAudio();
 
           if (spkBtn.classList.contains('speaking')) {
-            window.nishaAI.stopSpeaking();
+            window.aiConcierge.stopSpeaking();
             spkBtn.classList.remove('speaking');
             spkBtn.querySelector('.uhh-spk-txt').textContent = 'Suniye';
             spkBtn.querySelector('.uhh-spk-ico').textContent = '▶';
@@ -2309,7 +2309,7 @@
             _currentSpeakingBtn = spkBtn;
             updateVoiceStatus('speaking', '🔊 Bol rahe hain…');
 
-            window.nishaAI.speak(cleanSpeech, () => {
+            window.aiConcierge.speak(cleanSpeech, () => {
               spkBtn.classList.remove('speaking');
               spkBtn.querySelector('.uhh-spk-txt').textContent = 'Suniye';
               spkBtn.querySelector('.uhh-spk-ico').textContent = '▶';
@@ -2319,7 +2319,7 @@
               // If this was a voice turn, listen for next query automatically!
               if (_autoVoice && _voiceTurn && _chatOpen) {
                 setTimeout(() => {
-                  if (_chatOpen && !window.nishaAI.isSpeaking) {
+                  if (_chatOpen && !window.aiConcierge.isSpeaking) {
                     startListeningMode();
                   }
                 }, 350);
@@ -2331,7 +2331,7 @@
         spkBtn.addEventListener('click', toggleSpeakThis);
 
         // If Auto Voice is turned on, speak automatically!
-        if (_autoVoice && window.nishaAI && cleanSpeech) {
+        if (_autoVoice && window.aiConcierge && cleanSpeech) {
           toggleSpeakThis();
         }
       }
@@ -2353,7 +2353,7 @@
     if (!text) return;
 
     // Stop ongoing speech before sending next query
-    if (window.nishaAI) window.nishaAI.stopSpeaking();
+    if (window.aiConcierge) window.aiConcierge.stopSpeaking();
     updateVoiceStatus('idle');
     if (_currentSpeakingBtn) {
       _currentSpeakingBtn.classList.remove('speaking');
@@ -2393,10 +2393,10 @@
   }
 
   // ── INIT ────────────────────────────────────────────────────────
-  const NISHA_ENABLED = false; // Disabled until full pronunciation training & accuracy are 100% complete
+  const AI_VOICE_ENABLED = false; // Disabled until full pronunciation training & accuracy are 100% complete
 
   function boot() {
-    if (!NISHA_ENABLED) {
+    if (!AI_VOICE_ENABLED) {
       document.getElementById('uhh-chat-btn-wrap')?.remove();
       document.getElementById('uhh-chat-panel')?.remove();
       document.getElementById('uhh-chat-backdrop')?.remove();

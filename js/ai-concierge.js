@@ -46,7 +46,7 @@
     { room_id:'LUL-402', property_name:'Celebrity Garden',          nickname:'Celebrity Garden',          base_price:11500,max_guests:10, bhk:'Grand Homestay',   area:'Near Lulu Mall' }
   ];
 
-  class NishaAIEngine {
+  class AIConciergeEngine {
     constructor() {
       this.apiKey = this.loadApiKey();
       this.sarvamApiKey = this.loadSarvamApiKey();
@@ -182,7 +182,7 @@
           }
         }
       } catch (err) {
-        console.warn('[NishaAI] Supabase rooms sync warning:', err.message);
+        console.warn('[AIConcierge] Supabase rooms sync warning:', err.message);
       }
       return this.properties;
     }
@@ -223,7 +223,7 @@
 
         return { success: true, waUrl, message: 'Lead captured successfully.' };
       } catch (err) {
-        console.warn('[NishaAI] Lead save warning:', err.message);
+        console.warn('[AIConcierge] Lead save warning:', err.message);
         return { success: false, error: err.message };
       }
     }
@@ -596,13 +596,13 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
                 supported.find(m => /flash/i.test(m)) ||
                 supported.find(m => /gemini/i.test(m)) ||
                 supported[0];
-              console.log('[NishaAI] Discovered supported models:', supported, 'Selected:', this.discoveredModel);
+              console.log('[AIConcierge] Discovered supported models:', supported, 'Selected:', this.discoveredModel);
               return supported;
             }
           }
         }
       } catch (err) {
-        console.warn('[NishaAI] Model discovery error:', err.message);
+        console.warn('[AIConcierge] Model discovery error:', err.message);
       }
       return [];
     }
@@ -727,7 +727,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           } catch (_) {}
         }
       } catch (err) {
-        console.warn('[NishaAI] Gemini API error, falling back to local knowledge base:', err.message);
+        console.warn('[AIConcierge] Gemini API error, falling back to local knowledge base:', err.message);
       }
 
       // Fallback: Return instant accurate knowledge answer if Gemini failed
@@ -823,13 +823,13 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
         };
 
         reco.onerror = (event) => {
-          console.warn('[NishaAI] SpeechRecognition event error:', event.error);
+          console.warn('[AIConcierge] SpeechRecognition event error:', event.error);
           if (event.error === 'no-speech') {
             // Normal silence pause when user is thinking, don't abort completely!
             return;
           }
           if (event.error === 'language-not-supported' && reco.lang !== 'hi-IN') {
-            console.log('[NishaAI] Falling back to hi-IN voice recognition');
+            console.log('[AIConcierge] Falling back to hi-IN voice recognition');
             this.recognitionLang = 'hi-IN';
             return;
           }
@@ -917,7 +917,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
             anyFemale ||
             anyNonMale;
 
-          console.log('[NishaAI] Selected Female Voice:', this.selectedVoice?.name, 'Lang:', this.selectedVoice?.lang);
+          console.log('[AIConcierge] Selected Female Voice:', this.selectedVoice?.name, 'Lang:', this.selectedVoice?.lang);
         } catch (_) {}
       };
 
@@ -933,7 +933,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
       const match = voices.find(v => v.name === voiceName);
       if (match) {
         this.selectedVoice = match;
-        console.log('[NishaAI] Custom voice set to:', match.name);
+        console.log('[AIConcierge] Custom voice set to:', match.name);
       }
     }
 
@@ -1096,7 +1096,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
             };
 
             audio.onerror = (e) => {
-              console.warn('[NishaAI] Audio element error:', e);
+              console.warn('[AIConcierge] Audio element error:', e);
               if (this._speakToken === currentToken) {
                 this.isSpeaking = false;
                 if (onEnd) onEnd();
@@ -1110,7 +1110,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
               }
               return true;
             } catch (playErr) {
-              console.warn('[NishaAI] Audio play rejected (autoplay permission):', playErr);
+              console.warn('[AIConcierge] Audio play rejected (autoplay permission):', playErr);
               this.isSpeaking = false;
               if (onEnd) onEnd();
               return false;
@@ -1118,10 +1118,10 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           }
         } else {
           const errData = await res.json().catch(() => ({}));
-          console.warn('[NishaAI] Sarvam API returned error:', errData);
+          console.warn('[AIConcierge] Sarvam API returned error:', errData);
         }
       } catch (err) {
-        console.warn('[NishaAI] Sarvam AI speech error:', err);
+        console.warn('[AIConcierge] Sarvam AI speech error:', err);
       }
       this.isSpeaking = false;
       return false;
@@ -1215,7 +1215,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
         };
 
         utterance.onerror = (e) => {
-          console.warn('[NishaAI] TTS error:', e);
+          console.warn('[AIConcierge] TTS error:', e);
           this.isSpeaking = false;
           if (this.onStateChange && !this.isListening) this.onStateChange('idle');
           if (onEnd) onEnd();
@@ -1226,7 +1226,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           try {
             this.synthesis.speak(utterance);
           } catch (e) {
-            console.warn('[NishaAI] speak exception:', e);
+            console.warn('[AIConcierge] speak exception:', e);
             if (onEnd) onEnd();
           }
         }, 50);
@@ -1242,7 +1242,7 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
           }
         }, 10000);
       } catch (err) {
-        console.warn('[NishaAI] speak() exception:', err);
+        console.warn('[AIConcierge] speak() exception:', err);
         this.isSpeaking = false;
         if (onEnd) onEnd();
       }
@@ -1280,9 +1280,8 @@ Whenever guest asks for dates or rates, warmly recommend the best stay and ask f
   }
 
   // Export globally
-  window.AIConciergeEngine = NishaAIEngine;
-  window.aiConcierge = new NishaAIEngine();
-  window.nishaAI = window.aiConcierge;
+  window.AIConciergeEngine = AIConciergeEngine;
+  window.aiConcierge = new AIConciergeEngine();
 
 })(typeof window !== 'undefined' ? window : this);
 

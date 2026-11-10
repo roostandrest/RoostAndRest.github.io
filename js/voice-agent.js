@@ -364,8 +364,8 @@ Remember: Your goal is to make guests fall in love with Roost And Rest Stays and
       listenToGuest();
     };
 
-    if (window.nishaAI) {
-      await window.nishaAI.speak(textToSpeak, onDone);
+    if (window.aiConcierge) {
+      await window.aiConcierge.speak(textToSpeak, onDone);
     } else {
       setTimeout(onDone, 3000);
     }
@@ -375,9 +375,9 @@ Remember: Your goal is to make guests fall in love with Roost And Rest Stays and
     if (!_isActiveVoiceSession) return;
     setStatus('listening', '🔴 Sun rahi hoon... (Boliye)');
 
-    if (!window.nishaAI) return;
+    if (!window.aiConcierge) return;
 
-    window.nishaAI.startListening(
+    window.aiConcierge.startListening(
       async (transcript) => {
         if (!_isActiveVoiceSession) return;
         if (!transcript || !transcript.trim()) {
@@ -404,8 +404,8 @@ Remember: Your goal is to make guests fall in love with Roost And Rest Stays and
     if (!_isActiveVoiceSession) return;
     if (!userText || !userText.trim()) return;
 
-    if (window.nishaAI) {
-      window.nishaAI.stopListening();
+    if (window.aiConcierge) {
+      window.aiConcierge.stopListening();
     }
 
     appendTranscript('user', userText.trim());
@@ -417,7 +417,7 @@ Remember: Your goal is to make guests fall in love with Roost And Rest Stays and
       saveLead({ name: 'Voice Guest', phone: phoneMatch[2], interested_property: userText });
     }
 
-    const reply = await window.nishaAI.sendMessage(userText.trim());
+    const reply = await window.aiConcierge.sendMessage(userText.trim());
     if (!_isActiveVoiceSession) return;
 
     appendTranscript('agent', reply);
@@ -428,8 +428,8 @@ Remember: Your goal is to make guests fall in love with Roost And Rest Stays and
     const panel = document.getElementById('uhh-voice-panel');
     if (panel) panel.style.display = 'block';
 
-    if (window.nishaAI) {
-      window.nishaAI.unlockAudio();
+    if (window.aiConcierge) {
+      window.aiConcierge.unlockAudio();
     }
 
     _isActiveVoiceSession = true;
@@ -460,9 +460,9 @@ Remember: Your goal is to make guests fall in love with Roost And Rest Stays and
   // ── 9. END CONVERSATION ────────────────────────────────────────────
   async function endConversation() {
     _isActiveVoiceSession = false;
-    if (window.nishaAI) {
-      window.nishaAI.stopSpeaking();
-      window.nishaAI.stopListening();
+    if (window.aiConcierge) {
+      window.aiConcierge.stopSpeaking();
+      window.aiConcierge.stopListening();
     }
     setStatus('idle', '🎙️ Voice Concierge');
     const panel = document.getElementById('uhh-voice-panel');

@@ -154,12 +154,12 @@ async function buildMessageData(bkId) {
     primaryCaretaker = { name: careName, phone: carePhone };
   }
 
-  // Dedicated Property Operations Team (9194109911)
+  // Primary Operations & Guest Support: Mr. Anwar Ahmad (9807486555)
   const manager = {
-    name: 'Operations Support',
-    phone: '9194109911',
-    hours: '10 AM to 09 PM',
-    role: 'Manager'
+    name: 'Mr. Anwar Ahmad (Host & Director)',
+    phone: '9807486555',
+    hours: '24x7 Assistance',
+    role: 'Director'
   };
 
   // Calculate paid + due
