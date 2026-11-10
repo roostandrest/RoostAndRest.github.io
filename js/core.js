@@ -1980,7 +1980,7 @@ function renderShell(content, activePage = 'dashboard') {
           <div class="topbar-left">
             <button type="button" class="sidebar-toggle-btn" id="hamburgerBtn" aria-label="Toggle Navigation" title="Toggle Navigation"><i class="ti ti-menu-2"></i></button>
             <div class="topbar-brand-group" onclick="navigate('dashboard')">
-              <img src="assets/logo.svg" alt="Roost & Rest" class="topbar-brand-logo" />
+              <img src="assets/logo.svg" alt="Roost & Rest" class="topbar-brand-logo" style="width:34px;height:34px;min-width:34px;max-width:34px;max-height:34px;border-radius:10px;object-fit:cover;flex-shrink:0;" />
               <div class="topbar-brand-titles">
                 <span class="topbar-brand-main">ROOST &amp; REST</span>
                 <span class="topbar-brand-sub">STAYS CRM</span>
