@@ -95,6 +95,6 @@
 
   <!-- Heritage / Location -->
   <text x="256" y="405" font-family="'Plus Jakarta Sans', 'Montserrat', -apple-system, sans-serif" font-size="11" font-weight="600" letter-spacing="4" fill="#F59E0B" text-anchor="middle" opacity="0.9">
-    LUCKNOW &bull; EST. 2026
+    LUCKNOW &#8226; EST. 2026
   </text>
 </svg>
