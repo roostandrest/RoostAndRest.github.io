@@ -1,5 +1,5 @@
 /**
- * ROOST-BANK & Payment Source Global Manager (v2 FIXED)
+ * Anwar OD & Payment Source Global Manager (v3 FIXED)
  * ROOST AND REST STAYS
  */
 
@@ -11,7 +11,7 @@ const UHHS_PAYMENT_SOURCES = {
 // 1. Payment Source Dropdown HTML Generator (strictly Roost and Rest and Anwar OD)
 function getPaymentSourceDropdownHTML(selected = 'Roost and Rest', id = 'payment_source') {
     const s = String(selected || 'Roost and Rest').toUpperCase();
-    const isAnwar = s.includes('ANWAR') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'));
+    const isAnwar = s.includes('ANWAR') || s.includes('OD') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'));
     return `
         <div class="form-group mb-2">
             <label class="form-label fw-bold" style="font-size:13px; color:#333;">
@@ -28,7 +28,7 @@ function getPaymentSourceDropdownHTML(selected = 'Roost and Rest', id = 'payment
 // 2. Badge UI Helper for Table Display
 function getPaymentSourceBadge(source) {
     const s = (source || 'Roost and Rest').toUpperCase();
-    if (s.includes('ANWAR') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'))) {
+    if (s.includes('ANWAR') || s.includes('OD') || (s.includes('CASH') && !s.includes('ROOST') && !s.includes('BANK'))) {
         return `<span style="background-color:#2C241E; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">💵 Anwar OD</span>`;
     } else {
         return `<span style="background-color:#B45309; color:#ffffff; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; display:inline-block;">🏦 Roost and Rest</span>`;
@@ -56,7 +56,7 @@ function setLocalODDeposits(list) {
 function normalizePaymentSource(src) {
     if (!src) return '';
     const s = String(src).trim().toUpperCase();
-    if (s.includes('OD') || s.includes('Roost & Rest') || s.includes('Roost & Rest')) return 'ROOST-BANK';
+    if (s.includes('OD') || s.includes('ANWAR') || s.includes('ROOST')) return 'ROOST-BANK';
     return src;
 }
 
@@ -186,7 +186,7 @@ const BASELINE_OD_ENTRIES = [
     {
         id: 'settlement_2026_09_16_od',
         transaction_date: '2026-09-16',
-        description: 'Reconciliation & Full Settlement: All ROOST-BANK expenses & advances settled up to 16-Sep-2026',
+        description: 'Reconciliation & Full Settlement: All Anwar OD expenses & advances settled up to 16-Sep-2026',
         amount: 77962,
         transaction_type: 'INFLOW',
         payment_mode: 'BANK',
@@ -209,7 +209,7 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
     if (client) {
         // 2. Primary cloud persistence: company_advances
         try {
-            let q = client.from('company_advances').select('*').or('payment_source.eq.ROOST-BANK,given_to.eq.ROOST-BANK');
+            let q = client.from('company_advances').select('*').or('payment_source.eq.ROOST-BANK,given_to.eq.ROOST-BANK,payment_source.ilike.%OD%,given_to.ilike.%OD%');
             if (startDate) q = q.gte('advance_date', startDate);
             if (endDate) q = q.lte('advance_date', endDate);
             const { data: caData, error: caErr } = await q.order('advance_date', { ascending: false });
@@ -237,40 +237,63 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
             console.warn('Company advances OD read error:', e.message);
         }
 
-        // 2b. Auto-synced Guest Payments directly received into ROOST-BANK
+        // 2b. Auto-synced Guest Payments directly received into Anwar OD
         try {
             let qPay = client.from('payment_history')
-                .select('id, amount, payment_date, payment_mode, received_by, notes, booking_id, guest_register(guest_name, rooms(nickname, unit_no))')
-                .or('received_by.eq.ROOST-BANK,received_by.ilike.%ROOST-BANK%')
+                .select('id, amount, payment_date, payment_mode, notes, booking_id, created_at, verification_status')
                 .neq('verification_status', 'rejected');
             if (startDate) qPay = qPay.gte('payment_date', startDate);
             if (endDate) qPay = qPay.lte('payment_date', endDate);
             const { data: payData, error: payErr } = await qPay.order('payment_date', { ascending: false });
             if (!payErr && Array.isArray(payData)) {
-                payData.forEach(p => {
+                // Direct & offline guest payments strictly route to Anwar OD (Airbnb payouts go to company account)
+                const offlinePays = payData.filter(p => {
+                    const m = (p.payment_mode || '').toLowerCase();
+                    return !m.includes('airbnb');
+                });
+
+                // Batch fetch guest & room info for these booking IDs
+                const bIds = [...new Set(offlinePays.map(p => p.booking_id).filter(Boolean))];
+                let guestMap = {};
+                if (bIds.length > 0) {
+                    try {
+                        const { data: gData } = await client.from('guest_register')
+                            .select('booking_id, guest_name, rooms(nickname, unit_no)')
+                            .in('booking_id', bIds);
+                        if (Array.isArray(gData)) {
+                            gData.forEach(g => { guestMap[g.booking_id] = g; });
+                        }
+                    } catch (ge) {
+                        console.warn('guest_register batch load error in Anwar OD:', ge.message);
+                    }
+                }
+
+                offlinePays.forEach(p => {
                     const uniqueKey = 'pay_' + p.id;
-                    const guestName = p.guest_register?.guest_name || 'Guest';
-                    const r = p.guest_register?.rooms;
+                    const g = guestMap[p.booking_id];
+                    const guestName = g?.guest_name || 'Guest';
+                    const r = g?.rooms;
                     const roomStr = r ? (r.nickname ? `${r.nickname} (${r.unit_no || ''})` : (r.unit_no || '')) : '';
                     const desc = `Guest Payment: ${guestName}${roomStr ? ' - ' + roomStr : ''} [Booking #${p.booking_id || ''}]`;
+                    const txDate = p.payment_date || (p.created_at ? p.created_at.slice(0, 10) : '');
                     itemsMap.set(uniqueKey, {
                         id: uniqueKey,
                         db_id: p.id,
                         booking_id: p.booking_id,
                         source_table: 'payment_history',
-                        transaction_date: p.payment_date,
+                        transaction_date: txDate,
                         description: desc,
                         amount: parseFloat(p.amount || 0),
                         transaction_type: 'INFLOW',
                         payment_mode: p.payment_mode || 'UPI',
                         received_from: guestName,
                         reference_note: p.notes || `Booking #${p.booking_id}`,
-                        created_at: p.payment_date
+                        created_at: p.created_at || txDate
                     });
                 });
             }
         } catch (e) {
-            console.warn('ROOST-BANK payment_history auto-sync read error:', e.message);
+            console.warn('Anwar OD payment_history auto-sync read error:', e.message);
         }
 
         // 2c. Auto-synced Guest Security Deposits directly received into ROOST-BANK
@@ -383,13 +406,13 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             client.from('maintenance_log').select('*').gte('created_at', CHECKPOINT_START).lte('created_at', dayBefore),
             client.from('laundry_payments').select('*').gte('payment_date', CHECKPOINT_START).lte('payment_date', dayBefore),
             client.from('advance_tracker').select('*').gte('date_given', CHECKPOINT_START).lte('date_given', dayBefore),
-            client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover').gte('advance_date', CHECKPOINT_START).lte('advance_date', dayBefore),
+            client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover,given_by.ilike.%OD%').gte('advance_date', CHECKPOINT_START).lte('advance_date', dayBefore),
             getODSecurityRefunds(client, CHECKPOINT_START, dayBefore)
         ]);
 
         const seenPrior = new Set();
         (priorDeposits || []).forEach(d => {
-            const k = String(d.db_id || d.id);
+            const k = String(d.id || d.db_id);
             if (!seenPrior.has(k)) {
                 seenPrior.add(k);
                 openingInflow += parseFloat(d.amount || 0);
@@ -433,7 +456,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
 
     let qAdv = client.from('advance_tracker').select('*, employees(name)');
 
-    let qReturns = client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover').gte('advance_date', startDate);
+    let qReturns = client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover,given_by.ilike.%OD%').gte('advance_date', startDate);
     if (endDate) qReturns = qReturns.lte('advance_date', endDate);
 
     const [{ data: exps }, { data: maints }, { data: launds }, { data: allAdvs }, { data: returns }, secRefunds] = await Promise.all([
@@ -445,7 +468,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     // Deduplicate Deposits
     const seenDepIds = new Set();
     (deposits || []).forEach(d => {
-        const depKey = String(d.db_id || d.id);
+        const depKey = String(d.id || d.db_id);
         if (seenDepIds.has(depKey)) return;
         seenDepIds.add(depKey);
 
@@ -707,7 +730,7 @@ window.renderClosingStatementForDate = function(startDate, endDate) {
         tCloseEl.style.color = periodClosingBal >= 0 ? '#4ADE80' : '#F87171';
     }
     const tCloseTitle = document.getElementById('today-proof-closing-title');
-    if (tCloseTitle) tCloseTitle.innerText = isRange ? `💰 Closing Balance (${fmtShort(endD)})` : '💰 Roost-Bank Closing Balance';
+    if (tCloseTitle) tCloseTitle.innerText = isRange ? `💰 Closing Balance (${fmtShort(endD)})` : '💰 Anwar OD Closing Balance';
 
     // Update Timestamp
     const tTimeEl = document.getElementById('today-proof-timestamp');
@@ -850,7 +873,7 @@ async function calculateLiveODBalance(supabaseClient) {
                         <div style="padding:14px; border-radius:10px; background:${isNegative ? '#fff5f5' : '#f0fff4'}; border:1.5px solid ${isNegative ? '#dc3545' : '#198754'}; margin-bottom:12px;">
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <div>
-                                    <div style="font-size:12px; font-weight:700; color:#555; text-transform:uppercase;">🏦 Roost-Bank ACCOUNT BALANCE</div>
+                                    <div style="font-size:12px; font-weight:700; color:#555; text-transform:uppercase;">🏦 Anwar OD ACCOUNT BALANCE</div>
                                     <div style="font-size:24px; font-weight:800; color:${isNegative ? '#dc3545' : '#198754'}; margin-top:2px;">
                                         ${netBalance < 0 ? '-₹' : '₹'}${Math.abs(netBalance).toLocaleString('en-IN', { minimumFractionDigits: 0 })}
                                     </div>
@@ -920,7 +943,7 @@ window.cbDepositToODModal = function(defaultSender = 'Aniket', defaultAmount = '
         <div class="modal-box" style="background:#fff;border-radius:16px;padding:22px;max-width:480px;width:100%;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;box-shadow:0 20px 40px rgba(0,0,0,0.3);margin:auto;box-sizing:border-box;border:1px solid #e2e8f0;" onclick="event.stopPropagation()">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #e2e8f0;padding-bottom:12px;">
                 <h3 style="margin:0;font-size:18px;color:#059669;font-weight:800;display:flex;align-items:center;gap:6px;">
-                    <span>🏦</span> Deposit to Roost Bank
+                    <span>🏦</span> Deposit to Anwar OD
                 </h3>
                 <button type="button" onclick="this.closest('.modal-overlay').remove()" style="background:#f1f5f9;border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:#64748b;display:flex;align-items:center;justify-content:center;font-weight:700;">✕</button>
             </div>
@@ -1506,4 +1529,4 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
     });
 }
 
-console.log("✅ ROOST-BANK Global Manager loaded & Global Modals Attached!");
+console.log("✅ Anwar OD Global Manager loaded & Global Modals Attached!");

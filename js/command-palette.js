@@ -1285,7 +1285,7 @@
             { key: `${altSymbol}B`, single: 'B', label: '📑 Smart Bookings', desc: 'View all reservations & guests register', action: 'window.openBookingsShortcut()' },
             { key: `${altSymbol}F`, single: 'F', label: '🛏️ Flats & Turnaround', desc: 'Realtime room turnaround Kanban board', action: 'window.openFlatsShortcut()' },
             { key: `${altSymbol}U`, single: 'U', label: '🏢 Units & Nightly Pricing', desc: 'Master inventory, live nightly rates, caretaker & manager contacts', action: 'window.openUnitsShortcut()' },
-            { key: `${altSymbol}Q`, single: 'Q', label: '⚖️ Universal Claims & Roost-Bank', desc: 'Daily Closing Statements, company ledger & vendor claim approvals', action: 'window.openClaimShortcut()' },
+            { key: `${altSymbol}Q`, single: 'Q', label: '⚖️ Universal Claims & Anwar OD', desc: 'Daily Closing Statements, Anwar OD ledger & vendor claim approvals', action: 'window.openClaimShortcut()' },
             { key: `${altSymbol}E`, single: 'E', label: '📊 Expenses & Outflow Hub', desc: 'Open Expenses page (Wi-Fi, Maintenance, Laundry, Staff Advances & P&L)', action: 'window.openExpensesShortcut()' },
             { key: `${altSymbol}⇧E`, single: '⇧E', label: '➕ Add Expense', desc: 'Directly open Add Expense modal', action: 'window.openAddExpenseModalShortcut()' },
             { key: `${altSymbol}T`, single: 'T', label: '📋 Staff Tasks & Checklists', desc: 'Housekeeping, deep cleans & staff duties (Alt+Shift+T for new)', action: 'window.openTasksShortcut()' },

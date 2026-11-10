@@ -2987,7 +2987,7 @@ window.openWifiRechargeModal = async function() {
           <div class="form-group" style="margin-bottom:16px;">
             <label style="font-size:12.5px;font-weight:700;">Payment Source *</label>
             <select id="wifiPaySource" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-              <option value="ROOST-BANK">🏦 Roost Bank Account (Current A/c)</option>
+              <option value="ROOST-BANK">🏦 Anwar OD Account (Offline / Overdraft)</option>
               <option value="COMPANY">🏢 COMPANY (Cash / QR)</option>
             </select>
           </div>
@@ -3088,14 +3088,14 @@ window.openEmployeeTransportModal = async function() {
             <span style="font-size:26px;">🛵</span>
             <div>
               <h2 style="margin:0;font-size:17px;font-weight:800;color:#1e293b;">Staff Rapido &amp; Travel Tracker</h2>
-              <div style="font-size:12px;color:#64748b;">Record rides &amp; petrol allowance (Paid by Company / Roost-Bank)</div>
+              <div style="font-size:12px;color:#64748b;">Record rides &amp; petrol allowance (Paid by Anwar OD / Company)</div>
             </div>
           </div>
           <button type="button" onclick="document.getElementById('${modalId}').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
         </div>
 
         <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#1E40AF;line-height:1.4;">
-          🛡️ <strong>COMPANY OPERATIONAL EXPENSE:</strong> Ye expense company ya Roost-Bank se pay hota hai. Employee ki monthly salary se <strong>₹0 katenge</strong> (Non-deductible).
+          🛡️ <strong>COMPANY OPERATIONAL EXPENSE:</strong> Ye expense company ya Anwar OD se pay hota hai. Employee ki monthly salary se <strong>₹0 katenge</strong> (Non-deductible).
         </div>
 
         <form id="empTransportForm" onsubmit="window.saveEmpTransport(event)">
@@ -3142,7 +3142,7 @@ window.openEmployeeTransportModal = async function() {
           <div class="form-group" style="margin-bottom:16px;">
             <label style="font-size:12.5px;font-weight:700;">Paid Via *</label>
             <select id="transportPaySource" style="width:100%;padding:9px;border:1.5px solid #0d6efd;border-radius:10px;font-weight:700;">
-              <option value="ROOST-BANK">🏦 Roost-Bank (Direct App Booking / Overdraft)</option>
+              <option value="ROOST-BANK">🏦 Anwar OD (Direct App Booking / Overdraft)</option>
               <option value="COMPANY">🏢 COMPANY (Reimbursement / Cash in Hand)</option>
             </select>
           </div>

@@ -6681,7 +6681,7 @@ async function saveEditPayment(payId, bkId) {
 }
 
 async function delPayment(payId, bkId) {
-  if (!confirm('⚠️ Are you sure you want to delete this payment record?\n\nThis will remove the payment, update the balance due, and remove it from any ROOST-BANK accounts.')) return;
+  if (!confirm('⚠️ Are you sure you want to delete this payment record?\n\nThis will remove the payment, update the balance due, and remove it from Anwar OD accounts.')) return;
   await sb.from('payment_history').delete().eq('id', payId);
   await recalcPaymentStatus(bkId);
   if (window.UHHSODManager && window.UHHSODManager.calculateBalance) window.UHHSODManager.calculateBalance();

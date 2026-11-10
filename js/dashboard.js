@@ -2519,7 +2519,7 @@ window.renderExecutiveDashboard = async function () {
                   <div>
                     <div style="font-size:12px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;">Current Month: November 2026 (Portfolio Combined)</div>
                     <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
-                      <span style="font-size:22px;font-weight:900;color:#0F172A;">₹7,55,325.34</span>
+                      <span style="font-size:22px;font-weight:900;color:#0F172A;">₹${monthRevenue.toLocaleString('en-IN')}</span>
                       <span style="font-size:12px;color:#64748B;font-weight:700;">Total (INR)</span>
                     </div>
                   </div>
@@ -2527,15 +2527,15 @@ window.renderExecutiveDashboard = async function () {
                   <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
                     <div>
                       <div style="font-size:11.5px;color:#059669;font-weight:800;">🟢 Offline Direct</div>
-                      <div style="font-size:16px;font-weight:900;color:#0F172A;">₹5,27,300.00 <span style="font-size:11px;color:#059669;font-weight:700;">(70%)</span></div>
+                      <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${directRev.toLocaleString('en-IN')} <span style="font-size:11px;color:#059669;font-weight:700;">(${directPct}%)</span></div>
                     </div>
                     <div>
                       <div style="font-size:11.5px;color:#E11D48;font-weight:800;">🔴 Online Airbnb</div>
-                      <div style="font-size:16px;font-weight:900;color:#0F172A;">₹2,28,025.34 <span style="font-size:11px;color:#E11D48;font-weight:700;">(30%)</span></div>
+                      <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${(abRev + bcomRev + agodaRev).toLocaleString('en-IN')} <span style="font-size:11px;color:#E11D48;font-weight:700;">(${100 - directPct}%)</span></div>
                     </div>
                     <div>
                       <div style="font-size:11.5px;color:#4F46E5;font-weight:800;">💼 Net Op. Income</div>
-                      <div style="font-size:16px;font-weight:900;color:#0F172A;">₹3,86,822.84</div>
+                      <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${hhNetOpIncome.toLocaleString('en-IN')}</div>
                     </div>
                     <button type="button" onclick="navigate('ca-audit')" style="background:#0F172A;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:opacity 0.15s ease;">
                       <span>CA &amp; Tax Audit</span> <span>→</span>
@@ -3460,6 +3460,14 @@ function initExecutiveDashboardCharts(data) {
     const realExps = Array.isArray(data.realExpenses) ? data.realExpenses : [];
 
     monthKeys.forEach((mKey, idx) => {
+      // Roost & Rest tracking strictly starts from 1st November 2026. Months prior to Nov 2026 are 0.
+      if (mKey < '2026-11') {
+        revData[idx] = 0;
+        expData[idx] = 0;
+        profitData[idx] = 0;
+        return;
+      }
+
       // Confirmed bookings in month
       const bksInMonth = targetBookings.filter(b => {
         const ci = b.check_in || '';
@@ -3775,15 +3783,21 @@ function initExecutiveDashboardCharts(data) {
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec'];
     
-    // Audited baseline records:
-    const baselineOffline = [0, 0, 0, 0, 0, 0, 432564, 1622299, 920675, 1009981, 527300, 474500];
-    const baselinePaid = [191052, 357340, 205742, 384895, 370671, 339418, 419610, 279852, 298021, 417402, 85176, 0];
-    const baselineUpcoming = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 142849, 235000];
+    // Roost & Rest tracking strictly starts from 1st November 2026.
+    // Prior months (Jan - Oct 2026) are strictly 0 (no fake/mock data).
+    const dynamicOffline = new Array(12).fill(0);
+    const dynamicPaid = new Array(12).fill(0);
+    const dynamicUpcoming = new Array(12).fill(0);
 
-    // Compute dynamic monthly figures from data.allBookings if present
-    const dynamicOffline = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const dynamicOnline = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const allBks = Array.isArray(data?.allBookings) ? data.allBookings : [];
+    const allBks = Array.isArray(data?.filteredBookings || data?.allBookings) ? (data.filteredBookings || data.allBookings) : [];
+    const allPays = Array.isArray(data?.propPayments) ? data.propPayments : [];
+
+    const payMap = {};
+    allPays.forEach(p => {
+      if (p.booking_id) {
+        payMap[p.booking_id] = (payMap[p.booking_id] || 0) + (Number(p.amount) || 0);
+      }
+    });
 
     allBks.forEach(b => {
       if (b.is_cancelled) return;
@@ -3791,22 +3805,30 @@ function initExecutiveDashboardCharts(data) {
       if (data?.globalProp && typeof window.matchesRoom === 'function' && !window.matchesRoom(b, data.globalProp)) {
         return;
       }
+
+      // Strict rule: Only bookings active in or from 1st November 2026 onwards
+      if (b.check_in < '2026-11-01' && (b.check_out || b.check_in) < '2026-11-01') return;
+
       const mIdx = parseInt(b.check_in.slice(5, 7), 10) - 1;
-      if (mIdx < 0 || mIdx > 11) return;
+      if (mIdx < 10) return; // Strict 1st Nov rule: Jan - Oct are 0
+
       const amt = Number(b.total_amount) || 0;
       const mode = String(b.booking_mode || '').toLowerCase();
-      const isOnline = mode.includes('airbnb') || mode.includes('booking.com') || mode.includes('agoda') || mode.includes('makemytrip');
+      const isOnline = mode.includes('airbnb') || mode.includes('online') || mode.includes('booking.com') || mode.includes('agoda') || mode.includes('makemytrip');
+
       if (isOnline) {
-        dynamicOnline[mIdx] += amt;
+        const paidAmt = payMap[b.booking_id] != null ? payMap[b.booking_id] : amt;
+        const dueAmt = Math.max(0, amt - paidAmt);
+        dynamicPaid[mIdx] += Math.round(paidAmt);
+        dynamicUpcoming[mIdx] += Math.round(dueAmt);
       } else {
-        dynamicOffline[mIdx] += amt;
+        dynamicOffline[mIdx] += Math.round(amt);
       }
     });
 
-    const isFilteredByProp = Boolean(data?.globalProp);
-    const offlineData = isFilteredByProp ? dynamicOffline : baselineOffline.map((base, i) => dynamicOffline[i] > 0 ? dynamicOffline[i] : base);
-    const paidData = isFilteredByProp ? dynamicOnline.map((dyn, i) => i === 11 ? 0 : Math.round(dyn * 0.95)) : baselinePaid;
-    const upcomingData = isFilteredByProp ? [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, dynamicOnline[10] ? Math.round(dynamicOnline[10] * 0.4) : 0, dynamicOnline[11] || 0] : baselineUpcoming;
+    const offlineData = dynamicOffline;
+    const paidData = dynamicPaid;
+    const upcomingData = dynamicUpcoming;
 
     window._perfMonthlyData = {
       months,
@@ -4018,13 +4040,23 @@ function initExecutiveDashboardCharts(data) {
         window._dashAbPerfChartInstance.update();
       }
 
-      // Update Capsule
+      // Update Capsule with 100% real live November operations data
       if (capsule) {
-        const curOff = offlineData[10] || 527300;
-        const curPaid = paidData[10] || 85176;
-        const curUpc = upcomingData[10] || 142849;
+        const curOff = offlineData[10] || 0;
+        const curPaid = paidData[10] || 0;
+        const curUpc = upcomingData[10] || 0;
         const curOn = curPaid + curUpc;
         const curTotal = curOff + curOn;
+        const offPct = curTotal > 0 ? Math.round((curOff / curTotal) * 100) : 0;
+        const onPct = 100 - offPct;
+        const realExpsSum = Array.isArray(data?.realExpenses) ? data.realExpenses.filter(e => (e.entry_date || '').startsWith('2026-11')).reduce((s, e) => s + (Number(e.amount) || 0), 0) : 0;
+        const curNetOpIncome = Math.max(0, curTotal - realExpsSum);
+
+        const novOfflineBks = allBks.filter(b => !b.is_cancelled && (b.check_in || '').startsWith('2026-11') && !String(b.booking_mode || '').toLowerCase().includes('airbnb') && !String(b.booking_mode || '').toLowerCase().includes('online'));
+        const novOfflineNights = novOfflineBks.reduce((s, b) => s + Math.max(1, Math.round((new Date(b.check_out || b.check_in) - new Date(b.check_in)) / 86400000)), 0);
+        const curOffAdr = novOfflineNights > 0 ? Math.round(curOff / novOfflineNights) : (novOfflineBks.length > 0 ? Math.round(curOff / novOfflineBks.length) : 0);
+
+        const novOnlineBks = allBks.filter(b => !b.is_cancelled && (b.check_in || '').startsWith('2026-11') && (String(b.booking_mode || '').toLowerCase().includes('airbnb') || String(b.booking_mode || '').toLowerCase().includes('online')));
 
         if (mode === 'offline') {
           capsule.innerHTML = `
@@ -4032,17 +4064,17 @@ function initExecutiveDashboardCharts(data) {
               <div style="font-size:12px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.5px;">Current Month: November 2026 (Offline Direct)</div>
               <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
                 <span style="font-size:22px;font-weight:900;color:#0F172A;">₹${curOff.toLocaleString('en-IN')}</span>
-                <span style="font-size:12px;color:#059669;font-weight:700;">Direct Bookings (70% Share)</span>
+                <span style="font-size:12px;color:#059669;font-weight:700;">Direct Bookings (${offPct}% Share)</span>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
               <div>
                 <div style="font-size:11.5px;color:#64748B;font-weight:700;">Guest Volume</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">56 Bookings</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">${novOfflineBks.length} Booking${novOfflineBks.length === 1 ? '' : 's'}</div>
               </div>
               <div>
                 <div style="font-size:11.5px;color:#64748B;font-weight:700;">Direct ADR</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">~₹3,200 / night</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curOffAdr.toLocaleString('en-IN')} / night</div>
               </div>
               <div>
                 <div style="font-size:11.5px;color:#059669;font-weight:700;">Zero Commission</div>
@@ -4058,18 +4090,22 @@ function initExecutiveDashboardCharts(data) {
             <div>
               <div style="font-size:12px;font-weight:800;color:#E11D48;text-transform:uppercase;letter-spacing:0.5px;">Current Month: November 2026 (Airbnb Synchronized)</div>
               <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
-                <span style="font-size:22px;font-weight:900;color:#0F172A;">₹${curOn.toLocaleString('en-IN')}.34</span>
-                <span style="font-size:12px;color:#E11D48;font-weight:700;">Online Total (30% Share)</span>
+                <span style="font-size:22px;font-weight:900;color:#0F172A;">₹${curOn.toLocaleString('en-IN')}</span>
+                <span style="font-size:12px;color:#E11D48;font-weight:700;">Online Total (${onPct}% Share)</span>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
               <div>
+                <div style="font-size:11.5px;color:#64748B;font-weight:700;">Reservations</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">${novOnlineBks.length} Stays</div>
+              </div>
+              <div>
                 <div style="font-size:11.5px;color:#E11D48;font-weight:700;">● Paid Payouts</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curPaid.toLocaleString('en-IN')}.97</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curPaid.toLocaleString('en-IN')}</div>
               </div>
               <div>
                 <div style="font-size:11.5px;color:#DB2777;font-weight:700;">○ Upcoming</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curUpc.toLocaleString('en-IN')}.37</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">${curUpc > 0 ? '₹' + curUpc.toLocaleString('en-IN') : '₹0'}</div>
               </div>
               <button type="button" onclick="navigate('ca-audit')" style="background:#0F172A;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
                 <span>CA &amp; Tax Audit</span> <span>→</span>
@@ -4082,22 +4118,22 @@ function initExecutiveDashboardCharts(data) {
             <div>
               <div style="font-size:12px;font-weight:800;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;">Current Month: November 2026 (Portfolio Combined)</div>
               <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px;">
-                <span style="font-size:22px;font-weight:900;color:#0F172A;">₹${curTotal.toLocaleString('en-IN')}.34</span>
+                <span style="font-size:22px;font-weight:900;color:#0F172A;">₹${curTotal.toLocaleString('en-IN')}</span>
                 <span style="font-size:12px;color:#64748B;font-weight:700;">Total (INR)</span>
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
               <div>
                 <div style="font-size:11.5px;color:#059669;font-weight:800;">🟢 Offline Direct</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curOff.toLocaleString('en-IN')} <span style="font-size:11px;color:#059669;font-weight:700;">(70%)</span></div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curOff.toLocaleString('en-IN')} <span style="font-size:11px;color:#059669;font-weight:700;">(${offPct}%)</span></div>
               </div>
               <div>
                 <div style="font-size:11.5px;color:#E11D48;font-weight:800;">🔴 Online Airbnb</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curOn.toLocaleString('en-IN')}.34 <span style="font-size:11px;color:#E11D48;font-weight:700;">(30%)</span></div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curOn.toLocaleString('en-IN')} <span style="font-size:11px;color:#E11D48;font-weight:700;">(${onPct}%)</span></div>
               </div>
               <div>
                 <div style="font-size:11.5px;color:#4F46E5;font-weight:800;">💼 Net Op. Income</div>
-                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹3,86,822.84</div>
+                <div style="font-size:16px;font-weight:900;color:#0F172A;">₹${curNetOpIncome.toLocaleString('en-IN')}</div>
               </div>
               <button type="button" onclick="navigate('ca-audit')" style="background:#0F172A;color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:opacity 0.15s ease;">
                 <span>CA &amp; Tax Audit</span> <span>→</span>
@@ -4210,6 +4246,11 @@ function initExecutiveDashboardCharts(data) {
         wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
     };
+
+    // Automatically trigger initial capsule update with real dynamic data
+    if (typeof window.setPerformanceChannel === 'function') {
+      window.setPerformanceChannel(window._perfChannelMode || 'all');
+    }
   }
 }
 window.initExecutiveDashboardCharts = initExecutiveDashboardCharts;

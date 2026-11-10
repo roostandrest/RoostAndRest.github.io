@@ -1536,7 +1536,7 @@ function renderShell(content, activePage = 'dashboard') {
       pages: ['expenses', 'claims', 'reimbursements', 'laundry', 'maintenance', 'store', 'cashbook'],
       tabs: [
         { id: 'expenses', label: '📊 Expenses & P&L' },
-        { id: 'claims', label: '🏦 Roost Bank & Claims' },
+        { id: 'claims', label: '🏦 Anwar OD & Claims' },
         { id: 'laundry', label: '🧺 Laundry' },
         { id: 'maintenance', label: '🔧 Maintenance' }
       ]
@@ -1750,7 +1750,7 @@ function renderShell(content, activePage = 'dashboard') {
     cashbook: { title: 'Cash Book', sub: 'Cash flow, handovers & safe balance', icon: '💰' },
     reimbursements: { title: 'Daily Expenses', sub: 'Staff reimbursements & operational spends', icon: '💸' },
     expenses: { title: 'Monthly Expenses & P&L', sub: 'Property-wise profit & loss reporting', icon: '📊' },
-    claims: { title: 'Roost Bank & Universal Claims', sub: 'Roost-Bank Overdraft balance, daily closing statement & vendor settlements', icon: '🏦' },
+    claims: { title: 'Anwar OD & Universal Claims', sub: 'Anwar OD Overdraft balance, daily closing statement & vendor settlements', icon: '🏦' },
     'ca-audit': { title: 'CA Payout & Tax Audit (Section 194-O TDS)', sub: 'Audited Airbnb payouts, 1% Section 194-O TDS, gross earnings & 1-click CA export', icon: '💼' },
     investors: { title: 'Investors Ledger', sub: 'Property investor shares & payouts', icon: '🧑‍💼' },
     dailyReport: { title: 'Daily Operations Report', sub: 'End-of-day revenue, checkins & summaries', icon: '📈' },
@@ -6317,8 +6317,8 @@ function renderAppMenu() {
           <div class="roost-menu-row" onclick="navigate('claims')">
             <div class="roost-icon-box" style="background:#EEF2FF;color:#4F46E5;"><i class="ti ti-building-bank"></i></div>
             <div class="roost-row-content">
-              <div class="roost-row-title">Roost-Bank &amp; Claims Hub</div>
-              <div class="roost-row-sub">Overdraft balance, daily closing statement &amp; vendor claims</div>
+              <div class="roost-row-title">Anwar OD &amp; Claims Hub</div>
+              <div class="roost-row-sub">Anwar OD balance, daily closing statement &amp; vendor claims</div>
             </div>
             <i class="ti ti-chevron-right roost-chevron"></i>
           </div>

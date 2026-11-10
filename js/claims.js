@@ -79,11 +79,11 @@ window.renderClaims = async function() {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
         <div>
           <h1>⚖️ Universal Claims Manager</h1>
-          <div class="sub">Checkpoint: <strong>16-Sep-2026 11:59 PM (Settled)</strong> · Roost Bank Engine</div>
+          <div class="sub">Checkpoint: <strong>16-Sep-2026 11:59 PM (Settled)</strong> · Anwar OD Engine</div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button onclick="openUhhsDepositModal()" style="background:#92400E;color:#fff;font-weight:700;">📥 Deposit Entry (Roost Bank)</button>
-          <button onclick="showUhhsStatementModal()" style="background:#0F766E;color:#fff;font-weight:600;">📜 Roost Bank Ledger</button>
+          <button onclick="openUhhsDepositModal()" style="background:#92400E;color:#fff;font-weight:700;">📥 Deposit Entry (Anwar OD)</button>
+          <button onclick="showUhhsStatementModal()" style="background:#0F766E;color:#fff;font-weight:600;">📜 Anwar OD Ledger</button>
           <button onclick="showCompanyLedgerModal()" style="background:#EA580C;color:#fff;font-weight:600;">🏢 Company Ledger</button>
           <button onclick="generateClaimReport()" style="background:#8B5CF6;color:#fff;font-weight:600;">📊 Claim Report Statement</button>
           <button onclick="copyClaimWhatsAppText()" style="background:#25D366;color:#fff;font-weight:600;">📱 WhatsApp Summary</button>
@@ -97,10 +97,10 @@ window.renderClaims = async function() {
         <div>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:20px;">🏦</span>
-            <strong style="font-size:16px;color:#15803D;">Roost Bank Account (Online Balance)</strong>
+            <strong style="font-size:16px;color:#15803D;">Anwar OD Account (Offline &amp; Direct Balance)</strong>
           </div>
           <div style="font-size:12px;color:#64748B;margin-top:2px;">
-            Money received online from Anwar &amp; spent via Roost-Bank (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
+            Money received via UPI / Cash &amp; spent via Anwar OD (Post-Checkpoint: 17-Sep onwards · Opening Balance: ₹0)
           </div>
         </div>
         <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
@@ -255,7 +255,7 @@ window.renderClaims = async function() {
       <!-- FOOTER AUDIT NOTE FOR OWNERS -->
       <div style="background:#F8FAFC;border-radius:8px;padding:8px 12px;font-size:11.5px;color:#64748B;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
         <div>
-          🛡️ <strong>Owner Assurance:</strong> Automatically compiled from Roost-Bank bank receipts and verified vendor claims. Zero manual adjustments.
+          🛡️ <strong>Owner Assurance:</strong> Automatically compiled from Anwar OD bank receipts and verified vendor claims. Zero manual adjustments.
         </div>
         <div style="color:#92400E;font-weight:600;">
           Roost And Rest Stays
@@ -1082,7 +1082,7 @@ window.showUhhsStatementModal = async function() {
         <div style="padding:12px 16px;border-bottom:1.5px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;gap:10px;background:#F8FAFC;">
           <div style="min-width:0;flex:1;">
             <h2 style="margin:0;color:#0F766E;font-size:16px;font-weight:800;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              📜 Roost Bank Statement / Ledger
+              📜 Anwar OD Statement / Ledger
             </h2>
             <div style="font-size:11px;color:#64748B;margin-top:2px;">
               Period: <strong>${fDate}</strong> → <strong>${tDate}</strong> · Txns: <strong>${txns.length}</strong>
@@ -1636,7 +1636,7 @@ window.exportUhhsLedgerPDF = function(fDate, tDate, totalInflow, totalOutflow, n
       </div>
 
       <div class="header">
-        <h1>📜 Roost Bank Account Statement / Ledger</h1>
+        <h1>📜 Anwar OD Account Statement / Ledger</h1>
         <div class="sub">Period: <strong>${safeFDate}</strong> → <strong>${safeTDate}</strong> | Generated: ${new Date().toLocaleString('en-IN')}</div>
       </div>
 
@@ -2252,7 +2252,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
           <div>
             <div style="font-size:15px;font-weight:900;color:#0f172a;letter-spacing:0.2px;">ROOST AND REST STAYS</div>
             <div style="font-size:11px;font-weight:700;color:#0284c7;text-transform:uppercase;">
-              ${isRange ? 'Roost Bank Period Financial Statement' : 'Roost Bank Official Daily Statement'}
+              ${isRange ? 'Anwar OD Period Financial Statement' : 'Anwar OD Official Daily Statement'}
             </div>
           </div>
         </div>
@@ -2269,7 +2269,7 @@ window.downloadTodayBalanceScreenshot = async function(evt) {
       <!-- Primary Hero Closing Balance Card -->
       <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);color:#ffffff;border-radius:14px;padding:20px;text-align:center;border:1.5px solid #334155;box-shadow:0 6px 18px rgba(15,23,42,0.25);margin-bottom:16px;">
         <div style="font-size:11.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;">
-          💰 ${isRange ? `CLOSING BALANCE AS OF ${endDateFmt}` : 'ROOST BANK CLOSING BALANCE'}
+          💰 ${isRange ? `CLOSING BALANCE AS OF ${endDateFmt}` : 'ANWAR OD CLOSING BALANCE'}
         </div>
         <div style="font-size:34px;font-weight:900;color:#4ade80;margin:6px 0;letter-spacing:-0.5px;">
           ${closeBalStr}
@@ -2436,7 +2436,7 @@ window.shareTodayBalanceWhatsApp = function() {
 
   const text = isRange ? [
     '🏦 *ROOST AND REST STAYS*',
-    '📊 *Roost-Bank PERIOD FINANCIAL STATEMENT*',
+    '📊 *Anwar OD PERIOD FINANCIAL STATEMENT*',
     `📅 *Statement Period:* ${dateRangeFmt}`,
     `🕒 *Refreshed:* ${timeStr}`,
     '────────────────────────────',
@@ -2452,14 +2452,14 @@ window.shareTodayBalanceWhatsApp = function() {
     `• Total Outflow: ${totalOut} (claims & spends)`,
     `• Running OD Balance: ${closeBal}`,
     '────────────────────────────',
-    '_🛡️ Owner Assurance: Automatically compiled from verified Roost-Bank bank receipts & claims._',
+    '_🛡️ Owner Assurance: Automatically compiled from verified Anwar OD receipts & claims._',
     '_Generated by Roost & Rest Financial Engine_'
   ].filter(Boolean).join('\n') : [
     '🏦 *ROOST AND REST STAYS*',
-    '📊 *DAILY Roost-Bank CLOSING & BALANCE STATEMENT*',
+    '📊 *DAILY Anwar OD CLOSING & BALANCE STATEMENT*',
     `📅 *Statement Day:* ${state.dateFmt} | ${timeStr}`,
     '────────────────────────────',
-    `💰 *CURRENT ROOST BANK CLOSING BALANCE:* *${closeBal}*`,
+    `💰 *CURRENT ANWAR OD CLOSING BALANCE:* *${closeBal}*`,
     '🛡️ *Status:* Verified & Reconciled (Zero Discrepancy)',
     '────────────────────────────',
     '📈 *ALL-TIME LEDGER (Post-Checkpoint 17-Sep):*',
@@ -2473,7 +2473,7 @@ window.shareTodayBalanceWhatsApp = function() {
     `• Net Daily Delta: ${netVal}`,
     (inVal === '₹0' && outVal === '₹0') ? '_(No new entries recorded yet today. Previous running balance carried forward)_' : '',
     '────────────────────────────',
-    '_🛡️ Owner Assurance: Automatically compiled from Roost-Bank bank receipts & verified vendor claims._',
+    '_🛡️ Owner Assurance: Automatically compiled from Anwar OD receipts & verified vendor claims._',
     '_Generated by Roost & Rest Financial Engine_'
   ].filter(Boolean).join('\n');
 

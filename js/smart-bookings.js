@@ -3440,7 +3440,7 @@ window.saveSmartBooking = async function() {
         booking_id: bkId,
         amount: adv,
         payment_mode: advMode,
-        payment_date: ci,
+        payment_date: new Date().toISOString().slice(0, 10),
         paid_at: new Date().toISOString(),
         received_by: receivedBy,
         handover_status: advMode === 'Cash' ? 'in_hand' : 'handed_over',
@@ -3833,7 +3833,7 @@ window.saveMultiSmartBooking = async function() {
     // Record advance in payment_history for all booked homestays
     if (totalAdvance > 0) {
       const bksToProcess = (createdBookings && createdBookings.length > 0) ? createdBookings : roomInserts;
-      const payDate = ci || new Date().toISOString().slice(0, 10);
+      const payDate = new Date().toISOString().slice(0, 10);
       const handoverStatus = (advMode === 'Cash' && !['Anwar', 'Shahenshah'].includes(advReceivedBy)) ? 'in_hand' : 'handed_over';
       const meta = typeof approvalMeta === 'function' ? approvalMeta() : {};
 

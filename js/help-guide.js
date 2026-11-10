@@ -26,7 +26,7 @@
       { key: `${altSymbol}B`, single: 'B', title: 'Bookings Management Hub', desc: 'All confirmed, active, check-in aur check-out bookings ki complete register.', action: 'window.openBookingsShortcut()' },
       { key: `${altSymbol}F`, single: 'F', title: 'Flats Status & Turnaround', desc: 'Real-time room cleanliness, dirty status aur turnaround Kanban board.', action: 'window.openFlatsShortcut()' },
       { key: `${altSymbol}U`, single: 'U', title: 'Units & Master Pricing', desc: '19 units ki live inventory, nightly rates, caretaker & manager contacts.', action: 'window.openUnitsShortcut()' },
-      { key: `${altSymbol}Q`, single: 'Q', title: 'Universal Claims & Roost-Bank', desc: 'Daily Closing Statements, company ledger & vendor claim approvals.', action: 'window.openClaimShortcut()' },
+      { key: `${altSymbol}Q`, single: 'Q', title: 'Universal Claims & Anwar OD', desc: 'Daily Closing Statements, Anwar OD ledger & vendor claim approvals.', action: 'window.openClaimShortcut()' },
       { key: `${altSymbol}E`, single: 'E', title: 'Expenses & Outflow Hub', desc: 'Expenses page par jayein (Wi-Fi, Maintenance, Laundry, Staff Advances & P&L).', action: 'window.openExpensesShortcut()', altKey: `${altSymbol}⇧E for Add Expense` },
       { key: `${altSymbol}T`, single: 'T', title: 'Staff Tasks & Checklists', desc: 'Housekeeping, deep cleans aur staff maintenance tasks list.', action: 'window.openTasksShortcut()', altKey: `${altSymbol}⇧T for New` },
       { key: `${altSymbol}A`, single: 'A', title: 'Staff Salary Advances Tracker', desc: 'Employees ko di gayi peshgi (loan/advance) aur pending balance.', action: 'window.openAdvanceShortcut()', altKey: `${altSymbol}⇧A for New` },
@@ -354,21 +354,21 @@
             </div>
           </div>
 
-          <!-- SECTION 6: CLAIMS & Roost-Bank STATEMENT -->
+          <!-- SECTION 6: CLAIMS & Anwar OD STATEMENT -->
           <div class="tuhh-help-section-block" data-category="claims" id="section-claims">
             <div class="tuhh-section-header">
               <div class="tuhh-section-icon" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-scale"></i></div>
               <div>
-                <h2 class="tuhh-section-title">6. Universal Claims, Roost-Bank &amp; Daily Closing Statement</h2>
+                <h2 class="tuhh-section-title">6. Universal Claims, Anwar OD &amp; Daily Closing Statement</h2>
                 <p class="tuhh-section-subtitle">Vendor claims, company advances aur daily financial balance reconciliation:</p>
               </div>
             </div>
 
             <div class="tuhh-grid-2">
               <div class="tuhh-info-box">
-                <h4><i class="ti ti-report-money"></i> Roost Bank Account &amp; Claims Balance</h4>
+                <h4><i class="ti ti-report-money"></i> Anwar OD Account &amp; Claims Balance</h4>
                 <p>
-                  Company account (Roost-Bank) se staff ko diye gaye funds, deposit entries, aur verified vendor bills (plumbing, electrical, laundry, grocery) <strong>Finances &gt; Roost-Bank &amp; Claims</strong> me maintain hote hain.
+                  Company account (Anwar OD) se staff ko diye gaye funds, deposit entries, aur verified vendor bills (plumbing, electrical, laundry, grocery) <strong>Finances &gt; Anwar OD &amp; Claims</strong> me maintain hote hain.
                 </p>
                 <div style="margin-top:10px;">
                   <button type="button" class="tuhh-action-inline-btn" onclick="window.openClaimShortcut()"><i class="ti ti-scale"></i> Open Claims Manager (${altSymbol}Q)</button>
