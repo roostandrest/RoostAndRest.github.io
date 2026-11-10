@@ -2617,7 +2617,7 @@ Roost And Rest Stays Property Management`;
     };
 
     const today = getLocalDateStr();
-    const startDefault = initialParams.startDate || '2026-09-01'; // User's requested backlog start
+    const startDefault = initialParams.startDate || '2026-11-01'; // Default backlog start Nov 1
     const endDefault = initialParams.endDate || today;
 
     const modal = document.createElement('div');

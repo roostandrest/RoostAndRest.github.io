@@ -52,11 +52,11 @@ async function processAirbnbCSV(input) {
 
     statusEl.innerHTML = `<div class="success-msg">✅ Loaded ${airbnbBookings.length} bookings from CSV</div>`;
 
-    // Fetch app bookings (Airbnb mode only, from July 2026)
+    // Fetch app bookings (Airbnb mode only, from November 2026)
     const { data: appBookings } = await sb.from('guest_register')
       .select('booking_id, guest_name, check_in, check_out, room_id, total_amount, notes, booking_mode, rooms(nickname, unit_no)')
       .eq('booking_mode', 'Online-Airbnb')
-      .gte('check_in', '2026-07-01')
+      .gte('check_in', '2026-11-01')
       .order('check_in');
 
     // Build match map from app: guest+checkin as key
@@ -108,7 +108,7 @@ async function processAirbnbCSV(input) {
 
     airbnbBookings.forEach(ab => {
       const cdate = convertDate(ab.startDate);
-      if (cdate < '2026-07-01') return;
+      if (cdate < '2026-11-01') return;
       ab.startDateNorm = cdate;
       ab.endDateNorm = convertDate(ab.endDate);
 

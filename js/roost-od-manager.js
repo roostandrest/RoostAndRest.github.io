@@ -620,7 +620,7 @@ window.renderClosingStatementForDate = function(startDate, endDate) {
     } else if (startD === 'latest') {
         startD = endD = latestActiveDate;
     } else if (startD === 'range') {
-        startD = document.getElementById('cfFromDate')?.value || window._claimsState?.fromDate || '2026-10-01';
+        startD = document.getElementById('cfFromDate')?.value || window._claimsState?.fromDate || '2026-11-01';
         endD = document.getElementById('cfToDate')?.value || window._claimsState?.toDate || localToday;
     } else if (startD && !endD) {
         endD = startD;

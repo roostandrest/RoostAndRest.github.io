@@ -15,7 +15,7 @@
     possiblyCancelled: [],
     activeFilter: 'all', // 'all' | 'conflicts' | 'missing' | 'synced'
     searchQuery: '',
-    fromDate: '2026-07-01',
+    fromDate: '2026-11-01',
     toDate: new Date().toISOString().slice(0, 10)
   };
 
