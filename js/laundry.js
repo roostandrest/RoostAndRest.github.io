@@ -358,7 +358,7 @@ window.renderAddLaundry = async function() {
           <select id="lPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
             <option value="ROOST-BANK" selected>🏦 ROOST-BANK (Overdraft Account)</option>
-            <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
+            <option value="ANWAR">👤 Anwar (Direct Personal)</option>
           </select>
         </div>
         <div class="form-group">
@@ -728,7 +728,7 @@ window.editLaundry = async function(id) {
           <select id="lPaymentSourceEdit" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
             <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 ROOST-BANK (Overdraft Account)</option>
-            <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+            <option value="ANWAR" ${rec.payment_source === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
           </select>
         </div>
         <div class="form-group">
@@ -1297,7 +1297,7 @@ window.addLaundryPayment = async function(recordId, dueAmount) {
         <select id="lpPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
           <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
           <option value="ROOST-BANK" selected>🏦 ROOST-BANK (Overdraft Account)</option>
-          <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
+          <option value="ANWAR">👤 Anwar (Direct Personal)</option>
         </select>
       </div>
       <div class="form-group"><label>Amount ₹ *</label><input id="lpAmt" type="number" value="${dueAmount}" min="0"></div>
@@ -1491,7 +1491,7 @@ window.editLaundryPayment = async function(paymentId, recordId) {
         <select id="lpPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
           <option value="COMPANY" ${pay.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
           <option value="ROOST-BANK" ${pay.payment_source === 'ROOST-BANK' || !pay.payment_source ? 'selected' : ''}>🏦 ROOST-BANK (Overdraft Account)</option>
-          <option value="FIROZ" ${pay.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+          <option value="ANWAR" ${pay.payment_source === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
         </select>
       </div>
       <div class="form-group"><label>Amount ₹ *</label><input id="lpEditAmt" type="number" value="${pay.amount}" min="0"></div>

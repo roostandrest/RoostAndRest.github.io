@@ -37,7 +37,7 @@ window._claimsState = {
 function normalizePaymentSource(rawVal) {
   if (!rawVal) return 'Roost&rest-Od';
   const s = String(rawVal).trim().toUpperCase();
-  if (s.includes('ANWAR') || s.includes('FIROZ') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'))) return 'Anwar';
+  if (s.includes('ANWAR') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'))) return 'Anwar';
   return 'Roost&rest-Od';
 }
 
@@ -313,7 +313,7 @@ window.renderClaims = async function() {
             <option value="all" ${window._claimsState.paidByFilter==='all'?'selected':''}>All Payers</option>
             <option value="ROOST-BANK" ${window._claimsState.paidByFilter==='ROOST-BANK'?'selected':''}>🏦 Roost-Bank</option>
             <option value="COMPANY" ${window._claimsState.paidByFilter==='COMPANY'?'selected':''}>🏢 COMPANY</option>
-            <option value="FIROZ" ${window._claimsState.paidByFilter==='FIROZ'?'selected':''}>👤 FIROZ</option>
+            <option value="ANWAR" ${window._claimsState.paidByFilter==='ANWAR'?'selected':''}>👤 ANWAR</option>
             <option value="OTHER" ${window._claimsState.paidByFilter==='OTHER'?'selected':''}>⚠️ OTHER</option>
           </select>
         </div>
@@ -1246,7 +1246,7 @@ window.openReimbursementEditModal = async function(id) {
           <select id="ledgerEditSource" style="width:100%;padding:8px;border:1.5px solid #0D6EFD;border-radius:6px;font-weight:600;background:#F8FAFC;box-sizing:border-box;">
             <option value="ROOST-BANK" ${rec.payment_source === 'ROOST-BANK' || !rec.payment_source ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
             <option value="COMPANY" ${rec.payment_source === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
-            <option value="FIROZ" ${rec.payment_source === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+            <option value="ANWAR" ${rec.payment_source === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
           </select>
         </div>
 
@@ -2083,9 +2083,9 @@ window.exportCompanyLedgerPDF = async function(fDate, tDate) {
 
   const allData = window._claimsState?.allData || [];
 
-  // Filter: COMPANY/FIROZ paid expenses and advances within date range
+  // Filter: COMPANY/ANWAR paid expenses and advances within date range
   const compItems = allData.filter(item => {
-    if (item.paidBy !== 'COMPANY' && item.paidBy !== 'FIROZ') return false;
+    if (item.paidBy !== 'COMPANY' && item.paidBy !== 'ANWAR') return false;
     if (fromD && item.dateStr && item.dateStr < fromD) return false;
     if (toD && item.dateStr && item.dateStr > toD) return false;
     return true;

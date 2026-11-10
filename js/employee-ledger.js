@@ -28,7 +28,7 @@ window.EMPLOYEE_LEDGER = {
 
     // Specific staff names check
     const name = (emp.name || '').toLowerCase();
-    if (name.includes('praveen') || name.includes('arman') || name.includes('shuaib') || name.includes('aniket')) return false;
+    if (name.includes('arman') || name.includes('shuaib') || name.includes('aniket')) return false;
     if (name.includes('kanchan') || name.includes('shalu') || name.includes('laxmi')) return true;
 
     // Maid / Cleaning role

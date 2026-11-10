@@ -774,7 +774,7 @@ function generateBlossomStatusText(includeTags, vacantLabel, includeVillas, useR
 
   const lines = [];
   if (includeTags) {
-    lines.push('@Arman Commander @Abraham Khan (Raja) @Mr. Anwar khan @Mr. Shahanshah Khan ');
+    lines.push('@Arman Commander @Abraham Khan (Raja) @Mr. Anwar khan ');
   }
   lines.push('📋 UPDATED BOOKING STATUS\n');
 

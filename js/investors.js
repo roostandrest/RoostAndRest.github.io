@@ -1671,7 +1671,6 @@ window.whatsappInvestorReport = async function(investorId, roomId, monthYear) {
       (bks.length > 0 ? '*📅 BOOKINGS:*' + NL + bkList : '_No bookings this month_' + NL + NL) +
       '━━━━━━━━━━━━━━━━━━━━' + NL +
       '📞 Contact:' + NL +
-      'Mr. Shahanshah - 9807486555' + NL +
       'Mr. Anwar Ahmad - 9807486555' + NL +
       '━━━━━━━━━━━━━━━━━━━━' + NL +
       'ROOST AND REST STAYS' + NL +
@@ -2381,7 +2380,6 @@ async function _originalQuickWhatsAppInvestor(investorId) {
       '───────────────' + NL +
       '*Regards,*' + NL +
       'Team Roost & Rest' + NL +
-      '📞 Mr. Shahanshah: 9807486555' + NL +
       '📞 Mr. Anwar Ahmad: 9807486555' + NL +
       '🌐 roostandrest.github.io';
     

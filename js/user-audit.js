@@ -4,7 +4,7 @@
  * Developer: Roost & Rest Tech
  * 
  * Features:
- * 1. Real-time Login Alerts to Praveen (Developer) when any user logs in
+ * 1. Real-time Login Alerts to Admin / Developer when any user logs in
  * 2. Per-User Page Visit History (which pages, timestamps, durations)
  * 3. Monthly Login Audit (days logged in, total hours online, average daily activity)
  * 4. Beautiful Audit Modal in User Management
@@ -1374,7 +1374,7 @@
                 month: monthStr,
                 userId: b.created_by || 'staff',
                 userName: bUser,
-                userRole: (bUser.toLowerCase().includes('praveen') || bUser.toLowerCase().includes('admin')) ? 'manager' : (bUser === 'Gmail Sync' ? 'system' : 'staff'),
+                userRole: (bUser.toLowerCase().includes('manager') || bUser.toLowerCase().includes('admin')) ? 'manager' : (bUser === 'Gmail Sync' ? 'system' : 'staff'),
                 actionType: 'booking_add',
                 actionTitle: '➕ Added Booking',
                 device: '💻 System Record',
@@ -1974,7 +1974,7 @@
                   `;
                 } else if (a.actionType === 'booking_delete') {
                   amtVal = d.totalAmount || null;
-                  const canRestore = window.isPraveenUser && window.isPraveenUser();
+                  const canRestore = window.isDeveloperUser && window.isDeveloperUser();
                   descHtml = `
                     <div style="font-weight:700;color:#DC2626;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
                       <span>Deleted: ${escapeHtml(d.guestName || 'Guest')} &middot; <span style="font-family:monospace;font-size:11.5px;">${d.bookingId || '-'}</span></span>

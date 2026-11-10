@@ -5,24 +5,24 @@
  * =====================================================================
  */
 
-window.GST_ENGINE = (function() {
+window.GST_ENGINE = (function () {
   'use strict';
 
   // 1. COMPANY MASTER CONFIG
   const CO = {
-    name:       'ROOST AND REST STAYS',
-    tradeName:  'Roost And Rest Stays Homestays',
-    gstin:      '09AAMCT8448C1ZX',
-    pan:        'AAMCT8448C',
-    cin:        'U55101UP2026PTC244637',
-    sac:        '996311', // Accommodation services in homestays / guest houses
-    address:    'Plot No.: 39 & 40, Radhikapuri Colony, Takrohi, Indira Nagar, Lucknow - 226016',
-    state:      'Uttar Pradesh',
-    stateCode:  '09',
-    phone:      '+91 94500 55554 / +91 82996 00709',
+    name: 'ROOST AND REST STAYS',
+    tradeName: 'Roost And Rest Stays Homestays',
+    gstin: '09AAMCT8448C1ZX',
+    pan: 'AAMCT8448C',
+    cin: 'U55101UP2026PTC244637',
+    sac: '996311', // Accommodation services in homestays / guest houses
+    address: 'Plot No.: 39 & 40, Radhikapuri Colony, Takrohi, Indira Nagar, Lucknow - 226016',
+    state: 'Uttar Pradesh',
+    stateCode: '09',
+    phone: '+91 9807486555 / +91 82996 00709',
     managerPhone: '+91 9194109911',
-    email:      'theroostandrestlucknow@gmail.com',
-    web:        'roostandrest.github.io'
+    email: 'theroostandrestlucknow@gmail.com',
+    web: 'roostandrest.github.io'
   };
 
   // Signature & Stamp Source Helper
@@ -34,7 +34,7 @@ window.GST_ENGINE = (function() {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
       localStorage.setItem('uhh_custom_signature_stamp', e.target.result);
       alert('✅ Real Signature & Stamp uploaded! Ab se yeh aapke sabhi bills aur print par automatically aayega.');
       if (typeof window._gstRecompute === 'function') window._gstRecompute();
@@ -152,30 +152,30 @@ window.GST_ENGINE = (function() {
     if (typeof sb !== 'undefined' && sb) {
       try {
         const payload = {
-          booking_id:     inv.booking_id,
-          invoice_no:     inv.invoice_no,
-          invoice_date:   inv.invoice_date,
+          booking_id: inv.booking_id,
+          invoice_no: inv.invoice_no,
+          invoice_date: inv.invoice_date,
           is_gst_invoice: inv.is_gst_invoice === true,
-          guest_name:     inv.guest_name,
-          guest_phone:    inv.guest_phone || null,
-          guest_gstin:    inv.guest_gstin || null,
-          guest_company:  inv.guest_company || null,
-          guest_address:  inv.guest_address || null,
-          room_id:        inv.room_id || null,
-          room_name:      inv.room_name || null,
-          check_in:       inv.check_in || null,
-          check_out:      inv.check_out || null,
-          nights:         inv.nights || 1,
-          total_amount:   Number(inv.total_amount || 0),
-          taxable_value:  Number(inv.taxable_value || 0),
-          cgst:           Number(inv.cgst || 0),
-          sgst:           Number(inv.sgst || 0),
-          gst_rate:       Number(inv.gst_rate || 0),
-          sac_code:       CO.sac,
-          booking_mode:   inv.booking_mode || 'Direct',
-          status:         inv.is_gst_invoice ? 'Recorded for CA' : 'Draft / Non-GST Receipt',
-          airbnb_code:    inv.airbnb_code || null,
-          updated_at:     new Date().toISOString()
+          guest_name: inv.guest_name,
+          guest_phone: inv.guest_phone || null,
+          guest_gstin: inv.guest_gstin || null,
+          guest_company: inv.guest_company || null,
+          guest_address: inv.guest_address || null,
+          room_id: inv.room_id || null,
+          room_name: inv.room_name || null,
+          check_in: inv.check_in || null,
+          check_out: inv.check_out || null,
+          nights: inv.nights || 1,
+          total_amount: Number(inv.total_amount || 0),
+          taxable_value: Number(inv.taxable_value || 0),
+          cgst: Number(inv.cgst || 0),
+          sgst: Number(inv.sgst || 0),
+          gst_rate: Number(inv.gst_rate || 0),
+          sac_code: CO.sac,
+          booking_mode: inv.booking_mode || 'Direct',
+          status: inv.is_gst_invoice ? 'Recorded for CA' : 'Draft / Non-GST Receipt',
+          airbnb_code: inv.airbnb_code || null,
+          updated_at: new Date().toISOString()
         };
 
         const { error } = await sb.from('gst_invoices')
@@ -234,7 +234,7 @@ window.GST_ENGINE = (function() {
   // 9. BUILD FULL A4 PRINTABLE INVOICE HTML (Supports Both GST Tax Invoice & Without GST Invoice)
   function buildPrintableInvoiceHTML(inv) {
     const isGST = inv.is_gst_invoice === true;
-    
+
     // Format dates as DD/MM/YYYY
     function fmtDate(dStr) {
       if (!dStr) return '-';
@@ -304,9 +304,9 @@ window.GST_ENGINE = (function() {
               <strong>Mobile:</strong> ${CO.phone} | <strong>Email:</strong> ${CO.email}
             </div>
             <div style="color:#000;margin-top:2px;">
-              ${isGST 
-                ? `<strong>GSTIN (18%):</strong> ${CO.gstin} &nbsp;|&nbsp; <strong>GSTIN (5%):</strong> ${CO.gstin}`
-                : `<strong>Billing Mode:</strong> Direct Accommodation / Non-GST Supply`}
+              ${isGST
+        ? `<strong>GSTIN (18%):</strong> ${CO.gstin} &nbsp;|&nbsp; <strong>GSTIN (5%):</strong> ${CO.gstin}`
+        : `<strong>Billing Mode:</strong> Direct Accommodation / Non-GST Supply`}
             </div>
             <div style="color:#444;font-size:9px;">
               <strong>CIN:</strong> ${CO.cin} &nbsp;|&nbsp; <strong>PAN:</strong> ${CO.pan}
@@ -394,14 +394,14 @@ window.GST_ENGINE = (function() {
             <td style="padding:6px 2px;border-right:1px solid #000;text-align:center;white-space:nowrap;font-size:9.5px;">${checkInFmt}</td>
             <td style="padding:6px 2px;border-right:1px solid #000;text-align:center;white-space:nowrap;font-size:9.5px;">${checkOutFmt}</td>
             <td style="padding:6px 2px;border-right:1px solid #000;text-align:center;font-weight:700;white-space:nowrap;font-size:9.5px;">${inv.nights || 1} DAY</td>
-            <td style="padding:6px 4px;border-right:1px solid #000;text-align:right;white-space:nowrap;font-size:9.5px;">${ratePerNight.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+            <td style="padding:6px 4px;border-right:1px solid #000;text-align:right;white-space:nowrap;font-size:9.5px;">${ratePerNight.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td style="padding:6px 4px;border-right:1px solid #000;text-align:right;white-space:nowrap;">
-              ${isGST 
-                ? `<span style="font-size:9.5px;">${taxAmtNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</span><br/><span style="font-size:8.5px;color:#555;">(${gstRateNum}%)</span>`
-                : `<span style="color:#059669;font-weight:700;font-size:9.5px;">₹ 0.00</span><br/><span style="font-size:8.5px;color:#64748B;">(0% Non-GST)</span>`}
+              ${isGST
+        ? `<span style="font-size:9.5px;">${taxAmtNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span><br/><span style="font-size:8.5px;color:#555;">(${gstRateNum}%)</span>`
+        : `<span style="color:#059669;font-weight:700;font-size:9.5px;">₹ 0.00</span><br/><span style="font-size:8.5px;color:#64748B;">(0% Non-GST)</span>`}
             </td>
             <td style="padding:6px 6px;text-align:right;font-weight:800;white-space:nowrap;font-size:9.5px;">
-              ${totalNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}
+              ${totalNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </td>
           </tr>
 
@@ -423,9 +423,9 @@ window.GST_ENGINE = (function() {
             <td style="padding:5px 2px;border-right:1px solid #000;text-align:center;white-space:nowrap;">${inv.nights || 1}</td>
             <td style="padding:5px 4px;border-right:1px solid #000;"></td>
             <td style="padding:5px 4px;border-right:1px solid #000;text-align:right;white-space:nowrap;">
-              ${isGST ? '₹ ' + taxAmtNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2}) : '₹ 0.00'}
+              ${isGST ? '₹ ' + taxAmtNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '₹ 0.00'}
             </td>
-            <td style="padding:5px 6px;text-align:right;font-weight:900;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+            <td style="padding:5px 6px;text-align:right;font-weight:900;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>
 
           <!-- RECEIVED AMOUNT ROW -->
@@ -434,7 +434,7 @@ window.GST_ENGINE = (function() {
             <td style="border-right:1px solid #000;"></td>
             <td style="border-right:1px solid #000;"></td>
             <td style="border-right:1px solid #000;"></td>
-            <td style="padding:5px 6px;text-align:right;font-weight:900;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+            <td style="padding:5px 6px;text-align:right;font-weight:900;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>
 
           <!-- BALANCE AMOUNT ROW -->
@@ -478,12 +478,12 @@ window.GST_ENGINE = (function() {
           <tbody>
             <tr>
               <td style="padding:6px 3px;border-right:1px solid #000;white-space:nowrap;">${CO.sac}</td>
-              <td style="padding:6px 5px;border-right:1px solid #000;text-align:right;white-space:nowrap;">${taxableNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <td style="padding:6px 5px;border-right:1px solid #000;text-align:right;white-space:nowrap;">${taxableNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td style="padding:6px 3px;border-right:1px solid #000;white-space:nowrap;">${halfRate}%</td>
-              <td style="padding:6px 5px;border-right:1px solid #000;text-align:right;white-space:nowrap;">${cgstNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <td style="padding:6px 5px;border-right:1px solid #000;text-align:right;white-space:nowrap;">${cgstNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td style="padding:6px 3px;border-right:1px solid #000;white-space:nowrap;">${halfRate}%</td>
-              <td style="padding:6px 5px;border-right:1px solid #000;text-align:right;white-space:nowrap;">${sgstNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-              <td style="padding:6px 5px;text-align:right;font-weight:800;white-space:nowrap;">₹ ${taxAmtNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <td style="padding:6px 5px;border-right:1px solid #000;text-align:right;white-space:nowrap;">${sgstNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              <td style="padding:6px 5px;text-align:right;font-weight:800;white-space:nowrap;">₹ ${taxAmtNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             </tr>
           </tbody>
         </table>
@@ -508,10 +508,10 @@ window.GST_ENGINE = (function() {
           <tbody>
             <tr>
               <td style="padding:6px 6px;border-right:1px solid #000;font-weight:700;">Direct Guest Accommodation (Non-GST)</td>
-              <td style="padding:6px 6px;border-right:1px solid #000;text-align:right;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <td style="padding:6px 6px;border-right:1px solid #000;text-align:right;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               <td style="padding:6px 6px;border-right:1px solid #000;text-align:right;color:#059669;font-weight:700;white-space:nowrap;">₹ 0.00 (0%)</td>
               <td style="padding:6px 6px;border-right:1px solid #000;text-align:center;font-weight:800;color:#059669;white-space:nowrap;">✔ PAID IN FULL</td>
-              <td style="padding:6px 6px;text-align:right;font-weight:900;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <td style="padding:6px 6px;text-align:right;font-weight:900;white-space:nowrap;">₹ ${totalNum.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             </tr>
           </tbody>
         </table>
@@ -551,8 +551,8 @@ window.GST_ENGINE = (function() {
     </div> <!-- End of Bordered Frame -->
 
     <div style="font-size:9px;color:#666;text-align:center;margin-top:4px;">
-      ${isGST 
-        ? 'This is a computer-generated tax invoice under GST Act. All disputes subject to Lucknow jurisdiction only.' 
+      ${isGST
+        ? 'This is a computer-generated tax invoice under GST Act. All disputes subject to Lucknow jurisdiction only.'
         : 'This is an official computer-generated invoice for accommodation services provided without GST. Not valid for claiming GST Input Tax Credit (ITC). All disputes subject to Lucknow jurisdiction only.'}
     </div>
 
@@ -749,8 +749,8 @@ window.GST_ENGINE = (function() {
             </thead>
             <tbody>
               ${allInvs.length ? allInvs.map(i => {
-                const isG = i.is_gst_invoice;
-                return `
+      const isG = i.is_gst_invoice;
+      return `
                   <tr style="border-bottom:1px solid var(--border);background:${isG ? '#fff' : '#F8FAFC'};">
                     <td style="padding:9px 12px;font-weight:800;">${escapeHtml(i.invoice_no)}</td>
                     <td style="padding:9px 12px;color:var(--muted);">${i.invoice_date || '-'}</td>
@@ -772,7 +772,7 @@ window.GST_ENGINE = (function() {
                     </td>
                   </tr>
                 `;
-              }).join('') : `
+    }).join('') : `
                 <tr>
                   <td colspan="8" style="text-align:center;padding:30px;color:var(--muted);">
                     No GST Invoices recorded yet. Open any direct booking to generate its first invoice!
@@ -901,7 +901,7 @@ Generated automatically via Roost & Rest Management Portal.`;
       try {
         const { data: rm } = await sb.from('rooms').select('room_id, nickname, unit_no, property_name').eq('room_id', booking.room_id).maybeSingle();
         if (rm) booking.rooms = rm;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (!booking) {
@@ -932,8 +932,8 @@ Generated automatically via Roost & Rest Management Portal.`;
 
     const defaultInvNo = existing ? existing.invoice_no : getNextInvoiceNo(today, defaultIsGST);
     const defaultInvDate = existing ? existing.invoice_date : today;
-    const defaultRate = existing 
-      ? (defaultIsGST ? (existing.gst_rate ?? 5) : 0) 
+    const defaultRate = existing
+      ? (defaultIsGST ? (existing.gst_rate ?? 5) : 0)
       : (defaultIsGST ? (totalAmt / n <= 7500 ? 5 : 18) : 0);
 
     // Form state holder
@@ -1228,11 +1228,11 @@ Generated automatically via Roost & Rest Management Portal.`;
               <div id="uhhInvoicePrintArea" class="uhh-invoice-document invoice-doc" style="padding:10px 0;background:#fff;overflow-x:auto;-webkit-overflow-scrolling:touch;width:100%;">
                 <div style="min-width:640px;background:#fff;margin:0 auto;">
                   ${buildPrintableInvoiceHTML({
-                    ...state,
-                    taxable_value: state.is_gst_invoice ? calc.base : state.total_amount,
-                    cgst: state.is_gst_invoice ? calc.cgst : 0,
-                    sgst: state.is_gst_invoice ? calc.sgst : 0
-                  })}
+        ...state,
+        taxable_value: state.is_gst_invoice ? calc.base : state.total_amount,
+        cgst: state.is_gst_invoice ? calc.cgst : 0,
+        sgst: state.is_gst_invoice ? calc.sgst : 0
+      })}
                 </div>
               </div>
             `}
@@ -1267,12 +1267,12 @@ Generated automatically via Roost & Rest Management Portal.`;
     }
 
     // Interactive Callbacks
-    window._gstSetTab = function(tab) {
+    window._gstSetTab = function (tab) {
       state.activeTab = tab;
       renderModalContent();
     };
 
-    window._gstSetIsGST = function(isG) {
+    window._gstSetIsGST = function (isG) {
       state.is_gst_invoice = isG;
       if (!isG) {
         state.gst_rate = 0;
@@ -1290,7 +1290,7 @@ Generated automatically via Roost & Rest Management Portal.`;
       renderModalContent();
     };
 
-    window._gstRecompute = function() {
+    window._gstRecompute = function () {
       // Re-read inputs safely
       const totInp = document.getElementById('gstInpTotal');
       const nInp = document.getElementById('gstInpNights');
@@ -1301,7 +1301,7 @@ Generated automatically via Roost & Rest Management Portal.`;
       renderModalContent();
     };
 
-    window._gstSaveOnly = async function() {
+    window._gstSaveOnly = async function () {
       // Sync input fields
       const noInp = document.getElementById('gstInpInvNo');
       const dtInp = document.getElementById('gstInpInvDate');
@@ -1330,13 +1330,13 @@ Generated automatically via Roost & Rest Management Portal.`;
       renderModalContent();
     };
 
-    window._gstSaveAndPrint = async function() {
+    window._gstSaveAndPrint = async function () {
       await window._gstSaveOnly();
       modal.remove(); // Safely dismiss modal so mobile print overlay has 100% focus and zero backdrop interference
       printInvoiceDocument(state);
     };
 
-    window._gstDownloadImage = async function() {
+    window._gstDownloadImage = async function () {
       await window._gstSaveOnly();
       const cleanInvNo = String(state.invoice_no || state.booking_id || 'Bill').replace(/[\/\\:*?"<>|]/g, '-');
       const isGST = state.is_gst_invoice === true;
@@ -1373,7 +1373,7 @@ Generated automatically via Roost & Rest Management Portal.`;
             navigator.share({
               files: [file],
               title: title
-            }).catch(() => {});
+            }).catch(() => { });
             return;
           }
           const url = URL.createObjectURL(blob);
@@ -1386,14 +1386,14 @@ Generated automatically via Roost & Rest Management Portal.`;
           setTimeout(() => URL.revokeObjectURL(url), 1000);
           if (window.fsn?.success) fsn.success('Saved', 'Bill image saved successfully!');
         }, 'image/png');
-      } catch(err) {
+      } catch (err) {
         if (tempWrapper.parentNode) tempWrapper.remove();
         console.error('Bill capture error:', err);
         alert('Could not generate bill image: ' + err.message);
       }
     };
 
-    window._gstWhatsApp = function(triggerBtn) {
+    window._gstWhatsApp = function (triggerBtn) {
       // 1. Sync all active form inputs from the modal DOM into state immediately
       const noInp = document.getElementById('gstInpInvNo');
       const dtInp = document.getElementById('gstInpInvDate');
@@ -1448,7 +1448,7 @@ ${isGST ? `📊 *Taxable Base:* ₹${Number(calc.base).toLocaleString('en-IN')} 
 
 ✨ *Roost And Rest Stays Property Management*`;
 
-      const waUrl = fullPhone 
+      const waUrl = fullPhone
         ? `https://wa.me/${fullPhone}?text=${encodeURIComponent(shortMsg)}`
         : `https://wa.me/?text=${encodeURIComponent(shortMsg)}`;
 
@@ -1459,7 +1459,7 @@ ${isGST ? `📊 *Taxable Base:* ₹${Number(calc.base).toLocaleString('en-IN')} 
       }
     };
 
-    window._gstDeleteCurrent = async function() {
+    window._gstDeleteCurrent = async function () {
       if (!confirm(`⚠️ Kya aap is booking (${state.booking_id}) ka invoice delete karna chahte hain?`)) {
         return;
       }
@@ -1484,7 +1484,7 @@ ${isGST ? `📊 *Taxable Base:* ₹${Number(calc.base).toLocaleString('en-IN')} 
   return {
     CO: CO,
     openGSTInvoiceModal: openGSTInvoiceModal,
-    openWithoutGSTInvoiceModal: function(bookingId) {
+    openWithoutGSTInvoiceModal: function (bookingId) {
       return openGSTInvoiceModal(bookingId, 'without_gst');
     },
     openCARegisterModal: openCARegisterModal,
@@ -1503,7 +1503,7 @@ ${isGST ? `📊 *Taxable Base:* ₹${Number(calc.base).toLocaleString('en-IN')} 
 
 // Window level bridges
 window.openGSTInvoiceModal = window.GST_ENGINE.openGSTInvoiceModal;
-window.openWithoutGSTInvoiceModal = function(bookingId) {
+window.openWithoutGSTInvoiceModal = function (bookingId) {
   return window.GST_ENGINE.openWithoutGSTInvoiceModal(bookingId);
 };
 window.openCARegisterModal = window.GST_ENGINE.openCARegisterModal;

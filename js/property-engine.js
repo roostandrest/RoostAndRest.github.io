@@ -320,7 +320,7 @@
               this.prop.base_price = Number(room.rent_per_night);
             }
 
-              // Public website contacts always route to official Host Concierge (+91 94500 55554)
+              // Public website contacts always route to official Host Concierge (+91 9807486555)
               // Individual caretaker phone & check-in details are sent privately via WhatsApp upon confirmed booking
 
             this.renderLocationSection();
@@ -1260,7 +1260,7 @@
       const p = this.prop;
       const titleEl = document.getElementById('luxe-spec-title');
       if (titleEl) {
-        titleEl.textContent = `${p.type || 'Luxury Homestay'} · Superhosts & Owners: Shahanshah & Anwar · Operations Team`;
+        titleEl.textContent = `${p.type || 'Luxury Homestay'} · Superhost & Owner: Anwar Ahmad · Operations Team`;
       }
 
       const pillsEl = document.getElementById('luxe-spec-pills');
@@ -1411,7 +1411,7 @@
           </div>
         `;
       } else {
-        const waMsg = encodeURIComponent(`Hi Mr. Shahanshah, please share the full walkthrough video of ${this.prop.name} on WhatsApp.`);
+        const waMsg = encodeURIComponent(`Hi, please share the full walkthrough video of ${this.prop.name} on WhatsApp.`);
         container.innerHTML = `
           <div class="luxe-video-box" style="background: linear-gradient(135deg, #18202d 0%, #28364b 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30px; color:#fff;">
             <div style="font-size:44px; margin-bottom:12px;">🎬</div>
@@ -1774,7 +1774,7 @@
             📋 Book Now
           </a>
 
-          <!-- Secondary WhatsApp Inquiry link (Mr. Shahanshah 9807486555) -->
+          <!-- Secondary WhatsApp Inquiry link (9807486555) -->
           <a id="luxe-btn-wa-direct" class="luxe-btn-book-primary" style="background:#25d366; margin-top:8px;" href="https://wa.me/919807486555?text=${encodeURIComponent(`Namaste! I have an inquiry about booking ${p.name} from ${this.checkIn} to ${this.checkOut}. Please share details.`)}" target="_blank">
             ${ICONS.whatsapp} Have Questions? WhatsApp Us
           </a>
@@ -1782,7 +1782,7 @@
           <!-- Secondary CTAs -->
           <div class="luxe-card-sub-actions" style="margin-top:14px;">
             <a class="luxe-btn-card-sub" href="tel:+919807486555">
-              📞 Call Host (Shahanshah)
+              📞 Call Host
             </a>
             <button type="button" id="luxe-btn-airbnb-link" class="luxe-btn-card-sub" onclick="window.luxeEngine.openAirbnbModal()">
               View on Airbnb ↗
@@ -1912,7 +1912,7 @@
       const amount = this.totalPayable || (baseTotal + gstAmount);
 
       const upiId = '9807486555@ybl';
-      const upiAltId = 'firozkhan85429189871@axl';
+      const upiAltId = '9807486555@upi';
       const upiString = `upi://pay?pa=${upiId}&pn=The%20Unique%20Haven%20Homes&am=${amount}&cu=INR&tn=Booking%20${encodeURIComponent(p.name)}%20${this.nights}N`;
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=1&data=${encodeURIComponent(upiString)}`;
 
@@ -2413,7 +2413,7 @@
       });
       this.renderInteractiveCalendar();
 
-      // 4. Pre-fill WhatsApp message for Host Mr. Shahanshah (9807486555)
+      // 4. Pre-fill WhatsApp message for Host (9807486555)
       const waReceipt = `🏨 *ROOST AND REST STAYS*
 *DIRECT WEBSITE BOOKING CONFIRMATION*
 ───────────────────────
@@ -2588,7 +2588,7 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
 
           <div style="font-size:11.5px; color:#64748b; margin-bottom:18px; line-height:1.5;">
             📍 <strong>Property Location:</strong> <a href="${details.mapLink}" target="_blank" style="color:#0284c7; text-decoration:underline;">Open Pinpoint on Google Maps ↗</a><br>
-            👑 <strong>Superhosts &amp; Owners:</strong> Anwar Ahmad (+91 82996 00709) &amp; Shahanshah (+91 94500 55554)<br>
+            👑 <strong>Superhost &amp; Owner:</strong> Anwar Ahmad (+91 82996 00709 / +91 9807486555)<br>
             👤 <strong>Manager:</strong> Operations (+91 9807486555) · Office: 10:00 AM – 09:00 PM
           </div>
 
@@ -4392,7 +4392,7 @@ Direct Booking & Photo Album: ${shareUrl}`;
 CIN: U55101UP2026PTC244637 · ROC Kanpur
 Registered Office: P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, UP 226016 - India
 GST SAC Code: 996311 (Short-Stay Accommodation Services)
-Hosts & Helpline: +91 9807486555 (Shahanshah) / +91 9807486555 (Anwar)
+Helpline: +91 9807486555 (Anwar Ahmad)
 
 ==================================================
 OFFICIAL GST TAX INVOICE & BOOKING PASS

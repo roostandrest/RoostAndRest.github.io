@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  const ADMIN_WA   = '919807486555'; // Mr. Shahanshah (+91 94500 55554)
+  const ADMIN_WA   = '919807486555'; // Roost & Rest Official Helpline
   const CHAT_KEY   = 'uhh_chat_history';
   const LEAD_KEY   = 'uhh_chat_lead';
 
@@ -397,7 +397,7 @@
 
   function formatPropertyReply(prop) {
     syncCatalogRatesFromDB();
-    const waMsg = encodeURIComponent(`Namaste Shahanshah ji! I am interested in booking ${prop.name} (${prop.type}) in ${prop.area}. Direct rate: ₹${prop.price.toLocaleString('en-IN')}/night. Please share availability.`);
+    const waMsg = encodeURIComponent(`Namaste! I am interested in booking ${prop.name} (${prop.type}) in ${prop.area}. Direct rate: ₹${prop.price.toLocaleString('en-IN')}/night. Please share availability.`);
     const waUrl = `https://wa.me/${ADMIN_WA}?text=${waMsg}`;
     return {
       text: `Namaste ji! 🙏 **${prop.name}** (${prop.type}) ke baare mein complete details:\n\n` +
@@ -556,10 +556,10 @@
 
       const propText = _leadData.property ? ` for ${_leadData.property}` : '';
       const datesText = _leadData.dates ? ` (${_leadData.dates})` : '';
-      const waMsg = encodeURIComponent(`Namaste Shahanshah ji! I'm ${guestName} (${phoneClean}). I want to book a stay${propText}${datesText} at Roost And Rest Stays. Please share confirmation.`);
+      const waMsg = encodeURIComponent(`Namaste! I'm ${guestName} (${phoneClean}). I want to book a stay${propText}${datesText} at Roost And Rest Stays. Please share confirmation.`);
       return {
-        text: `✅ **Bahut shukriya ${guestName} ji!** 🙏\n\nHamaare host **Mr. Shahanshah (+91 94500 55554)** aapko WhatsApp number **${phoneClean}** par abhi live details aur confirmation voucher bhej rahe hain.\n\nAap chahein to turant WhatsApp par bhi connect kar sakte hain:`,
-        actions: [{ label: '📲 Message Shahanshah on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=${waMsg}` }],
+        text: `✅ **Bahut shukriya ${guestName} ji!** 🙏\n\nHamaare host **Mr. Anwar Ahmad (+91 9807486555)** aapko WhatsApp number **${phoneClean}** par abhi live details aur confirmation voucher bhej rahe hain.\n\nAap chahein to turant WhatsApp par bhi connect kar sakte hain:`,
+        actions: [{ label: '📲 Message Host on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=${waMsg}` }],
         quickReplies: ['Check-in time kya hai?', 'Advance policy?', 'Other options dikhao']
       };
     }
@@ -811,8 +811,8 @@
               `• **15% Flat Savings:** Airbnb aur OTAs 14%–18% guest service fee add karte hain. Direct booking me zero platform fee hoti hai!\n` +
               `• **Verified Superhost Stays:** Same luxury properties, same 4.9★ hospitality standards.\n` +
               `• **Flexible Timings:** Early check-in & late checkout me maximum flexibility.\n` +
-              `• **Personal Host Contact:** Direct co-founder & host Mr. Shahanshah (+91 94500 55554) se round-the-clock support.`,
-        actions: [{ label: '📲 Book Direct & Save 15%', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to book direct to save platform fees.` }],
+              `• **Personal Host Contact:** Direct owner & host Mr. Anwar Ahmad (+91 9807486555) se round-the-clock support.`,
+        actions: [{ label: '📲 Book Direct & Save 15%', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to book direct to save platform fees.` }],
         quickReplies: ['Rates list dikhao 💰', 'Gomti Grand Villa ₹8,000', 'Book now 📅']
       };
     }
@@ -825,8 +825,8 @@
               `• **Monthly Stay (30+ nights):** Up to **25% Super Saver Discount**\n` +
               `• **Medanta Medical Stays:** Special subsidized packages for patient families.\n` +
               `• **Direct Booking Bonus:** 15% less than Airbnb rates.\n\n` +
-              `Best custom quote ke liye seedha host Mr. Shahanshah ji se baat karein!`,
-        actions: [{ label: '📲 Claim Best Discount on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Hi Shahanshah ji! I need a special discount for stay at Roost And Rest Stays.` }],
+              `Best custom quote ke liye seedha host Mr. Anwar Ahmad ji se baat karein!`,
+        actions: [{ label: '📲 Claim Best Discount on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Hi! I need a special discount for stay at Roost And Rest Stays.` }],
         quickReplies: ['Book karna hai 📅', 'Flats ke rates', 'Villas ke rates']
       };
     }
@@ -852,18 +852,16 @@
     }
 
     // 25. HOSTS, FOUNDERS & CONTACT DETAILS
-    if (/host|owner|firoz|shahanshah|praveen|contact|phone|number|call|baat karni/i.test(msg)) {
+    if (/host|owner|contact|phone|number|call|baat karni/i.test(msg)) {
       return {
-        text: `📞 **Roost And Rest Stays — Founder & Host Contacts:**\n\n` +
-              `• 👑 **Mr. Shahanshah (Co-Founder & Host):**\n` +
-              `  📱 **+91 94500 55554** (Direct Calls & WhatsApp)\n\n` +
-              `• ⭐ **Mr. Anwar Ahmad (Superhost & Co-Founder):**\n` +
+        text: `📞 **Roost And Rest Stays — Host & Booking Contacts:**\n\n` +
+              `• ⭐ **Mr. Anwar Ahmad (Superhost & Owner):**\n` +
               `  📱 **+91 82996 00709**\n\n` +
-              `• 🛡️ **Roost & Rest Tech (Operations & Support):**\n` +
+              `• 🛡️ **Roost & Rest Operations & Support:**\n` +
               `  📱 **+91 9807486555**\n\n` +
               `🏢 **Company:** ROOST AND REST STAYS\n` +
               `📍 **Office:** Radhikapuri, Indira Nagar, Lucknow`,
-        actions: [{ label: '📲 Call / WhatsApp Shahanshah (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to inquire about Roost And Rest Stays booking.` }],
+        actions: [{ label: '📲 Call / WhatsApp Support (+91 9807486555)', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to inquire about Roost And Rest Stays booking.` }],
         quickReplies: ['Rates list dikhao 💰', 'Gomti Grand Villa ₹8,000', 'Book now 📅']
       };
     }
@@ -1055,7 +1053,7 @@
         text: `🛡️ **100% Safe for Solo Female & Women Travelers:**\n\n` +
               `• **VIP Gated Colonies:** Hamari sabhi properties safe, affluent VIP neighborhoods (Gomti Nagar & Sushant Golf City) me hain jahan 24/7 security patrolling hoti hai.\n` +
               `• **Zero Interference:** Complete privacy, secure locks, exterior CCTV monitoring.\n` +
-              `• **24/7 Support:** Hamari team aur co-founder Mr. Shahanshah 24 hours kisi bhi zaroorat ke liye available rehte hain.\n` +
+              `• **24/7 Support:** Hamari team aur host Mr. Anwar Ahmad 24 hours kisi bhi zaroorat ke liye available rehte hain.\n` +
               `• Dozens of solo female executives, doctors, and women groups stay with us every month with 5★ ratings!`,
         quickReplies: ['Rates list 💰', '3BHK Flat ₹4,500', 'Book now 📅']
       };
@@ -1085,7 +1083,7 @@
       const datesLabel = _leadData.dates || parsed.dates || 'Aapki dates';
       const guestsLabel = _leadData.guests || parsed.guests || 'Aapke guests';
 
-      const waText = encodeURIComponent(`Namaste Shahanshah ji! I want to book ${propLabel} for ${datesLabel} (${guestsLabel}). Please confirm availability & advance token details.`);
+      const waText = encodeURIComponent(`Namaste! I want to book ${propLabel} for ${datesLabel} (${guestsLabel}). Please confirm availability & advance token details.`);
 
       return {
         text: `✨ **Booking Request Note Kar Li Hai!**\n\n` +
@@ -1114,7 +1112,7 @@
               `3️⃣ **30% advance token** se instant WhatsApp booking voucher & gate pass receive karein!\n\n` +
               `👉 **Neeche diye options me se select karein**, ya\n` +
               `👉 **Seedha type karein** (Jaise: *"10 Oct ko 4 log Gomti Grand Villa"*):`,
-        actions: [{ label: '📲 Direct WhatsApp Host (Mr. Shahanshah)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to book a stay at Roost And Rest Stays. Please share available options.` }],
+        actions: [{ label: '📲 Direct WhatsApp Host', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to book a stay at Roost And Rest Stays. Please share available options.` }],
         quickReplies: [
           '🏡 Gomti Grand Villa (₹8k)',
           '👑 Royal White House (₹12k)',
@@ -1135,7 +1133,7 @@
               `• **Instant Voucher:** Advance transfer hote hi digital booking receipt, check-in instructions aur host location pin WhatsApp par aa jata hai.\n` +
               `• **Balance Payment:** Baaki bacha payment aap property check-in ke time de sakte hain.\n` +
               `• **Zero Security Deposit:** Hum koi security deposit nahi lete!`,
-        actions: [{ label: '📲 Pay Advance & Lock Dates', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to pay advance token and confirm my booking.` }],
+        actions: [{ label: '📲 Pay Advance & Lock Dates', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I want to pay advance token and confirm my booking.` }],
         quickReplies: ['Book karna hai 📅', 'Cancellation refund policy?', 'Gomti Grand Villa ₹8k']
       };
     }
@@ -1147,7 +1145,7 @@
               `• **100% Free Rescheduling:** Agar aapka plan change hota hai aur aap check-in se **48 hours pehle** inform karte hain, to bina kisi deduction ke aapki dates aage badha di jaati hain!\n` +
               `• **Safe Token Guarantee:** Aapka advance amount future stay me 100% adjust hota hai.\n` +
               `• **Zero Hidden Charges:** Full transparency aur guest-first hospitality policy.`,
-        actions: [{ label: '📲 Chat with Host on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I have a question regarding cancellation/rescheduling.` }],
+        actions: [{ label: '📲 Chat with Host on WhatsApp', url: `https://wa.me/${ADMIN_WA}?text=Namaste! I have a question regarding cancellation/rescheduling.` }],
         quickReplies: ['Advance payment rule', 'Check-in timing', 'Book karna hai 📅']
       };
     }
@@ -1195,7 +1193,7 @@
         if (smartReply && smartReply.trim()) {
           return {
             text: smartReply,
-            actions: [{ label: '📲 WhatsApp Host (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent('Namaste! I want to confirm booking with Roost And Rest Stays.')}` }],
+            actions: [{ label: '📲 WhatsApp Host (+91 9807486555)', url: `https://wa.me/${ADMIN_WA}?text=${encodeURIComponent('Namaste! I want to confirm booking with Roost And Rest Stays.')}` }],
             quickReplies: ['Book karna hai 📅', 'Rates list 💰', 'Gomti Grand Villa ₹8k']
           };
         }
@@ -2007,7 +2005,7 @@
           <div class="uhh-chat-header-status" id="uhh-chat-header-status">Roost And Rest Stays · Online</div>
         </div>
         <div class="uhh-chat-header-actions">
-          <a href="tel:+919807486555" class="uhh-header-icon-btn" title="Call Host (+91 94500 55554)" aria-label="Call">
+          <a href="tel:+919807486555" class="uhh-header-icon-btn" title="Call Host (+91 9807486555)" aria-label="Call">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
           </a>
           <a href="https://wa.me/919807486555?text=Namaste!%20I%20am%20looking%20for%20stay%20at%20Unique%20Haven%20Homes." target="_blank" rel="noopener" class="uhh-header-icon-btn" title="Direct WhatsApp" aria-label="WhatsApp">

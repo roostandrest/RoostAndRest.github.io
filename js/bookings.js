@@ -130,7 +130,7 @@ window.rejectBooking = async function(bkId) {
   if (window.closeBookingDrawer) closeBookingDrawer();
 };
 
-// ─── FOUNDER SPECIAL DISCOUNT MODAL (Mr. Anwar Ahmad & Mr. Shahanshah) ───
+// ─── FOUNDER SPECIAL DISCOUNT MODAL (Mr. Anwar Ahmad) ───
 window.openFounderDiscountModal = async function(bkId) {
   if (!isTrustedUser()) { fsn.error('Denied', 'Only founders/owners can apply special discounts'); return; }
   
@@ -162,7 +162,7 @@ window.openFounderDiscountModal = async function(bkId) {
           <div style="font-size:24px;">👑</div>
           <div>
             <div style="font-size:16px;font-weight:800;letter-spacing:-0.02em;">Founder Special Discount</div>
-            <div style="font-size:11.5px;opacity:0.9;">Mr. Anwar Ahmad &amp; Mr. Shahanshah Exclusive Host Authority</div>
+            <div style="font-size:11.5px;opacity:0.9;">Mr. Anwar Ahmad Exclusive Host Authority</div>
           </div>
         </div>
         <button onclick="document.getElementById('founderDiscountModalOverlay').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:14px;font-weight:700;">✕</button>
@@ -186,10 +186,8 @@ window.openFounderDiscountModal = async function(bkId) {
         <!-- Authorized By -->
         <div>
           <label style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:6px;">Discount Granted By:</label>
-          <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;">
-            <button type="button" class="fd-auth-btn" data-auth="Mr. Shahanshah" onclick="window.selectFdAuth(this)" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#334155;cursor:pointer;">Shahanshah</button>
-            <button type="button" class="fd-auth-btn" data-auth="Mr. Anwar Ahmad" onclick="window.selectFdAuth(this)" style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#334155;cursor:pointer;">Anwar Ahmad</button>
-            <button type="button" class="fd-auth-btn active" data-auth="Founders Shahanshah &amp; Anwar" onclick="window.selectFdAuth(this)" style="background:#e0e7ff;border:1.5px solid #6366f1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#4338ca;cursor:pointer;">Both Founders</button>
+          <div style="display:grid;grid-template-columns:1fr;gap:6px;">
+            <button type="button" class="fd-auth-btn active" data-auth="Mr. Anwar Ahmad" onclick="window.selectFdAuth(this)" style="background:#e0e7ff;border:1.5px solid #6366f1;border-radius:8px;padding:8px 6px;font-size:11.5px;font-weight:700;color:#4338ca;cursor:pointer;">Mr. Anwar Ahmad (Owner)</button>
           </div>
         </div>
 
@@ -237,7 +235,7 @@ window.openFounderDiscountModal = async function(bkId) {
         <!-- Founder Notes -->
         <div>
           <label style="display:block;font-size:11.5px;font-weight:700;color:#64748b;margin-bottom:4px;">Booking Note / Special Privilege Reason</label>
-          <input type="text" id="fdNote" value="Special Founder Discount approved by Shahanshah &amp; Anwar Ahmad" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;box-sizing:border-box;" />
+          <input type="text" id="fdNote" value="Special Founder Discount approved by Anwar Ahmad" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;box-sizing:border-box;" />
         </div>
 
       </div>
@@ -262,7 +260,7 @@ window.openFounderDiscountModal = async function(bkId) {
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
   window._fdOrigTotal = origTotal;
-  window._fdSelectedAuth = 'Founders Shahanshah & Anwar';
+  window._fdSelectedAuth = 'Mr. Anwar Ahmad';
   window.recalcFd();
 };
 
@@ -277,7 +275,7 @@ window.selectFdAuth = function(btn) {
   btn.style.background = '#e0e7ff';
   btn.style.borderColor = '#6366f1';
   btn.style.color = '#4338ca';
-  window._fdSelectedAuth = btn.getAttribute('data-auth') || 'Founders Shahanshah & Anwar';
+  window._fdSelectedAuth = btn.getAttribute('data-auth') || 'Mr. Anwar Ahmad';
   const noteEl = document.getElementById('fdNote');
   if (noteEl) {
     noteEl.value = `Special Founder Discount approved by ${window._fdSelectedAuth}`;
@@ -322,7 +320,7 @@ window.submitFounderDiscount = async function(bkId, origTotal, andApprove) {
   if (!isTrustedUser()) { fsn.error('Denied', 'Only owner/developer can modify discount'); return; }
   const discountAmt = window._fdCalculatedDiscount !== undefined ? window._fdCalculatedDiscount : 0;
   const finalTotal = window._fdCalculatedFinal !== undefined ? window._fdCalculatedFinal : origTotal;
-  const auth = window._fdSelectedAuth || 'Founders Shahanshah & Anwar';
+  const auth = window._fdSelectedAuth || 'Mr. Anwar Ahmad';
   const customNote = document.getElementById('fdNote')?.value?.trim() || `Special Founder Discount approved by ${auth}`;
 
   const updatePayload = {
@@ -2676,7 +2674,7 @@ async function renderManageBookings() {
         ${canM ? `<button class="btn-sm" onclick="renderAddBooking()">➕ New Booking</button>` : ''}
         <button class="btn-sm outline" onclick="exportBookingsPDF()">📄 Export PDF</button>
         <button class="btn-sm" onclick="exportBookingsCSV()" style="background:#059669;color:#fff;border:none;font-weight:700;">📥 Export CSV</button>
-        ${(window.isPraveenUser && window.isPraveenUser()) ? `
+        ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
           <button type="button" class="btn-sm" onclick="window.openDeletedBookingsVaultModal()" style="background:#0F172A;color:#F8FAFC;border:1px solid #334155;font-weight:700;display:inline-flex;align-items:center;gap:6px;" title="Deleted Bookings Trash Vault (System Admin Only)">
             <span>🗑️ Deleted Vault</span>
           </button>
@@ -5792,7 +5790,7 @@ async function delBooking(bkId, guestName, roomId) {
       console.warn('Vault backup warning:', vErr);
     }
 
-    // 5. Delete from active payment_history & guest_register (Photos kept safe so Praveen can restore)
+    // 5. Delete from active payment_history & guest_register (Photos kept safe so Admin can restore)
     await sb.from('payment_history').delete().eq('booking_id', bkId);
     // Record dismissed block tombstone if this was a blocked slot
     if (String(bkId).startsWith('BLK_') || bk?.booking_mode === 'Offline-Blocked' || (bk?.guest_name && bk.guest_name.toLowerCase().includes('blocked'))) {
@@ -5880,9 +5878,9 @@ window.delBooking = delBooking;
 window.deleteBooking = delBooking;
 window.archiveAndSoftDeleteBooking = delBooking;
 
-// ============ PRAVEEN-EXCLUSIVE RESTORE FROM VAULT ============
+// ============ ADMIN RESTORE FROM VAULT ============
 window.restoreDeletedBooking = async function(bkId) {
-  if (!window.isPraveenUser || !window.isPraveenUser()) {
+  if (!window.isDeveloperUser || !window.isDeveloperUser()) {
     const msg = '🔒 Access Denied: Only System Administrator has permission to view or restore deleted bookings.';
     if (window.fsn) fsn.error('Access Denied', msg);
     else alert(msg);
@@ -5971,9 +5969,9 @@ window.restoreDeletedBooking = async function(bkId) {
   }
 };
 
-// ============ PRAVEEN-EXCLUSIVE TRASH VAULT MODAL ============
+// ============ ADMIN TRASH VAULT MODAL ============
 window.openDeletedBookingsVaultModal = async function() {
-  if (!window.isPraveenUser || !window.isPraveenUser()) {
+  if (!window.isDeveloperUser || !window.isDeveloperUser()) {
     alert('🔒 Access Denied: Only System Administrator has permission to view the Deleted Bookings Vault.');
     return;
   }
@@ -6091,7 +6089,7 @@ async function loadReceiveByHolders() {
 window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, customEl) {
   if (!selectEl) return;
   const s = String(currentVal || '').toUpperCase();
-  const isAnwar = s.includes('ANWAR') || s.includes('FIROZ') || (mode === 'Cash' && !s.includes('OD') && !s.includes('BANK'));
+  const isAnwar = s.includes('ANWAR') || (mode === 'Cash' && !s.includes('OD') && !s.includes('BANK'));
 
   selectEl.innerHTML = `
     <option value="Roost&rest-Od" ${!isAnwar ? 'selected' : ''}>🏦 Roost&rest-Od (Company Current A/c)</option>
@@ -6132,7 +6130,7 @@ window.onPayModeChange = async function() {
   let curr = typeof getReceiverValue === 'function' ? getReceiverValue('payReceivedBy', 'payReceivedByCustom') : receivedByEl.value;
   if (mode === 'UPI') {
     // When UPI is selected, auto-default to Anwar
-    if (!curr || curr === 'Cash' || curr === 'Shahenshah' || curr === 'Praveen') {
+    if (!curr || curr === 'Cash') {
       curr = 'Anwar';
     }
   }
@@ -8991,8 +8989,8 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
 
   // Payees Definition
   const PAYEES = {
-    firoz: {
-      id: 'firoz',
+    anwar: {
+      id: 'anwar',
       name: 'Mr. Anwar Ahmad',
       upiId: '9807486555@upi',
       phone: '+91 82996 00709',
@@ -9006,7 +9004,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
       label: 'Roost&rest-Od'
     },
   };
-  let currentPayee = 'firoz';
+  let currentPayee = 'anwar';
 
   // 2. Remove existing overlay if any
   document.getElementById('customPaymentQrOverlay')?.remove();
@@ -9220,7 +9218,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
 
   function setPayee(key) {
     currentPayee = key;
-    if (key === 'firoz') {
+    if (key === 'anwar') {
       if (payeeAnwarBtn) {
         payeeAnwarBtn.style.border = '2px solid #4F46E5';
         payeeAnwarBtn.style.background = '#EEF2FF';
@@ -9258,7 +9256,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     updateLivePreview();
   }
 
-  if (payeeAnwarBtn) payeeAnwarBtn.addEventListener('click', () => setPayee('firoz'));
+  if (payeeAnwarBtn) payeeAnwarBtn.addEventListener('click', () => setPayee('anwar'));
   if (payeeRoostBankBtn) payeeRoostBankBtn.addEventListener('click', () => setPayee('roost_bank'));
   
 
@@ -9297,7 +9295,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     const amt = Math.max(0, parseInt(amtIn.value) || 0);
     const roomFull = getSelectedRoomLabel();
     const roomShort = getSelectedRoomShort();
-    const payee = PAYEES[currentPayee] || PAYEES.firoz;
+    const payee = PAYEES[currentPayee] || PAYEES.anwar;
 
     // Clean alphanumeric note for UPI transaction (max 40 chars, e.g. "Rohit Singh - FLAT501" or "FLAT501 Stay")
     const cleanGuest = rawGuest.replace(/[^a-zA-Z0-9 ]/g, '').trim().slice(0, 20);

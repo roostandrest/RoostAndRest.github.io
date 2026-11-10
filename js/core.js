@@ -256,16 +256,12 @@ window.isDeveloperUser = function(userId, email, displayName, role) {
   if (r === 'developer') return true;
   const uid = (userId || window.SESSION?.userId || '').toLowerCase();
   const em = (email || window.SESSION?.email || '').toLowerCase();
-  const name = (displayName || window.SESSION?.displayName || '').toLowerCase();
-  if (uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa') return true;
-  if (em === 'tech@roostandrest.com' || em.includes('praveensingh')) return true;
-  if (name.includes('praveen')) return true;
+  if (uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa' || uid === 'e3717cbd-da9a-495e-a940-2995021e8ca2') return true;
+  if (em === 'tech@roostandrest.com' || em === 'admin@roostandrest.github.io') return true;
   return false;
 };
 
-window.isPraveenUser = window.isDeveloperUser;
-
-window.isCurrentSessionPraveen = function() {
+window.isCurrentSessionDev = function() {
   if (!window.SESSION) return false;
   return window.isDeveloperUser(SESSION.userId, SESSION.email, SESSION.displayName, SESSION.role);
 };
@@ -913,11 +909,11 @@ async function loadProfile(userId) {
   if (window.UserActivityTracker) {
     window.UserActivityTracker.recordLogin(userId, SESSION.displayName, p.role);
   }
-  // 🔔 DYNAMIC LOGIN NOTIFICATION: Send alert whenever ANY user logs in (ANY ROLE: admin, owner, manager, staff, etc.) who is not Praveen
-  const isPraveenLoggingIn = window.isPraveenUser
-    ? window.isPraveenUser(userId, SESSION.email, SESSION.displayName, p.role)
-    : ((SESSION.displayName || '').toLowerCase().includes('praveen') || (SESSION.email || '').toLowerCase().includes('praveensingh'));
-  if (!isPraveenLoggingIn) {
+  // 🔔 DYNAMIC LOGIN NOTIFICATION: Send alert whenever ANY user logs in (ANY ROLE: admin, owner, manager, staff, etc.) who is not Developer
+  const isDevLoggingIn = window.isDeveloperUser
+    ? window.isDeveloperUser(userId, SESSION.email, SESSION.displayName, p.role)
+    : false;
+  if (!isDevLoggingIn) {
     if (window.DevLoginAlert && typeof window.DevLoginAlert.notifyDevOnLogin === 'function') {
       window.DevLoginAlert.notifyDevOnLogin(userId, SESSION.displayName, p.role, SESSION.email);
     } else {
@@ -1640,7 +1636,7 @@ function renderShell(content, activePage = 'dashboard') {
 
   // Minimal, uncluttered left drawer list as requested by user
   if (isPureOwner) {
-    // 👑 OWNER ROLE (Anwar, Shanshah) — Full business access, restricted admin pages
+    // 👑 OWNER ROLE (Anwar) — Full business access, restricted admin pages
     // Hidden: User Management, Laundry, HRMS & Tasks, WhatsApp Hub, Help & Guide
     nav = [
       ['dashboard', 'Today · Operations'],
@@ -1733,17 +1729,6 @@ function renderShell(content, activePage = 'dashboard') {
   };
   const displayBadge = CUSTOM_BADGES[SESSION.userId] || roleLabel;
 
-  // Strict Praveen-Only Authorization Guard for sensitive operations (Restore deleted bookings, master audit)
-  window.isPraveenUser = function() {
-    const s = window.SESSION || {};
-    const email = (s.email || '').toLowerCase().trim();
-    const uid = (s.userId || '').toLowerCase().trim();
-    const name = (s.displayName || '').toLowerCase().trim();
-    return email === 'tech@roostandrest.com' ||
-           uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa' ||
-           s.role === 'developer' ||
-           name.includes('praveen');
-  };
 
   const PAGE_TITLES = {
     dashboard: { title: "Today's Operations Hub", sub: 'Guest check-ins, check-outs & in-house stays', icon: '🏠' },
@@ -2214,7 +2199,7 @@ function renderShell(content, activePage = 'dashboard') {
     if (dName && dName !== 'User' && dName !== 'Staff') {
       return dName;
     }
-    // If user has email username (e.g. praveensinghaws)
+    // If user has email username
     if (emailHandle) {
       return emailHandle;
     }
@@ -2991,7 +2976,7 @@ async function renderUserManagement() {
   ]);
 
   let userList = (profiles || []).map(u => {
-    if ((u.display_name || '').toLowerCase().includes('praveen') || u.role === 'developer') {
+    if (u.role === 'developer') {
       return { ...u, display_name: 'Roost & Rest Tech' };
     }
     return u;
@@ -4363,7 +4348,7 @@ async function startHeartbeat() {
   if (window.UserActivityTracker) {
     window.UserActivityTracker.pulseActivity(SESSION.userId, SESSION.displayName, SESSION.role);
   }
-  if (window.isCurrentSessionPraveen && window.isCurrentSessionPraveen() && window.DevLoginAlert?.pollNewAlertsForDev) {
+  if (window.isCurrentSessionDev && window.isCurrentSessionDev() && window.DevLoginAlert?.pollNewAlertsForDev) {
     window.DevLoginAlert.pollNewAlertsForDev();
   }
   // Then every 30 seconds
@@ -4373,7 +4358,7 @@ async function startHeartbeat() {
       if (window.UserActivityTracker) {
         window.UserActivityTracker.pulseActivity(SESSION.userId, SESSION.displayName, SESSION.role);
       }
-      if (window.isCurrentSessionPraveen && window.isCurrentSessionPraveen() && window.DevLoginAlert?.pollNewAlertsForDev) {
+      if (window.isCurrentSessionDev && window.isCurrentSessionDev() && window.DevLoginAlert?.pollNewAlertsForDev) {
         window.DevLoginAlert.pollNewAlertsForDev();
       }
     }
@@ -5324,7 +5309,7 @@ window.forceLogoutAll = async function() {
         const data = ev.data;
         if (!data || data.type !== 'FORCE_LOGOUT') return;
         if (!SESSION.userId) return;
-        // Do not logout the issuer (Praveen)
+        // Do not logout the issuer
         if (SESSION.userId === data.issuer) return;
 
         if (data.target === 'ALL' || data.target === SESSION.userId) {
@@ -5436,7 +5421,7 @@ async function loadCashHolders(forceRefresh = false) {
 // Master Universal 2-Option Payment Source Dropdown (Roost&rest-Od, Anwar)
 window.renderCashHolderDropdown = async function(elementId, selectedVal) {
   const s = String(selectedVal || 'Roost&rest-Od').toUpperCase();
-  const isAnwar = s.includes('ANWAR') || s.includes('FIROZ') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'));
+  const isAnwar = s.includes('ANWAR') || (s.includes('CASH') && !s.includes('OD') && !s.includes('BANK'));
   
   return `
     <select id="${elementId}" name="${elementId}" class="form-select form-control" style="border: 1.5px solid #B45309; font-weight: 700; padding: 10px; border-radius: 8px; width: 100%; background: #ffffff; color: #0f172a;">
@@ -6438,6 +6423,15 @@ function renderAppMenu() {
               <div class="roost-row-sub">System configuration, API keys &amp; company profile</div>
             </div>
             <i class="ti ti-chevron-right roost-chevron"></i>
+          </div>
+
+          <div class="roost-menu-row" onclick="window.promptPWAInstall && window.promptPWAInstall()" style="background:#F0FDF4;border:1px solid #BBF7D0;">
+            <div class="roost-icon-box" style="background:#DCFCE7;color:#16A34A;"><i class="ti ti-device-mobile"></i></div>
+            <div class="roost-row-content">
+              <div class="roost-row-title" style="color:#15803D;font-weight:700;">Install Mobile App (PWA)</div>
+              <div class="roost-row-sub">Add Roost CRM to your mobile home screen</div>
+            </div>
+            <i class="ti ti-download roost-chevron" style="color:#16A34A;"></i>
           </div>
 
           <div class="roost-menu-row roost-logout-row" onclick="document.getElementById('logoutBtn')?.click()">

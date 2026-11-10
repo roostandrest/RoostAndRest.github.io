@@ -17,9 +17,8 @@
 (function (window) {
   'use strict';
 
-  // Default Host Contacts
-  const HOST_SHAHANSHAH = '919807486555'; // Co-founder & Host
-  const HOST_FIROZ      = '919807486555'; // Superhost & Co-founder
+  // Default Host Contact
+  const HOST_CONTACT = '919807486555'; // Host & Official Support
   // Storage Keys
   const GEMINI_KEY_STORAGE = 'uhh_gemini_api_key';
   const SARVAM_KEY_STORAGE = 'uhh_sarvam_api_key';
@@ -220,7 +219,7 @@
           `👥 *Guests:* ${guests || 'Not specified'}\n\n` +
           `Action: Kindly confirm availability & advance token ASAP! 🙏`
         );
-        const waUrl = `https://wa.me/${HOST_SHAHANSHAH}?text=${adminMsg}`;
+        const waUrl = `https://wa.me/${HOST_CONTACT}?text=${adminMsg}`;
 
         return { success: true, waUrl, message: 'Lead captured successfully.' };
       } catch (err) {
@@ -243,7 +242,7 @@
           phone: phone,
           notes: userText
         });
-        return `Dhanyawad ji! 🙏 Aapka number (${phone}) maine note kar liya hai. Hamare co-founder Mr. Shahanshah (+91 94500 55554) aapko 5 minute ke andar WhatsApp par best direct discount aur available flats ki photos bhej rahe hain!`;
+        return `Dhanyawad ji! 🙏 Aapka number (${phone}) maine note kar liya hai. Hamare host Mr. Anwar Ahmad (+91 9807486555) aapko 5 minute ke andar WhatsApp par best direct discount aur available flats ki photos bhej rahe hain!`;
       }
 
       // 0. SPECIFIC PROPERTY LOOKUP (Matches by exact/partial/phonetic property names)
@@ -488,7 +487,7 @@
 
       // 7C. Photoshoots & Pre-Wedding
       if (/(photoshoot|shoot|pre wedding|reels|camera|फोटोशूट|शूट|रील|कैमरा)/i.test(q)) {
-        return `Haanji! The Pink House, Royal White House aur Gomti Grand Villa pre-wedding aur aesthetic video shoots ke liye Lucknow me best locations hain. Shoot timing aur equipment permissions ke liye aap WhatsApp (+91 94500 55554) par coordinate kar sakte hain!`;
+        return `Haanji! The Pink House, Royal White House aur Gomti Grand Villa pre-wedding aur aesthetic video shoots ke liye Lucknow me best locations hain. Shoot timing aur equipment permissions ke liye aap WhatsApp (+91 9807486555) par coordinate kar sakte hain!`;
       }
 
       // 7D. Medanta Hospital & Patient Stays
@@ -517,11 +516,10 @@
       }
 
       // 8. Contact Hosts
-      if (/(contact|phone|call|number|firoz|shahanshah|host|owner|फोन|नंबर|कॉल|बात|मालिक|संपर्क)/i.test(q)) {
-        return `Aap hamare hosts se directly phone ya WhatsApp par baat kar sakte hain:\n\n` +
-          `👑 **Mr. Shahanshah (Founder & Host):** +91 94500 55554\n` +
-          `⭐ **Mr. Anwar Ahmad (Superhost):** +91 82996 00709\n\n` +
-          `Dono numbers par 24/7 call aur WhatsApp active hai!`;
+      if (/(contact|phone|call|number|host|owner|फोन|नंबर|कॉल|बात|मालिक|संपर्क)/i.test(q)) {
+        return `Aap hamare host se directly phone ya WhatsApp par baat kar sakte hain:\n\n` +
+          `⭐ **Mr. Anwar Ahmad (Host & Owner):** +91 82996 00709 / +91 9807486555\n\n` +
+          `24/7 call aur WhatsApp active hai!`;
       }
 
       // 9. Booking / Availability
@@ -569,7 +567,7 @@ KEY POLICIES & AMENITIES:
 - Free dedicated parking and elevator access in apartment buildings
 - Distances: 5 mins to Lulu Mall & Medanta, 7 mins to Ekana Cricket Stadium, 20 mins to Airport (via Shaheed Path)
 - Caretakers on-ground: Arman (+91 8467080284) for Gomti Nagar flats, Aniket (+91 9214246820) for Vishesh Khand villas, Sarvan (+91 8858034382) for Golf City/Lulu stays
-- Founder & Host Contacts: Mr. Shahanshah (+91 94500 55554) & Mr. Anwar Ahmad (+91 82996 00709)
+- Host & Owner Contact: Mr. Anwar Ahmad (+91 82996 00709 / +91 9807486555)
 - Property Operations Team (+91 9807486555)
 
 LEAD CAPTURE:

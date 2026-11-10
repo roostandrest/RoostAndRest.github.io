@@ -1,28 +1,63 @@
 {
   "name": "Roost And Rest CRM",
-  "short_name": "Roost & Rest",
+  "short_name": "Roost CRM",
+  "id": "/index.html",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#2C241E",
+  "display_override": ["standalone", "window-controls-overlay"],
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
   "description": "Roost And Rest Homestays & Stays Enterprise CRM • Lucknow",
+  "orientation": "any",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/logo.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Operations",
+      "short_name": "Operations",
+      "description": "Today's check-ins, check-outs and in-house stays",
+      "url": "./index.html#dashboard",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Bookings Management",
+      "short_name": "Bookings",
+      "description": "View and manage all reservations",
+      "url": "./index.html#bookings",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Properties",
+      "short_name": "Properties",
+      "description": "View all rooms and inventory",
+      "url": "./index.html#flats",
+      "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }

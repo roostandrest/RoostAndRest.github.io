@@ -5,7 +5,6 @@
 
 // ═══ HARDCODED: Business Owners (Escalation) ═══
 const OWNERS = [
-  { name: 'Mr. Shahanshah', phone: '9807486555' },
   { name: 'Mr. Anwar Ahmad', phone: '9807486555' }
 ];
 
@@ -78,7 +77,7 @@ async function buildMessageData(bkId) {
       // 3. Must NOT be manager (Roost & Rest Tech has dedicated Property Manager section)
       const roleStr = String(e.role || '').toLowerCase();
       const nameStr = String(e.name || '').toLowerCase();
-      if (nameStr.includes('praveen') || roleStr.includes('manager')) return false;
+      if (roleStr.includes('manager')) return false;
 
       // 4. Must be Caretaker role
       const propRole = String(e.property_role || '').toLowerCase();
@@ -282,7 +281,6 @@ We want to keep the neighbourhood peaceful for everyone.
 
 *Contact*
 If you need anything, message me anytime or call directly
-📞Mr Shahansha 9807486555
 📞Mr Anwar khan 9807486555
 Happy to help whenever you need.
 🌐 ${d.websiteURL || 'https://roostandrest.github.io'}`;
@@ -324,8 +322,7 @@ Thank you for choosing *Roost And Rest Stays*. Your direct reservation has been 
 
 👤 *Property Manager:* ${d.manager.name} (${d.manager.phone})
 
-👑 *Company Owners:*
-• Mr. Shahanshah: 9807486555
+👑 *Company Owner:*
 • Mr. Anwar Ahmad: 9807486555
 
 📋 *Key Check-in Instructions:*
@@ -390,7 +387,6 @@ ${d.caretakerBlock}
 • Please check all personal belongings
 
 *Assistance / Queries:*
-📞 Mr. Shahanshah: 9807486555
 📞 Mr. Anwar Ahmad: 9807486555
 
 Need an extension? Reply here to check availability.

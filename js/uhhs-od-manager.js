@@ -11,7 +11,7 @@ const UHHS_PAYMENT_SOURCES = {
 // 1. Payment Source Dropdown HTML Generator (strictly Roost&rest-Od and Anwar)
 function getPaymentSourceDropdownHTML(selected = 'Roost&rest-Od', id = 'payment_source') {
     const s = String(selected || 'Roost&rest-Od').toUpperCase();
-    const isAnwar = s.includes('ANWAR') || s.includes('FIROZ') || s.includes('COMPANY') || (s.includes('CASH') && !s.includes('OD'));
+    const isAnwar = s.includes('ANWAR') || s.includes('COMPANY') || (s.includes('CASH') && !s.includes('OD'));
     return `
         <div class="form-group mb-2">
             <label class="form-label fw-bold" style="font-size:13px; color:#333;">
@@ -190,7 +190,7 @@ const BASELINE_OD_ENTRIES = [
         amount: 77962,
         transaction_type: 'INFLOW',
         payment_mode: 'BANK',
-        received_from: 'FIROZ / COMPANY SETTLEMENT',
+        received_from: 'ANWAR / COMPANY SETTLEMENT',
         reference_note: 'Account reconciled and balanced to ₹0 as of 16-Sep-2026 11:59 PM. New active tracking starts 17-Sep-2026.'
     }
 ];
@@ -1113,7 +1113,7 @@ window.cbReturnFromODModal = function() {
             <div class="form-group" style="margin-bottom:12px;">
                 <label style="font-weight:700;font-size:13px;display:block;margin-bottom:5px;color:#1e293b;">Returned To *</label>
                 <select id="odRetTo" style="width:100%;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:16px;box-sizing:border-box;background:#fff;">
-                    <option value="FIROZ">👤 Anwar Ahmad</option>
+                    <option value="ANWAR">👤 Anwar Ahmad</option>
                     <option value="COMPANY">🏢 Company Bank Account</option>
                 </select>
             </div>
@@ -1183,7 +1183,7 @@ window.cbSaveODReturn = async function() {
                 try {
                     await client.from('cash_handovers').insert([{
                         from_person: 'ROOST-BANK',
-                        to_person: target === 'FIROZ' ? 'Anwar' : 'Company',
+                        to_person: target === 'ANWAR' ? 'Anwar' : 'Company',
                         amount: amount,
                         handover_date: date,
                         notes: `Cash return from ROOST-BANK | ${note || ''}`,

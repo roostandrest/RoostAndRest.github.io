@@ -15,12 +15,11 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
     cin:        'U55101UP2026PTC244637',
     pan:        'ABECT9843K',
     address:    'P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, Uttar Pradesh – 226016',
-    phone:      '+91 94500 55554',
+    phone:      '+91 9807486555',
     phone2:     '+91 82996 00709',
     managerPhone: '+91 9807486555',
     managerName: 'Anwar Ahmad',
     owners: [
-      { name: 'Mr. Shahanshah', phone: '+91 94500 55554' },
       { name: 'Mr. Anwar Ahmad', phone: '+91 82996 00709' }
     ],
     email:      'theroostandrestlucknow@gmail.com',
@@ -708,8 +707,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
 ▪️ *Balance Due:* ₹${balanceDue.toLocaleString('en-IN')} ${balanceDue > 0 ? '⚠️ (Payable at Check-in)' : '✅ (Fully Cleared)'}
 ━━━━━━━━━━━━━━━━━━━━${secAmount > 0 ? `\n🛡️ *Security Deposit Policy:* ₹${secAmount.toLocaleString('en-IN')} is 100% refundable at check-out post room & inventory inspection.\n` : ''}${payHistoryText}${customNotes ? `\n\n📝 *Special Request & Notes:* ${customNotes}` : ''}
 
-👑 *Company Owners / Directors:*
-• Mr. Shahanshah: +91 94500 55554
+👑 *Company Owner / Director:*
 • Mr. Anwar Ahmad: +91 82996 00709
 
 📋 *Key Check-in Instructions:*
@@ -1428,12 +1426,12 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- Support Strip -->
         <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
           <div>
-            👑 <strong>Director / Owner:</strong> Shahanshah<br>
-            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 94500 55554</a>
+            👑 <strong>Director / Owner:</strong> Anwar Ahmad<br>
+            📞 <a href="tel:+918299600709" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
           </div>
           <div>
-            👑 <strong>Director / Owner:</strong> Anwar Ahmad<br>
-            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
+            🛡️ <strong>Support &amp; Helpline:</strong> Operations<br>
+            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 9807486555</a>
           </div>
         </div>
 
@@ -2418,8 +2416,7 @@ ${propertiesList}
 ▪️ *Balance Due at Check-in:* ₹${balanceDue.toLocaleString('en-IN')} ${balanceDue > 0 ? '⚠️ (Payable upon arrival)' : '✅ (Fully Cleared)'}
 ━━━━━━━━━━━━━━━━━━━━${payHistoryText}${groupNotes ? `\n\n📝 *Special Note:* ${groupNotes}` : ''}
 
-👑 *Company Owners / Directors:*
-• Mr. Shahanshah: +91 94500 55554
+👑 *Company Owner / Director:*
 • Mr. Anwar Ahmad: +91 82996 00709
 
 📋 *Key Check-in Instructions:*

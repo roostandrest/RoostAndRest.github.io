@@ -8,7 +8,7 @@ function isEmpCleanerPieceRate(e) {
   if (savedType === 'per_flat') return true;
   if (savedType === 'monthly') return false;
   const name = (e.name || '').toLowerCase();
-  if (name.includes('praveen') || name.includes('arman') || name.includes('shuaib') || name.includes('aniket')) return false;
+  if (name.includes('arman') || name.includes('shuaib') || name.includes('aniket')) return false;
   if (name.includes('kanchan') || name.includes('shalu') || name.includes('laxmi')) return true;
   const role = (e.role || '').toLowerCase();
   return role.includes('maid') || role.includes('clean');
@@ -110,16 +110,16 @@ async function renderManageEmployees() {
   window._allEmployees = emps || [];
   window._allRooms = rooms || [];
   // Auto-sync Management Team to all registered rooms
-  const praveenEmp = (emps || []).find(e => (e.name || '').toLowerCase().includes('praveen'));
-  if (praveenEmp && rooms && rooms.length > 0) {
+  const managerEmp = (emps || []).find(e => (e.role || '').toLowerCase().includes('manager'));
+  if (managerEmp && rooms && rooms.length > 0) {
     const allRoomIds = rooms.map(r => r.room_id).join(',');
-    const curAssigned = (praveenEmp.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
+    const curAssigned = (managerEmp.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
     if (curAssigned.length < rooms.length) {
-      praveenEmp.assigned_rooms = allRoomIds;
+      managerEmp.assigned_rooms = allRoomIds;
       (async () => {
         try {
           if (window.sb) {
-            await sb.from('employees').update({ assigned_rooms: allRoomIds }).eq('emp_id', praveenEmp.emp_id);
+            await sb.from('employees').update({ assigned_rooms: allRoomIds }).eq('emp_id', managerEmp.emp_id);
           }
         } catch(e) {}
       })();
@@ -318,7 +318,7 @@ function renderEmployeeCardsView(emps, isO, roomMap) {
         const isActive = isEmployeeActive(e);
         const assignedArr = (e.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
               const totalPropsCount = Object.keys(roomMap).length || (window._allRooms || []).length || 18;
-              const isAllAssigned = assignedArr.length >= (totalPropsCount - 1) || (e.role && e.role.toLowerCase().includes('manager')) || (e.name && e.name.toLowerCase().includes('praveen'));
+              const isAllAssigned = assignedArr.length >= (totalPropsCount - 1) || (e.role && e.role.toLowerCase().includes('manager'));
         const cleanPhone = (e.phone || '').replace(/\D/g, '');
         const whatsappPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
         const initial = (e.name || 'S').trim().charAt(0).toUpperCase();
@@ -474,7 +474,7 @@ function renderEmployeeTableView(emps, isO, roomMap) {
               const isActive = isEmployeeActive(e);
               const assignedArr = (e.assigned_rooms || '').split(',').map(s => s.trim()).filter(Boolean);
               const totalPropsCount = Object.keys(roomMap).length || (window._allRooms || []).length || 18;
-              const isAllAssigned = assignedArr.length >= (totalPropsCount - 1) || (e.role && e.role.toLowerCase().includes('manager')) || (e.name && e.name.toLowerCase().includes('praveen'));
+              const isAllAssigned = assignedArr.length >= (totalPropsCount - 1) || (e.role && e.role.toLowerCase().includes('manager'));
               const cleanPhone = (e.phone || '').replace(/\D/g, '');
               const whatsappPhone = cleanPhone.length === 10 ? '91' + cleanPhone : cleanPhone;
               const initial = (e.name || 'S').trim().charAt(0).toUpperCase();
@@ -3210,7 +3210,7 @@ async function renderAddAdv() {
           <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
             <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
-            <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
+            <option value="ANWAR">👤 Anwar (Direct Personal)</option>
           </select>
         </div>
       </div>
@@ -3328,7 +3328,7 @@ async function editAdv(id) {
           <select id="aPaidBy" style="border: 1.5px solid #0d6efd; font-weight: 600;">
             <option value="COMPANY" ${a.paid_by === 'COMPANY' ? 'selected' : ''}>🏢 COMPANY (Guest Rent / Cash in Hand)</option>
             <option value="ROOST-BANK" ${a.paid_by === 'ROOST-BANK' || !a.paid_by ? 'selected' : ''}>🏦 Roost Bank Account (Current A/c)</option>
-            <option value="FIROZ" ${a.paid_by === 'FIROZ' ? 'selected' : ''}>👤 FIROZ (Direct Personal)</option>
+            <option value="ANWAR" ${a.paid_by === 'ANWAR' ? 'selected' : ''}>👤 Anwar (Direct Personal)</option>
           </select>
         </div>
       </div>

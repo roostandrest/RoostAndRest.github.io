@@ -430,7 +430,7 @@ ON CONFLICT (key) DO UPDATE SET
   updated_at = NOW();
 
 -- ═══════════════════════════════════════════════════════════════════
--- 18. PRE-APPROVE ANWAR AHMAD (OWNER) & PRAVEEN SINGH (DEVELOPER)
+-- 18. PRE-APPROVE ANWAR AHMAD (OWNER) & ROOST AND REST TECH (DEVELOPER)
 -- ═══════════════════════════════════════════════════════════════════
 INSERT INTO public.profiles (user_id, display_name, role, is_approved)
 VALUES

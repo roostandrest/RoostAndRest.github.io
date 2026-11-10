@@ -58,7 +58,7 @@ async function renderExpenses() {
     if (!raw) return 'COMPANY';
     const s = String(raw).trim().toUpperCase();
     if (s.includes('OD') || s.includes('Roost & Rest') || s.includes('OVERDRAFT')) return 'ROOST-BANK';
-    if (s.includes('FIROZ') || s.includes('DIRECT')) return 'FIROZ';
+    if (s.includes('ANWAR') || s.includes('DIRECT')) return 'ANWAR';
     return 'COMPANY';
   }
 

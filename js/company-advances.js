@@ -1,13 +1,13 @@
 /**
  * 💵 Company Advances Module
- * Manager (Praveen) takes advance from owners (Anwar/Shahenshah)
+ * Manager takes advance from owner (Anwar)
  * Links expenses to advances, tracks reconciliation
  */
 
 // Advance can come from:
 // 1. Company (ROOST AND REST STAYS - business fund)
-// 2-4. Personal (owner/manager's own money)
-const CA_OWNERS = ['🏢 Company (ROOST AND REST STAYS)', 'Anwar', 'Shahenshah', 'Praveen'];
+// 2. Personal (owner's own money)
+const CA_OWNERS = ['🏢 Company (ROOST AND REST STAYS)', 'Anwar'];
 
 window.renderCompanyAdvances = async function() {
   if (!['owner', 'admin', 'developer', 'manager'].includes(SESSION.role)) {
@@ -151,7 +151,7 @@ async function renderCANew(tabs) {
         <select id="caPaymentSource" style="border: 1.5px solid #0d6efd; font-weight: 600;">
           <option value="COMPANY">🏢 COMPANY (Guest Rent / Cash in Hand)</option>
           <option value="ROOST-BANK" selected>🏦 Roost Bank Account (Current A/c)</option>
-          <option value="FIROZ">👤 FIROZ (Direct Personal)</option>
+          <option value="ANWAR">👤 Anwar (Direct Personal)</option>
         </select>
       </div>
       <div class="form-grid">

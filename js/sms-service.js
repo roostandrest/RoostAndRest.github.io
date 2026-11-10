@@ -17,7 +17,7 @@
     // OpenSMS Gateway URL (e.g. http://192.168.1.50:8080 or https://gateway.yourdomain.com)
     gatewayUrl: localStorage.getItem('tuhh_opensms_url') || window.OPENSMS_GATEWAY_URL || '',
     gatewayApiKey: localStorage.getItem('tuhh_opensms_key') || window.OPENSMS_API_KEY || '',
-    hostWaNumber: '919807486555', // Mr. Shahanshah & Mr. Anwar Ahmad
+    hostWaNumber: '919807486555', // Mr. Anwar Ahmad
     companyName: 'Roost And Rest Stays'
   };
 
@@ -45,7 +45,7 @@
     },
 
     /**
-     * Format phone for display e.g. +91 94500 55554
+     * Format phone for display e.g. +91 98074 86555
      */
     displayPhone: function (phone) {
       const p = this.cleanPhone(phone);

@@ -713,7 +713,6 @@ Roost And Rest Stays Property Management`;
         `👤 *Manager:* Anwar Ahmad (9807486555)\n\n` +
         `*Contact*\n` +
         `If you need anything, message me anytime or call directly\n` +
-        `📞Mr Shahansha 9807486555\n` +
         `📞Mr Anwar khan 9807486555\n` +
         `Happy to help whenever you need.\n` +
         `━━━━━━━━━━━━━━━━━━\n` +
