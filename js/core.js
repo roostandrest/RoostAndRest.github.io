@@ -1979,11 +1979,11 @@ function renderShell(content, activePage = 'dashboard') {
         <header class="app-topbar">
           <div class="topbar-left">
             <button type="button" class="sidebar-toggle-btn" id="hamburgerBtn" aria-label="Toggle Navigation" title="Toggle Navigation"><i class="ti ti-menu-2"></i></button>
-            <div class="topbar-brand-group" onclick="navigate('dashboard')" style="display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0;">
-              <img src="assets/logo.svg" alt="Roost & Rest" style="width:34px;height:34px;border-radius:10px;object-fit:cover;box-shadow:0 2px 6px rgba(0,0,0,0.1);flex-shrink:0;" />
-              <div class="topbar-brand-titles" style="display:flex;flex-direction:column;">
-                <span class="topbar-brand-main" style="font-weight:900;font-size:13px;color:#222222;letter-spacing:0.2px;white-space:nowrap;line-height:1.2;">ROOST &amp; REST</span>
-                <span class="topbar-brand-sub" style="font-size:9px;color:var(--primary);font-weight:800;letter-spacing:0.5px;white-space:nowrap;">STAYS CRM</span>
+            <div class="topbar-brand-group" onclick="navigate('dashboard')">
+              <img src="assets/logo.svg" alt="Roost & Rest" class="topbar-brand-logo" />
+              <div class="topbar-brand-titles">
+                <span class="topbar-brand-main">ROOST &amp; REST</span>
+                <span class="topbar-brand-sub">STAYS CRM</span>
               </div>
             </div>
             <!-- Search Menu in Topbar Left on Desktop (Matching YBT CRM) -->
@@ -2031,8 +2031,8 @@ function renderShell(content, activePage = 'dashboard') {
             </div>
 
             <!-- 1-Click WhatsApp Status Generator (Blossom Skyline) -->
-            <button type="button" class="topbar-wa-status-btn" onclick="typeof window.openBlossomSkylineDailyStatusModal === 'function' ? window.openBlossomSkylineDailyStatusModal() : (window.navigate('daily-report'), setTimeout(() => window.openBlossomSkylineDailyStatusModal?.(), 500))" title="1-Click WhatsApp Booking Data Status (Flats 101–501)" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg, #25D366 0%, #128C7E 100%);color:#ffffff;border:none;border-radius:10px;padding:6px 13px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 6px rgba(37,211,102,0.3);white-space:nowrap;transition:all 0.15s ease;">
-              <i class="ti ti-brand-whatsapp" style="font-size:15px;"></i>
+            <button type="button" class="topbar-wa-status-btn" onclick="typeof window.openBlossomSkylineDailyStatusModal === 'function' ? window.openBlossomSkylineDailyStatusModal() : (window.navigate('daily-report'), setTimeout(() => window.openBlossomSkylineDailyStatusModal?.(), 500))" title="1-Click WhatsApp Booking Data Status (Flats 101–501)">
+              <i class="ti ti-brand-whatsapp"></i>
               <span class="topbar-wa-status-text">📋 WA Status</span>
             </button>
 
@@ -2042,7 +2042,7 @@ function renderShell(content, activePage = 'dashboard') {
             </button>
 
             <!-- Help Center Button -->
-            <button class="topbar-icon-btn" onclick="navigate('help')" title="Help & User Operating Guide (Press ? or F1)" aria-label="Help & Guide">
+            <button class="topbar-icon-btn topbar-help-btn" onclick="navigate('help')" title="Help & User Operating Guide (Press ? or F1)" aria-label="Help & Guide">
               <span><i class="ti ti-help-circle" style="font-size:1.18rem;color:#92400E;"></i></span>
             </button>
 

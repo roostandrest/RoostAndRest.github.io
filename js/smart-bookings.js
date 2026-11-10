@@ -670,6 +670,20 @@ function formatAirbnbDateRange(ci, co) {
   }
 }
 
+function formatTime12(tStr) {
+  if (!tStr) return '';
+  const parts = String(tStr).trim().split(':');
+  if (parts.length >= 2) {
+    let h = parseInt(parts[0], 10);
+    if (isNaN(h)) return tStr;
+    const m = parts[1].slice(0, 2);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12 || 12;
+    return `${h}:${m} ${ampm}`;
+  }
+  return tStr;
+}
+
 function getAirbnbHeadline(b, today) {
   const isBlocked = (b.guest_name || '').toLowerCase().includes('blocked');
   if (isBlocked) {
@@ -821,16 +835,16 @@ function renderSingleAirbnbResCard(b, paidMap, canM, today) {
   let timeSub = '';
   if (isSameDayStay) {
     timeMain = 'Day Use';
-    timeSub = `${(b.check_in_time || '09:30').slice(0, 5)} - ${(b.check_out_time || '16:30').slice(0, 5)}`;
+    timeSub = `${formatTime12(b.check_in_time || '09:30')} - ${formatTime12(b.check_out_time || '16:30')}`;
   } else if (isCheckoutToday) {
-    timeMain = (b.check_out_time ? b.check_out_time.replace(/:\d\d$/, '') : '11:00').replace(/\s*[ap]m/i, '');
-    timeSub = '';
+    timeMain = formatTime12(b.check_out_time || '11:00');
+    timeSub = 'Check-out';
   } else if (isArrivalToday) {
-    timeMain = (b.check_in_time ? b.check_in_time.replace(/:\d\d$/, '') : '14:00').replace(/\s*[ap]m/i, '');
-    timeSub = '';
+    timeMain = formatTime12(b.check_in_time || '14:00');
+    timeSub = 'Check-in';
   } else if (isStayingAllDay) {
-    timeMain = 'All day';
-    timeSub = '';
+    timeMain = 'In-House';
+    timeSub = 'Staying';
   } else if (isUpcoming) {
     timeMain = formatAirbnbDateRange(b.check_in, b.check_out);
     timeSub = `${nights} ${nights === 1 ? 'night' : 'nights'}`;

@@ -642,6 +642,29 @@ html, body, #app {
   box-shadow: 0 6px 20px rgba(14, 165, 233, 0.25) !important;
 }
 
+.topbar-wa-status-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 6px 13px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3) !important;
+  white-space: nowrap !important;
+  transition: all 0.15s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.topbar-wa-status-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
 .topbar-avatar-pill {
   display: flex;
   align-items: center;
@@ -1224,84 +1247,196 @@ html, body, #app {
   }
 }
 
-@media (max-width: 640px) {
-  /* iPhone & small phone optimizations — Zero Overlap & Pure Airbnb Spacing */
+@media (max-width: 768px) {
+  /* 📱 MOBILE TOPBAR — Zero Overlap, Perfect Alignment & Pure Airbnb Spacing */
   .app-topbar {
+    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
     padding-left: max(12px, env(safe-area-inset-left)) !important;
     padding-right: max(12px, env(safe-area-inset-right)) !important;
-    gap: 8px !important;
-    height: calc(56px + env(safe-area-inset-top, 0px)) !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: space-between !important;
+    gap: 8px !important;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-bottom: 1px solid var(--border) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    overflow: hidden !important;
   }
+
   .topbar-left {
-    flex: 0 1 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
     min-width: 0 !important;
-    gap: 6px !important;
+    overflow: hidden !important;
   }
-  /* Remove duplicate hamburger on mobile because bottom nav has Menu */
+
+  /* Hide hamburger and desktop-only buttons on mobile — bottom nav handles full navigation */
+  .sidebar-toggle-btn,
+  #hamburgerBtn,
   .mobile-hamburger-btn {
     display: none !important;
   }
-  .topbar-brand-titles .topbar-brand-sub {
-    display: none !important;
+
+  .topbar-brand-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    cursor: pointer !important;
   }
+
+  .topbar-brand-group img,
+  .topbar-brand-logo {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    border-radius: 8px !important;
+    object-fit: cover !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .topbar-brand-titles {
+    display: flex !important;
+    flex-direction: column !important;
+    min-width: 0 !important;
+    line-height: 1.15 !important;
+  }
+
   .topbar-brand-titles .topbar-brand-main {
-    font-size: 12.5px !important;
-    max-width: 120px !important;
+    font-size: 13px !important;
+    font-weight: 900 !important;
+    color: #0F172A !important;
+    letter-spacing: 0.2px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    line-height: 1.15 !important;
   }
+
+  .topbar-brand-titles .topbar-brand-sub {
+    font-size: 8.5px !important;
+    color: var(--primary) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    display: block !important;
+  }
+
   .page-heading,
   .topbar-search,
   .topbar-mobile-search-btn {
     display: none !important;
   }
+
   .topbar-right {
-    flex: 0 0 auto !important;
-    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
     gap: 8px !important;
+    flex: 0 0 auto !important;
     justify-content: flex-end !important;
+    margin-left: auto !important;
   }
-  /* On small mobile, hide topbar property select to prevent overlapping; user uses the Airbnb filter button */
-  .topbar-property-selector {
+
+  /* Hide crowded / duplicate items on mobile topbar */
+  .topbar-wa-status-btn,
+  .topbar-property-selector,
+  .topbar-help-btn,
+  .topbar-icon-btn[aria-label="Help & Guide"],
+  .topbar-avatar-pill {
     display: none !important;
   }
-  .topbar-new-booking-btn {
-    padding: 0 !important;
+
+  /* 3 Clean, 36px Circular Icon Buttons with Zero Overlap */
+  .topbar-search-menu-btn {
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
+    max-width: 36px !important;
+    padding: 0 !important;
     border-radius: 50% !important;
-    display: inline-flex !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    flex-shrink: 0 !important;
+  }
+  .topbar-search-menu-btn .search-btn-text,
+  .topbar-search-menu-btn .search-btn-kbd {
+    display: none !important;
+  }
+  .topbar-search-menu-btn .search-btn-icon {
+    font-size: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin: 0 !important;
+  }
+
+  .topbar-new-booking-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 2px 8px var(--primary-glow) !important;
+    flex-shrink: 0 !important;
   }
   .topbar-new-booking-btn .topbar-new-booking-text {
     display: none !important;
   }
-  .topbar-avatar-pill .user-name-mini,
-  .topbar-avatar-pill .avatar-caret {
-    display: none !important;
+  .topbar-new-booking-btn .topbar-new-booking-icon {
+    font-size: 16px !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
-  .topbar-avatar-pill {
+
+  #topbarNotifBtn.topbar-icon-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
     padding: 0 !important;
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-  .topbar-qr-pill-btn {
-    padding: 5px 8px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     flex-shrink: 0 !important;
   }
-  .topbar-qr-pill-btn .qr-btn-text,
-  .topbar-qr-pill-btn kbd {
+  #topbarNotifBtn i {
+    font-size: 16px !important;
+  }
+
+  .topbar-qr-pill-btn {
     display: none !important;
   }
+
   .main-content {
-    padding: 12px 10px calc(84px + env(safe-area-inset-bottom, 0px));
-    padding-left: max(10px, env(safe-area-inset-left));
-    padding-right: max(10px, env(safe-area-inset-right));
+    padding: 12px 10px calc(84px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-left: max(10px, env(safe-area-inset-left)) !important;
+    padding-right: max(10px, env(safe-area-inset-right)) !important;
   }
   .card {
     padding: 14px 12px !important;
@@ -7849,19 +7984,27 @@ textarea:focus {
   }
 
   .airbnb-avatar-group {
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    height: 46px;
+    position: relative;
+    flex-shrink: 0;
   }
 
   .airbnb-guest-avatar-img {
-    width: 48px;
-    height: 48px;
-    font-size: 17px;
+    width: 46px;
+    height: 46px;
+    font-size: 16px;
+    border-radius: 50%;
   }
 
   .airbnb-property-thumb-badge {
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid #ffffff;
+    bottom: -1px;
+    right: -2px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 
   .airbnb-card-footer-row {
@@ -9355,11 +9498,13 @@ textarea:focus {
   box-shadow: var(--shadow-xs) !important;
 }
 
-/* 6. Topbar Action Buttons Consistency */
-.topbar-right button {
-  border-radius: 10px !important;
-  font-weight: 600 !important;
-  font-size: 12.5px !important;
+/* 6. Topbar Action Buttons Consistency (Desktop) */
+@media (min-width: 769px) {
+  .topbar-right button {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+  }
 }
 
 .topbar-property-selector {
@@ -9923,7 +10068,7 @@ textarea:focus {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .topbar-search-menu-btn {
     width: 36px !important;
     height: 36px !important;
