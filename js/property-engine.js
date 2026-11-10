@@ -2588,8 +2588,8 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
 
           <div style="font-size:11.5px; color:#64748b; margin-bottom:18px; line-height:1.5;">
             📍 <strong>Property Location:</strong> <a href="${details.mapLink}" target="_blank" style="color:#0284c7; text-decoration:underline;">Open Pinpoint on Google Maps ↗</a><br>
-            👑 <strong>Superhost &amp; Owner:</strong> Anwar Ahmad (+91 82996 00709 / +91 9807486555)<br>
-            👤 <strong>Manager:</strong> Operations (+91 9807486555) · Office: 10:00 AM – 09:00 PM
+            👑 <strong>Director &amp; Owner:</strong> Mr. Anwar Ahmad (+91 9807486555)<br>
+            🛡️ <strong>Helpline &amp; Support:</strong> +91 9807486555 · 24x7 Assistance
           </div>
 
           <div class="luxe-voucher-actions" style="display:flex; flex-direction:column; gap:10px;">

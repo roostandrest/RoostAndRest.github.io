@@ -16,11 +16,11 @@ window.BOOKING_RECEIPT_ENGINE = (function() {
     pan:        'ABECT9843K',
     address:    'P NO 39 & 40 Radhikapuri, Indira Nagar Takrohi, Lucknow, Uttar Pradesh – 226016',
     phone:      '+91 9807486555',
-    phone2:     '+91 82996 00709',
+    phone2:     '+91 9807486555',
     managerPhone: '+91 9807486555',
     managerName: 'Mr. Anwar Ahmad',
     owners: [
-      { name: 'Mr. Anwar Ahmad (Owner & Director)', phone: '+91 9807486555 / +91 82996 00709' }
+      { name: 'Mr. Anwar Ahmad (Owner & Director)', phone: '+91 9807486555' }
     ],
     email:      'theroostandrestlucknow@gmail.com',
     web:        'roostandrest.github.io'
@@ -708,7 +708,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
 ━━━━━━━━━━━━━━━━━━━━${secAmount > 0 ? `\n🛡️ *Security Deposit Policy:* ₹${secAmount.toLocaleString('en-IN')} is 100% refundable at check-out post room & inventory inspection.\n` : ''}${payHistoryText}${customNotes ? `\n\n📝 *Special Request & Notes:* ${customNotes}` : ''}
 
 👑 *Company Owner, Director & Helpline:*
-• Mr. Anwar Ahmad: +91 9807486555 / +91 82996 00709
+• Mr. Anwar Ahmad: +91 9807486555
 
 📋 *Key Check-in Instructions:*
 • Valid Govt ID (Aadhaar / DL / Passport) mandatory for all guests.
@@ -1278,7 +1278,7 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
     }
 
     return `
-      <div id="uhhMobileSlipCard" style="width:480px;max-width:480px;background:#FFFFFF;color:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:20px 18px;border-radius:14px;box-sizing:border-box;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision;font-variant-numeric:tabular-nums;border:2px solid #0F172A;margin:0 auto;">
+      <div id="uhhMobileSlipCard" style="width:100%;max-width:480px;background:#FFFFFF;color:#0F172A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;padding:20px 18px;border-radius:14px;box-sizing:border-box;line-height:1.4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:geometricPrecision;font-variant-numeric:tabular-nums;border:2px solid #0F172A;margin:0 auto;">
         
         <!-- Header Strip -->
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #E2E8F0;padding-bottom:12px;margin-bottom:10px;gap:10px;">
@@ -1426,12 +1426,10 @@ ${secAmount > 0 ? `▪️ *Refundable Security Deposit:* ₹${secAmount.toLocale
         <!-- Support Strip -->
         <div style="background:#F8FAFC;border:1.5px solid #CBD5E1;border-radius:10px;padding:9px 12px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
           <div>
-            👑 <strong>Director &amp; Owner:</strong> Mr. Anwar Ahmad<br>
-            📞 <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 9807486555</a>
+            👑 <strong>Director &amp; Owner:</strong> Mr. Anwar Ahmad
           </div>
           <div>
-            🛡️ <strong>Support &amp; Helpline:</strong> Mr. Anwar Ahmad<br>
-            📞 <a href="tel:+918299600709" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 82996 00709</a>
+            📞 <strong>Helpline:</strong> <a href="tel:+919807486555" style="color:#0F172A;text-decoration:none;font-weight:900;">+91 9807486555</a>
           </div>
         </div>
 
@@ -2417,7 +2415,7 @@ ${propertiesList}
 ━━━━━━━━━━━━━━━━━━━━${payHistoryText}${groupNotes ? `\n\n📝 *Special Note:* ${groupNotes}` : ''}
 
 👑 *Company Owner, Director & Helpline:*
-• Mr. Anwar Ahmad: +91 9807486555 / +91 82996 00709
+• Mr. Anwar Ahmad: +91 9807486555
 
 📋 *Key Check-in Instructions:*
 • Original Govt ID (Aadhaar / DL / Passport) mandatory for all adult guests.

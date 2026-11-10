@@ -1927,7 +1927,7 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     (totalDue > 0 ? `• Instant UPI Pay Link: upi://pay?pa=roostandrest@icici&pn=Roost%20And%20Rest%20Stays&am=${totalDue}&cu=INR${NL}` : '') +
     `${NL}` +
     `*Owner, Director & Helpline:*${NL}` +
-    `• Mr. Anwar Ahmad: 9807486555 / 8299600709${NL}${NL}` +
+    `• Mr. Anwar Ahmad: 9807486555${NL}${NL}` +
     `ROOST AND REST STAYS`;
 
   const shareModal = document.createElement('div');
@@ -8993,7 +8993,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
       id: 'anwar',
       name: 'Anwar OD',
       upiId: '9807486555@upi',
-      phone: '+91 82996 00709',
+      phone: '+91 9807486555',
       label: 'Anwar OD'
     }
   };

@@ -4020,7 +4020,7 @@ async function renderSettings() {
           <div class="form-group">
             <label>Support &amp; Helpline Phone (Mr. Anwar Ahmad)</label>
             <input type="text" id="brand_owner_phone_2" value="${(setMap['owner_phone_2'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
-            <small style="color:var(--muted);">Support &amp; Helpline: Mr. Anwar Ahmad (+91 9807486555 / +91 82996 00709)</small>
+            <small style="color:var(--muted);">Support &amp; Helpline: Mr. Anwar Ahmad (+91 9807486555)</small>
           </div>
         </div>
 

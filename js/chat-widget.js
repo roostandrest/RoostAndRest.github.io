@@ -856,7 +856,7 @@
       return {
         text: `📞 **Roost And Rest Stays — Director, Owner & Helpline Contacts:**\n\n` +
               `• 👑 **Mr. Anwar Ahmad (Director & Owner):**\n` +
-              `  📱 **+91 9807486555** / **+91 82996 00709**\n\n` +
+              `  📱 **+91 9807486555**\n\n` +
               `• 🛡️ **24x7 Support & Helpline:**\n` +
               `  📱 **Mr. Anwar Ahmad: +91 9807486555**\n\n` +
               `🏢 **Company:** ROOST AND REST STAYS\n` +

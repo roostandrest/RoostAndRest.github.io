@@ -19,8 +19,8 @@ window.GST_ENGINE = (function () {
     address: 'Plot No.: 39 & 40, Radhikapuri Colony, Takrohi, Indira Nagar, Lucknow - 226016',
     state: 'Uttar Pradesh',
     stateCode: '09',
-    phone: '+91 9807486555 / +91 82996 00709',
-    managerPhone: '+91 9194109911',
+    phone: '+91 9807486555',
+    managerPhone: '+91 9807486555',
     email: 'theroostandrestlucknow@gmail.com',
     web: 'roostandrest.github.io'
   };

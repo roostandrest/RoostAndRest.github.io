@@ -135,7 +135,7 @@ LULLANPUR:
 - Direct Discount: Booking directly with us saves 15% to 20% compared to Airbnb/MakeMyTrip.
 - Group & Events: Grand Villas like Royal White House (up to 18 guests) and Gomti Grand Villa are perfect for weddings, birthdays, and family get-togethers.
 - Key Landmarks: 5 mins to Lulu Mall & Phoenix Palassio, 5 mins to Medanta Hospital, 7 mins to Ekana Stadium, 20 mins to CCS International Airport.
-- Direct WhatsApp & Calling: +91 82996 00709 (Anwar Ahmad - Host & Owner), +91 9807486555 (Roost & Rest Support)
+- Direct WhatsApp & Calling: +91 9807486555 (Mr. Anwar Ahmad - Director, Owner & Helpline)
 
 ═══ LEAD CAPTURE — CRITICAL INSTRUCTIONS ═══
 When a guest: asks about any specific property, inquires about availability, mentions dates, or asks how to book — you MUST:
