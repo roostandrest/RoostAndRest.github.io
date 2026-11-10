@@ -1,5 +1,5 @@
 window.renderMyLedger = async function() {
-  const userName = SESSION.userName || SESSION.name || 'Praveen';
+  const userName = SESSION.userName || SESSION.name || 'System Admin';
   renderShell('<div class="card"><h1>💼 My Cash Ledger — ' + userName + '</h1><div class="loading">Loading...</div></div>', 'my-ledger');
   
   const [

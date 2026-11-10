@@ -558,7 +558,7 @@ async function whatsappDailyReport(date) {
   msg += '━━━━━━━━━━━━━━━━━' + NL;
   msg += '_ROOST AND REST STAYS_' + NL;
   msg += '🌐 roostandrest.github.io' + NL;
-  msg += '⚡ Developed by Praveen Singh';
+  msg += 'ROOST AND REST STAYS • Boutique Homestays';
 
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';

@@ -1684,7 +1684,6 @@ window.exportUhhsLedgerPDF = function(fDate, tDate, totalInflow, totalOutflow, n
       ${typeof window.getOfficialReportFooterHTML === 'function' ? window.getOfficialReportFooterHTML() : `
         <div style="margin-top:24px;padding-top:12px;border-top:1px solid #cbd5e1;text-align:center;font-size:11px;color:#64748b;">
           <strong>ROOST AND REST STAYS</strong> &bull; roostandrest.github.io<br>
-          ⚡ Developed by Praveen Singh
         </div>
       `}
 
@@ -2167,7 +2166,7 @@ window.exportCompanyLedgerPDF = async function(fDate, tDate) {
     ) +
     '</tbody></table></div>' +
     '<div style="margin-top:24px;padding-top:12px;border-top:1px solid #DDD6FE;text-align:center;font-size:11px;color:#64748b;">' +
-    '<strong>ROOST AND REST STAYS</strong> · roostandrest.github.io<br>⚡ Developed by Praveen Singh</div>' +
+    '<strong>ROOST AND REST STAYS</strong> · roostandrest.github.io<br></div>' +
     '<script>window.onload=function(){setTimeout(function(){window.print();},400);};<\/script>' +
     '</body></html>';
   window.printDocumentHTML(html, title);

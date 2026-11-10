@@ -2231,7 +2231,7 @@ function downloadFYData() {
   d.bookings.forEach(g => {
     csv += `${g.booking_id},${g.guest_name},${g.room_id},${g.check_in},${d.paidMap[g.booking_id] || 0}\n`;
   });
-  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.github.io"\n"Developed by Praveen Singh"\n`;
+  csv += `\n"ROOST AND REST STAYS"\n"roostandrest.github.io"\n""\n`;
   window.exportCSV(csv, `Financial_${d.label}.csv`);
 }
 

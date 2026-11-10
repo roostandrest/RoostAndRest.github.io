@@ -120,7 +120,7 @@ async function renderCAActive(tabs) {
 // ═══ TAB 2: TAKE NEW ADVANCE ═══
 async function renderCANew(tabs) {
   const { data: emps } = await sb.from('employees').select('emp_id, name').eq('status', 'Active').order('name');
-  const currentUser = SESSION.displayName || 'Praveen';
+  const currentUser = SESSION.displayName || 'System Admin';
   
   renderShell(`
     ${tabs}

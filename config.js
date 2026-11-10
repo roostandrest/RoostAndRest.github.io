@@ -2,7 +2,7 @@
 // ROOST AND REST — ENTERPRISE CRM CONFIGURATION
 // Lucknow, Uttar Pradesh, India
 // Owner / Director: Anwar Ahmad (+91 9807486555)
-// Developer: Praveen Singh
+// Developer: Roost & Rest Tech
 // ═══════════════════════════════════════════════════════════════
 
 const SUPABASE_URL = "https://lfxeacasgyofsyxthman.supabase.co";
@@ -14,8 +14,8 @@ const BRAND_TAGLINE = "Boutique Stays & Luxury Homestays • Lucknow";
 const OWNER_NAME = "Anwar Ahmad";
 const OWNER_PHONE = "9807486555";
 const OWNER_EMAIL = "roostandrestlucknow@gmail.com";
-const DEVELOPER_NAME = "Praveen Singh";
-const DEVELOPER_EMAIL = "praveensinghaws@gmail.com";
+const DEVELOPER_NAME = "Roost & Rest Tech";
+const DEVELOPER_EMAIL = "roostandrestlucknow@gmail.com";
 
 // Razorpay Key Placeholder
 const RAZORPAY_KEY_ID = "rzp_test_placeholder_key";

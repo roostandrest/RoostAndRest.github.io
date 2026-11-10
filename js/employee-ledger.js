@@ -871,7 +871,7 @@ window.paySalaryModal = function(empId, empName, suggestedAmount) {
         <label style="font-weight:700;">Paid By *</label>
         <select id="paySalBy">
           <option value="Company">🏢 TUHH Company Account</option>
-          <option value="Praveen">🔵 Praveen Singh (Personal)</option>
+          
         </select>
       </div>
 
@@ -1018,7 +1018,7 @@ window.giveAdvanceModal = async function(empId, empName) {
         <label style="font-weight:700;">Given By *</label>
         <select id="advBy">
           <option value="COMPANY">🏢 TUHH Company Account</option>
-          <option value="ROOST-BANK">🔵 Praveen Singh (Personal)</option>
+          
         </select>
       </div>
 
@@ -1172,7 +1172,7 @@ window.editCleanerFlatsModal = function(empId, empName, currentFlats, ratePerFla
 
       <div style="background:#EEF2FF;padding:12px 14px;border-radius:10px;border:1px solid #C7D2FE;margin-bottom:16px;">
         <div style="font-size:11.5px;color:#4338CA;font-weight:600;line-height:1.4;">
-          💡 Praveen ya Admin kisi bhi month ke total cleaned flats manually adjust ya verify kar sakte hain (e.g. 10 flats ya 200 flats).
+          💡 Admin ya Management kisi bhi month ke total cleaned flats manually adjust ya verify kar sakte hain (e.g. 10 flats ya 200 flats).
         </div>
       </div>
 

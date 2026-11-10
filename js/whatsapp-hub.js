@@ -710,7 +710,7 @@ Roost And Rest Stays Property Management`;
         `📅 *Check-in:* ${fmtD(b.check_in)} (From 02:00 PM)\n` +
         `📅 *Check-out:* ${fmtD(b.check_out)} (By 11:00 AM)\n` +
         `💰 *Total Amount:* ₹${(b.total_amount || 0).toLocaleString('en-IN')}\n\n` +
-        `👤 *Manager:* Praveen Singh (9194109911)\n\n` +
+        `👤 *Manager:* Anwar Ahmad (9807486555)\n\n` +
         `*Contact*\n` +
         `If you need anything, message me anytime or call directly\n` +
         `📞Mr Shahansha 9807486555\n` +

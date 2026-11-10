@@ -570,7 +570,7 @@ KEY POLICIES & AMENITIES:
 - Distances: 5 mins to Lulu Mall & Medanta, 7 mins to Ekana Cricket Stadium, 20 mins to Airport (via Shaheed Path)
 - Caretakers on-ground: Arman (+91 8467080284) for Gomti Nagar flats, Aniket (+91 9214246820) for Vishesh Khand villas, Sarvan (+91 8858034382) for Golf City/Lulu stays
 - Founder & Host Contacts: Mr. Shahanshah (+91 94500 55554) & Mr. Anwar Ahmad (+91 82996 00709)
-- Property Manager: Praveen Singh (+91 9194109911)
+- Property Operations Team (+91 9807486555)
 
 LEAD CAPTURE:
 Whenever guest asks for dates or rates, warmly recommend the best stay and ask for their WhatsApp number so the team can confirm their booking!`;

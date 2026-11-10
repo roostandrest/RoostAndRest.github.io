@@ -1234,7 +1234,7 @@ async function renderInvestorReport(investorId, roomId, month) {
               Official Portal: <span style="color:#FDE047;">roostandrest.github.io</span> · Direct Phone / WhatsApp: <span style="color:#FFFFFF;">+91 9807486555</span>
             </div>
             <div style="color:#64748B;font-size:8px;margin-top:3px;border-top:1px solid #1E293B;padding-top:3px;">
-              ⚡ System Architecture &amp; Core Automation Developed by Praveen Singh
+              ⚡ System Architecture &amp; Core Automation
             </div>
           </div>
         </div>
@@ -1675,8 +1675,7 @@ window.whatsappInvestorReport = async function(investorId, roomId, monthYear) {
       'Mr. Anwar Ahmad - 9807486555' + NL +
       '━━━━━━━━━━━━━━━━━━━━' + NL +
       'ROOST AND REST STAYS' + NL +
-      'roostandrest.github.io' + NL +
-      '⚡ Developed by Praveen Singh';
+      'roostandrest.github.io';
 
     const phone = (inv.phone || '').replace(/[^0-9]/g, '');
     const shareModal = document.createElement('div');

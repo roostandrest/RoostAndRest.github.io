@@ -305,7 +305,7 @@ window.saveReimbursement = async function() {
       }
     }
 
-    const currentUser = SESSION.displayName || 'Praveen Singh';
+    const currentUser = SESSION.displayName || 'System Admin';
     const initialStatus = 'Pending';
 
     const { data: newR, error } = await sb.from('reimbursements').insert({
@@ -340,7 +340,7 @@ window.saveReimbursement = async function() {
           amount: amt,
           txn_date: date,
           description: `Expense: ${desc} (${cat})`,
-          created_by: SESSION.displayName || 'Praveen'
+          created_by: SESSION.displayName || 'System Admin'
         });
       } catch (e) {
         console.warn('account_transactions view insert skipped/unsupported:', e);
@@ -572,7 +572,7 @@ window.deleteReimbursement = async function(id) {
 window._companyCashData = null;
 
 window.loadAvailableCash = function(){}; window._old_load = async function() {
-  const currentUser = SESSION.displayName || 'Praveen Singh';
+  const currentUser = SESSION.displayName || 'System Admin';
   
   const { data: payments } = await sb.from('payment_history')
     .select('id, amount, payment_date, payment_mode')
@@ -799,7 +799,7 @@ window.showReimbReport = async function() {
       <div style="margin:16px 0;padding-top:10px;border-top:1px solid #e2e8f0;text-align:center;font-size:11px;color:#64748b;">
         <div style="font-weight:700;letter-spacing:0.5px;color:#1e293b;">ROOST AND REST STAYS</div>
         <div style="font-size:10px;color:#64748b;margin-top:2px;">roostandrest.github.io</div>
-        <div style="font-weight:700;color:#0f172a;margin-top:4px;">⚡ Developed by Praveen Singh</div>
+        <div style="font-weight:700;color:#0f172a;margin-top:4px;"></div>
       </div>
 
       <div style="display:flex;gap:10px;" class="no-print">

@@ -1796,7 +1796,7 @@ async function printGuestLedger(guestName, phone, passedBookings, passedPayments
       <div style="margin-top:20px;text-align:center;font-size:10px;color:#64748B;border-top:1px solid #E2E8F0;padding-top:10px;page-break-inside:avoid;">
         <div style="font-weight:700;color:#0F172A;font-size:11px;">ROOST AND REST STAYS</div>
         <div>Govt. Registered Homestay · Computer-Generated Official Ledger</div>
-        <div style="margin-top:3px;color:#94A3B8;">Developed by Praveen Singh · Authenticated CRM Statement Record</div>
+        <div style="margin-top:3px;color:#94A3B8;"></div>
       </div>
 
       <!-- Screen-only Print Trigger Button -->
@@ -1930,7 +1930,7 @@ async function whatsappGuestLedger(guestName, phone, passedBookings, passedPayme
     `${NL}` +
     `*Helpline:*${NL}` +
     `• Mr. Anwar Ahmad: 9807486555${NL}${NL}` +
-    `ROOST AND REST STAYS\nDeveloped by Praveen Singh`;
+    `ROOST AND REST STAYS`;
 
   const shareModal = document.createElement('div');
   shareModal.className = 'modal-overlay';
@@ -2677,7 +2677,7 @@ async function renderManageBookings() {
         <button class="btn-sm outline" onclick="exportBookingsPDF()">📄 Export PDF</button>
         <button class="btn-sm" onclick="exportBookingsCSV()" style="background:#059669;color:#fff;border:none;font-weight:700;">📥 Export CSV</button>
         ${(window.isPraveenUser && window.isPraveenUser()) ? `
-          <button type="button" class="btn-sm" onclick="window.openDeletedBookingsVaultModal()" style="background:#0F172A;color:#F8FAFC;border:1px solid #334155;font-weight:700;display:inline-flex;align-items:center;gap:6px;" title="Deleted Bookings Trash Vault (Praveen Only)">
+          <button type="button" class="btn-sm" onclick="window.openDeletedBookingsVaultModal()" style="background:#0F172A;color:#F8FAFC;border:1px solid #334155;font-weight:700;display:inline-flex;align-items:center;gap:6px;" title="Deleted Bookings Trash Vault (System Admin Only)">
             <span>🗑️ Deleted Vault</span>
           </button>
         ` : ''}
@@ -5744,7 +5744,7 @@ async function updateBooking(bkId, parentBookingId = '', stayGroupId = '') {
 
 // ============ SECURE ARCHIVE & SOFT DELETE BOOKING ============
 async function delBooking(bkId, guestName, roomId) {
-  if (!confirm(`Delete "${guestName || 'this'}" booking?\n(Booking will be safely archived to Praveen's recovery vault)`)) return false;
+  if (!confirm(`Delete "${guestName || 'this'}" booking?\n(Booking will be safely archived to Secure System Vault)`)) return false;
   try {
     // 1. Fetch entire active booking row
     const { data: bk } = await sb.from('guest_register').select('*').eq('booking_id', bkId).single();
@@ -5877,7 +5877,7 @@ window.archiveAndSoftDeleteBooking = delBooking;
 // ============ PRAVEEN-EXCLUSIVE RESTORE FROM VAULT ============
 window.restoreDeletedBooking = async function(bkId) {
   if (!window.isPraveenUser || !window.isPraveenUser()) {
-    const msg = '🔒 Access Denied: Only Praveen has permission to view or restore deleted bookings.';
+    const msg = '🔒 Access Denied: Only System Administrator has permission to view or restore deleted bookings.';
     if (window.fsn) fsn.error('Access Denied', msg);
     else alert(msg);
     return false;
@@ -5942,7 +5942,7 @@ window.restoreDeletedBooking = async function(bkId) {
         guestName: gName,
         roomId: rId,
         totalAmount: envelope.total_amount,
-        notes: 'Restored from Deleted Vault by Praveen'
+        notes: 'Restored from System Vault'
       });
     }
 
@@ -5968,7 +5968,7 @@ window.restoreDeletedBooking = async function(bkId) {
 // ============ PRAVEEN-EXCLUSIVE TRASH VAULT MODAL ============
 window.openDeletedBookingsVaultModal = async function() {
   if (!window.isPraveenUser || !window.isPraveenUser()) {
-    alert('🔒 Access Denied: Only Praveen has permission to view the Deleted Bookings Vault.');
+    alert('🔒 Access Denied: Only System Administrator has permission to view the Deleted Bookings Vault.');
     return;
   }
 
@@ -5987,7 +5987,7 @@ window.openDeletedBookingsVaultModal = async function() {
           <span style="font-size:22px;">🗑️</span>
           <div>
             <div style="font-size:16px;font-weight:900;letter-spacing:0.3px;color:#F8FAFC;">Deleted Bookings Recovery Vault</div>
-            <div style="font-size:11px;color:#94A3B8;">Praveen Exclusive Recovery Vault · Zero Permanent Data Loss</div>
+            <div style="font-size:11px;color:#94A3B8;">System Recovery Vault · Zero Permanent Data Loss</div>
           </div>
         </div>
         <button type="button" onclick="document.getElementById('deletedVaultModalOverlay')?.remove();" style="background:rgba(255,255,255,0.1);border:none;color:#fff;font-size:18px;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -6031,7 +6031,7 @@ window.openDeletedBookingsVaultModal = async function() {
     bodyEl.innerHTML = `
       <div style="font-size:12.5px;color:#475569;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
         <span>Found <strong>${vault.length}</strong> deleted booking(s) available for restoration:</span>
-        <span style="font-size:11px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;padding:4px 8px;border-radius:6px;font-weight:700;">Restorable by Praveen</span>
+        <span style="font-size:11px;background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;padding:4px 8px;border-radius:6px;font-weight:700;">Restorable by Admin</span>
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;">
         ${vault.map(item => {
@@ -6844,7 +6844,6 @@ async function exportBookingsPDF() {
   ${window.getOfficialReportFooterHTML ? window.getOfficialReportFooterHTML(dateStr) : `
     <div class="footer" style="margin-top:28px;text-align:center;font-size:11px;color:#717171;border-top:1px solid #EBEBEB;padding-top:12px;">
       <strong>${window.COMPANY_LEGAL_NAME || BRAND}</strong><br>
-      Developed by Praveen Singh
     </div>
   `}
 
@@ -8993,13 +8992,13 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
       phone: '+91 82996 00709',
       label: 'Mr. Anwar Ahmad (Default)'
     },
-    praveen: {
-      id: 'praveen',
-      name: 'Mr. Praveen Singh',
-      upiId: '9454470872@apl',
-      phone: '+91 94544 70872',
-      label: 'Mr. Praveen Singh'
-    }
+    roost_bank: {
+      id: 'roost_bank',
+      name: 'Roost&rest-Od (Company Current A/c)',
+      upi: 'roostandrest@icici',
+      note: 'Roost&rest-Od Official Account',
+      label: 'Roost&rest-Od'
+    },
   };
   let currentPayee = 'firoz';
 
@@ -9091,9 +9090,9 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
               <div style="font-size:11px;font-weight:800;color:#312E81;">👑 Anwar (Default)</div>
               <div style="font-size:9.5px;color:#4338CA;font-family:monospace;margin-top:1px;font-weight:700;">9807486555@upi</div>
             </button>
-            <button type="button" id="cpqrPayeePraveen" style="padding:6px 8px;border-radius:8px;border:1.5px solid #CBD5E1;background:#FFFFFF;cursor:pointer;text-align:left;transition:all 0.2s;">
-              <div style="font-size:11px;font-weight:800;color:#0F172A;">Praveen</div>
-              <div style="font-size:9.5px;color:#64748B;font-family:monospace;margin-top:1px;">9454470872@apl</div>
+            <button type="button" id="cpqrPayeeRoostBank" style="padding:6px 8px;border-radius:8px;border:1.5px solid #CBD5E1;background:#FFFFFF;cursor:pointer;text-align:left;transition:all 0.2s;">
+              <div style="font-size:11px;font-weight:800;color:#0F172A;">🏢 Roost&rest-Od</div>
+              <div style="font-size:9.5px;color:#64748B;font-family:monospace;margin-top:1px;">roostandrest@icici</div>
             </button>
           </div>
         </div>
@@ -9204,50 +9203,58 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
   const sendWaBtn = overlay.querySelector('#cpqrSendWaBtn');
   const downloadBtn = overlay.querySelector('#cpqrDownloadBtn');
   const copyBtn = overlay.querySelector('#cpqrCopyBtn');
-  const payeeAnwarBtn = overlay.querySelector('#cpqrPayeeAnwar');
-  const payeePraveenBtn = overlay.querySelector('#cpqrPayeePraveen');
   const copyPublicLinkBtn = overlay.querySelector('#cpqrCopyPublicLinkBtn');
 
   if (initRoomId && roomSel) {
     roomSel.value = initRoomId;
   }
 
+  const payeeAnwarBtn = overlay.querySelector('#cpqrPayeeAnwar');
+  const payeeRoostBankBtn = overlay.querySelector('#cpqrPayeeRoostBank');
+
   function setPayee(key) {
     currentPayee = key;
     if (key === 'firoz') {
-      payeeAnwarBtn.style.border = '2px solid #4F46E5';
-      payeeAnwarBtn.style.background = '#EEF2FF';
-      payeeAnwarBtn.style.boxShadow = '0 2px 8px rgba(79,70,229,0.15)';
-      payeeAnwarBtn.children[0].style.color = '#312E81';
-      payeeAnwarBtn.children[1].style.color = '#4338CA';
-      payeeAnwarBtn.children[1].style.fontWeight = '700';
-
-      payeePraveenBtn.style.border = '1.5px solid #CBD5E1';
-      payeePraveenBtn.style.background = '#FFFFFF';
-      payeePraveenBtn.style.boxShadow = 'none';
-      payeePraveenBtn.children[0].style.color = '#0F172A';
-      payeePraveenBtn.children[1].style.color = '#64748B';
-      payeePraveenBtn.children[1].style.fontWeight = 'normal';
+      if (payeeAnwarBtn) {
+        payeeAnwarBtn.style.border = '2px solid #4F46E5';
+        payeeAnwarBtn.style.background = '#EEF2FF';
+        payeeAnwarBtn.style.boxShadow = '0 2px 8px rgba(79,70,229,0.15)';
+        payeeAnwarBtn.children[0].style.color = '#312E81';
+        payeeAnwarBtn.children[1].style.color = '#4338CA';
+        payeeAnwarBtn.children[1].style.fontWeight = '700';
+      }
+      if (payeeRoostBankBtn) {
+        payeeRoostBankBtn.style.border = '1.5px solid #CBD5E1';
+        payeeRoostBankBtn.style.background = '#FFFFFF';
+        payeeRoostBankBtn.style.boxShadow = 'none';
+        payeeRoostBankBtn.children[0].style.color = '#0F172A';
+        payeeRoostBankBtn.children[1].style.color = '#64748B';
+        payeeRoostBankBtn.children[1].style.fontWeight = 'normal';
+      }
     } else {
-      payeePraveenBtn.style.border = '2px solid #4F46E5';
-      payeePraveenBtn.style.background = '#EEF2FF';
-      payeePraveenBtn.style.boxShadow = '0 2px 8px rgba(79,70,229,0.15)';
-      payeePraveenBtn.children[0].style.color = '#312E81';
-      payeePraveenBtn.children[1].style.color = '#4338CA';
-      payeePraveenBtn.children[1].style.fontWeight = '700';
-
-      payeeAnwarBtn.style.border = '1.5px solid #CBD5E1';
-      payeeAnwarBtn.style.background = '#FFFFFF';
-      payeeAnwarBtn.style.boxShadow = 'none';
-      payeeAnwarBtn.children[0].style.color = '#0F172A';
-      payeeAnwarBtn.children[1].style.color = '#64748B';
-      payeeAnwarBtn.children[1].style.fontWeight = 'normal';
+      if (payeeRoostBankBtn) {
+        payeeRoostBankBtn.style.border = '2px solid #4F46E5';
+        payeeRoostBankBtn.style.background = '#EEF2FF';
+        payeeRoostBankBtn.style.boxShadow = '0 2px 8px rgba(79,70,229,0.15)';
+        payeeRoostBankBtn.children[0].style.color = '#312E81';
+        payeeRoostBankBtn.children[1].style.color = '#4338CA';
+        payeeRoostBankBtn.children[1].style.fontWeight = '700';
+      }
+      if (payeeAnwarBtn) {
+        payeeAnwarBtn.style.border = '1.5px solid #CBD5E1';
+        payeeAnwarBtn.style.background = '#FFFFFF';
+        payeeAnwarBtn.style.boxShadow = 'none';
+        payeeAnwarBtn.children[0].style.color = '#0F172A';
+        payeeAnwarBtn.children[1].style.color = '#64748B';
+        payeeAnwarBtn.children[1].style.fontWeight = 'normal';
+      }
     }
     updateLivePreview();
   }
 
-  payeeAnwarBtn.addEventListener('click', () => setPayee('firoz'));
-  payeePraveenBtn.addEventListener('click', () => setPayee('praveen'));
+  if (payeeAnwarBtn) payeeAnwarBtn.addEventListener('click', () => setPayee('firoz'));
+  if (payeeRoostBankBtn) payeeRoostBankBtn.addEventListener('click', () => setPayee('roost_bank'));
+  
 
   if (copyPublicLinkBtn) {
     copyPublicLinkBtn.addEventListener('click', () => {

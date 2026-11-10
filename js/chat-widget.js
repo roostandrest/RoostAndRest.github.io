@@ -860,7 +860,7 @@
               `• ⭐ **Mr. Anwar Ahmad (Superhost & Co-Founder):**\n` +
               `  📱 **+91 82996 00709**\n\n` +
               `• 🛡️ **Praveen Singh (Operations & Support):**\n` +
-              `  📱 **+91 91941 09911**\n\n` +
+              `  📱 **+91 9807486555**\n\n` +
               `🏢 **Company:** ROOST AND REST STAYS\n` +
               `📍 **Office:** Radhikapuri, Indira Nagar, Lucknow`,
         actions: [{ label: '📲 Call / WhatsApp Shahanshah (+91 94500 55554)', url: `https://wa.me/${ADMIN_WA}?text=Namaste Shahanshah ji! I want to inquire about Roost And Rest Stays booking.` }],

@@ -3179,8 +3179,7 @@ function buildIdPendingMessage(daysBack) {
     msg += '━━━━━━━━━━━━━━━━━' + NL;
     msg += '_ROOST AND REST STAYS_' + NL;
     msg += 'roostandrest.github.io' + NL;
-    msg += '*Developed by Praveen Singh*';
-  }
+    }
   return msg;
 }
 

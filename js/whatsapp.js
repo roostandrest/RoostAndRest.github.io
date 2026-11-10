@@ -155,9 +155,9 @@ async function buildMessageData(bkId) {
     primaryCaretaker = { name: careName, phone: carePhone };
   }
 
-  // Dedicated Property Manager: Praveen Singh (9194109911)
+  // Dedicated Property Operations Team (9194109911)
   const manager = {
-    name: 'Praveen Singh',
+    name: 'Operations Support',
     phone: '9194109911',
     hours: '10 AM to 09 PM',
     role: 'Manager'

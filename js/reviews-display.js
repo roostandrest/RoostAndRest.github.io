@@ -27,7 +27,7 @@
     {
       room_id: 'GOM-201', slug: 'the-dark-blue', property_name: 'The Dark Blue',
       airbnb_id: '1655969170448425308', reviewer_name: 'Priya S.', reviewer_from: 'Delhi', rating: 5,
-      review_text: 'Absolutely stunning property! The dark blue theme is so aesthetic and the flat was immaculate. Everything was exactly as shown in the photos. Praveen was super responsive and made sure we had everything we needed. Will definitely book again!',
+      review_text: 'Absolutely stunning property! The dark blue theme is so aesthetic and the flat was immaculate. Everything was exactly as shown in the photos. The Roost & Rest team was super responsive and made sure we had everything we needed. Will definitely book again!',
       review_date_str: 'August 2026', is_featured: true
     },
     {
@@ -87,7 +87,7 @@
     {
       room_id: 'GOM-401', slug: 'the-nawabi-stay', property_name: 'The Nawabi Stay',
       airbnb_id: '1655985012390192300', reviewer_name: 'Tariq A.', reviewer_from: 'Dubai', rating: 5,
-      review_text: 'True Lucknowi hospitality! Beautiful royal vibes, modern amenities, and prime Gomti Nagar location. Our family had an unforgettable experience. Thank you Praveen!',
+      review_text: 'True Lucknowi hospitality! Beautiful royal vibes, modern amenities, and prime Gomti Nagar location. Our family had an unforgettable experience. Thank you Roost & Rest team!',
       review_date_str: 'September 2026', is_featured: true
     },
     {

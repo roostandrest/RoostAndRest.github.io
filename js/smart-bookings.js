@@ -2333,7 +2333,7 @@ async function renderSmartAddBooking(prefillOpts) {
           </div>
           <div class="form-group">
             <label style="font-weight:700;">Guest Name *</label>
-            <input id="guestName" placeholder="Full name of guest (e.g. Praveen Singh)" value="${pre.guestName || ''}"
+            <input id="guestName" placeholder="Full name of guest (e.g. Guest Name)" value="${pre.guestName || ''}"
               style="font-size:14px;font-weight:600;" />
           </div>
         </div>
@@ -3981,7 +3981,7 @@ window.openLateCheckoutModal = async function(bookingId) {
 
       <div class="form-group" style="margin-bottom:14px;">
         <label style="font-weight:700;font-size:13px;display:block;margin-bottom:4px;">Reason / Notes for Housekeeping</label>
-        <input id="lateCoNotes" type="text" placeholder="e.g. Evening flight at 7 PM / Approved by Praveen" value="Late checkout approved till 04:30 PM" style="font-size:13px;width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid #CBD5E1;" />
+        <input id="lateCoNotes" type="text" placeholder="e.g. Evening flight at 7 PM / Approved by Management" value="Late checkout approved till 04:30 PM" style="font-size:13px;width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid #CBD5E1;" />
       </div>
 
       <div style="background:#FFFBEB;border:1px solid #FDE68A;padding:10px 12px;border-radius:8px;margin-bottom:16px;font-size:12px;color:#92400E;display:flex;align-items:flex-start;gap:6px;">

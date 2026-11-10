@@ -1985,7 +1985,7 @@
                       ` : ''}
                     </div>
                     <div style="font-size:11.5px;color:#64748B;margin-top:2px;">
-                      Archived in Trash Vault. Room: ${d.roomId || '-'} ${canRestore ? ' &middot; <span style="color:#059669;font-weight:600;">Restorable by Praveen</span>' : ''}
+                      Archived in Trash Vault. Room: ${d.roomId || '-'} ${canRestore ? ' &middot; <span style="color:#059669;font-weight:600;">Restorable by Admin</span>' : ''}
                     </div>
                   `;
                 } else if (a.actionType === 'payment_add') {

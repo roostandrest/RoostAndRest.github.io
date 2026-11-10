@@ -1260,7 +1260,7 @@
       const p = this.prop;
       const titleEl = document.getElementById('luxe-spec-title');
       if (titleEl) {
-        titleEl.textContent = `${p.type || 'Luxury Homestay'} · Superhosts & Owners: Shahanshah & Anwar · Manager: Praveen Singh`;
+        titleEl.textContent = `${p.type || 'Luxury Homestay'} · Superhosts & Owners: Shahanshah & Anwar · Operations Team`;
       }
 
       const pillsEl = document.getElementById('luxe-spec-pills');
@@ -2589,7 +2589,7 @@ _Please confirm room allotment and issue official GST Tax Invoice. Thank you!_`;
           <div style="font-size:11.5px; color:#64748b; margin-bottom:18px; line-height:1.5;">
             📍 <strong>Property Location:</strong> <a href="${details.mapLink}" target="_blank" style="color:#0284c7; text-decoration:underline;">Open Pinpoint on Google Maps ↗</a><br>
             👑 <strong>Superhosts &amp; Owners:</strong> Anwar Ahmad (+91 82996 00709) &amp; Shahanshah (+91 94500 55554)<br>
-            👤 <strong>Manager:</strong> Praveen Singh (+91 91941 09911) · Office: 10:00 AM – 09:00 PM
+            👤 <strong>Manager:</strong> Operations (+91 9807486555) · Office: 10:00 AM – 09:00 PM
           </div>
 
           <div class="luxe-voucher-actions" style="display:flex; flex-direction:column; gap:10px;">

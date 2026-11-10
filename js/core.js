@@ -386,7 +386,7 @@ window.getOfficialReportFooterHTML = function(dateStr) {
         Report Generated: ${dt} &bull; 📧 roostandrestlucknow@gmail.com
       </div>
       <div style="font-size:11.5px;color:#0F172A;font-weight:800;margin-top:4px;letter-spacing:0.3px;">
-        ⚡ Enterprise CRM Developed by Praveen Singh
+        ⚡ Enterprise CRM
       </div>
     </div>`;
 };
@@ -395,8 +395,7 @@ window.getOfficialReportFooterText = function() {
   const NL = String.fromCharCode(10);
   return '━━━━━━━━━━━━━━━━━' + NL +
     'ROOST AND REST STAYS' + NL +
-    'Boutique Homestays • Lucknow' + NL +
-    'Developed by Praveen Singh';
+    'Boutique Homestays • Lucknow';
 };
 
 let SESSION = {
@@ -1821,14 +1820,14 @@ function renderShell(content, activePage = 'dashboard') {
     }
   }
 
-  const footerHtml = (activePage === 'bookings' || activePage === 'reports' || activePage === 'calendar' || activePage === 'expenses' || activePage === 'laundry' || activePage === 'maintenance' || activePage === 'airbnb-sync' || activePage === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin' || activePage === 'employees' || activePage === 'attendance' || activePage === 'tasks' || activePage === 'employee-ledger' || activePage === 'att-summary' || (typeof content === 'string' && (content.includes('Developed by Praveen Singh') || content.includes('report-doc') || content.includes('report-official-footer')))) ? '' : `
+  const footerHtml = (activePage === 'bookings' || activePage === 'reports' || activePage === 'calendar' || activePage === 'expenses' || activePage === 'laundry' || activePage === 'maintenance' || activePage === 'airbnb-sync' || activePage === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin' || activePage === 'employees' || activePage === 'attendance' || activePage === 'tasks' || activePage === 'employee-ledger' || activePage === 'att-summary') ? '' : `
     <footer class="app-official-system-footer">
       <div class="footer-legal">ROOST AND REST STAYS</div>
       <div class="footer-meta">
         <span>Boutique Homestays &bull; Lucknow</span> &bull; 
         <span>roostandrestlucknow@gmail.com</span>
       </div>
-      <div class="footer-credit">⚡ Developed by <strong>Praveen Singh</strong></div>
+      <div class="footer-credit">ROOST AND REST STAYS &bull; Boutique Homestays &bull; Lucknow</div>
     </footer>`;
 
   const existingMain = document.getElementById('mainContent');
@@ -2991,7 +2990,12 @@ async function renderUserManagement() {
     sb.from('employees').select('emp_id, name, phone, role, is_active')
   ]);
 
-  const userList = profiles || [];
+  const userList = (profiles || []).map(u => {
+    if ((u.display_name || '').toLowerCase().includes('praveen') || u.role === 'developer') {
+      return { ...u, display_name: 'Roost & Rest Tech' };
+    }
+    return u;
+  });
   const pendingRequests = (allPending || []).filter(p => p.status === 'Pending');
   const employees = allEmployees || [];
 
@@ -4060,7 +4064,7 @@ async function renderSettings() {
 
         <div class="form-grid" style="margin-top:10px;">
           <div class="form-group">
-            <label>Developer &amp; Technical Support (Praveen Singh)</label>
+            <label>Developer &amp; Technical Support (Roost &amp; Rest Tech)</label>
             <input type="text" id="brand_manager_phone" value="${(setMap['manager_phone'] || '9807486555').replace(/"/g, '&quot;')}" placeholder="9807486555" />
             <small style="color:var(--muted);">Master system administrator &amp; developer support</small>
           </div>
@@ -6235,7 +6239,7 @@ window.printDocumentHTML = function(htmlContent, title = 'Document', options = {
 // 📱 HOMEYHUTS SCREENSHOT 1 — MASTER APP MENU RENDERER
 // ═══════════════════════════════════════════════════════════
 function renderAppMenu() {
-  const shortName = (SESSION.displayName || 'Praveen Singh').split('(')[0].trim();
+  const shortName = (SESSION.displayName || 'System Admin').split('(')[0].trim();
   const initial = shortName.charAt(0).toUpperCase() || 'P';
   const roleLabel = ({
     'developer': 'Developer',
