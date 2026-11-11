@@ -2919,8 +2919,8 @@ code {
 .ptr-indicator .ptr-spinner {
   width: 22px;
   height: 22px;
-  border: 3px solid rgba(226,114,91,0.2);
-  border-top-color: #E2725B;
+  border: 3px solid rgba(180, 83, 9, 0.2);
+  border-top-color: #B45309;
   border-radius: 50%;
   transition: transform 0.15s linear;
 }
@@ -3110,81 +3110,144 @@ code {
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* ═══════════════════════════════════════════════════════════
-   🎯 SPLASH SCREEN — App boot animation
+   🎯 SPLASH SCREEN — App boot animation (Roost & Rest Luxury Noir)
    ═══════════════════════════════════════════════════════════ */
 #splashScreen {
   position: fixed;
   inset: 0;
-  background: #FFF7F5; /* Warm Peach-tinted Ivory matching HomeyHuts splash */
+  background: radial-gradient(circle at 50% 45%, #231B15 0%, #15100D 55%, #0E0B09 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 999999;
-  transition: opacity 0.4s ease-out;
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s ease-out;
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #splashScreen.hide {
   opacity: 0;
+  transform: scale(1.03);
   pointer-events: none;
 }
 
-#splashScreen .splash-logo {
+#splashScreen .splash-logo-wrap {
+  position: relative;
   width: 96px;
   height: 96px;
-  border-radius: 26px;
-  background: #ffffff;
-  padding: 12px;
-  box-shadow: 0 10px 30px rgba(234, 56, 41, 0.15), 0 2px 8px rgba(0, 0, 0, 0.04);
-  animation: splashPop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border: 1px solid rgba(234, 56, 41, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+
+#splashScreen .splash-logo-glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 36px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, rgba(217, 119, 6, 0.12) 50%, transparent 75%);
+  filter: blur(12px);
+  animation: splashPulse 2.4s ease-in-out infinite;
+}
+
+#splashScreen .splash-logo {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(245, 158, 11, 0.28);
+  animation: splashPop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  background: transparent;
 }
 
 #splashScreen .splash-logo img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
+  display: block;
 }
 
 #splashScreen .splash-title {
-  color: #111827;
+  color: #FFFFFF;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 21px;
-  font-weight: 800;
-  margin-top: 18px;
-  letter-spacing: 0.2px;
-  animation: splashFade 0.6s ease-out 0.3s both;
+  font-weight: 700;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  margin-top: 4px;
+  animation: splashFade 0.7s ease-out 0.2s both;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 #splashScreen .splash-tagline {
-  color: #EA3829;
-  font-size: 13.5px;
+  color: #F59E0B;
+  font-size: 11px;
   font-weight: 600;
-  font-style: italic;
-  margin-top: 4px;
-  animation: splashFade 0.6s ease-out 0.5s both;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  margin-top: 6px;
+  animation: splashFade 0.7s ease-out 0.35s both;
+}
+
+#splashScreen .splash-loader-bar {
+  width: 130px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  margin-top: 28px;
+  overflow: hidden;
+  position: relative;
+  animation: splashFade 0.7s ease-out 0.45s both;
+}
+
+#splashScreen .splash-loader-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 45%;
+  background: linear-gradient(90deg, transparent, #F59E0B, #FFFBEB, #D97706, transparent);
+  border-radius: 99px;
+  animation: splashBarMove 1.3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+#splashScreen .splash-status {
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-top: 10px;
+  animation: splashFade 0.7s ease-out 0.55s both;
 }
 
 #splashScreen .splash-spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid #FFEBE8;
-  border-top-color: #EA3829;
-  border-radius: 50%;
-  margin-top: 28px;
-  animation: splashSpin 0.8s linear infinite;
+  display: none;
 }
 
 @keyframes splashPop {
-  0% { transform: scale(0.4); opacity: 0; }
-  60% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); }
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes splashPulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.12); }
 }
 
 @keyframes splashFade {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes splashBarMove {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
 }
 
 @keyframes splashSpin {
