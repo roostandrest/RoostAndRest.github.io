@@ -3619,6 +3619,23 @@ window.saveSmartBooking = async function() {
         advance: adv,
         payment_status: insertObj.payment_status
       };
+
+      // 🔔 Instant Notification & Harmonic Audio Alert
+      if (window.triggerNotification?.newBooking) {
+        window.triggerNotification.newBooking(bkPayload);
+      }
+      if (adv > 0 && window.triggerNotification?.paymentReceived) {
+        window.triggerNotification.paymentReceived({
+          amount: adv,
+          mode: advMode,
+          guest_name: insertObj.guest_name,
+          room_name: roomText,
+          received_by: receivedBy || (SESSION?.displayName || 'Staff'),
+          booking_id: bkId,
+          notes: 'Advance booking deposit'
+        });
+      }
+
       if (typeof window.triggerGuestBookingPass === 'function') {
         window.triggerGuestBookingPass(bkPayload).catch(err => console.warn('Guest booking pass error:', err));
       }
@@ -3628,7 +3645,7 @@ window.saveSmartBooking = async function() {
       if (typeof window.triggerInvestorBookingAlert === 'function') {
         window.triggerInvestorBookingAlert(bkPayload).catch(err => console.warn('Investor booking alert error:', err));
       }
-    } catch(e) { console.warn('WhatsApp trigger error in smart bookings:', e); }
+    } catch(e) { console.warn('Notification/WhatsApp trigger error in smart bookings:', e); }
 
     if (window.fsn?.toast) {
       fsn.toast('🎉 Booking Saved Successfully!');

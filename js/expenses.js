@@ -1653,6 +1653,21 @@ async function saveExpEntry() {
       });
     }
 
+    // 🔔 Instant Notification & Audio Alert
+    if (window.triggerNotification?.expenseAdded) {
+      const catEl = document.getElementById('exCategory');
+      const catName = catEl?.options?.[catEl.selectedIndex]?.text || cid;
+      const roomEl = document.getElementById('exRoom');
+      const roomName = roomEl?.options?.[roomEl.selectedIndex]?.text || roomId;
+      window.triggerNotification.expenseAdded({
+        amount: amt,
+        category: catName,
+        description: (roomName ? roomName + ': ' : '') + (notes || 'Expense entry'),
+        payment_mode: payMode,
+        paid_by: paidBy || 'Staff'
+      });
+    }
+
     fsn.success('Success', '✅ Expense saved!');
     renderExpenses();
   } catch (err) {

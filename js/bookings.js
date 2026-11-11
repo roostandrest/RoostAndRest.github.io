@@ -4589,6 +4589,21 @@ async function saveBooking() {
 
       await recalcPaymentStatus(bkId);
 
+    // 🔔 Instant Notification & Harmonic Chime Alert
+    if (window.triggerNotification?.paymentReceived) {
+      const gName = currBk2?.guest_name || currBk?.guest_name || 'Guest';
+      const rName = propLabel(currBk2?.rooms || currBk?.rooms) || '';
+      window.triggerNotification.paymentReceived({
+        amount: paymentForCurrent,
+        mode: mode,
+        guest_name: gName,
+        room_name: rName,
+        received_by: receivedBy || 'Staff',
+        booking_id: bkId,
+        notes: userNotes
+      });
+    }
+
     // 📋 Audit log for Developer
     if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
       window.UserActionAudit.recordAction('payment_add', {
@@ -6468,6 +6483,21 @@ async function savePaymentModal(bkId) {
       return;
     }
     await recalcPaymentStatus(bkId);
+
+    // 🔔 Instant Notification & Harmonic Chime Alert
+    if (window.triggerNotification?.paymentReceived) {
+      const gName = currBk2?.guest_name || currBk?.guest_name || 'Guest';
+      const rName = propLabel(currBk2?.rooms || currBk?.rooms) || '';
+      window.triggerNotification.paymentReceived({
+        amount: paymentForCurrent,
+        mode: mode,
+        guest_name: gName,
+        room_name: rName,
+        received_by: receivedBy || 'Staff',
+        booking_id: bkId,
+        notes: userNotes
+      });
+    }
 
     // 📋 Audit log for Developer
     if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {

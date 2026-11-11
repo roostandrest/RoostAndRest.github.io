@@ -950,6 +950,12 @@ async function loadProfile(userId) {
 
   startHeartbeat();
 
+  // 🔔 Start Real-time Notifications Engine & Sync Badges
+  if (window.notifications && typeof window.notifications.start === 'function') {
+    window.notifications.start();
+    window.notifications.updateBadge();
+  }
+
   if (window.UserActivityTracker) {
     window.UserActivityTracker.recordLogin(userId, SESSION.displayName, p.role);
   }

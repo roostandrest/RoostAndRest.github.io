@@ -44,64 +44,91 @@
   try { localStorage.setItem('uh_notif_history', JSON.stringify(NOTIF.history)); } catch(e) {}
 
   // ─── Sound (Apple / Luxury Hospitality Harmonic Chime Synthesizer) ───
+  let sharedAudioCtx = null;
+  function getAudioContext() {
+    try {
+      if (!sharedAudioCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) sharedAudioCtx = new AudioCtx();
+      }
+      if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
+        sharedAudioCtx.resume().catch(() => {});
+      }
+    } catch(e) {}
+    return sharedAudioCtx;
+  }
+
+  // Pre-unlock audio context on user's first touch or click
+  if (typeof window !== 'undefined') {
+    ['click', 'touchstart', 'keydown'].forEach(evt => {
+      window.addEventListener(evt, () => getAudioContext(), { once: true, passive: true });
+    });
+  }
+
   function playSound(type) {
     if (NOTIF.isMuted) return;
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      const ctx = getAudioContext();
+      if (!ctx) return;
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        ctx.resume().catch(() => {});
       }
+
+      const t0 = ctx.currentTime + 0.02;
 
       // Harmonic chords with gentle attack and warm exponential decay
       const presets = {
         booking: [
-          { freq: 523.25, time: 0, dur: 0.35, gain: 0.16 },    // C5
-          { freq: 659.25, time: 0.08, dur: 0.35, gain: 0.18 },  // E5
-          { freq: 783.99, time: 0.16, dur: 0.45, gain: 0.20 },  // G5
-          { freq: 1046.5, time: 0.24, dur: 0.65, gain: 0.22 }   // C6 (crystal bell)
+          { freq: 523.25, time: 0, dur: 0.35, gain: 0.18 },    // C5
+          { freq: 659.25, time: 0.08, dur: 0.35, gain: 0.20 },  // E5
+          { freq: 783.99, time: 0.16, dur: 0.45, gain: 0.22 },  // G5
+          { freq: 1046.5, time: 0.24, dur: 0.65, gain: 0.25 }   // C6 (crystal bell)
         ],
         payment: [
-          { freq: 587.33, time: 0, dur: 0.3, gain: 0.16 },     // D5
-          { freq: 880.00, time: 0.09, dur: 0.35, gain: 0.18 },   // A5
-          { freq: 1174.66, time: 0.18, dur: 0.6, gain: 0.22 }   // D6
+          { freq: 587.33, time: 0, dur: 0.3, gain: 0.20 },     // D5
+          { freq: 880.00, time: 0.09, dur: 0.35, gain: 0.22 },   // A5
+          { freq: 1174.66, time: 0.18, dur: 0.65, gain: 0.26 }  // D6 (Apple Cash Chime)
         ],
         checkin: [
-          { freq: 440.00, time: 0, dur: 0.35, gain: 0.16 },    // A4
-          { freq: 554.37, time: 0.1, dur: 0.5, gain: 0.20 }     // C#5
+          { freq: 440.00, time: 0, dur: 0.3, gain: 0.18 },     // A4
+          { freq: 554.37, time: 0.09, dur: 0.35, gain: 0.20 },  // C#5
+          { freq: 659.25, time: 0.18, dur: 0.5, gain: 0.22 }    // E5
         ],
         checkout: [
-          { freq: 554.37, time: 0, dur: 0.3, gain: 0.16 },
-          { freq: 440.00, time: 0.1, dur: 0.45, gain: 0.18 }
+          { freq: 659.25, time: 0, dur: 0.3, gain: 0.18 },
+          { freq: 554.37, time: 0.09, dur: 0.35, gain: 0.20 },
+          { freq: 440.00, time: 0.18, dur: 0.5, gain: 0.22 }
+        ],
+        expense: [
+          { freq: 349.23, time: 0, dur: 0.25, gain: 0.16 },    // F4
+          { freq: 440.00, time: 0.08, dur: 0.3, gain: 0.18 },   // A4
+          { freq: 523.25, time: 0.16, dur: 0.45, gain: 0.20 }   // C5
         ],
         task: [
-          { freq: 493.88, time: 0, dur: 0.3, gain: 0.15 },
-          { freq: 659.25, time: 0.1, dur: 0.45, gain: 0.18 }
+          { freq: 493.88, time: 0, dur: 0.3, gain: 0.18 },
+          { freq: 659.25, time: 0.1, dur: 0.45, gain: 0.20 }
         ],
         info: [
-          { freq: 523.25, time: 0, dur: 0.25, gain: 0.14 },
-          { freq: 659.25, time: 0.08, dur: 0.4, gain: 0.16 }
+          { freq: 523.25, time: 0, dur: 0.25, gain: 0.16 },
+          { freq: 783.99, time: 0.09, dur: 0.45, gain: 0.18 }
         ]
       };
 
       const notes = presets[type] || presets.info;
       notes.forEach(({ freq, time, dur, gain }) => {
-        setTimeout(() => {
-          try {
-            const osc = ctx.createOscillator();
-            const gainNode = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, ctx.currentTime);
-            gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.02);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
-            osc.connect(gainNode);
-            gainNode.connect(ctx.destination);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + dur);
-          } catch(err) {}
-        }, time * 1000);
+        try {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t0 + time);
+          gainNode.gain.setValueAtTime(0.0001, t0 + time);
+          gainNode.gain.linearRampToValueAtTime(gain, t0 + time + 0.015);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, t0 + time + dur);
+          osc.connect(gainNode);
+          gainNode.connect(ctx.destination);
+          osc.start(t0 + time);
+          osc.stop(t0 + time + dur);
+        } catch(err) {}
       });
     } catch(e) {}
   }
@@ -836,17 +863,36 @@
     const c2 = sb.channel('rt-payments-' + Date.now())
       .on('postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'payment_history' },
-        (payload) => {
+        async (payload) => {
           console.log('🔔 New payment event:', payload.new);
           const p = payload.new;
+          if (!p || p.verification_status === 'rejected') return;
+          let guestName = 'Guest';
+          let roomName = '';
+          if (p.booking_id) {
+            try {
+              const { data: b } = await sb.from('guest_register')
+                .select('guest_name, room_id, phone, rooms(nickname, unit_no)')
+                .eq('booking_id', p.booking_id)
+                .single();
+              if (b) {
+                guestName = b.guest_name || 'Guest';
+                if (b.rooms) roomName = (b.rooms.nickname || '') + (b.rooms.unit_no ? ' (' + b.rooms.unit_no + ')' : '');
+              }
+            } catch(e) {}
+          }
+          const amt = Number(p.amount || 0).toLocaleString('en-IN');
           notify({
-            type: 'payment', icon: '💰',
-            title: 'Payment Received',
-            message: '₹' + (p.amount || 0) + ' — ' + (p.payment_mode || 'Payment'),
-            sub: p.notes || '',
-            page: 'bookings', sound: 'payment',
+            type: 'payment',
+            icon: '💰',
+            title: `💰 Payment Received: ₹${amt}`,
+            message: `${guestName}${roomName ? ' — ' + roomName : ''} • ${p.payment_mode || 'Payment'}`,
+            sub: `Received by ${p.received_by || 'Staff'}${p.notes ? ' • ' + p.notes : ''}`,
+            page: 'bookings',
+            sound: 'payment',
             entityId: p.booking_id,
-            entityType: 'payment'
+            entityType: 'payment',
+            booking_id: p.booking_id
           });
         })
       .subscribe((s) => console.log('🔔 Payments channel:', s));
@@ -864,9 +910,9 @@
             message: t.task_description || 'Task',
             sub: t.emp_id || '',
             page: 'tasks', sound: 'task',
-              entityId: t.task_id || t.id,
-              entityType: 'task'
-            });
+            entityId: t.task_id || t.id,
+            entityType: 'task'
+          });
         })
       .subscribe((s) => console.log('🔔 Tasks channel:', s));
 
@@ -890,7 +936,8 @@
               sub: `Check-in time: ${new Date(n.check_in_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`,
               page: 'bookings', sound: 'checkin',
               entityId: n.booking_id,
-              entityType: 'booking'
+              entityType: 'booking',
+              booking_id: n.booking_id
             });
           }
           if (!o.check_out_time && n.check_out_time) {
@@ -901,17 +948,137 @@
               sub: `Check-out time: ${new Date(n.check_out_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`,
               page: 'bookings', sound: 'checkout',
               entityId: n.booking_id,
-              entityType: 'booking'
+              entityType: 'booking',
+              booking_id: n.booking_id
             });
           }
         })
       .subscribe((s) => console.log('🔔 Updates channel:', s));
 
-    NOTIF.channels = [c1, c2, c3, c4];
+    // 5. Expenses INSERT
+    const c5 = sb.channel('rt-expenses-' + Date.now())
+      .on('postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'expenses' },
+        (payload) => {
+          console.log('🔔 New expense event:', payload.new);
+          const exp = payload.new;
+          if (!exp) return;
+          const amt = Number(exp.amount || 0).toLocaleString('en-IN');
+          notify({
+            type: 'expense',
+            icon: '💸',
+            title: `💸 Expense Logged: ₹${amt}`,
+            message: `${exp.category || exp.category_id || 'Expense'} — ${exp.description || exp.notes || 'Entry recorded'}`,
+            sub: `Paid via: ${exp.payment_mode || 'Cash'} • By ${exp.paid_by || 'Staff'}`,
+            page: 'expenses',
+            sound: 'expense',
+            entityId: exp.id,
+            entityType: 'expense'
+          });
+        })
+      .subscribe((s) => console.log('🔔 Expenses channel:', s));
+
+    NOTIF.channels = [c1, c2, c3, c4, c5];
     NOTIF.started = true;
     console.log('🔔 Started', NOTIF.channels.length, 'channels');
     return true;
   }
+
+  // ─── Direct In-App Instant Notification Dispatcher (Zero Network Delay) ───
+  window.triggerNotification = {
+    newBooking: function(b) {
+      if (!b) return;
+      const totalFormatted = Number(b.total_amount || 0).toLocaleString('en-IN');
+      const isAirbnb = String(b.booking_mode || '').toLowerCase().includes('airbnb');
+      const isWeb = b.booked_by === 'Website' || b.booking_mode === 'Direct-Website' || b.verification_status === 'pending';
+      const rName = b.room_name || b.room_id || 'Homestay';
+      let title = `📅 New Booking: ${rName} (₹${totalFormatted})`;
+      let icon = '📅';
+      if (isAirbnb) {
+        title = `🚨 New Airbnb Booking: ${rName} (₹${totalFormatted})`;
+        icon = '🚨';
+      } else if (isWeb) {
+        title = `🌐 New Website Booking: ${rName} (₹${totalFormatted})`;
+        icon = '🌐';
+      }
+      notify({
+        type: 'booking',
+        icon: icon,
+        title: title,
+        message: `${b.guest_name || 'Guest'} — ${rName}`,
+        sub: `Dates: ${b.check_in || '-'} to ${b.check_out || '-'} • ₹${totalFormatted}`,
+        page: isWeb ? 'pendingApprovals' : 'bookings',
+        sound: 'booking',
+        entityId: b.booking_id,
+        entityType: 'booking',
+        booking_id: b.booking_id,
+        phone: b.phone
+      });
+    },
+    paymentReceived: function(p) {
+      if (!p) return;
+      const amt = Number(p.amount || 0).toLocaleString('en-IN');
+      notify({
+        type: 'payment',
+        icon: '💰',
+        title: `💰 Payment Received: ₹${amt}`,
+        message: `${p.guest_name || 'Guest'}${p.room_name ? ' — ' + p.room_name : ''} • ${p.mode || p.payment_mode || 'Payment'}`,
+        sub: `Received by ${p.received_by || 'Staff'}${p.notes ? ' • ' + p.notes : ''}`,
+        page: 'bookings',
+        sound: 'payment',
+        entityId: p.booking_id,
+        entityType: 'payment',
+        booking_id: p.booking_id
+      });
+    },
+    checkIn: function(b) {
+      if (!b) return;
+      const rName = b.room_name || b.room_id || 'Homestay';
+      notify({
+        type: 'checkin',
+        icon: '✅',
+        title: `✅ Guest Checked In: ${b.guest_name || 'Guest'}`,
+        message: `${b.guest_name || 'Guest'} is now checked-in at ${rName}`,
+        sub: `Checked-in successfully • Unit occupied`,
+        page: 'bookings',
+        sound: 'checkin',
+        entityId: b.booking_id,
+        entityType: 'booking',
+        booking_id: b.booking_id
+      });
+    },
+    checkOut: function(b) {
+      if (!b) return;
+      const rName = b.room_name || b.room_id || 'Homestay';
+      notify({
+        type: 'checkout',
+        icon: '📤',
+        title: `📤 Guest Checked Out: ${b.guest_name || 'Guest'}`,
+        message: `${b.guest_name || 'Guest'} departed from ${rName}`,
+        sub: `Departure logged • Ready for housekeeping turnover`,
+        page: 'bookings',
+        sound: 'checkout',
+        entityId: b.booking_id,
+        entityType: 'booking',
+        booking_id: b.booking_id
+      });
+    },
+    expenseAdded: function(e) {
+      if (!e) return;
+      const amt = Number(e.amount || 0).toLocaleString('en-IN');
+      notify({
+        type: 'expense',
+        icon: '💸',
+        title: `💸 Expense Logged: ₹${amt}`,
+        message: `${e.category || e.category_id || 'Expense'} — ${e.description || e.notes || ''}`,
+        sub: `Paid via: ${e.payment_mode || e.mode || 'Cash'} • By ${e.paid_by || e.logged_by || 'Staff'}`,
+        page: 'expenses',
+        sound: 'expense',
+        entityId: e.id || Date.now(),
+        entityType: 'expense'
+      });
+    }
+  };
 
   // Expose globals
   window.notifications = {
