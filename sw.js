@@ -1,5 +1,5 @@
-const CACHE_NAME = 'roost-live-v606';
-const RUNTIME_CACHE = 'roost-runtime-v606';
+const CACHE_NAME = 'roost-live-v607';
+const RUNTIME_CACHE = 'roost-runtime-v607';
 
 const CORE_ASSETS = [
   './',
@@ -10,8 +10,11 @@ const CORE_ASSETS = [
   './manifest.json',
   './assets/logo.svg',
   './assets/logo.png',
+  './assets/logo-crest.png',
+  './assets/logo-emblem.png',
   './assets/icon-192.png',
   './assets/icon-512.png',
+  './assets/apple-touch-icon.png',
   './assets/signature-stamp.svg',
   './js/core.js',
   './js/user-audit.js',
@@ -133,8 +136,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // JS Scripts & Versioned assets: Network-first to always run latest logic
-  if (url.pathname.endsWith('.js') || url.search.includes('v=')) {
+  // JS Scripts & Versioned code assets: Network-first to always run latest logic (exclude static images/media)
+  const isImageOrMedia = url.pathname.match(/\.(png|jpg|jpeg|gif|svg|ico|webp|mp3|wav|ogg)$/i);
+  if (url.pathname.endsWith('.js') || (url.search.includes('v=') && !isImageOrMedia)) {
     event.respondWith(
       fetch(req)
         .then(res => {
@@ -146,14 +150,14 @@ self.addEventListener('fetch', event => {
           }
           return res;
         })
-        .catch(() => caches.match(req).then(cached => cached || new Response('Offline', { status: 503 })))
+        .catch(() => caches.match(req, { ignoreSearch: true }).then(cached => cached || new Response('Offline', { status: 503 })))
     );
     return;
   }
 
   // Other static assets (images, css): cache first
   event.respondWith(
-    caches.match(req).then(cached => {
+    caches.match(req, { ignoreSearch: true }).then(cached => {
       const fetchPromise = fetch(req)
         .then(res => {
           if (res && res.status === 200) {
