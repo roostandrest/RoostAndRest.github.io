@@ -43,40 +43,45 @@
   };
   try { localStorage.setItem('uh_notif_history', JSON.stringify(NOTIF.history)); } catch(e) {}
 
-  // ─── Sound (Apple / Luxury Hospitality Harmonic Chime Synthesizer) ───
-  let sharedAudioCtx = null;
-  function getAudioContext() {
+  // ─── Sound (Apple / Luxury Hospitality Harmonic Chime Synthesizer - Exact TUHH Architecture) ───
+  let _audioUnlocked = false;
+  function unlockAudioContext() {
+    if (_audioUnlocked) return;
     try {
-      if (!sharedAudioCtx) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) sharedAudioCtx = new AudioCtx();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
       }
-      if (sharedAudioCtx && sharedAudioCtx.state === 'suspended') {
-        sharedAudioCtx.resume().catch(() => {});
-      }
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.00001, ctx.currentTime);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.001);
+      _audioUnlocked = true;
     } catch(e) {}
-    return sharedAudioCtx;
   }
 
-  // Pre-unlock audio context on user's first touch or click
   if (typeof window !== 'undefined') {
     ['click', 'touchstart', 'keydown'].forEach(evt => {
-      window.addEventListener(evt, () => getAudioContext(), { once: true, passive: true });
+      window.addEventListener(evt, unlockAudioContext, { once: true, passive: true });
     });
   }
 
   function playSound(type) {
     if (NOTIF.isMuted) return;
     try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
       if (ctx.state === 'suspended') {
         ctx.resume().catch(() => {});
       }
 
-      const t0 = ctx.currentTime + 0.02;
-
-      // Harmonic chords with gentle attack and warm exponential decay
+      // Harmonic chords with gentle attack and warm exponential decay (TUHH crystal bell)
       const presets = {
         booking: [
           { freq: 523.25, time: 0, dur: 0.35, gain: 0.18 },    // C5
@@ -85,19 +90,17 @@
           { freq: 1046.5, time: 0.24, dur: 0.65, gain: 0.25 }   // C6 (crystal bell)
         ],
         payment: [
-          { freq: 587.33, time: 0, dur: 0.3, gain: 0.20 },     // D5
-          { freq: 880.00, time: 0.09, dur: 0.35, gain: 0.22 },   // A5
-          { freq: 1174.66, time: 0.18, dur: 0.65, gain: 0.26 }  // D6 (Apple Cash Chime)
+          { freq: 587.33, time: 0, dur: 0.3, gain: 0.18 },     // D5
+          { freq: 880.00, time: 0.09, dur: 0.35, gain: 0.20 },   // A5
+          { freq: 1174.66, time: 0.18, dur: 0.6, gain: 0.24 }   // D6 (Apple Cash chime)
         ],
         checkin: [
-          { freq: 440.00, time: 0, dur: 0.3, gain: 0.18 },     // A4
-          { freq: 554.37, time: 0.09, dur: 0.35, gain: 0.20 },  // C#5
-          { freq: 659.25, time: 0.18, dur: 0.5, gain: 0.22 }    // E5
+          { freq: 440.00, time: 0, dur: 0.35, gain: 0.18 },    // A4
+          { freq: 554.37, time: 0.1, dur: 0.5, gain: 0.20 }     // C#5
         ],
         checkout: [
-          { freq: 659.25, time: 0, dur: 0.3, gain: 0.18 },
-          { freq: 554.37, time: 0.09, dur: 0.35, gain: 0.20 },
-          { freq: 440.00, time: 0.18, dur: 0.5, gain: 0.22 }
+          { freq: 554.37, time: 0, dur: 0.3, gain: 0.18 },
+          { freq: 440.00, time: 0.1, dur: 0.45, gain: 0.20 }
         ],
         expense: [
           { freq: 349.23, time: 0, dur: 0.25, gain: 0.16 },    // F4
@@ -105,30 +108,33 @@
           { freq: 523.25, time: 0.16, dur: 0.45, gain: 0.20 }   // C5
         ],
         task: [
-          { freq: 493.88, time: 0, dur: 0.3, gain: 0.18 },
-          { freq: 659.25, time: 0.1, dur: 0.45, gain: 0.20 }
+          { freq: 493.88, time: 0, dur: 0.3, gain: 0.16 },
+          { freq: 659.25, time: 0.1, dur: 0.45, gain: 0.18 }
         ],
         info: [
-          { freq: 523.25, time: 0, dur: 0.25, gain: 0.16 },
-          { freq: 783.99, time: 0.09, dur: 0.45, gain: 0.18 }
+          { freq: 523.25, time: 0, dur: 0.25, gain: 0.15 },
+          { freq: 659.25, time: 0.08, dur: 0.4, gain: 0.17 }
         ]
       };
 
-      const notes = presets[type] || presets.info;
+      const notes = presets[type] || presets.booking;
       notes.forEach(({ freq, time, dur, gain }) => {
-        try {
-          const osc = ctx.createOscillator();
-          const gainNode = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, t0 + time);
-          gainNode.gain.setValueAtTime(0.0001, t0 + time);
-          gainNode.gain.linearRampToValueAtTime(gain, t0 + time + 0.015);
-          gainNode.gain.exponentialRampToValueAtTime(0.0001, t0 + time + dur);
-          osc.connect(gainNode);
-          gainNode.connect(ctx.destination);
-          osc.start(t0 + time);
-          osc.stop(t0 + time + dur);
-        } catch(err) {}
+        setTimeout(() => {
+          try {
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + dur);
+          } catch(err) {}
+        }, time * 1000);
       });
     } catch(e) {}
   }
@@ -647,6 +653,9 @@
             <button type="button" id="notifMuteToggle" title="Toggle sound alerts" style="background:${NOTIF.isMuted ? '#FEE2E2' : '#F1F5F9'};border:1px solid #CBD5E1;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;color:${NOTIF.isMuted ? '#DC2626' : '#334155'};display:inline-flex;align-items:center;gap:4px;">
               ${NOTIF.isMuted ? '🔇 Muted' : '🔊 Sound ON'}
             </button>
+            <button type="button" onclick="window.notifications && window.notifications.playSound('booking')" title="Test crystal notification chime" style="background:#FEF3C7;border:1px solid #FCD34D;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#92400E;display:inline-flex;align-items:center;gap:4px;">
+              🔔 Test Sound
+            </button>
             <button type="button" onclick="window.notifications.requestPushPermission()" title="Enable OS / Mobile Push Alerts" style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#4F46E5;display:inline-flex;align-items:center;gap:4px;">
               📲 Push Alerts
             </button>
@@ -1086,6 +1095,7 @@
     stop: stopAll,
     openPanel: openPanel,
     notify: notify,
+    playSound: playSound,
     updateBadge: updateBadge,
     requestPushPermission: requestPushPermission,
     checkLowInventory: checkLowInventoryAlert,
@@ -1094,6 +1104,8 @@
   window.notify = notify;
   window.showToast = showToast;
   window.requestPushPermission = requestPushPermission;
+  window.playNotificationChime = playSound;
+  window.testNotificationSound = playSound;
 
   // Auto-start when session ready
   let tries = 0;

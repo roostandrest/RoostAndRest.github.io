@@ -63,24 +63,37 @@ window.computeFilteredBookings = function(all, paidMap, today) {
     const sqDigits = sq.replace(/\D/g, '');
 
     filtered = filtered.filter(b => {
-      // 1. Robust Phone matching (+91, 91, 0, spaces, dashes)
+      // 1. Direct Guest Name matching (case-insensitive substring)
+      const gName = String(b.guest_name || '').toLowerCase();
+      if (gName && (gName.includes(sq) || sq.includes(gName))) return true;
+
+      // 2. Multi-word Name tokens (e.g. "Wasmi Hasan" matches "Wasmi" or "Hasan")
+      if (rawTokens.length > 0 && rawTokens.every(tok => gName.includes(tok))) return true;
+
+      // 3. Ultra-robust Phone matching (+91, 91, 0, spaces, dashes, partial digits)
       if (window.matchPhoneSearch && window.matchPhoneSearch(sq, b.phone)) return true;
 
-      // 2. Digits matching (Aadhaar/ID, Booking ID, Amount)
+      // 4. Digits matching (Phone digits, Aadhaar/ID digits, Booking ID digits)
       const bPhoneDigits = String(b.phone || '').replace(/\D/g, '');
       const bIdDigits = String(b.id_proof_no || '').replace(/\D/g, '');
       const bBookingIdDigits = String(b.booking_id || '').replace(/\D/g, '');
 
       if (sqDigits.length >= 3) {
-        if (bPhoneDigits.includes(sqDigits)) return true;
-        if (bIdDigits.includes(sqDigits)) return true;
-        if (bBookingIdDigits.includes(sqDigits)) return true;
+        if (bPhoneDigits && (bPhoneDigits.includes(sqDigits) || sqDigits.includes(bPhoneDigits.slice(-10)))) return true;
+        if (bIdDigits && bIdDigits.includes(sqDigits)) return true;
+        if (bBookingIdDigits && bBookingIdDigits.includes(sqDigits)) return true;
       }
 
-      // 3. Fallback room data lookup if rooms foreign object is missing
+      // 5. Booking ID and Airbnb confirmation code
+      const bid = String(b.booking_id || '').toLowerCase();
+      if (bid.includes(sq)) return true;
+      const abnbCode = String(b.airbnb_confirmation_code || '').toLowerCase();
+      if (abnbCode && abnbCode.includes(sq)) return true;
+
+      // 6. Fallback room data lookup if rooms foreign object is missing
       const roomObj = b.rooms || window._roomsCache?.find(r => r.room_id === b.room_id) || {};
 
-      // 4. Comprehensive text bundle for this booking
+      // 7. Comprehensive text bundle for this booking
       const textBundle = [
         b.guest_name || '',
         b.phone || '',
@@ -410,7 +423,7 @@ async function renderSmartManageBookings(forceRefresh = false) {
   const pendingApprovalsCount = (all || []).filter(b => b.verification_status === 'pending').length;
 
   // Sync global search if present
-  if (window.SESSION?.bookingSearch && !window._sbkState.searchQuery) {
+  if (window.SESSION?.bookingSearch !== undefined && window.SESSION.bookingSearch !== window._sbkState.searchQuery) {
     window._sbkState.searchQuery = window.SESSION.bookingSearch;
   }
 
@@ -505,9 +518,7 @@ async function renderSmartManageBookings(forceRefresh = false) {
               style="border:none;outline:none;font-size:13px;color:#0F172A;width:100%;background:transparent;"
               oninput="window.handleSearchInput(this.value)"
               onkeydown="if(event.key==='Enter'){event.preventDefault();window.handleManualSearch();}" />
-            ${window._sbkState.searchQuery ? `
-              <button type="button" onclick="window.clearSearch();" style="border:none;background:transparent;cursor:pointer;color:#94A3B8;font-size:12px;padding:2px 4px;font-weight:700;" title="Clear search">✕</button>
-            ` : ''}
+            <button type="button" id="sbkClearBtn" onclick="window.clearSearch();" style="display:${window._sbkState.searchQuery ? 'inline-block' : 'none'};border:none;background:transparent;cursor:pointer;color:#94A3B8;font-size:12px;padding:2px 4px;font-weight:700;" title="Clear search">✕</button>
           </div>
 
           <!-- Filter Trigger Button -->

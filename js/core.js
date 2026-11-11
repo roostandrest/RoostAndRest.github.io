@@ -2191,16 +2191,29 @@ function renderShell(content, activePage = 'bookings') {
   // 📞 ULTRA-ROBUST PHONE NORMALIZATION & LOOKUP ENGINE
   // Handles +91, 91, 0, spaces, dashes, parentheses & partials
   // ═══════════════════════════════════════════════════════════
+  window.getPhoneSearchVariants = function(raw) {
+    if (!raw) return [];
+    const str = String(raw).trim();
+    const digits = str.replace(/\D/g, '');
+    const variants = new Set();
+    if (digits) variants.add(digits);
+    if (digits.length >= 10) variants.add(digits.slice(-10));
+    if (digits.startsWith('91') && digits.length > 2) variants.add(digits.slice(2));
+    if (digits.startsWith('091') && digits.length > 3) variants.add(digits.slice(3));
+    if (digits.startsWith('0') && digits.length > 1) variants.add(digits.slice(1));
+    return Array.from(variants).filter(v => v.length >= 3);
+  };
+
   window.normalizePhone = function(raw) {
     if (!raw) return { raw: '', digits: '', core10: '', formatted: '' };
     const str = String(raw).trim();
     const digits = str.replace(/\D/g, '');
     let core10 = digits;
-    if (digits.length >= 12 && digits.startsWith('91')) {
+    if (digits.startsWith('91') && digits.length >= 3) {
       core10 = digits.slice(2);
-    } else if (digits.length >= 13 && digits.startsWith('091')) {
+    } else if (digits.startsWith('091') && digits.length >= 4) {
       core10 = digits.slice(3);
-    } else if (digits.length >= 11 && digits.startsWith('0')) {
+    } else if (digits.startsWith('0') && digits.length >= 2) {
       core10 = digits.slice(1);
     }
     if (core10.length > 10) {
@@ -2214,27 +2227,22 @@ function renderShell(content, activePage = 'bookings') {
     if (!query || !targetPhone) return false;
     const qStr = String(query).trim().toLowerCase();
     const tStr = String(targetPhone).trim().toLowerCase();
-    if (tStr.includes(qStr)) return true;
+    if (tStr.includes(qStr) || qStr.includes(tStr)) return true;
+
+    const qVariants = window.getPhoneSearchVariants ? window.getPhoneSearchVariants(query) : [];
+    const tVariants = window.getPhoneSearchVariants ? window.getPhoneSearchVariants(targetPhone) : [];
+
+    for (const q of qVariants) {
+      for (const t of tVariants) {
+        if (t.includes(q) || q.includes(t)) return true;
+      }
+    }
 
     const qNorm = window.normalizePhone(query);
     const tNorm = window.normalizePhone(targetPhone);
 
-    // Exact 10-digit match (with or without +91 / 91 / 0 prefix)
-    if (qNorm.core10 && tNorm.core10 && qNorm.core10.length === 10 && tNorm.core10.length === 10) {
-      if (qNorm.core10 === tNorm.core10) return true;
-    }
-
-    // Substring match on normalized 10 digits or cleaned digits
-    if (qNorm.core10 && qNorm.core10.length >= 3) {
-      if (tNorm.core10 && tNorm.core10.includes(qNorm.core10)) return true;
-      if (tNorm.digits && tNorm.digits.includes(qNorm.core10)) return true;
-    }
-    if (qNorm.digits && qNorm.digits.length >= 3) {
-      if (tNorm.digits && tNorm.digits.includes(qNorm.digits)) return true;
-      if (tNorm.core10 && tNorm.core10.includes(qNorm.digits)) return true;
-    }
-    if (tNorm.core10 && tNorm.core10.length >= 4 && qNorm.digits && qNorm.digits.includes(tNorm.core10)) {
-      return true;
+    if (qNorm.core10 && tNorm.core10 && qNorm.core10.length >= 3) {
+      if (tNorm.core10.includes(qNorm.core10) || qNorm.core10.includes(tNorm.core10)) return true;
     }
 
     return false;
@@ -2427,16 +2435,20 @@ function renderShell(content, activePage = 'bookings') {
     clearTimeout(_mobileSearchDebounce);
     _mobileSearchDebounce = setTimeout(async () => {
       let matches = [];
-      const qNorm = window.normalizePhone(q);
-      const cached = window._sbkState?.cachedBookings || [];
+      const cached = window._sbkState?.cachedBookings || window._allBookings || [];
+      const rawTokens = q.split(/\s+/).filter(Boolean);
       if (cached.length) {
-        matches = cached.filter(b => 
-          (b.guest_name && b.guest_name.toLowerCase().includes(q)) ||
-          window.matchPhoneSearch(q, b.phone) ||
-          (b.booking_id && String(b.booking_id).toLowerCase().includes(q)) ||
-          (b.rooms?.nickname && b.rooms.nickname.toLowerCase().includes(q)) ||
-          (b.room_id && b.room_id.toLowerCase().includes(q))
-        ).slice(0, 8);
+        matches = cached.filter(b => {
+          const gName = (b.guest_name || '').toLowerCase();
+          if (gName.includes(q)) return true;
+          if (rawTokens.length > 1 && rawTokens.every(tok => gName.includes(tok))) return true;
+          if (window.matchPhoneSearch && window.matchPhoneSearch(q, b.phone)) return true;
+          if (b.booking_id && String(b.booking_id).toLowerCase().includes(q)) return true;
+          if (b.rooms?.nickname && b.rooms.nickname.toLowerCase().includes(q)) return true;
+          if (b.rooms?.unit_no && String(b.rooms.unit_no).toLowerCase().includes(q)) return true;
+          if (b.room_id && b.room_id.toLowerCase().includes(q)) return true;
+          return false;
+        }).slice(0, 10);
       }
 
       // If no cached matches or not loaded yet, query Supabase directly

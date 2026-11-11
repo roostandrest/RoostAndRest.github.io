@@ -2493,20 +2493,27 @@ async function renderManageBookings() {
     f = f.filter(b => window._myAssignedRooms.includes(b.room_id));
   }
 
-  if (mf !== 'All') f = f.filter(b => b.booking_mode === mf);
-  if (pf) f = f.filter(b => b.room_id === pf);
-  if (df) f = f.filter(b => b.check_in === df);
-  if (d1) f = f.filter(b => b.check_in >= d1);
-  if (d2) f = f.filter(b => b.check_in <= d2);
   if (sq) {
     const sLow = sq.toLowerCase();
-    f = f.filter(b => 
-      (b.guest_name || '').toLowerCase().includes(sLow) || 
-      window.matchPhoneSearch(sq, b.phone) || 
-      (b.booking_id && String(b.booking_id).toLowerCase().includes(sLow)) ||
-      (b.airbnb_confirmation_code && b.airbnb_confirmation_code.toLowerCase().includes(sLow)) ||
-      (b.notes && b.notes.toLowerCase().includes(sLow))
-    );
+    const rawTokens = sLow.split(/\s+/).filter(Boolean);
+    f = (all || []).filter(b => {
+      if (window._myAssignedRooms?.length && !window._myAssignedRooms.includes(b.room_id)) return false;
+      const gName = (b.guest_name || '').toLowerCase();
+      if (gName.includes(sLow)) return true;
+      if (rawTokens.length > 1 && rawTokens.every(tok => gName.includes(tok))) return true;
+      if (window.matchPhoneSearch && window.matchPhoneSearch(sq, b.phone)) return true;
+      if (b.booking_id && String(b.booking_id).toLowerCase().includes(sLow)) return true;
+      if (b.airbnb_confirmation_code && b.airbnb_confirmation_code.toLowerCase().includes(sLow)) return true;
+      if (b.room_id && b.room_id.toLowerCase().includes(sLow)) return true;
+      if (b.notes && b.notes.toLowerCase().includes(sLow)) return true;
+      return false;
+    });
+  } else {
+    if (mf !== 'All') f = f.filter(b => b.booking_mode === mf);
+    if (pf) f = f.filter(b => b.room_id === pf);
+    if (df) f = f.filter(b => b.check_in === df);
+    if (d1) f = f.filter(b => b.check_in >= d1);
+    if (d2) f = f.filter(b => b.check_in <= d2);
   }
 
   // Period filter

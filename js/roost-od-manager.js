@@ -120,7 +120,7 @@ async function fetchRawSecurityDepositBookings(client) {
             try {
                 const { data, error } = await client.from('guest_register')
                     .select('booking_id, guest_name, room_id, check_in, check_out, notes, security_deposit_amount, security_deposit_status, security_deposit_mode, security_deposit_received_by, security_deposit_received_date, security_deposit_refund_date, security_deposit_refund_amount, security_deposit_refund_mode, security_deposit_refunded_by, security_deposit_deducted_amount, rooms(nickname, unit_no)')
-                    .or('security_deposit_received_by.ilike.%OD%,security_deposit_received_by.ilike.%Roost & Rest%,security_deposit_received_by.ilike.%Roost & Rest%,security_deposit_refunded_by.ilike.%OD%,security_deposit_refunded_by.ilike.%Roost & Rest%,security_deposit_refunded_by.ilike.%Roost & Rest%,notes.ilike.%[SECURITY_DEPOSIT:%');
+                    .or('security_deposit_received_by.ilike.%OD%,security_deposit_refunded_by.ilike.%OD%,notes.ilike.%[SECURITY_DEPOSIT:%');
                 if (!error && Array.isArray(data)) {
                     _hasNativeSecDepCols = true;
                     return data;

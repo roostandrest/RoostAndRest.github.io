@@ -1829,6 +1829,68 @@
         items.push({ isHeader: true, title: `🎯 Matching Menus & Actions (${scoredItems.length})` });
         items.push(...scoredItems.slice(0, 16));
       }
+
+      // 🛎 Realtime Guest & Booking Lookup (Matches guest names, phones, booking IDs)
+      const allBookings = window._sbkState?.cachedBookings || window._allBookings || [];
+      const matchingBookings = [];
+      const rawTokens = q.split(/\s+/).filter(Boolean);
+
+      for (const b of allBookings) {
+        if (!b) continue;
+        const name = (b.guest_name || '').toLowerCase();
+        const phone = b.phone || '';
+        const bid = (b.booking_id || '').toLowerCase();
+        const rid = (b.room_id || '').toLowerCase();
+        const rNick = (b.rooms?.nickname || '').toLowerCase();
+        const unit = String(b.rooms?.unit_no || '').toLowerCase();
+
+        let isMatch = false;
+        if (name.includes(q) || (rawTokens.length > 1 && rawTokens.every(tok => name.includes(tok)))) isMatch = true;
+        else if (window.matchPhoneSearch && window.matchPhoneSearch(q, phone)) isMatch = true;
+        else if (bid.includes(q) || rid.includes(q) || rNick.includes(q) || unit.includes(q)) isMatch = true;
+
+        if (isMatch) {
+          matchingBookings.push(b);
+          if (matchingBookings.length >= 6) break;
+        }
+      }
+
+      if (matchingBookings.length > 0) {
+        items.push({ isHeader: true, title: `🛎 Guests & Reservations (${matchingBookings.length})` });
+        matchingBookings.forEach(b => {
+          const roomLabel = (b.rooms?.nickname || b.room_id || 'Unit') + (b.rooms?.unit_no ? ` (${b.rooms.unit_no})` : '');
+          items.push({
+            id: 'bk_' + b.booking_id,
+            type: 'booking',
+            group: 'Guest Register',
+            icon: '🛎',
+            title: b.guest_name || 'Guest',
+            sub: `${roomLabel} • ${b.check_in || '-'} to ${b.check_out || '-'} • 📱 ${b.phone || 'No phone'} • ₹${Number(b.total_amount||0).toLocaleString('en-IN')}`,
+            action: () => {
+              closeCommandPalette();
+              if (window.openBookingDrawer) {
+                window.openBookingDrawer(b.booking_id);
+              } else if (window.triggerGlobalSearch) {
+                window.triggerGlobalSearch(b.booking_id);
+              }
+            }
+          });
+        });
+      }
+
+      // Always offer 1-click global bookings search action
+      items.push({
+        id: 'search_bookings_' + q,
+        type: 'action',
+        group: 'Bookings Search',
+        icon: '🔍',
+        title: `Search all reservations for "${query}"`,
+        sub: 'Open Smart Bookings register with this query',
+        action: () => {
+          closeCommandPalette();
+          if (window.triggerGlobalSearch) window.triggerGlobalSearch(query);
+        }
+      });
     }
 
     _currentResults = items.filter(x => !x.isHeader);
