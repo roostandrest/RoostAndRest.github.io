@@ -452,101 +452,121 @@ window.CA_AUDIT_PACK = (function() {
           </div>
 
           <!-- Window Body -->
-          <div style="padding:20px 24px;">
+          <div style="padding:18px 22px;">
 
             <!-- TOP ACTION BAR -->
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:22px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:18px;">
               <div>
-                <h1 style="margin:0 0 4px 0;font-size:22px;font-weight:900;color:#0F172A;letter-spacing:-0.4px;">
-                  💼 Airbnb Payouts, Section 194-O TDS &amp; CA Tax Audit
+                <h1 style="margin:0 0 6px 0;font-size:18px;font-weight:800;color:#0F172A;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;">
+                  <span>💼</span>
+                  <span>Airbnb Payouts, Section 194-O TDS &amp; CA Tax Audit</span>
                 </h1>
-                <div style="font-size:12.5px;color:#64748B;">
-                  PAN: <strong style="color:#0F172A;">${CO.pan}</strong> &bull; GSTIN: <strong style="color:#0F172A;">${CO.gstin}</strong> &bull; Bank: <strong style="color:#0F172A;">${CO.bank}</strong> &bull; TDS: <strong style="color:#92400E;">Section 194-O @ 5.0%</strong>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:3px 9px;font-size:11.5px;color:#475569;">
+                    <span style="font-weight:700;color:#94A3B8;">PAN</span>
+                    <strong style="color:#0F172A;letter-spacing:0.3px;">${CO.pan}</strong>
+                  </span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:3px 9px;font-size:11.5px;color:#475569;">
+                    <span style="font-weight:700;color:#94A3B8;">GSTIN</span>
+                    <strong style="color:#0F172A;letter-spacing:0.3px;">${CO.gstin}</strong>
+                  </span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:3px 9px;font-size:11.5px;color:#475569;">
+                    <span style="font-weight:700;color:#94A3B8;">Bank</span>
+                    <strong style="color:#0F172A;">${CO.bank}</strong>
+                  </span>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:6px;padding:3px 9px;font-size:11.5px;color:#92400E;font-weight:700;">
+                    <span>⚖️ TDS</span>
+                    <span>Section 194-O @ 5.0%</span>
+                  </span>
                 </div>
               </div>
 
-              <!-- Action Buttons -->
+              <!-- Action Buttons (Refined Enterprise SaaS Palette) -->
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                 
                 <!-- 1-Click Import CSV -->
-                <label style="margin:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#92400E;color:#ffffff;padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:800;box-shadow:0 2px 4px rgba(2,132,199,0.25);transition:all 0.15s ease;">
-                  <i class="ti ti-upload"></i>
-                  <span>📁 Import CSV</span>
+                <label style="margin:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#FFFFFF;color:#1E293B;border:1px solid #CBD5E1;height:36px;padding:0 14px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='#FFFFFF'">
+                  <i class="ti ti-upload" style="font-size:14px;color:#64748B;"></i>
+                  <span>Import CSV</span>
                   <input type="file" accept=".csv" onchange="window.CA_AUDIT_PACK.uploadCSV(this.files[0])" style="display:none;" />
                 </label>
 
                 <!-- Airbnb Live Connector -->
-                <button type="button" onclick="window.CA_AUDIT_PACK.openConnector()" style="display:inline-flex;align-items:center;gap:6px;background:#FF385C;color:#ffffff;padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:800;border:none;cursor:pointer;box-shadow:0 2px 4px rgba(255,56,92,0.25);">
-                  <i class="ti ti-plug"></i>
-                  <span>⚡ Airbnb Live Connector</span>
+                <button type="button" onclick="window.CA_AUDIT_PACK.openConnector()" style="display:inline-flex;align-items:center;gap:6px;background:#FFFFFF;color:#1E293B;border:1px solid #CBD5E1;height:36px;padding:0 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='#FFFFFF'">
+                  <span style="width:7px;height:7px;border-radius:50%;background:#FF385C;"></span>
+                  <span>Airbnb Connector</span>
                 </button>
 
-                <!-- Download Excel Workbook -->
-                <button type="button" onclick="window.CA_AUDIT_PACK.downloadExcel()" style="display:inline-flex;align-items:center;gap:6px;background:#10B981;color:#ffffff;padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:800;border:none;cursor:pointer;box-shadow:0 2px 4px rgba(16,185,129,0.25);">
-                  <i class="ti ti-file-spreadsheet"></i>
-                  <span>📥 Download Excel (CA Format)</span>
+                <!-- Download Excel Workbook (Primary Action) -->
+                <button type="button" onclick="window.CA_AUDIT_PACK.downloadExcel()" style="display:inline-flex;align-items:center;gap:6px;background:#B45309;color:#ffffff;height:36px;padding:0 15px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;box-shadow:0 1px 3px rgba(180,83,9,0.3);transition:all 0.15s ease;" onmouseover="this.style.background='#92400E'" onmouseout="this.style.background='#B45309'">
+                  <i class="ti ti-file-spreadsheet" style="font-size:14px;"></i>
+                  <span>Download Excel (CA Format)</span>
                 </button>
 
                 <!-- WhatsApp Summary -->
-                <button type="button" onclick="window.CA_AUDIT_PACK.copyWhatsApp()" style="display:inline-flex;align-items:center;gap:6px;background:#25D366;color:#ffffff;padding:8px 16px;border-radius:10px;font-size:12.5px;font-weight:800;border:none;cursor:pointer;box-shadow:0 2px 4px rgba(37,211,102,0.25);">
-                  <i class="ti ti-brand-whatsapp"></i>
-                  <span>📱 Send to CA</span>
+                <button type="button" onclick="window.CA_AUDIT_PACK.copyWhatsApp()" style="display:inline-flex;align-items:center;gap:6px;background:#FFFFFF;color:#1E293B;border:1px solid #CBD5E1;height:36px;padding:0 14px;border-radius:8px;font-size:12px;font-weight:600;border:none;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='#FFFFFF'">
+                  <span style="color:#16A34A;font-size:13px;">💬</span>
+                  <span>Send to CA</span>
                 </button>
               </div>
             </div>
 
             <!-- 5 KPI SPARKLINE RIBBON -->
-            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(210px, 1fr));gap:14px;margin-bottom:24px;">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;margin-bottom:20px;">
               
               <!-- KPI 1: Gross Outward Revenue -->
-              <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:16px 18px;position:relative;">
-                <div style="font-size:11.5px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Gross Airbnb Turnover</div>
-                <div style="font-size:22px;font-weight:900;color:#0F172A;line-height:1.2;">₹${s.totalGross.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
-                <div style="font-size:11px;color:#10B981;font-weight:700;margin-top:4px;">GSTR-1 Outward Supply Base</div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between;min-height:92px;">
+                <div style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.4px;">Gross Airbnb Turnover</div>
+                <div style="font-size:18px;font-weight:700;color:#0F172A;line-height:1.2;margin:6px 0 8px;font-variant-numeric:tabular-nums;letter-spacing:-0.2px;">₹${s.totalGross.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
+                <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#047857;background:#ECFDF5;padding:2px 8px;border-radius:999px;border:1px solid #A7F3D0;width:fit-content;">● GSTR-1 Outward Base</div>
               </div>
 
               <!-- KPI 2: Section 194-O TDS -->
-              <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:14px;padding:16px 18px;position:relative;">
-                <div style="font-size:11.5px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">5% TDS u/s 194-O (Income Tax)</div>
-                <div style="font-size:22px;font-weight:900;color:#1D4ED8;line-height:1.2;">₹${s.totalTds.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
-                <div style="font-size:11px;color:#2563EB;font-weight:700;margin-top:4px;">In Form 26AS / AIS Tax Credit</div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between;min-height:92px;">
+                <div style="font-size:11px;font-weight:700;color:#1E40AF;text-transform:uppercase;letter-spacing:0.4px;">5% TDS u/s 194-O</div>
+                <div style="font-size:18px;font-weight:700;color:#1D4ED8;line-height:1.2;margin:6px 0 8px;font-variant-numeric:tabular-nums;letter-spacing:-0.2px;">₹${s.totalTds.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
+                <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#1E40AF;background:#EFF6FF;padding:2px 8px;border-radius:999px;border:1px solid #BFDBFE;width:fit-content;">● 26AS / AIS Tax Credit</div>
               </div>
 
               <!-- KPI 3: Airbnb Service Fee -->
-              <div style="background:#FFF1F2;border:1px solid #FECDD3;border-radius:14px;padding:16px 18px;position:relative;">
-                <div style="font-size:11.5px;font-weight:700;color:#9F1239;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Airbnb Platform Commission</div>
-                <div style="font-size:22px;font-weight:900;color:#E11D48;line-height:1.2;">₹${s.totalServiceFee.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
-                <div style="font-size:11px;color:#BE123C;font-weight:700;margin-top:4px;">Sec 37 P&amp;L Deductible Expense</div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between;min-height:92px;">
+                <div style="font-size:11px;font-weight:700;color:#9F1239;text-transform:uppercase;letter-spacing:0.4px;">Platform Commission</div>
+                <div style="font-size:18px;font-weight:700;color:#BE123C;line-height:1.2;margin:6px 0 8px;font-variant-numeric:tabular-nums;letter-spacing:-0.2px;">₹${s.totalServiceFee.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
+                <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#9F1239;background:#FFF1F2;padding:2px 8px;border-radius:999px;border:1px solid #FECDD3;width:fit-content;">● Sec 37 P&amp;L Expense</div>
               </div>
 
               <!-- KPI 4: Net Bank Payouts Transferred -->
-              <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:14px;padding:16px 18px;position:relative;">
-                <div style="font-size:11.5px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Net Transferred to A/c 0550</div>
-                <div style="font-size:22px;font-weight:900;color:#047857;line-height:1.2;">₹${s.totalBankPayouts.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
-                <div style="font-size:11px;color:#059669;font-weight:700;margin-top:4px;">${s.totalPayoutRows} Bank Transfers Credited</div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between;min-height:92px;">
+                <div style="font-size:11px;font-weight:700;color:#065F46;text-transform:uppercase;letter-spacing:0.4px;">Net Transferred (0550)</div>
+                <div style="font-size:18px;font-weight:700;color:#047857;line-height:1.2;margin:6px 0 8px;font-variant-numeric:tabular-nums;letter-spacing:-0.2px;">₹${s.totalBankPayouts.toLocaleString('en-IN', {maximumFractionDigits:2})}</div>
+                <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#047857;background:#ECFDF5;padding:2px 8px;border-radius:999px;border:1px solid #A7F3D0;width:fit-content;">● ${s.totalPayoutRows} Bank Credits</div>
               </div>
 
               <!-- KPI 5: Volume Stats -->
-              <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;padding:16px 18px;position:relative;">
-                <div style="font-size:11.5px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Bookings &amp; Nights</div>
-                <div style="font-size:22px;font-weight:900;color:#0F172A;line-height:1.2;">${s.totalBookings} <span style="font-size:14px;font-weight:700;color:#64748B;">/ ${s.totalNights} nts</span></div>
-                <div style="font-size:11px;color:#64748B;font-weight:700;margin-top:4px;">ADR: ₹${s.totalNights > 0 ? Math.round(s.totalGross / s.totalNights).toLocaleString('en-IN') : 0} / night</div>
+              <div style="background:#FFFFFF;border:1px solid #E2E8F0;border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,0.03);display:flex;flex-direction:column;justify-content:space-between;min-height:92px;">
+                <div style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.4px;">Bookings &amp; Nights</div>
+                <div style="font-size:18px;font-weight:700;color:#0F172A;line-height:1.2;margin:6px 0 8px;font-variant-numeric:tabular-nums;letter-spacing:-0.2px;">${s.totalBookings} <span style="font-size:12.5px;font-weight:600;color:#64748B;">/ ${s.totalNights} nts</span></div>
+                <div style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:#475569;background:#F1F5F9;padding:2px 8px;border-radius:999px;border:1px solid #E2E8F0;width:fit-content;">ADR: ₹${s.totalNights > 0 ? Math.round(s.totalGross / s.totalNights).toLocaleString('en-IN') : 0} / nt</div>
               </div>
             </div>
 
-            <!-- SUB-TABS NAVIGATION -->
-            <div style="display:flex;border-bottom:2px solid #E2E8F0;margin-bottom:22px;gap:6px;overflow-x:auto;">
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('summary')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'summary' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'summary' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
-                📊 CA Tax Summary &amp; Monthly Trajectory
+            <!-- SUB-TABS NAVIGATION (Modern Capsule Pill Switcher) -->
+            <div style="display:inline-flex;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:10px;padding:3px;gap:3px;margin-bottom:18px;overflow-x:auto;max-width:100%;">
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('summary')" style="background:${activeTab === 'summary' ? '#FFFFFF' : 'transparent'};color:${activeTab === 'summary' ? '#0F172A' : '#64748B'};box-shadow:${activeTab === 'summary' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none'};border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:${activeTab === 'summary' ? '700' : '600'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease;">
+                <span>📊</span>
+                <span>Tax Summary &amp; Trajectory</span>
               </button>
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('properties')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'properties' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'properties' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
-                🏡 Property &amp; Listing Breakdown (${properties.length})
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('properties')" style="background:${activeTab === 'properties' ? '#FFFFFF' : 'transparent'};color:${activeTab === 'properties' ? '#0F172A' : '#64748B'};box-shadow:${activeTab === 'properties' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none'};border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:${activeTab === 'properties' ? '700' : '600'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease;">
+                <span>🏡</span>
+                <span>Property Breakdown (${properties.length})</span>
               </button>
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('reservations')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'reservations' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'reservations' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
-                📋 Detailed Reservations Register (${reservations.length})
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('reservations')" style="background:${activeTab === 'reservations' ? '#FFFFFF' : 'transparent'};color:${activeTab === 'reservations' ? '#0F172A' : '#64748B'};box-shadow:${activeTab === 'reservations' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none'};border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:${activeTab === 'reservations' ? '700' : '600'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease;">
+                <span>📋</span>
+                <span>Reservations Register (${reservations.length})</span>
               </button>
-              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('payouts')" style="background:none;border:none;padding:10px 18px;font-size:13.5px;font-weight:800;color:${activeTab === 'payouts' ? '#92400E' : '#64748B'};border-bottom:3px solid ${activeTab === 'payouts' ? '#92400E' : 'transparent'};cursor:pointer;white-space:nowrap;margin-bottom:-2px;">
-                🏦 Bank Transfers Register (${payouts.length})
+              <button type="button" onclick="window.CA_AUDIT_PACK.switchTab('payouts')" style="background:${activeTab === 'payouts' ? '#FFFFFF' : 'transparent'};color:${activeTab === 'payouts' ? '#0F172A' : '#64748B'};box-shadow:${activeTab === 'payouts' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none'};border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:${activeTab === 'payouts' ? '700' : '600'};cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease;">
+                <span>🏦</span>
+                <span>Bank Transfers (${payouts.length})</span>
               </button>
             </div>
 
@@ -554,66 +574,66 @@ window.CA_AUDIT_PACK = (function() {
             ${activeTab === 'summary' ? `
               <div>
                 <!-- Compliance Alert Box for CA -->
-                <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:12px;">
-                  <span style="font-size:24px;line-height:1;">⚖️</span>
-                  <div style="font-size:13px;color:#92400E;line-height:1.5;">
-                    <strong style="font-size:14px;color:#78350F;display:block;margin-bottom:2px;">Chartered Accountant (CA) Statutory Compliance Notes:</strong>
-                    1. <strong>TDS Section 194-O:</strong> Airbnb acts as an E-Commerce Operator under Section 194-O of the Income Tax Act, deducting 5.0% TDS from gross booking receipts. Ensure this ₹${s.totalTds.toLocaleString('en-IN', {maximumFractionDigits:2})} is reconciled with Form 26AS and AIS.<br/>
+                <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:12px;">
+                  <span style="font-size:18px;line-height:1.2;">⚖️</span>
+                  <div style="font-size:12px;color:#92400E;line-height:1.6;">
+                    <strong style="font-size:12.5px;color:#78350F;display:block;margin-bottom:3px;letter-spacing:-0.2px;">Chartered Accountant (CA) Statutory Compliance Notes:</strong>
+                    1. <strong>TDS Section 194-O:</strong> Airbnb acts as an E-Commerce Operator under Section 194-O of the Income Tax Act, deducting 5.0% TDS from gross booking receipts. Reconcile this ₹${s.totalTds.toLocaleString('en-IN', {maximumFractionDigits:2})} with Form 26AS and AIS.<br/>
                     2. <strong>Turnover for GST &amp; ITR:</strong> Gross Airbnb Outward value of ₹${s.totalGross.toLocaleString('en-IN', {maximumFractionDigits:2})} forms part of turnover under Section 44AB / Normal Provisions.<br/>
                     3. <strong>Airbnb Service Fee:</strong> ₹${s.totalServiceFee.toLocaleString('en-IN', {maximumFractionDigits:2})} is a legitimate business expenditure deductible in P&amp;L.
                   </div>
                 </div>
 
                 <!-- Monthly Trajectory Table -->
-                <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                  <div style="padding:14px 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                    <h3 style="margin:0;font-size:14.5px;font-weight:800;color:#0F172A;">📅 Month-by-Month Tax &amp; Payout Audit Register (2026)</h3>
-                    <span style="font-size:12px;color:#64748B;font-weight:600;">Reconciled across Reservations, 5% TDS &amp; Bank Credits</span>
+                <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                  <div style="padding:12px 18px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <h3 style="margin:0;font-size:13.5px;font-weight:700;color:#0F172A;">📅 Month-by-Month Tax &amp; Payout Audit Register (2026)</h3>
+                    <span style="font-size:11.5px;color:#64748B;font-weight:600;">Reconciled across Reservations, 5% TDS &amp; Bank Credits</span>
                   </div>
 
                   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                    <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;font-variant-numeric:tabular-nums;">
                       <thead>
-                        <tr style="background:#F1F5F9;color:#475569;font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
-                          <th style="padding:10px 16px;">Month</th>
-                          <th style="padding:10px 16px;text-align:right;">Gross Turnover</th>
-                          <th style="padding:10px 16px;text-align:right;">TDS u/s 194-O (5%)</th>
-                          <th style="padding:10px 16px;text-align:right;">Service Fee</th>
-                          <th style="padding:10px 16px;text-align:right;">Cleaning Fee</th>
-                          <th style="padding:10px 16px;text-align:right;">Host Tax</th>
-                          <th style="padding:10px 16px;text-align:right;">Bank Payout (0550)</th>
-                          <th style="padding:10px 16px;text-align:center;">Bookings</th>
-                          <th style="padding:10px 16px;text-align:center;">Nights</th>
+                        <tr style="background:#F1F5F9;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
+                          <th style="padding:9px 14px;">Month</th>
+                          <th style="padding:9px 14px;text-align:right;">Gross Turnover</th>
+                          <th style="padding:9px 14px;text-align:right;">TDS u/s 194-O (5%)</th>
+                          <th style="padding:9px 14px;text-align:right;">Service Fee</th>
+                          <th style="padding:9px 14px;text-align:right;">Cleaning Fee</th>
+                          <th style="padding:9px 14px;text-align:right;">Host Tax</th>
+                          <th style="padding:9px 14px;text-align:right;">Bank Payout (0550)</th>
+                          <th style="padding:9px 14px;text-align:center;">Bookings</th>
+                          <th style="padding:9px 14px;text-align:center;">Nights</th>
                         </tr>
                       </thead>
                       <tbody>
                         ${monthly.map(m => `
                           <tr style="border-bottom:1px solid #F1F5F9;transition:background 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
-                            <td style="padding:11px 16px;font-weight:800;color:#0F172A;">
+                            <td style="padding:9px 14px;font-weight:700;color:#0F172A;">
                               ${m.month}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:800;color:#0F172A;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:700;color:#0F172A;">
                               ₹${m.gross.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:800;color:#1D4ED8;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:700;color:#1D4ED8;">
                               ₹${m.tds.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;color:#E11D48;font-weight:700;">
+                            <td style="padding:9px 14px;text-align:right;color:#E11D48;font-weight:600;">
                               ₹${m.fee.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;color:#64748B;">
+                            <td style="padding:9px 14px;text-align:right;color:#64748B;">
                               ₹${m.clean.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;color:#64748B;">
+                            <td style="padding:9px 14px;text-align:right;color:#64748B;">
                               ₹${m.host_tax.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:900;color:#047857;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:700;color:#047857;">
                               ₹${m.payout.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:center;font-weight:700;color:#0F172A;">
+                            <td style="padding:9px 14px;text-align:center;font-weight:600;color:#0F172A;">
                               ${m.bookings}
                             </td>
-                            <td style="padding:11px 16px;text-align:center;color:#64748B;">
+                            <td style="padding:9px 14px;text-align:center;color:#64748B;">
                               ${m.nights}
                             </td>
                           </tr>
@@ -640,25 +660,25 @@ window.CA_AUDIT_PACK = (function() {
 
             <!-- TAB 2: PROPERTY BREAKDOWN -->
             ${activeTab === 'properties' ? `
-              <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div style="padding:14px 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                  <h3 style="margin:0;font-size:14.5px;font-weight:800;color:#0F172A;">🏡 Property Performance &amp; Revenue Share (Ranked by Gross)</h3>
-                  <span style="font-size:12px;color:#64748B;font-weight:600;">19 Units · Click a property to filter reservation details</span>
+              <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                <div style="padding:12px 18px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                  <h3 style="margin:0;font-size:13.5px;font-weight:700;color:#0F172A;">🏡 Property Performance &amp; Revenue Share (Ranked by Gross)</h3>
+                  <span style="font-size:11.5px;color:#64748B;font-weight:600;">19 Units · Click a property to filter reservation details</span>
                 </div>
 
                 <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                  <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;font-variant-numeric:tabular-nums;">
                     <thead>
-                      <tr style="background:#F1F5F9;color:#475569;font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
-                        <th style="padding:10px 16px;">Listing Name</th>
-                        <th style="padding:10px 16px;text-align:right;">Gross Earnings</th>
-                        <th style="padding:10px 16px;text-align:right;">5% TDS (194-O)</th>
-                        <th style="padding:10px 16px;text-align:right;">Airbnb Fee</th>
-                        <th style="padding:10px 16px;text-align:center;">Bookings</th>
-                        <th style="padding:10px 16px;text-align:center;">Nights</th>
-                        <th style="padding:10px 16px;text-align:right;">ADR</th>
-                        <th style="padding:10px 16px;text-align:right;">Net Earnings</th>
-                        <th style="padding:10px 16px;text-align:center;">Action</th>
+                      <tr style="background:#F1F5F9;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
+                        <th style="padding:9px 14px;">Listing Name</th>
+                        <th style="padding:9px 14px;text-align:right;">Gross Earnings</th>
+                        <th style="padding:9px 14px;text-align:right;">5% TDS (194-O)</th>
+                        <th style="padding:9px 14px;text-align:right;">Airbnb Fee</th>
+                        <th style="padding:9px 14px;text-align:center;">Bookings</th>
+                        <th style="padding:9px 14px;text-align:center;">Nights</th>
+                        <th style="padding:9px 14px;text-align:right;">ADR</th>
+                        <th style="padding:9px 14px;text-align:right;">Net Earnings</th>
+                        <th style="padding:9px 14px;text-align:center;">Action</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -666,33 +686,33 @@ window.CA_AUDIT_PACK = (function() {
                         const adr = p.nights > 0 ? Math.round(p.gross / p.nights) : 0;
                         return `
                           <tr style="border-bottom:1px solid #F1F5F9;transition:background 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
-                            <td style="padding:11px 16px;font-weight:800;color:#0F172A;">
+                            <td style="padding:9px 14px;font-weight:600;color:#0F172A;">
                               ${p.listing}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:800;color:#0F172A;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:700;color:#0F172A;">
                               ₹${p.gross.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:800;color:#1D4ED8;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:700;color:#1D4ED8;">
                               ₹${p.tds.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;color:#E11D48;font-weight:700;">
+                            <td style="padding:9px 14px;text-align:right;color:#E11D48;font-weight:600;">
                               ₹${p.fee.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:center;font-weight:700;color:#0F172A;">
+                            <td style="padding:9px 14px;text-align:center;font-weight:600;color:#0F172A;">
                               ${p.bookings}
                             </td>
-                            <td style="padding:11px 16px;text-align:center;color:#64748B;">
+                            <td style="padding:9px 14px;text-align:center;color:#64748B;">
                               ${p.nights}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:700;color:#92400E;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:600;color:#92400E;">
                               ₹${adr.toLocaleString('en-IN')}
                             </td>
-                            <td style="padding:11px 16px;text-align:right;font-weight:900;color:#047857;">
+                            <td style="padding:9px 14px;text-align:right;font-weight:700;color:#047857;">
                               ₹${p.net.toLocaleString('en-IN', {maximumFractionDigits:2})}
                             </td>
-                            <td style="padding:11px 16px;text-align:center;">
-                              <button type="button" onclick="window.CA_AUDIT_PACK.filterByProperty('${p.listing.replace(/'/g, "\\'")}')" style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
-                                View Bookings
+                            <td style="padding:9px 14px;text-align:center;">
+                              <button type="button" onclick="window.CA_AUDIT_PACK.filterByProperty('${p.listing.replace(/'/g, "\\'")}')" style="background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">
+                                View
                               </button>
                             </td>
                           </tr>
@@ -708,68 +728,68 @@ window.CA_AUDIT_PACK = (function() {
             ${activeTab === 'reservations' ? `
               <div>
                 <!-- Filter Bar -->
-                <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                     <!-- Search input -->
                     <div style="position:relative;">
-                      <input type="text" placeholder="Search guest, code, listing..." value="${searchQuery}" oninput="window.CA_AUDIT_PACK.setSearch(this.value)" style="background:#fff;border:1px solid #CBD5E1;border-radius:8px;padding:6px 12px;font-size:12.5px;min-width:240px;" />
+                      <input type="text" placeholder="Search guest, code, listing..." value="${searchQuery}" oninput="window.CA_AUDIT_PACK.setSearch(this.value)" style="background:#fff;border:1px solid #CBD5E1;border-radius:6px;padding:5px 10px;font-size:12px;min-width:220px;" />
                     </div>
 
                     <!-- Month Filter -->
-                    <select onchange="window.CA_AUDIT_PACK.setMonth(this.value)" style="background:#fff;border:1px solid #CBD5E1;border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;">
+                    <select onchange="window.CA_AUDIT_PACK.setMonth(this.value)" style="background:#fff;border:1px solid #CBD5E1;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;">
                       <option value="all" ${selectedMonth === 'all' ? 'selected' : ''}>All Months (${monthList.length})</option>
                       ${monthList.map(m => `<option value="${m}" ${selectedMonth === m ? 'selected' : ''}>${m}</option>`).join('')}
                     </select>
 
                     <!-- Property Filter -->
-                    <select onchange="window.CA_AUDIT_PACK.setProperty(this.value)" style="background:#fff;border:1px solid #CBD5E1;border-radius:8px;padding:6px 12px;font-size:12.5px;font-weight:600;max-width:240px;">
+                    <select onchange="window.CA_AUDIT_PACK.setProperty(this.value)" style="background:#fff;border:1px solid #CBD5E1;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;max-width:220px;">
                       <option value="all" ${selectedProperty === 'all' ? 'selected' : ''}>All Properties (${propList.length})</option>
                       ${propList.map(p => `<option value="${p}" ${selectedProperty === p ? 'selected' : ''}>${p}</option>`).join('')}
                     </select>
 
                     ${(selectedMonth !== 'all' || selectedProperty !== 'all' || searchQuery) ? `
-                      <button type="button" onclick="window.CA_AUDIT_PACK.resetFilters()" style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:800;cursor:pointer;">
+                      <button type="button" onclick="window.CA_AUDIT_PACK.resetFilters()" style="background:#FEE2E2;border:1px solid #FECACA;color:#991B1B;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
                         ✕ Clear Filters
                       </button>
                     ` : ''}
                   </div>
 
-                  <div style="font-size:12.5px;color:#64748B;font-weight:700;">
+                  <div style="font-size:12px;color:#64748B;font-weight:600;">
                     Showing <strong>${filteredReservations.length}</strong> of ${reservations.length} reservations
                   </div>
                 </div>
 
                 <!-- Reservations Table -->
-                <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
                   <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                    <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;font-variant-numeric:tabular-nums;">
                       <thead>
-                        <tr style="background:#F1F5F9;color:#475569;font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
-                          <th style="padding:10px 14px;">Date</th>
-                          <th style="padding:10px 14px;">Code</th>
-                          <th style="padding:10px 14px;">Guest</th>
-                          <th style="padding:10px 14px;">Listing</th>
-                          <th style="padding:10px 14px;">Stay Dates</th>
-                          <th style="padding:10px 14px;text-align:center;">Nts</th>
-                          <th style="padding:10px 14px;text-align:right;">Gross</th>
-                          <th style="padding:10px 14px;text-align:right;">TDS (5%)</th>
-                          <th style="padding:10px 14px;text-align:right;">Fee</th>
-                          <th style="padding:10px 14px;text-align:right;">Net</th>
+                        <tr style="background:#F1F5F9;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
+                          <th style="padding:8px 12px;">Date</th>
+                          <th style="padding:8px 12px;">Code</th>
+                          <th style="padding:8px 12px;">Guest</th>
+                          <th style="padding:8px 12px;">Listing</th>
+                          <th style="padding:8px 12px;">Stay Dates</th>
+                          <th style="padding:8px 12px;text-align:center;">Nts</th>
+                          <th style="padding:8px 12px;text-align:right;">Gross</th>
+                          <th style="padding:8px 12px;text-align:right;">TDS (5%)</th>
+                          <th style="padding:8px 12px;text-align:right;">Fee</th>
+                          <th style="padding:8px 12px;text-align:right;">Net</th>
                         </tr>
                       </thead>
                       <tbody>
                         ${paginatedReservations.map(r => `
                           <tr style="border-bottom:1px solid #F1F5F9;transition:background 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
-                            <td style="padding:10px 14px;white-space:nowrap;font-size:12px;color:#64748B;">${r.date}</td>
-                            <td style="padding:10px 14px;font-family:monospace;font-weight:800;color:#92400E;">${r.code}</td>
-                            <td style="padding:10px 14px;font-weight:700;color:#0F172A;">${r.guest}</td>
-                            <td style="padding:10px 14px;color:#334155;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.listing}">${r.listing}</td>
-                            <td style="padding:10px 14px;font-size:12px;color:#64748B;white-space:nowrap;">${r.start_date} → ${r.end_date}</td>
-                            <td style="padding:10px 14px;text-align:center;font-weight:700;">${r.nights}</td>
-                            <td style="padding:10px 14px;text-align:right;font-weight:800;color:#0F172A;">₹${r.gross.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
-                            <td style="padding:10px 14px;text-align:right;font-weight:800;color:#1D4ED8;">₹${r.tds.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
-                            <td style="padding:10px 14px;text-align:right;color:#E11D48;">₹${r.fee.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
-                            <td style="padding:10px 14px;text-align:right;font-weight:900;color:#047857;">₹${r.net.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
+                            <td style="padding:8px 12px;white-space:nowrap;font-size:11.5px;color:#64748B;">${r.date}</td>
+                            <td style="padding:8px 12px;font-family:monospace;font-weight:700;color:#92400E;font-size:11.5px;">${r.code}</td>
+                            <td style="padding:8px 12px;font-weight:600;color:#0F172A;">${r.guest}</td>
+                            <td style="padding:8px 12px;color:#334155;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.listing}">${r.listing}</td>
+                            <td style="padding:8px 12px;font-size:11.5px;color:#64748B;white-space:nowrap;">${r.start_date} → ${r.end_date}</td>
+                            <td style="padding:8px 12px;text-align:center;font-weight:600;">${r.nights}</td>
+                            <td style="padding:8px 12px;text-align:right;font-weight:700;color:#0F172A;">₹${r.gross.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
+                            <td style="padding:8px 12px;text-align:right;font-weight:700;color:#1D4ED8;">₹${r.tds.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
+                            <td style="padding:8px 12px;text-align:right;color:#E11D48;font-weight:600;">₹${r.fee.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
+                            <td style="padding:8px 12px;text-align:right;font-weight:700;color:#047857;">₹${r.net.toLocaleString('en-IN', {maximumFractionDigits:2})}</td>
                           </tr>
                         `).join('')}
                       </tbody>
@@ -777,13 +797,13 @@ window.CA_AUDIT_PACK = (function() {
                   </div>
 
                   <!-- Pagination Bar -->
-                  <div style="padding:12px 18px;background:#F8FAFC;border-top:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                    <div style="font-size:12px;color:#64748B;">
+                  <div style="padding:10px 16px;background:#F8FAFC;border-top:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                    <div style="font-size:11.5px;color:#64748B;">
                       Page <strong>${currentPage}</strong> of <strong>${totalPages}</strong>
                     </div>
                     <div style="display:flex;gap:6px;">
-                      <button type="button" onclick="window.CA_AUDIT_PACK.setPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="background:#fff;border:1px solid #CBD5E1;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:700;">Previous</button>
-                      <button type="button" onclick="window.CA_AUDIT_PACK.setPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="background:#fff;border:1px solid #CBD5E1;padding:4px 12px;border-radius:6px;font-size:12px;font-weight:700;">Next</button>
+                      <button type="button" onclick="window.CA_AUDIT_PACK.setPage(${currentPage - 1})" ${currentPage <= 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="background:#fff;border:1px solid #CBD5E1;padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;">Previous</button>
+                      <button type="button" onclick="window.CA_AUDIT_PACK.setPage(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : 'style="cursor:pointer;"'} style="background:#fff;border:1px solid #CBD5E1;padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:600;">Next</button>
                     </div>
                   </div>
                 </div>
@@ -792,31 +812,31 @@ window.CA_AUDIT_PACK = (function() {
 
             <!-- TAB 4: BANK TRANSFERS REGISTER -->
             ${activeTab === 'payouts' ? `
-              <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div style="padding:14px 20px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                  <h3 style="margin:0;font-size:14.5px;font-weight:800;color:#0F172A;">🏦 Bank Transfers to Beneficiary: ${CO.bank}</h3>
-                  <span style="font-size:12px;color:#047857;font-weight:800;">Total Credited: ₹${s.totalBankPayouts.toLocaleString('en-IN', {maximumFractionDigits:2})}</span>
+              <div style="background:#ffffff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+                <div style="padding:12px 18px;background:#F8FAFC;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                  <h3 style="margin:0;font-size:13.5px;font-weight:700;color:#0F172A;">🏦 Bank Transfers to Beneficiary: ${CO.bank}</h3>
+                  <span style="font-size:11.5px;color:#047857;font-weight:700;">Total Credited: ₹${s.totalBankPayouts.toLocaleString('en-IN', {maximumFractionDigits:2})}</span>
                 </div>
 
                 <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                  <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;font-variant-numeric:tabular-nums;">
                     <thead>
-                      <tr style="background:#F1F5F9;color:#475569;font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
-                        <th style="padding:10px 16px;">Transfer Date</th>
-                        <th style="padding:10px 16px;">Arriving By</th>
-                        <th style="padding:10px 16px;">Reference Code</th>
-                        <th style="padding:10px 16px;">Transfer Details</th>
-                        <th style="padding:10px 16px;text-align:right;">Amount Credited</th>
+                      <tr style="background:#F1F5F9;color:#475569;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid #CBD5E1;">
+                        <th style="padding:9px 14px;">Transfer Date</th>
+                        <th style="padding:9px 14px;">Arriving By</th>
+                        <th style="padding:9px 14px;">Reference Code</th>
+                        <th style="padding:9px 14px;">Transfer Details</th>
+                        <th style="padding:9px 14px;text-align:right;">Amount Credited</th>
                       </tr>
                     </thead>
                     <tbody>
                       ${filteredPayouts.map(p => `
                         <tr style="border-bottom:1px solid #F1F5F9;transition:background 0.15s ease;" onmouseover="this.style.background='#F8FAFC'" onmouseout="this.style.background='transparent'">
-                          <td style="padding:11px 16px;font-weight:800;color:#0F172A;">${p.date}</td>
-                          <td style="padding:11px 16px;color:#64748B;">${p.arriving_date || '-'}</td>
-                          <td style="padding:11px 16px;font-family:monospace;color:#92400E;font-weight:700;">${p.ref_code || '-'}</td>
-                          <td style="padding:11px 16px;color:#334155;">${p.details || 'Transfer to Current 0550 (INR)'}</td>
-                          <td style="padding:11px 16px;text-align:right;font-weight:900;color:#047857;font-size:13.5px;">
+                          <td style="padding:9px 14px;font-weight:600;color:#0F172A;">${p.date}</td>
+                          <td style="padding:9px 14px;color:#64748B;">${p.arriving_date || '-'}</td>
+                          <td style="padding:9px 14px;font-family:monospace;color:#92400E;font-weight:600;font-size:11.5px;">${p.ref_code || '-'}</td>
+                          <td style="padding:9px 14px;color:#334155;">${p.details || 'Transfer to Current 0550 (INR)'}</td>
+                          <td style="padding:9px 14px;text-align:right;font-weight:700;color:#047857;font-size:12.5px;">
                             ₹${p.amount.toLocaleString('en-IN', {maximumFractionDigits:2})}
                           </td>
                         </tr>
