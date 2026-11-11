@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..900;1,9..40,300..900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Tabler Icons Webfont (HomeyIndia CRM Vector Icons) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <link rel="stylesheet" href="style.css?v=602" />
+  <link rel="stylesheet" href="style.css?v=604" />
   <script>
     (function() {
       try {
@@ -71,7 +71,7 @@
   <script src="config.js?v=591"></script>
 
   <!-- App Modules — order matters -->
-  <script src="js/core.js?v=601"></script>
+  <script src="js/core.js?v=604"></script>
   <script src="js/user-audit.js?v=591"></script>
   <script src="js/notifications.js?v=601"></script>
   <script src="js/dashboard.js?v=597"></script>
@@ -87,7 +87,7 @@
   <script src="js/booking-receipt.js?v=591"></script>
   <script src="js/gst-invoice.js?v=591"></script>
   <script src="js/airbnb-audit-data.js?v=591"></script>
-  <script src="js/ca-audit-pack.js?v=603"></script>
+  <script src="js/ca-audit-pack.js?v=591"></script>
   <script src="js/per-day-calc.js?v=591"></script>
   <script src="js/property-photos-data.js?v=591"></script>
   <script src="js/properties.js?v=591"></script>
@@ -142,13 +142,9 @@
     });
   </script>
 
-  <!-- 📱 Executive SaaS Mobile Bottom Navigation Bar (Today, Bookings, Properties, Expenses, Menu) - Strictly Mobile Only -->
-  <nav id="pwa-bottom-nav" class="pwa-bottom-nav">
-    <button type="button" class="pwa-nav-item active" data-page="today" onclick="if(window.setBookingTab) window.setBookingTab('today'); navigate('bookings');">
-      <span class="pwa-nav-icon"><i class="ti ti-calendar-event"></i></span>
-      <span class="pwa-nav-label">Today</span>
-    </button>
-    <button type="button" class="pwa-nav-item" data-page="bookings" onclick="if(window.setBookingTab) window.setBookingTab('all'); navigate('bookings');">
+  <!-- 📱 Executive SaaS Mobile Bottom Navigation Bar (Bookings, Properties, Employees, Expenses, Menu) - Strictly Mobile Only (TUHH Standard) -->
+  <nav id="pwa-bottom-nav" class="pwa-bottom-nav" style="display:none;">
+    <button type="button" class="pwa-nav-item active" data-page="bookings" onclick="navigate('bookings')">
       <span class="pwa-nav-icon"><i class="ti ti-calendar-check"></i></span>
       <span class="pwa-nav-label">Bookings</span>
       <span id="pwa-approvals-badge" style="display:none;" class="pwa-nav-badge">0</span>
@@ -156,6 +152,10 @@
     <button type="button" class="pwa-nav-item" data-page="rooms" onclick="navigate('rooms')">
       <span class="pwa-nav-icon"><i class="ti ti-building-estate"></i></span>
       <span class="pwa-nav-label">Properties</span>
+    </button>
+    <button type="button" class="pwa-nav-item" data-page="employees" onclick="navigate('employees')">
+      <span class="pwa-nav-icon"><i class="ti ti-users"></i></span>
+      <span class="pwa-nav-label">Employees</span>
     </button>
     <button type="button" class="pwa-nav-item" data-page="expenses" onclick="navigate('expenses')">
       <span class="pwa-nav-icon"><i class="ti ti-receipt-2"></i></span>

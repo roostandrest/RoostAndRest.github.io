@@ -1919,25 +1919,20 @@ function renderShell(content, activePage = 'bookings') {
       else a.classList.remove('active');
     });
 
-    // 5. Update mobile bottom nav (HomeyHuts / Airbnb 5-tab capsule pill)
-    const isTodayTab = (activePage === 'bookings' && (!window._sbkState || window._sbkState.activeTab === 'today'));
+    // 5. Update mobile bottom nav (HomeyHuts / Airbnb 5-tab capsule pill - TUHH Standard)
     document.querySelectorAll('#pwa-bottom-nav .pwa-nav-item, .bottom-nav a').forEach(btn => {
       const p = btn.dataset.page;
       let isAct = false;
-      if (p === 'today') {
-        isAct = isTodayTab;
-      } else if (p === 'bookings') {
-        isAct = (activePage === 'bookings' && !isTodayTab) || activePage === 'calendar' || activePage === 'pendingApprovals';
-      } else if (p === 'dashboard') {
-        isAct = (activePage === 'dashboard' || activePage === 'dailyReport');
+      if (p === 'bookings') {
+        isAct = (activePage === 'bookings') || activePage === 'calendar' || activePage === 'pendingApprovals' || activePage === 'reports';
       } else if (p === 'rooms' || p === 'flats') {
         isAct = (targetSidebarKey === 'rooms' || activePage === 'flats' || activePage === 'showcase-admin');
+      } else if (p === 'employees') {
+        isAct = (targetSidebarKey === 'employees' || activePage === 'attendance' || activePage === 'tasks' || activePage === 'employee-ledger');
       } else if (p === 'expenses') {
         isAct = (targetSidebarKey === 'expenses' || activePage === 'claims' || activePage === 'reimbursements');
-      } else if (p === 'employees') {
-        isAct = (targetSidebarKey === 'employees' || activePage === 'attendance' || activePage === 'tasks');
       } else if (p === 'menu') {
-        isAct = (activePage === 'menu' || targetSidebarKey === 'settings' || targetSidebarKey === 'help' || targetSidebarKey === 'user-mgmt');
+        isAct = (activePage === 'menu' || targetSidebarKey === 'settings' || targetSidebarKey === 'help' || targetSidebarKey === 'user-mgmt' || targetSidebarKey === 'analytics' || targetSidebarKey === 'dashboard');
       } else {
         isAct = (p === targetSidebarKey);
       }
@@ -2529,26 +2524,21 @@ function navigate(page) {
     if (m.id !== 'authOverlay' && m.id !== 'lockModal') m.remove();
   });
 
-  // Update active state on bottom navigation
+  // Update active state on bottom navigation (TUHH Standard)
   const targetBottomKey = (typeof PAGE_TO_SIDEBAR_MAP !== 'undefined' && PAGE_TO_SIDEBAR_MAP[page]) ? PAGE_TO_SIDEBAR_MAP[page] : page;
-  const isTodayTab = (page === 'bookings' && (!window._sbkState || window._sbkState.activeTab === 'today'));
   document.querySelectorAll('.bottom-nav a[data-page], .pwa-bottom-nav .pwa-nav-item[data-page]').forEach(a => {
     const p = a.dataset.page;
     let isAct = false;
-    if (p === 'today') {
-      isAct = isTodayTab;
-    } else if (p === 'bookings') {
-      isAct = (page === 'bookings' && !isTodayTab) || page === 'calendar' || page === 'pendingApprovals';
-    } else if (p === 'dashboard') {
-      isAct = (page === 'dashboard' || page === 'dailyReport');
+    if (p === 'bookings') {
+      isAct = (page === 'bookings') || page === 'calendar' || page === 'pendingApprovals' || page === 'reports';
     } else if (p === 'rooms' || p === 'flats') {
       isAct = (targetBottomKey === 'rooms' || page === 'flats' || page === 'showcase-admin');
+    } else if (p === 'employees') {
+      isAct = (targetBottomKey === 'employees' || page === 'attendance' || page === 'tasks' || page === 'employee-ledger');
     } else if (p === 'expenses') {
       isAct = (targetBottomKey === 'expenses' || page === 'claims' || page === 'reimbursements');
-    } else if (p === 'employees') {
-      isAct = (targetBottomKey === 'employees' || page === 'attendance' || page === 'tasks');
     } else if (p === 'menu') {
-      isAct = (page === 'menu' || targetBottomKey === 'settings' || targetBottomKey === 'help' || targetBottomKey === 'user-mgmt');
+      isAct = (page === 'menu' || targetBottomKey === 'settings' || targetBottomKey === 'help' || targetBottomKey === 'user-mgmt' || targetBottomKey === 'analytics' || targetBottomKey === 'dashboard');
     } else {
       isAct = (p === targetBottomKey);
     }
