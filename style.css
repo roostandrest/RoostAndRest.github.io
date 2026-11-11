@@ -163,9 +163,9 @@ html, body, #app {
 /* ─── SIDEBAR (Off-Canvas Luxury Drawer on Mobile & Desktop Toggle) ─── */
 .sidebar {
   display: none;
-  width: 280px;
-  background: #2C241E !important;
-  color: #FFFFFF !important;
+  width: 250px;
+  background: #FFFFFF !important;
+  color: #1E293B !important;
   position: fixed;
   top: 0;
   left: 0;
@@ -173,8 +173,8 @@ html, body, #app {
   height: 100vh;
   flex-direction: column;
   z-index: 99999;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 4px 0 28px rgba(0,0,0,0.35) !important;
+  border-right: 1px solid #E2E8F0 !important;
+  box-shadow: 2px 0 12px rgba(0,0,0,0.05) !important;
   transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -220,12 +220,12 @@ html, body, #app {
 }
 
 .brand-logo-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #1E293B, #0F172A);
-  border: 1.5px solid rgba(245, 158, 11, 0.5);
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3), 0 4px 12px rgba(0, 0, 0, 0.4);
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -239,50 +239,47 @@ html, body, #app {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 60%);
+  background: transparent;
   pointer-events: none;
 }
 
 .sidebar-brand:hover .brand-logo-wrap {
-  transform: translateY(-1px) scale(1.06);
-  box-shadow: 0 0 24px rgba(245, 158, 11, 0.55), 0 6px 16px rgba(0, 0, 0, 0.45);
-  border-color: #FBBF24;
+  transform: translateY(-1px);
+  border-color: #0284C7;
 }
 
 .sidebar-brand .brand-logo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 10px;
+  object-fit: contain;
+  border-radius: 6px;
   display: block;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
 .sidebar-brand .brand-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  line-height: 1.2;
 }
 
 .sidebar-brand .brand-name {
-  font-family: 'Outfit', -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   font-size: 13.5px;
   font-weight: 800;
-  letter-spacing: 0.6px;
-  color: #FFFFFF;
-  line-height: 1.15;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  letter-spacing: 0.3px;
+  color: #0F172A;
+  text-transform: uppercase;
 }
 
 .sidebar-brand .brand-sub {
-  font-size: 9px;
-  font-weight: 800;
-  color: #FCD34D;
-  background: rgba(245, 158, 11, 0.14);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  padding: 1px 6px;
-  border-radius: 4px;
-  letter-spacing: 1px;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0284C7;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
   text-transform: uppercase;
   width: fit-content;
   display: inline-block;
@@ -3282,6 +3279,7 @@ code {
     min-width: 250px !important;
     max-width: 250px !important;
     height: 100vh !important;
+    max-height: 100vh !important;
     background: #FFFFFF !important;
     color: #1E293B !important;
     border-right: 1px solid #E2E8F0 !important;
@@ -3289,8 +3287,7 @@ code {
     transform: none !important;
     z-index: 1000 !important;
     flex-shrink: 0 !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow: hidden !important;
   }
 
   .sidebar-backdrop {
@@ -3304,43 +3301,65 @@ code {
   .sidebar-top {
     background: #FFFFFF !important;
     border-bottom: 1px solid #F1F5F9 !important;
-    padding: 16px 16px 12px !important;
+    padding: 14px 16px 12px !important;
+    flex-shrink: 0 !important;
   }
 
   .sidebar-brand {
     cursor: pointer;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
   }
 
   .sidebar-brand .brand-logo-wrap {
     background: #F8FAFC !important;
     border: 1px solid #E2E8F0 !important;
-    border-radius: 10px !important;
-    width: 36px !important;
-    height: 36px !important;
+    border-radius: 9px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    padding: 4px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    flex-shrink: 0 !important;
+  }
+
+  .sidebar-brand .brand-logo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    border-radius: 6px !important;
+  }
+
+  .sidebar-brand .brand-text {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    line-height: 1.25 !important;
   }
 
   .sidebar-brand .brand-name {
     color: #0F172A !important;
-    font-size: 13px !important;
+    font-size: 13.5px !important;
     font-weight: 800 !important;
-    letter-spacing: -0.2px !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
   }
 
   .sidebar-brand .brand-sub {
-    color: #64748B !important;
-    font-size: 9.5px !important;
+    color: #0284C7 !important;
+    font-size: 10px !important;
     font-weight: 700 !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+    margin-top: 1px !important;
   }
 
   .sidebar-user-card {
-    background: #F8FAFC !important;
-    border: 1px solid #E2E8F0 !important;
-    border-radius: 10px !important;
-    margin: 8px 12px !important;
-    padding: 8px 10px !important;
+    display: none !important;
   }
 
   .sidebar-user-card .user-avatar {
@@ -3355,47 +3374,26 @@ code {
   .sidebar-user-card .user-name {
     color: #0F172A !important;
     font-weight: 700 !important;
-    font-size: 12.5px !important;
-  }
-
-  .sidebar-user-card .user-role-badge {
-    background: #E0F2FE !important;
-    color: #0369A1 !important;
-    font-size: 10.5px !important;
-    font-weight: 800 !important;
-  }
-
-  .sidebar-user-card .user-notif-btn {
-    background: #FFFFFF !important;
-    border: 1px solid #CBD5E1 !important;
-    color: #475569 !important;
-    width: 28px !important;
-    height: 28px !important;
-  }
-
   .sidebar-nav {
-    padding: 6px 10px 14px !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: #CBD5E1 transparent !important;
+    padding: 6px 10px 10px !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
   }
 
   .sidebar-nav::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .sidebar-nav::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
-    border-radius: 4px;
+    display: none !important;
   }
 
   .sidebar-nav a {
-    color: #475569 !important;
+    color: #334155 !important;
     background: transparent !important;
     border-radius: 8px !important;
     margin: 2px 0 !important;
-    padding: 8px 12px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
+    padding: 7px 12px !important;
+    font-size: 12.8px !important;
+    font-weight: 500 !important;
     display: flex !important;
     align-items: center !important;
     gap: 10px !important;
@@ -3424,8 +3422,9 @@ code {
   .sidebar-nav a.active-hub {
     background: #0284C7 !important;
     color: #FFFFFF !important;
-    font-weight: 700 !important;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3) !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
   }
 
   .sidebar-nav a.active .nav-icon,
@@ -3438,24 +3437,50 @@ code {
     font-size: 10px !important;
     font-weight: 700 !important;
     letter-spacing: 1px !important;
-    padding: 12px 12px 4px !important;
+    padding: 10px 12px 3px !important;
   }
 
   .sidebar-footer {
-    background: #F8FAFC !important;
+    background: #FFFFFF !important;
     border-top: 1px solid #E2E8F0 !important;
     padding: 8px 10px !important;
     display: flex !important;
+    flex-direction: row !important;
     gap: 6px !important;
+    flex-shrink: 0 !important;
+    margin-top: auto !important;
   }
 
   .sidebar-action-btn {
-    background: #FFFFFF !important;
-    border: 1px solid #CBD5E1 !important;
-    color: #334155 !important;
+    border-radius: 8px !important;
     padding: 6px 8px !important;
-    font-size: 11px !important;
+    font-size: 11.5px !important;
     font-weight: 600 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+  }
+
+  .sidebar-action-btn.help-btn {
+    flex: 1 !important;
+    background: #0284C7 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #0284C7 !important;
+  }
+
+  .sidebar-action-btn.pref-btn {
+    flex: 1 !important;
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    border: 1px solid #CBD5E1 !important;
+  }
+
+  .sidebar-action-btn.logout-btn {
+    display: none !important;
+  }
     border-radius: 6px !important;
   }
 
@@ -10582,191 +10607,270 @@ textarea:focus {
 
 
 /* ═══════════════════════════════════════════════════════════
-   🌟 ROOST & REST — ULTRA HIGH-CONTRAST LUXURY SIDEBAR DRAWER
-   Guarantees pristine crisp white/gold typography across all
-   themes (light & dark), all viewports (desktop, tablet, mobile)
+   🌟 ROOST & REST — MODERN CLEAN SAAS SIDEBAR (TUHH STANDARD)
+   Pristine white background, high-contrast dark charcoal typography,
+   zero-scroll viewport fit, and solid blue active pill highlight
    ═══════════════════════════════════════════════════════════ */
 aside.sidebar,
 .sidebar,
 .sidebar.mobile-drawer-open,
 .sidebar.open {
-  background: #1C1917 !important; /* Rich obsidian espresso */
-  color: #F8FAFC !important;
-  border-right: 1px solid rgba(245, 158, 11, 0.15) !important;
-  box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5) !important;
-  z-index: 100001 !important;
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+  border-right: 1px solid #E2E8F0 !important;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.04) !important;
+  z-index: 1000 !important;
 }
 
-/* Sidebar Brand Header */
+/* Sidebar Brand Header & Logo Typography (100% Crisp & High Contrast) */
+.sidebar-top {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  padding: 14px 16px 12px !important;
+  flex-shrink: 0 !important;
+}
+.sidebar-brand {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  cursor: pointer !important;
+}
+.sidebar-brand .brand-logo-wrap {
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  border-radius: 9px !important;
+  background: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 4px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  flex-shrink: 0 !important;
+}
+.sidebar-brand .brand-logo {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 6px !important;
+}
+.sidebar-brand .brand-text {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  line-height: 1.25 !important;
+}
 .sidebar-brand .brand-name,
 .sidebar.mobile-drawer-open .sidebar-brand .brand-name,
 .sidebar.open .sidebar-brand .brand-name {
-  color: #FFFFFF !important;
+  color: #0F172A !important; /* Deep dark slate charcoal */
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 13.5px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.5px !important;
+  letter-spacing: 0.3px !important;
+  text-transform: uppercase !important;
+  display: block !important;
 }
 .sidebar-brand .brand-sub,
 .sidebar.mobile-drawer-open .sidebar-brand .brand-sub,
 .sidebar.open .sidebar-brand .brand-sub {
-  color: #F59E0B !important; /* Warm amber gold */
+  color: #0284C7 !important; /* Crisp vivid ocean blue */
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
-  letter-spacing: 1px !important;
+  letter-spacing: 0.8px !important;
+  text-transform: uppercase !important;
+  display: block !important;
+  margin-top: 1px !important;
 }
 .sidebar-close-btn {
-  color: #F8FAFC !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+  color: #64748B !important;
+  background: #F1F5F9 !important;
+  border-radius: 6px !important;
 }
 
-/* Sidebar User Profile Card */
-.sidebar-user-card,
-.sidebar.mobile-drawer-open .sidebar-user-card,
-.sidebar.open .sidebar-user-card {
-  background: rgba(255, 255, 255, 0.06) !important;
-  border: 1px solid rgba(245, 158, 11, 0.2) !important;
-  border-radius: 12px !important;
+/* User Card: Hidden on desktop to eliminate scrolling (User is already displayed in topbar) */
+@media (min-width: 1025px) {
+  .sidebar-user-card {
+    display: none !important;
+  }
 }
-.sidebar-user-card .user-avatar {
-  background: linear-gradient(135deg, #B45309, #D97706) !important;
-  color: #FFFFFF !important;
-  font-weight: 800 !important;
-}
-.sidebar-user-card .user-name,
-.sidebar.mobile-drawer-open .sidebar-user-card .user-name,
-.sidebar.open .sidebar-user-card .user-name {
-  color: #FFFFFF !important;
-  font-weight: 700 !important;
-}
-.sidebar-user-card .user-role-badge,
-.sidebar.mobile-drawer-open .sidebar-user-card .user-role-badge,
-.sidebar.open .sidebar-user-card .user-role-badge {
-  background: rgba(245, 158, 11, 0.2) !important;
-  color: #FCD34D !important;
-  border: 1px solid rgba(245, 158, 11, 0.4) !important;
-  font-weight: 700 !important;
-}
-.sidebar-user-card .user-notif-btn {
-  color: #F8FAFC !important;
-  background: rgba(255, 255, 255, 0.08) !important;
+@media (max-width: 1024px) {
+  .sidebar-user-card {
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 10px !important;
+    margin: 8px 12px !important;
+    padding: 8px 10px !important;
+  }
+  .sidebar-user-card .user-name {
+    color: #0F172A !important;
+    font-weight: 700 !important;
+  }
+  .sidebar-user-card .user-role-badge {
+    background: #E0F2FE !important;
+    color: #0369A1 !important;
+    font-weight: 700 !important;
+  }
 }
 
-/* Sidebar Nav Links — Inactive Items (Crisp, High Contrast Silver-White) */
+/* Sidebar Navigation Items (TUHH Clean SaaS Spacing & High-Contrast Typography) */
+.sidebar .sidebar-nav,
+.sidebar-nav {
+  padding: 8px 10px !important;
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  scrollbar-width: none !important; /* Zero ugly scrollbars */
+  -ms-overflow-style: none !important;
+}
+.sidebar-nav::-webkit-scrollbar {
+  display: none !important;
+}
+
 .sidebar .sidebar-nav a,
 .sidebar-nav a,
-.sidebar nav a,
-.sidebar.mobile-drawer-open .sidebar-nav a,
-.sidebar.open .sidebar-nav a {
-  color: #F1F5F9 !important;
-  font-weight: 600 !important;
-  font-size: 13.5px !important;
+.sidebar nav a {
+  color: #334155 !important; /* Slate-700: Pristine contrast on white */
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+  font-weight: 500 !important;
+  font-size: 12.8px !important;
+  padding: 7px 12px !important;
+  margin: 2px 0 !important;
+  border-radius: 8px !important;
   background: transparent !important;
   text-decoration: none !important;
-  opacity: 0.95 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
   transition: all 0.15s ease !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
 }
 .sidebar .sidebar-nav a span,
 .sidebar .sidebar-nav a .nav-label,
 .sidebar-nav a span,
-.sidebar-nav a .nav-label,
-.sidebar.mobile-drawer-open .sidebar-nav a span,
-.sidebar.mobile-drawer-open .sidebar-nav a .nav-label,
-.sidebar.open .sidebar-nav a span,
-.sidebar.open .sidebar-nav a .nav-label {
-  color: #F1F5F9 !important;
-  font-weight: 600 !important;
+.sidebar-nav a .nav-label {
+  color: #334155 !important;
+  font-weight: 500 !important;
   opacity: 1 !important;
 }
 .sidebar .sidebar-nav a .nav-icon,
-.sidebar-nav a .nav-icon,
-.sidebar.mobile-drawer-open .sidebar-nav a .nav-icon,
-.sidebar.open .sidebar-nav a .nav-icon {
-  color: #F59E0B !important; /* Rich amber icon */
+.sidebar-nav a .nav-icon {
+  color: #64748B !important;
   font-size: 1.15rem !important;
+  flex-shrink: 0 !important;
   opacity: 1 !important;
 }
 
-/* Sidebar Nav Links — Hover */
+/* Hover State */
 .sidebar .sidebar-nav a:hover,
 .sidebar-nav a:hover,
-.sidebar nav a:hover,
-.sidebar.mobile-drawer-open .sidebar-nav a:hover,
-.sidebar.open .sidebar-nav a:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #FFFFFF !important;
-  opacity: 1 !important;
-  transform: translateX(3px) !important;
+.sidebar nav a:hover {
+  background: #F1F5F9 !important;
+  color: #0F172A !important;
+  transform: none !important;
 }
 .sidebar .sidebar-nav a:hover span,
 .sidebar .sidebar-nav a:hover .nav-label,
 .sidebar-nav a:hover span,
 .sidebar-nav a:hover .nav-label {
-  color: #FFFFFF !important;
+  color: #0F172A !important;
 }
 .sidebar .sidebar-nav a:hover .nav-icon,
 .sidebar-nav a:hover .nav-icon {
-  color: #FCD34D !important;
+  color: #0284C7 !important;
 }
 
-/* Sidebar Nav Links — Active Item (Luxury Warm Amber Gradient) */
+/* Active State (TUHH Solid Vibrant Blue Capsule) */
 .sidebar .sidebar-nav a.active,
 .sidebar-nav a.active,
 .sidebar nav a.active,
-.sidebar.mobile-drawer-open .sidebar-nav a.active,
-.sidebar.open .sidebar-nav a.active {
-  background: linear-gradient(135deg, #B45309 0%, #78350F 100%) !important;
+.sidebar .sidebar-nav a.active-hub,
+.sidebar-nav a.active-hub {
+  background: #0284C7 !important;
   color: #FFFFFF !important;
-  font-weight: 700 !important;
-  opacity: 1 !important;
-  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.45) !important;
-  border-left: 3px solid #F59E0B !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+  border-left: none !important;
 }
 .sidebar .sidebar-nav a.active span,
 .sidebar .sidebar-nav a.active .nav-label,
 .sidebar-nav a.active span,
 .sidebar-nav a.active .nav-label {
   color: #FFFFFF !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 .sidebar .sidebar-nav a.active .nav-icon,
-.sidebar-nav a.active .nav-icon {
+.sidebar-nav a.active .nav-icon,
+.sidebar .sidebar-nav a.active-hub .nav-icon,
+.sidebar-nav a.active-hub .nav-icon {
   color: #FFFFFF !important;
 }
 
 /* Nav Section Headings */
 .sidebar .nav-section-heading,
-.nav-section-heading,
-.sidebar.mobile-drawer-open .nav-section-heading,
-.sidebar.open .nav-section-heading {
-  color: #CBD5E1 !important;
+.nav-section-heading {
+  color: #94A3B8 !important;
   font-size: 10px !important;
   font-weight: 700 !important;
-  letter-spacing: 1.5px !important;
+  letter-spacing: 1px !important;
   text-transform: uppercase !important;
-  opacity: 0.85 !important;
+  padding: 10px 12px 3px !important;
 }
 
-/* Sidebar Footer & Action Buttons */
+/* Sidebar Footer (Compact Side-by-Side TUHH Buttons — Zero Vertical Waste) */
 .sidebar-footer,
 .sidebar.mobile-drawer-open .sidebar-footer,
 .sidebar.open .sidebar-footer {
-  background: rgba(0, 0, 0, 0.4) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #FFFFFF !important;
+  border-top: 1px solid #E2E8F0 !important;
+  padding: 8px 10px !important;
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
 }
 .sidebar-footer button,
 .sidebar-action-btn,
 .sidebar.mobile-drawer-open .sidebar-action-btn,
 .sidebar.open .sidebar-action-btn {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #F8FAFC !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px !important;
+  font-size: 11.5px !important;
   font-weight: 600 !important;
+  padding: 6px 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+  text-decoration: none !important;
 }
-.sidebar-footer button:hover,
-.sidebar-action-btn:hover {
-  background: rgba(255, 255, 255, 0.15) !important;
+.sidebar-action-btn.help-btn {
+  flex: 1 !important;
+  background: #0284C7 !important;
   color: #FFFFFF !important;
+  border: 1px solid #0284C7 !important;
 }
-.sidebar-footer button.logout-btn:hover {
-  background: rgba(220, 38, 38, 0.3) !important;
-  color: #FCA5A5 !important;
-  border-color: rgba(220, 38, 38, 0.5) !important;
+.sidebar-action-btn.help-btn:hover {
+  background: #0369A1 !important;
+  border-color: #0369A1 !important;
+}
+.sidebar-action-btn.pref-btn {
+  flex: 1 !important;
+  background: #FFFFFF !important;
+  color: #475569 !important;
+  border: 1px solid #CBD5E1 !important;
+}
+.sidebar-action-btn.pref-btn:hover {
+  background: #F8FAFC !important;
+  color: #0F172A !important;
+  border-color: #94A3B8 !important;
+}
+.sidebar-action-btn.logout-btn {
+  display: none !important; /* Topbar & Settings already have Logout */
 }
