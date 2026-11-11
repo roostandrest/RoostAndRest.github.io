@@ -245,7 +245,7 @@ html, body, #app {
 
 .sidebar-brand:hover .brand-logo-wrap {
   transform: translateY(-1px);
-  border-color: #0284C7;
+  border-color: #B45309;
 }
 
 .sidebar-brand .brand-logo {
@@ -275,7 +275,7 @@ html, body, #app {
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   font-size: 10px;
   font-weight: 700;
-  color: #0284C7;
+  color: #B45309;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   margin-top: 1px;
@@ -3350,7 +3350,7 @@ code {
   }
 
   .sidebar-brand .brand-sub {
-    color: #0284C7 !important;
+    color: #B45309 !important;
     font-size: 10px !important;
     font-weight: 700 !important;
     letter-spacing: 0.8px !important;
@@ -3362,18 +3362,6 @@ code {
     display: none !important;
   }
 
-  .sidebar-user-card .user-avatar {
-    background: #E0F2FE !important;
-    color: #0284C7 !important;
-    font-weight: 800 !important;
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 13px !important;
-  }
-
-  .sidebar-user-card .user-name {
-    color: #0F172A !important;
-    font-weight: 700 !important;
   .sidebar-nav {
     padding: 6px 10px 10px !important;
     flex: 1 1 auto !important;
@@ -3415,16 +3403,16 @@ code {
   }
 
   .sidebar-nav a:hover .nav-icon {
-    color: #0284C7 !important;
+    color: #B45309 !important;
   }
 
   .sidebar-nav a.active,
   .sidebar-nav a.active-hub {
-    background: #0284C7 !important;
+    background: #B45309 !important;
     color: #FFFFFF !important;
     font-weight: 600 !important;
     border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+    box-shadow: 0 2px 8px rgba(180, 83, 9, 0.35) !important;
   }
 
   .sidebar-nav a.active .nav-icon,
@@ -3466,9 +3454,14 @@ code {
 
   .sidebar-action-btn.help-btn {
     flex: 1 !important;
-    background: #0284C7 !important;
+    background: #B45309 !important;
     color: #FFFFFF !important;
-    border: 1px solid #0284C7 !important;
+    border: 1px solid #B45309 !important;
+  }
+
+  .sidebar-action-btn.help-btn:hover {
+    background: #92400E !important;
+    border-color: #92400E !important;
   }
 
   .sidebar-action-btn.pref-btn {
@@ -3476,6 +3469,16 @@ code {
     background: #FFFFFF !important;
     color: #475569 !important;
     border: 1px solid #CBD5E1 !important;
+  }
+
+  .sidebar-action-btn.pref-btn:hover {
+    background: #F8FAFC !important;
+    color: #0F172A !important;
+    border-color: #94A3B8 !important;
+  }
+
+  .sidebar-action-btn.logout-btn {
+    display: none !important;
   }
 
   .sidebar-action-btn.logout-btn {
@@ -10675,7 +10678,7 @@ aside.sidebar,
 .sidebar-brand .brand-sub,
 .sidebar.mobile-drawer-open .sidebar-brand .brand-sub,
 .sidebar.open .sidebar-brand .brand-sub {
-  color: #0284C7 !important; /* Crisp vivid ocean blue */
+  color: #B45309 !important; /* Roost & Rest Signature Terracotta Amber */
   font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
   font-size: 10px !important;
   font-weight: 700 !important;
@@ -10709,8 +10712,8 @@ aside.sidebar,
     font-weight: 700 !important;
   }
   .sidebar-user-card .user-role-badge {
-    background: #E0F2FE !important;
-    color: #0369A1 !important;
+    background: #FEF3C7 !important;
+    color: #92400E !important;
     font-weight: 700 !important;
   }
 }
@@ -10779,20 +10782,20 @@ aside.sidebar,
 }
 .sidebar .sidebar-nav a:hover .nav-icon,
 .sidebar-nav a:hover .nav-icon {
-  color: #0284C7 !important;
+  color: #B45309 !important;
 }
 
-/* Active State (TUHH Solid Vibrant Blue Capsule) */
+/* Active State (Roost & Rest Solid Brand Amber Pill) */
 .sidebar .sidebar-nav a.active,
 .sidebar-nav a.active,
 .sidebar nav a.active,
 .sidebar .sidebar-nav a.active-hub,
 .sidebar-nav a.active-hub {
-  background: #0284C7 !important;
+  background: #B45309 !important;
   color: #FFFFFF !important;
   font-weight: 600 !important;
   border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(180, 83, 9, 0.35) !important;
   border-left: none !important;
 }
 .sidebar .sidebar-nav a.active span,
@@ -10820,7 +10823,7 @@ aside.sidebar,
   padding: 10px 12px 3px !important;
 }
 
-/* Sidebar Footer (Compact Side-by-Side TUHH Buttons — Zero Vertical Waste) */
+/* Sidebar Footer (Compact Side-by-Side Buttons — Zero Vertical Waste) */
 .sidebar-footer,
 .sidebar.mobile-drawer-open .sidebar-footer,
 .sidebar.open .sidebar-footer {
@@ -10852,13 +10855,13 @@ aside.sidebar,
 }
 .sidebar-action-btn.help-btn {
   flex: 1 !important;
-  background: #0284C7 !important;
+  background: #B45309 !important;
   color: #FFFFFF !important;
-  border: 1px solid #0284C7 !important;
+  border: 1px solid #B45309 !important;
 }
 .sidebar-action-btn.help-btn:hover {
-  background: #0369A1 !important;
-  border-color: #0369A1 !important;
+  background: #92400E !important;
+  border-color: #92400E !important;
 }
 .sidebar-action-btn.pref-btn {
   flex: 1 !important;
