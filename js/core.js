@@ -3208,7 +3208,7 @@ async function renderUserManagement() {
         style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;${currentTab === 'activity' ? 'background:var(--primary);color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);' : 'background:#F3F4F6;color:#4B5563;border:1px solid #D1D5DB;'}">
         ⏱️ Daily Logins & Screen Time Logs
       </button>
-      ${(window.isDeveloperUser && window.isDeveloperUser()) ? `
+      ${(['developer', 'owner', 'admin', 'manager'].includes(SESSION.role) || (window.isDeveloperUser && window.isDeveloperUser())) ? `
         <button type="button" class="btn-sm" onclick="setUserMgmtTab('alerts')"
           style="padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;${currentTab === 'alerts' ? 'background:#DC2626;color:#fff;box-shadow:0 2px 4px rgba(0,0,0,0.1);' : 'background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;'}">
           🔔 Developer Login Alerts
@@ -3220,7 +3220,7 @@ async function renderUserManagement() {
       ` : ''}
     </div>
 
-    ${currentTab === 'users' ? renderUsersTabContent() : currentTab === 'activity' ? renderActivityTabContent() : currentTab === 'work' ? ((window.isDeveloperUser && window.isDeveloperUser()) ? '<div id="workAuditTabContainer" style="margin-top:8px;"><div style="text-align:center;padding:24px;color:#64748B;">⏳ Loading staff work actions...</div></div>' : renderUsersTabContent()) : ((window.isDeveloperUser && window.isDeveloperUser()) ? '<div id="alertsTabContainer" style="margin-top:8px;"><div style="text-align:center;padding:24px;color:#64748B;">⏳ Loading login alerts...</div></div>' : renderUsersTabContent())}
+    ${currentTab === 'users' ? renderUsersTabContent() : currentTab === 'activity' ? renderActivityTabContent() : currentTab === 'work' ? '<div id="workAuditTabContainer" style="margin-top:8px;"><div style="text-align:center;padding:24px;color:#64748B;">⏳ Loading staff work actions...</div></div>' : currentTab === 'alerts' ? '<div id="alertsTabContainer" style="margin-top:8px;"><div style="text-align:center;padding:24px;color:#64748B;">⏳ Loading login alerts...</div></div>' : renderUsersTabContent()}
   `, 'user-mgmt');
 
   if (currentTab === 'alerts' && typeof window.renderAlertsTabContent === 'function') {
@@ -3277,7 +3277,7 @@ async function renderUserManagement() {
         </div>
       ` : ''}
 
-      <!-- Quick Filter KPI Ribbon -->
+      <!-- Quick Filter KPI Ribbon (7 Permanent Cards - TUHH Standard) -->
       <div class="stat-grid" style="grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;margin-bottom:12px;">
         <div class="stat-card" onclick="setUserFilter('all')" style="cursor:pointer;border-left:4px solid #3B82F6;${activeFilter === 'all' ? 'background:#EFF6FF;box-shadow:0 0 0 2px #3B82F6;' : ''}">
           <div class="stat-num" style="color:#1D4ED8;">${totalUsers}</div>
@@ -3287,25 +3287,21 @@ async function renderUserManagement() {
           <div class="stat-num" style="color:#047857;">${activeCount}</div>
           <div class="stat-label">✅ Active Access</div>
         </div>
-        ${firedCount > 0 ? `
-          <div class="stat-card" onclick="setUserFilter('fired')" style="cursor:pointer;border-left:4px solid #DC2626;${activeFilter === 'fired' ? 'background:#FEF2F2;box-shadow:0 0 0 2px #DC2626;' : ''}">
-            <div class="stat-num" style="color:#B91C1C;">${firedCount}</div>
-            <div class="stat-label">🚫 Former Staff</div>
-          </div>
-        ` : ''}
-        ${pendingCount > 0 ? `
-          <div class="stat-card" onclick="setUserFilter('pending')" style="cursor:pointer;border-left:4px solid #F59E0B;background:#FFFBEB;box-shadow:0 0 0 2px #F59E0B;animation:pulse 2s infinite;">
-            <div class="stat-num" style="color:#B45309;">${pendingCount}</div>
-            <div class="stat-label">⏳ Pending Approvals</div>
-          </div>
-        ` : ''}
+        <div class="stat-card" onclick="setUserFilter('fired')" style="cursor:pointer;border-left:4px solid #DC2626;${activeFilter === 'fired' ? 'background:#FEF2F2;box-shadow:0 0 0 2px #DC2626;' : ''}">
+          <div class="stat-num" style="color:#B91C1C;">${firedCount}</div>
+          <div class="stat-label">🚫 Former Staff</div>
+        </div>
+        <div class="stat-card" onclick="setUserFilter('pending')" style="cursor:pointer;border-left:4px solid #F59E0B;${activeFilter === 'pending' ? 'background:#FFFBEB;box-shadow:0 0 0 2px #F59E0B;' : ''}">
+          <div class="stat-num" style="color:#B45309;">${pendingCount}</div>
+          <div class="stat-label">⏳ Pending Approvals</div>
+        </div>
         <div class="stat-card" onclick="setUserFilter('admin')" style="cursor:pointer;border-left:4px solid #8B5CF6;${activeFilter === 'admin' ? 'background:#F5F3FF;box-shadow:0 0 0 2px #8B5CF6;' : ''}">
           <div class="stat-num" style="color:#6D28D9;">${adminCount}</div>
-          <div class="stat-label">🛡️ Admins & Devs</div>
+          <div class="stat-label">🛡️ Admins &amp; Devs</div>
         </div>
         <div class="stat-card" onclick="setUserFilter('manager')" style="cursor:pointer;border-left:4px solid #B45309;${activeFilter === 'manager' ? 'background:#F0F9FF;box-shadow:0 0 0 2px #B45309;' : ''}">
           <div class="stat-num" style="color:#0369A1;">${managerCount}</div>
-          <div class="stat-label">👑 Owners & Mgrs</div>
+          <div class="stat-label">👑 Owners &amp; Mgrs</div>
         </div>
         <div class="stat-card" onclick="setUserFilter('suspended')" style="cursor:pointer;border-left:4px solid #EF4444;${activeFilter === 'suspended' ? 'background:#FEF2F2;box-shadow:0 0 0 2px #EF4444;' : ''}">
           <div class="stat-num" style="color:#B91C1C;">${suspendedCount}</div>
@@ -3369,7 +3365,7 @@ async function renderUserManagement() {
           <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;">
             <button type="button" class="btn-sm" onclick="setUserFilter('all')" style="${activeFilter === 'all' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">All</button>
             <button type="button" class="btn-sm" onclick="setUserFilter('active')" style="${activeFilter === 'active' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Active</button>
-            ${firedCount > 0 ? `<button type="button" class="btn-sm" onclick="setUserFilter('fired')" style="${activeFilter === 'fired' ? 'background:#DC2626;color:#fff;' : 'background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;'}">Former Staff (${firedCount})</button>` : ''}
+            <button type="button" class="btn-sm" onclick="setUserFilter('fired')" style="${activeFilter === 'fired' ? 'background:#DC2626;color:#fff;' : firedCount > 0 ? 'background:#FEE2E2;color:#991B1B;border:1px solid #FCA5A5;' : 'background:#F3F4F6;color:#6B7280;border:1px solid #E5E7EB;'}">Former Staff (${firedCount})</button>
             <button type="button" class="btn-sm" onclick="setUserFilter('admin')" style="${activeFilter === 'admin' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Admin/Dev</button>
             <button type="button" class="btn-sm" onclick="setUserFilter('manager')" style="${activeFilter === 'manager' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Owner/Mgr</button>
             <button type="button" class="btn-sm" onclick="setUserFilter('staff')" style="${activeFilter === 'staff' ? 'background:var(--primary);color:#fff;' : 'background:#F3F4F6;color:#374151;border:none;'}">Staff</button>
