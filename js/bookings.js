@@ -9036,7 +9036,12 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     if (prefill.amount === undefined || prefill.amount === null) {
       const pd = (window._sbkState?.cachedPaidMap || {})[curBooking.booking_id] || 0;
       const tot = curBooking.total_amount || 0;
-      const bal = tot - pd;
+      const isOnline = curBooking.booking_mode === 'Online-Airbnb' || !!curBooking.airbnb_confirmation_code;
+      const isPaidStatus = String(curBooking.payment_status || '').toLowerCase() === 'paid';
+      let bal = tot - pd;
+      if (isOnline && (isPaidStatus || pd > 0 || tot === 0)) {
+        bal = 0;
+      }
       prefill.amount = bal > 0 ? Math.round(bal) : (tot > 0 ? Math.round(tot) : 2500);
     }
   }

@@ -909,7 +909,12 @@
       let filtered = (bookings || []).filter(b => {
         const tot = b.total_amount || 0;
         const pd = paidMap[b.booking_id] || 0;
-        const due = tot - pd;
+        const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+        const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+        let due = tot - pd;
+        if (isOnline && (isPaidStatus || pd > 0 || tot === 0)) {
+          due = 0;
+        }
         if (currentFilter === 'unpaid' && due <= 0) return false;
 
         if (!q) return true;
@@ -923,8 +928,16 @@
 
       // Sort: bookings with highest positive due balance first
       filtered.sort((a, b) => {
-        const dueA = (a.total_amount || 0) - (paidMap[a.booking_id] || 0);
-        const dueB = (b.total_amount || 0) - (paidMap[b.booking_id] || 0);
+        const isOnlineA = a.booking_mode === 'Online-Airbnb' || !!a.airbnb_confirmation_code;
+        const isPaidStatusA = String(a.payment_status || '').toLowerCase() === 'paid';
+        let dueA = (a.total_amount || 0) - (paidMap[a.booking_id] || 0);
+        if (isOnlineA && (isPaidStatusA || (paidMap[a.booking_id] || 0) > 0 || !a.total_amount)) dueA = 0;
+
+        const isOnlineB = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+        const isPaidStatusB = String(b.payment_status || '').toLowerCase() === 'paid';
+        let dueB = (b.total_amount || 0) - (paidMap[b.booking_id] || 0);
+        if (isOnlineB && (isPaidStatusB || (paidMap[b.booking_id] || 0) > 0 || !b.total_amount)) dueB = 0;
+
         return dueB - dueA;
       });
 
@@ -942,8 +955,13 @@
         const unit = b.rooms?.unit_no ? ` (${b.rooms.unit_no})` : '';
         const tot = b.total_amount || 0;
         const pd = paidMap[b.booking_id] || 0;
-        const due = tot - pd;
-        const isDue = due > 0;
+        const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+        const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+        let due = tot - pd;
+        if (isOnline && (isPaidStatus || pd > 0 || tot === 0)) {
+          due = 0;
+        }
+        const isDue = due > 0.99;
 
         return `
           <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:#1E293B;border:1px solid #334155;border-radius:10px;gap:12px;">

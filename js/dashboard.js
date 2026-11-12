@@ -265,8 +265,13 @@ window.renderAirbnbResCard = function (b, feedType) {
   const totalAmt = Number(b.total_amount || 0);
   const pMap = window._dashboardPaidMap || {};
   const paidAmt = Number(pMap[b.booking_id] || 0);
-  const dueAmt = totalAmt - paidAmt;
-  const isPaid = totalAmt > 0 && dueAmt <= 0;
+  const isOnline = (b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code);
+  const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+  let dueAmt = totalAmt - paidAmt;
+  if (isOnline && (isPaidStatus || paidAmt > 0 || totalAmt === 0)) {
+    dueAmt = 0;
+  }
+  const isPaid = (totalAmt > 0 || isOnline) && (dueAmt <= 0.99 || isPaidStatus);
 
   return `
     <div class="airbnb-res-card" onclick="openBookingFromDashboard('${b.booking_id}')" title="Click to view details">
@@ -918,6 +923,8 @@ async function renderDashboard() {
     // 3. Balance payment collections
     const dueFollowups = allBookings.filter(b => {
       if (b.is_cancelled) return false;
+      const isOnline = (b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code);
+      if (isOnline) return false;
       const isTodayStay = (b.check_in === today || b.check_out === today || (b.check_in < today && b.check_out > today));
       if (!isTodayStay) return false;
       const tot = b.total_amount || 0;

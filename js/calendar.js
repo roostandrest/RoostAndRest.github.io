@@ -521,8 +521,13 @@ async function renderReports() {
                           const nights = Math.max(1, Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000));
                           const totalAmt = b.total_amount || 0;
                           const paidAmt = pm[b.booking_id] || 0;
-                          const dueAmt = Math.max(0, totalAmt - paidAmt);
-                          const isPaid = (dueAmt <= 0);
+                          const isOnline = (window.getBookingSource ? window.getBookingSource(b).type === 'airbnb' : (b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code));
+                          const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+                          let dueAmt = Math.max(0, totalAmt - paidAmt);
+                          if (isOnline && (isPaidStatus || paidAmt > 0 || totalAmt === 0)) {
+                            dueAmt = 0;
+                          }
+                          const isPaid = (dueAmt <= 0.99 || isPaidStatus);
 
                           let payBadge = '';
                           if (isBlocked) {
@@ -788,17 +793,28 @@ async function renderReports() {
         // Payment status check for non-blocked bookings
         const totalAmt = Number(bk.total_amount || 0);
         const paidAmt = Number(pm[bk.booking_id] || 0);
-        const dueAmt = Math.max(0, totalAmt - paidAmt);
-        const isPaidFull = !isBlocked && (totalAmt > 0 && dueAmt <= 0);
-        const isDue = !isBlocked && (dueAmt > 0);
+        const isOnline = (window.getBookingSource ? window.getBookingSource(bk).type === 'airbnb' : (bk.booking_mode === 'Online-Airbnb' || !!bk.airbnb_confirmation_code));
+        const isPaidStatus = String(bk.payment_status || '').toLowerCase() === 'paid';
+
+        let dueAmt = Math.max(0, totalAmt - paidAmt);
+        if (isOnline) {
+          // For online Airbnb bookings, guests have already paid the OTA platform in full.
+          // Any difference between gross total and net host payout is platform commission, NOT guest balance due!
+          if (isPaidStatus || paidAmt > 0 || totalAmt === 0) {
+            dueAmt = 0;
+          }
+        }
+        const isPaidFull = !isBlocked && (totalAmt > 0 || isOnline) && (dueAmt <= 0.99 || isPaidStatus);
+        const isDue = !isBlocked && !isOnline && (dueAmt > 0.99);
 
         let payTagHtml = '';
         if (!isBlocked) {
           if (isDue) {
-            const dueShort = dueAmt >= 1000 ? `${(dueAmt/1000).toFixed(dueAmt % 1000 === 0 ? 0 : 1)}k` : dueAmt;
-            payTagHtml = `<span class="cal-pay-tag due" title="⚠️ Unpaid: ₹${Math.round(dueAmt).toLocaleString('en-IN')} Due (Paid: ₹${paidAmt.toLocaleString('en-IN')} / Total: ₹${totalAmt.toLocaleString('en-IN')})">₹${dueShort}</span>`;
+            const dueRound = Math.round(dueAmt);
+            const dueShort = dueRound >= 1000 ? `${(dueRound/1000).toFixed(dueRound % 1000 === 0 ? 0 : 1)}k` : dueRound;
+            payTagHtml = `<span class="cal-pay-tag due" title="⚠️ Unpaid: ₹${dueRound.toLocaleString('en-IN')} Due (Paid: ₹${paidAmt.toLocaleString('en-IN')} / Total: ₹${totalAmt.toLocaleString('en-IN')})">₹${dueShort}</span>`;
           } else if (isPaidFull) {
-            payTagHtml = `<span class="cal-pay-tag paid" title="✓ Paid in Full (₹${paidAmt.toLocaleString('en-IN')})">✓ Paid</span>`;
+            payTagHtml = `<span class="cal-pay-tag paid" title="✓ Paid in Full (₹${(paidAmt || totalAmt).toLocaleString('en-IN')})">✓ Paid</span>`;
           }
         }
 
@@ -1448,7 +1464,12 @@ window.openBookingDetails = async function(bId) {
     .neq('verification_status', 'rejected');
 
   const totalPaid = (pays || []).reduce((s, p) => s + (p.amount || 0), 0);
-  const due = Math.max((b.total_amount || 0) - totalPaid, 0);
+  const isOnlineBk = (b.booking_mode === 'Online-Airbnb' || b.booking_mode === 'Online-Booking.com' || !!b.airbnb_confirmation_code);
+  const isPaidStat = String(b.payment_status || '').toLowerCase() === 'paid';
+  let due = Math.max((b.total_amount || 0) - totalPaid, 0);
+  if (isOnlineBk && (isPaidStat || totalPaid > 0 || !b.total_amount)) {
+    due = 0;
+  }
   const nights = (b.check_in && b.check_out) ? Math.max(Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000), 1) : 1;
   const idPaths = (b.id_proof_photo_paths || b.id_proof_photo_path || '').split(',').filter(Boolean);
 
@@ -1471,7 +1492,7 @@ window.openBookingDetails = async function(bId) {
         <div><strong>Property:</strong> ${propLabel(b.rooms) || b.room_id}</div>
         <div><strong>Channel Mode:</strong> <span style="font-weight:700;color:${isBlocked ? '#475569' : (b.booking_mode==='Online-Airbnb'?'#2563EB':'#D97706')}">${isBlocked ? '🔒 Offline-Blocked' : b.booking_mode}</span></div>
         <div><strong>Dates:</strong> 🗓️ ${b.check_in} ➔ ${b.check_out} (<strong>${nights}</strong> Night${nights>1?'s':''})</div>
-        ${!isBlocked ? `<div><strong>Total Amount:</strong> ₹${(b.total_amount||0).toLocaleString('en-IN')} | <strong>Paid:</strong> ₹${totalPaid.toLocaleString('en-IN')} | <strong style="color:${due>0?'#DC2626':'#059669'}">Due: ₹${due.toLocaleString('en-IN')}</strong></div>` : '<div style="color:var(--muted);font-size:12px;">This slot is blocked / unavailable on Airbnb. You can convert it to a real guest booking below.</div>'}
+        ${!isBlocked ? `<div><strong>Total Amount:</strong> ₹${(b.total_amount||0).toLocaleString('en-IN')} | <strong>Paid:</strong> ₹${(isOnlineBk && due === 0 ? (b.total_amount || totalPaid) : totalPaid).toLocaleString('en-IN')} | <strong style="color:${due>0?'#DC2626':'#059669'}">${isOnlineBk && due === 0 ? '✓ Paid via Airbnb' : `Due: ₹${due.toLocaleString('en-IN')}`}</strong></div>` : '<div style="color:var(--muted);font-size:12px;">This slot is blocked / unavailable on Airbnb. You can convert it to a real guest booking below.</div>'}
         ${sec && sec.status !== 'none' && (sec.amount > 0 || sec.status === 'pending') ? `
           <div style="background:#F0FDF4;border:1px solid #BBF7D0;padding:8px 12px;border-radius:8px;margin-top:6px;font-size:12.5px;color:#166534;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
             <div>

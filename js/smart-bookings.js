@@ -410,8 +410,10 @@ async function renderSmartManageBookings(forceRefresh = false) {
   let dueCount = 0;
   activeBookings.forEach(b => {
     const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
-    if (isOnline && (b.total_amount === 0 || b.payment_status === 'Pending CSV Payout')) return;
+    const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+    if (isOnline && (b.total_amount === 0 || isPaidStatus || b.payment_status === 'Pending CSV Payout')) return;
     const pd = paidMap[b.booking_id] || 0;
+    if (isOnline && pd > 0) return;
     const tot = b.total_amount || 0;
     const due = tot - pd;
     if (due > 0.99) {
@@ -829,7 +831,12 @@ function renderSingleAirbnbResCard(b, paidMap, canM, today) {
   const elapsedDays = Math.max(1, Math.ceil((new Date(today) - new Date(cin)) / 86400000));
   const dailyRate = b.per_day_rate || 0;
   const dynamicTotal = (isOpenEnded && dailyRate > 0) ? (elapsedDays * dailyRate) : (b.total_amount || 0);
-  const bal = dynamicTotal - pd;
+  const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+  const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+  let bal = dynamicTotal - pd;
+  if (isOnline && (isPaidStatus || pd > 0 || dynamicTotal === 0)) {
+    bal = 0;
+  }
 
   const isCheckoutToday = b.check_out === today;
   const isArrivalToday = b.check_in === today;
@@ -1109,8 +1116,12 @@ function renderAirbnbFollowupsHtml(allBookings, paidMap, canM, today) {
 
     const pd = paidMap[b.booking_id] || 0;
     const tot = b.total_amount || 0;
-    const bal = tot - pd;
     const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+    const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+    let bal = tot - pd;
+    if (isOnline && (isPaidStatus || pd > 0 || tot === 0)) {
+      bal = 0;
+    }
 
     // 1. Pending Verification (Top Priority — Direct Website & Staff Bookings)
     if (b.verification_status === 'pending') {
@@ -1148,7 +1159,7 @@ function renderAirbnbFollowupsHtml(allBookings, paidMap, canM, today) {
     }
 
     // 4. Balance Due
-    if (bal > 0.99 && (!isOnline || tot > 0)) {
+    if (bal > 0.99 && !isOnline) {
       balanceDue.push({
         type: 'due',
         title: `Collect ₹${Math.round(bal).toLocaleString('en-IN')} balance`,
@@ -1205,7 +1216,12 @@ function renderBookingCardsHtml(bookings, paidMap, canM, today) {
         const elapsedDays = Math.max(1, Math.ceil((new Date(today) - new Date(cin)) / 86400000));
         const dailyRate = b.per_day_rate || 0;
         const dynamicTotal = (isOpenEnded && dailyRate > 0) ? (elapsedDays * dailyRate) : (b.total_amount || 0);
-        const bal = dynamicTotal - pd;
+        const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+        const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+        let bal = dynamicTotal - pd;
+        if (isOnline && (isPaidStatus || pd > 0 || dynamicTotal === 0)) {
+          bal = 0;
+        }
 
         const isActive = b.check_in <= today && (isOpenEnded || b.check_out > today);
         const isCheckoutToday = !isOpenEnded && b.check_out === today;
@@ -1383,7 +1399,12 @@ function renderBookingTableHtml(bookings, paidMap, canM, today) {
               const elapsedDays = Math.max(1, Math.ceil((new Date(today) - new Date(cin)) / 86400000));
               const dailyRate = b.per_day_rate || 0;
               const dynamicTotal = (isOpenEnded && dailyRate > 0) ? (elapsedDays * dailyRate) : (b.total_amount || 0);
-              const bal = dynamicTotal - pd;
+              const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+              const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+              let bal = dynamicTotal - pd;
+              if (isOnline && (isPaidStatus || pd > 0 || dynamicTotal === 0)) {
+                bal = 0;
+              }
 
               const isActive = b.check_in <= today && (isOpenEnded || b.check_out > today);
               const isCheckoutToday = !isOpenEnded && b.check_out === today;
@@ -1534,8 +1555,12 @@ window.openBookingDrawer = async function(bookingId) {
     window._sbkState.cachedPaidMap[b.booking_id] = pd;
   }
   const tot = b.total_amount || 0;
-  const bal = tot - pd;
   const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
+  const isPaidStatus = String(b.payment_status || '').toLowerCase() === 'paid';
+  let bal = tot - pd;
+  if (isOnline && (isPaidStatus || pd > 0 || tot === 0)) {
+    bal = 0;
+  }
   const bSrc = (typeof window.getBookingSource === 'function') ? window.getBookingSource(b) : null;
   const canM = ['owner','admin','manager','moderator','developer'].includes(SESSION.role);
   const canD = ['developer','owner','admin'].includes(SESSION.role);

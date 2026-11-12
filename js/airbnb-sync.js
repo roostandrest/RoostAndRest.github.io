@@ -638,16 +638,19 @@
             phone: (missingPhone && r.phone) ? r.phone : matchedDb.phone,
             total_amount: r.you_earn > 0 ? r.you_earn : matchedDb.total_amount,
             per_day_rate: r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : (matchedDb.per_day_rate || 0),
+            payout_amount: r.you_earn > 0 ? r.you_earn : (matchedDb.payout_amount || 0),
             guests: r.guests || 1,
             booking_mode: 'Online-Airbnb',
             payment_status: 'Paid',
             airbnb_confirmation_code: r.confirmation_code || matchedDb.airbnb_confirmation_code,
             notes: 'CSV Auto-Enriched: Exact Net Payout'
           };
-          if (r.gross) updates.gross_amount = r.gross;
-          if (r.host_fee) updates.platform_fee = r.host_fee;
 
-          await sb.from('guest_register').update(updates).eq('booking_id', matchedDb.booking_id);
+          if (window.safeDbUpdate) {
+            await window.safeDbUpdate('guest_register', updates, 'booking_id', matchedDb.booking_id);
+          } else {
+            await sb.from('guest_register').update(updates).eq('booking_id', matchedDb.booking_id);
+          }
           Object.assign(matchedDb, updates);
 
           // Guarantee payment_history matches net payout
@@ -1014,17 +1017,22 @@
     if (existingOnline) {
       bookingId = existingOnline.booking_id;
       const finalName = (!isGenericName(r.guest_name)) ? r.guest_name : (existingOnline.guest_name || r.guest_name);
-      const { error } = await sb.from('guest_register').update({
+      const updatePayload = {
         guest_name: finalName,
         phone: r.phone || null,
         total_amount: r.you_earn,
         per_day_rate: r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : r.you_earn,
-        gross_amount: r.gross || r.amount,
+        payout_amount: r.you_earn,
         payment_status: 'Paid',
         booking_mode: 'Online-Airbnb',
         airbnb_confirmation_code: code,
         notes: `CSV Enriched: Details & Paid Status Updated`
-      }).eq('booking_id', bookingId);
+      };
+
+      const res = window.safeDbUpdate
+        ? await window.safeDbUpdate('guest_register', updatePayload, 'booking_id', bookingId)
+        : await sb.from('guest_register').update(updatePayload).eq('booking_id', bookingId);
+      const error = res?.error;
 
       if (error) {
         if (btn) { btn.disabled = false; btn.textContent = '➕ Add to CRM'; }
@@ -1033,7 +1041,7 @@
       }
     } else {
       bookingId = 'B' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
-      const { error } = await sb.from('guest_register').insert({
+      const insertPayload = {
         booking_id: bookingId,
         guest_name: r.guest_name,
         phone: r.phone,
@@ -1043,17 +1051,21 @@
         check_out: r.check_out,
         check_in_time: '14:00',
         check_out_time: '11:00',
-        checkout_confirmed: true,
         total_amount: r.you_earn,
         per_day_rate: r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : r.you_earn,
-        gross_amount: r.amount,
+        payout_amount: r.you_earn,
         booking_mode: 'Online-Airbnb',
         payment_status: 'Paid',
         verification_status: 'verified',
         airbnb_confirmation_code: r.confirmation_code,
         guests: r.guests || 1,
         notes: `Imported from CSV (${r.status})`
-      });
+      };
+
+      const res = window.safeDbInsert
+        ? await window.safeDbInsert('guest_register', insertPayload)
+        : await sb.from('guest_register').insert(insertPayload);
+      const error = res?.error;
 
       if (error) {
         if (btn) { btn.disabled = false; btn.textContent = '➕ Add to CRM'; }
@@ -1111,13 +1123,7 @@
     if (field === 'amount') {
       updates.total_amount = r.you_earn;
       updates.per_day_rate = r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : r.you_earn;
-      if (r.gross) updates.gross_amount = r.gross;
-      if (r.host_fee) {
-        updates.platform_fee = r.host_fee;
-        updates.airbnb_service_fee = r.host_fee;
-      }
-      if (r.tax_withheld) updates.airbnb_tax_withheld = r.tax_withheld;
-      updates.airbnb_net_payout = r.you_earn;
+      updates.payout_amount = r.you_earn;
       updates.payment_status = 'Paid';
       syncPay = true;
     }
@@ -1126,7 +1132,10 @@
       syncPay = true;
     }
 
-    const { error } = await sb.from('guest_register').update(updates).eq('booking_id', r.dbBk.booking_id);
+    const res = window.safeDbUpdate
+      ? await window.safeDbUpdate('guest_register', updates, 'booking_id', r.dbBk.booking_id)
+      : await sb.from('guest_register').update(updates).eq('booking_id', r.dbBk.booking_id);
+    const error = res?.error;
     if (error) {
       if (btn) {
         btn.disabled = false;
@@ -1208,17 +1217,14 @@
       const updates = {
         total_amount: r.you_earn,
         per_day_rate: r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : r.you_earn,
-        payment_status: 'Paid',
-        airbnb_net_payout: r.you_earn
+        payout_amount: r.you_earn,
+        payment_status: 'Paid'
       };
-      if (r.gross) updates.gross_amount = r.gross;
-      if (r.host_fee) {
-        updates.platform_fee = r.host_fee;
-        updates.airbnb_service_fee = r.host_fee;
-      }
-      if (r.tax_withheld) updates.airbnb_tax_withheld = r.tax_withheld;
 
-      const { error } = await sb.from('guest_register').update(updates).eq('booking_id', r.dbBk.booking_id);
+      const res = window.safeDbUpdate
+        ? await window.safeDbUpdate('guest_register', updates, 'booking_id', r.dbBk.booking_id)
+        : await sb.from('guest_register').update(updates).eq('booking_id', r.dbBk.booking_id);
+      const error = res?.error;
       if (error) {
         console.error('Reconciliation error for', r.confirmation_code, error);
         failed++;
@@ -1331,21 +1337,24 @@
       if (existingOnline) {
         bookingId = existingOnline.booking_id;
         const finalName = (!isGenericName(r.guest_name)) ? r.guest_name : (existingOnline.guest_name || r.guest_name);
-        const { error } = await sb.from('guest_register').update({
+        const updatePayload = {
           guest_name: finalName,
           phone: r.phone || null,
           total_amount: r.you_earn,
           per_day_rate: r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : r.you_earn,
-          gross_amount: r.gross || r.amount,
+          payout_amount: r.you_earn,
           payment_status: 'Paid',
           booking_mode: 'Online-Airbnb',
           airbnb_confirmation_code: r.confirmation_code,
           notes: `CSV Enriched: Details & Paid Status Updated`
-        }).eq('booking_id', bookingId);
-        opError = error;
+        };
+        const res = window.safeDbUpdate
+          ? await window.safeDbUpdate('guest_register', updatePayload, 'booking_id', bookingId)
+          : await sb.from('guest_register').update(updatePayload).eq('booking_id', bookingId);
+        opError = res?.error;
       } else {
         bookingId = 'B' + (Date.now() + i) + '_' + Math.random().toString(36).substring(2, 6);
-        const { error } = await sb.from('guest_register').insert({
+        const insertPayload = {
           booking_id: bookingId,
           guest_name: r.guest_name,
           phone: r.phone,
@@ -1355,18 +1364,20 @@
           check_out: r.check_out,
           check_in_time: '14:00',
           check_out_time: '11:00',
-          checkout_confirmed: true,
           total_amount: r.you_earn,
           per_day_rate: r.nights > 0 ? Math.round((r.you_earn / r.nights) * 100) / 100 : r.you_earn,
-          gross_amount: r.amount,
+          payout_amount: r.you_earn,
           booking_mode: 'Online-Airbnb',
           payment_status: 'Paid',
           verification_status: 'verified',
           airbnb_confirmation_code: r.confirmation_code,
           guests: r.guests || 1,
           notes: `Imported from CSV (${r.status})`
-        });
-        opError = error;
+        };
+        const res = window.safeDbInsert
+          ? await window.safeDbInsert('guest_register', insertPayload)
+          : await sb.from('guest_register').insert(insertPayload);
+        opError = res?.error;
       }
 
       if (!opError) {
