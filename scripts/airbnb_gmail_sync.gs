@@ -409,7 +409,8 @@ function parseAirbnbEmail(subject, textContent, emailDate, existingBooking) {
     for (const pat of nameMatchPatterns) {
       const m = cleanSearchText.match(pat) || subject.match(pat);
       if (m && m[1]) {
-        const cleanName = m[1].trim().replace(/\s+/g, ' ');
+        let cleanName = m[1].trim().replace(/\s+/g, ' ');
+        cleanName = cleanName.replace(/^(?:reservation|booking|confirmed|canceled|cancelled|inquiry|re:|fwd:|dear|hello|hi|guest|host|hosted by|accepted|eaed)\s+/i, '').trim();
         if (cleanName.length > 2 && !cleanName.toLowerCase().includes('airbnb') && !cleanName.toLowerCase().includes('reservation') && !cleanName.toLowerCase().includes('booking')) {
           guestName = cleanName;
           break;
@@ -657,3 +658,4 @@ function getOrCreateLabel(name) {
   }
   return label;
 }
+
