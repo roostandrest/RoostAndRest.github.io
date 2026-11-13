@@ -2894,6 +2894,7 @@ function findOverlappingBookings(bookings) {
   const grouped = {};
   (bookings || []).forEach(b => {
     if (!b.room_id || !b.check_in || !b.check_out) return;
+    if (b.is_cancelled === true || b.status === 'cancelled') return; // Skip cancelled bookings
     if (b.is_review_booking) return; // Skip ghost/review bookings
     if (!grouped[b.room_id]) grouped[b.room_id] = [];
     grouped[b.room_id].push(b);

@@ -208,7 +208,7 @@ function syncAirbnbReservations() {
     for (const b of needsEnrichment) {
       const code = b.airbnb_confirmation_code;
       try {
-        const threads = GmailApp.search(`from:airbnb.com ${code}`, 0, 1);
+        const threads = GmailApp.search(`in:anywhere ${code}`, 0, 1);
         if (threads && threads.length > 0) {
           const t = threads[0];
           const messages = t.getMessages();
@@ -238,7 +238,7 @@ function syncAirbnbReservations() {
     // ─────────────────────────────────────────────────────────────
     // STEP 2: GENERAL DISCOVERY OF NEW AIRBNB RESERVATIONS
     // ─────────────────────────────────────────────────────────────
-    const generalThreads = GmailApp.search('from:airbnb.com ("Reservation confirmed" OR "Booking confirmed" OR "confirmation code") -label:Airbnb-Synced', 0, 50);
+    const generalThreads = GmailApp.search('in:anywhere ("Reservation confirmed" OR "Booking confirmed" OR "confirmation code") -label:Airbnb-Synced', 0, 50);
     Logger.log(`Scanning ${generalThreads.length} unlabelled confirmation threads for new reservations.`);
 
     for (const thread of generalThreads) {

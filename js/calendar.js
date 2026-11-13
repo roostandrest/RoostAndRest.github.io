@@ -768,21 +768,22 @@ async function renderReports() {
           .replace(/^(Send|Message|Contact)\s+/i, '')
           .trim();
 
-        // If temporary channel placeholder like "🏨 Airbnb (HM...)"
+        // If temporary channel placeholder like "🏨 Airbnb (HM...)" or "Airbnb (HM...)"
         let isPlaceholder = false;
-        if (/^(🏨|🌐|🔵)\s*(Airbnb|Booking\.com)/i.test(cleanGuestName)) {
+        if (/^(?:🏨|🌐|🔵|\s)*(?:Airbnb|Booking\.com)/i.test(cleanGuestName)) {
           isPlaceholder = true;
           const codeMatch = cleanGuestName.match(/\(([A-Z0-9]+)\)/i) || (bk.airbnb_confirmation_code ? [null, bk.airbnb_confirmation_code] : null);
-          cleanGuestName = codeMatch ? codeMatch[1].slice(-4) : 'Airbnb';
+          const cCode = codeMatch ? codeMatch[1] : (bk.airbnb_confirmation_code || '');
+          cleanGuestName = cCode ? (cCode.startsWith('HM') ? cCode : `HM${cCode}`) : 'Airbnb';
         }
 
-        const guestInitial = isBlocked ? '🔒' : (isPlaceholder ? '🏨' : cleanGuestName.charAt(0).toUpperCase());
+        const guestInitial = isBlocked ? '🔒' : (isPlaceholder ? '🌐' : cleanGuestName.charAt(0).toUpperCase());
         const nameParts = cleanGuestName.split(/\s+/);
-        let firstName = isBlocked ? 'Blocked' : (nameParts[0] || 'Guest');
+        let firstName = isBlocked ? 'Blocked' : (isPlaceholder ? cleanGuestName : (nameParts[0] || 'Guest'));
         if (/^(Send|Message|Contact)$/i.test(firstName) && nameParts.length > 1) {
           firstName = nameParts[1];
         }
-        if (firstName.length > 10) firstName = firstName.substring(0, 10);
+        if (firstName.length > 14) firstName = firstName.substring(0, 14);
 
         const hasReview = isReviewedBooking(bk);
         const currentNight = calcNights(bk.check_in, ds);
