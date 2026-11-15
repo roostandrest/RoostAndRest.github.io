@@ -3036,9 +3036,20 @@ async function autoCheckout() {
 
 // ============ PHOTO VIEWER ============
 async function dlIdPhoto(path) {
-  const { data } = await sb.storage.from('id-proofs').createSignedUrl(path, 600);
-  if (!data?.signedUrl) { fsn.error('Error', '⚠️ Photo load failed'); return; }
-  showPhotoViewer(data.signedUrl, path);
+  if (!path) return;
+  if (path.startsWith('data:image') || path.startsWith('http://') || path.startsWith('https://')) {
+    showPhotoViewer(path, 'ID Photo');
+    return;
+  }
+  try {
+    const { data } = await sb.storage.from('id-proofs').createSignedUrl(path, 600);
+    if (data?.signedUrl) {
+      showPhotoViewer(data.signedUrl, path);
+      return;
+    }
+  } catch(e) {}
+  if (window.fsn?.error) fsn.error('Error', '⚠️ Photo load failed');
+  else alert('⚠️ Photo load failed');
 }
 
 function showPhotoViewer(url, path) {

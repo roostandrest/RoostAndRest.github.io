@@ -2127,9 +2127,16 @@ window.openGuestStatementModal = openGuestStatementModal;
 
 // ============ ID BUTTON BUILDER ============
 function buildIdButtons(b) {
-  const fp = parseIdPathArray(b.id_proof_front_paths).filter(Boolean);
-  const bp = parseIdPathArray(b.id_proof_back_paths).filter(Boolean);
-  const ap = [...new Set((b.id_proof_photo_paths || b.id_proof_photo_path || '').split(',').filter(Boolean))];
+  let idMeta = {};
+  if (b.notes && typeof b.notes === 'string' && b.notes.includes('[ID_PROOF:')) {
+    try {
+      const match = b.notes.match(/\[ID_PROOF:([\s\S]*?)\]/);
+      if (match) idMeta = JSON.parse(match[1]);
+    } catch(e) {}
+  }
+  const fp = parseIdPathArray(b.id_proof_front_paths || idMeta.frontPaths).filter(Boolean);
+  const bp = parseIdPathArray(b.id_proof_back_paths || idMeta.backPaths).filter(Boolean);
+  const ap = [...new Set((b.id_proof_photo_paths || b.id_proof_photo_path || idMeta.allPaths || idMeta.firstPath || '').split(',').filter(Boolean))];
   const seen = new Set();
   const allPhotos = [...fp, ...bp, ...ap].filter(p => { if (seen.has(p)) return false; seen.add(p); return true; });
 
@@ -2161,18 +2168,44 @@ window.openBookingIdUploadModal = async function(bkId) {
   if (oldModal) oldModal.remove();
 
   try {
-    const { data: b, error } = await sb.from('guest_register')
-      .select('booking_id, guest_name, phone, room_id, check_in, check_out, id_proof_type, id_proof_no, id_proof_front_paths, id_proof_back_paths, id_proof_photo_paths, rooms(nickname, unit_no)')
-      .eq('booking_id', bkId).single();
+    let b = null;
+    let res = await sb.from('guest_register').select('*').eq('booking_id', bkId).limit(1);
+    if (res.data && res.data.length) {
+      b = res.data[0];
+    } else {
+      res = await sb.from('guest_register').select('*').eq('id', bkId).limit(1);
+      if (res.data && res.data.length) b = res.data[0];
+    }
 
-    if (error || !b) {
-      alert('❌ Booking not found!');
+    if (!b) {
+      if (window.fsn?.error) fsn.error('Error', 'Booking not found');
+      else alert('❌ Booking not found!');
       return;
     }
 
-    const fp = parseIdPathArray(b.id_proof_front_paths).filter(Boolean);
-    const bp = parseIdPathArray(b.id_proof_back_paths).filter(Boolean);
-    const ap = [...new Set((b.id_proof_photo_paths || '').split(',').filter(Boolean))];
+    let roomLabel = b.room_id || '';
+    try {
+      const { data: rm } = await sb.from('rooms').select('nickname, unit_no').eq('room_id', b.room_id).single();
+      if (rm) roomLabel = (rm.nickname || '') + (rm.unit_no ? ` (${rm.unit_no})` : '');
+    } catch(e) {}
+
+    let idMeta = {};
+    if (b.notes && typeof b.notes === 'string' && b.notes.includes('[ID_PROOF:')) {
+      try {
+        const match = b.notes.match(/\[ID_PROOF:([\s\S]*?)\]/);
+        if (match) idMeta = JSON.parse(match[1]);
+      } catch(e) {}
+    }
+
+    const currentIdType = b.id_proof_type || idMeta.type || 'Aadhaar Card';
+    const currentIdNo = b.id_proof_no || idMeta.no || '';
+    const fpStr = b.id_proof_front_paths || idMeta.frontPaths || '';
+    const bpStr = b.id_proof_back_paths || idMeta.backPaths || '';
+    const apStr = b.id_proof_photo_paths || idMeta.allPaths || '';
+
+    const fp = parseIdPathArray(fpStr).filter(Boolean);
+    const bp = parseIdPathArray(bpStr).filter(Boolean);
+    const ap = [...new Set((apStr || '').split(',').filter(Boolean))];
     const seen = new Set();
     const allPhotos = [...fp, ...bp, ...ap].filter(p => { if (seen.has(p)) return false; seen.add(p); return true; });
 
@@ -2191,7 +2224,7 @@ window.openBookingIdUploadModal = async function(bkId) {
               🪪 Upload / Manage Guest ID
             </h3>
             <div style="font-size:12px;color:#64748B;margin-top:2px;">
-              Guest: <strong style="color:#0F172A;">${b.guest_name || 'Guest'}</strong> · Room: <strong>${b.rooms?.nickname || b.rooms?.unit_no || b.room_id}</strong>
+              Guest: <strong style="color:#0F172A;">${b.guest_name || 'Guest'}</strong> · Room: <strong>${roomLabel}</strong>
             </div>
           </div>
           <button onclick="document.getElementById('bookingIdUploadOverlay')?.remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#94A3B8;line-height:1;">✕</button>
@@ -2248,11 +2281,11 @@ window.openBookingIdUploadModal = async function(bkId) {
             <div>
               <label style="font-weight:600;font-size:11.5px;color:#334155;display:block;margin-bottom:3px;">ID Type *</label>
               <select id="bIdType" style="width:100%;padding:7px;border:1px solid #CBD5E1;border-radius:6px;font-size:12px;box-sizing:border-box;">
-                <option value="Aadhaar Card" ${b.id_proof_type==='Aadhaar Card'?'selected':''}>Aadhaar Card</option>
-                <option value="Driving License" ${b.id_proof_type==='Driving License'?'selected':''}>Driving License</option>
-                <option value="Passport" ${b.id_proof_type==='Passport'?'selected':''}>Passport</option>
-                <option value="PAN Card" ${b.id_proof_type==='PAN Card'?'selected':''}>PAN Card</option>
-                <option value="Voter ID" ${b.id_proof_type==='Voter ID'?'selected':''}>Voter ID</option>
+                <option value="Aadhaar Card" ${currentIdType==='Aadhaar Card'?'selected':''}>Aadhaar Card</option>
+                <option value="Driving License" ${currentIdType==='Driving License'?'selected':''}>Driving License</option>
+                <option value="Passport" ${currentIdType==='Passport'?'selected':''}>Passport</option>
+                <option value="PAN Card" ${currentIdType==='PAN Card'?'selected':''}>PAN Card</option>
+                <option value="Voter ID" ${currentIdType==='Voter ID'?'selected':''}>Voter ID</option>
                 <option value="Other Govt ID">Other Govt ID</option>
               </select>
             </div>
@@ -2260,7 +2293,7 @@ window.openBookingIdUploadModal = async function(bkId) {
 
           <div style="margin-bottom:12px;">
             <label style="font-weight:600;font-size:11.5px;color:#334155;display:block;margin-bottom:3px;">ID Number / Last 4 Digits (Optional)</label>
-            <input id="bIdNo" type="text" value="${(b.id_proof_no || '').replace(/"/g, '&quot;')}" placeholder="e.g. 1234 5678 9012 or last 4 digits" style="width:100%;padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:12.5px;box-sizing:border-box;">
+            <input id="bIdNo" type="text" value="${(currentIdNo || '').replace(/"/g, '&quot;')}" placeholder="e.g. 1234 5678 9012 or last 4 digits" style="width:100%;padding:7px 10px;border:1px solid #CBD5E1;border-radius:6px;font-size:12.5px;box-sizing:border-box;">
           </div>
 
           <!-- FRONT SIDE -->
@@ -2344,13 +2377,25 @@ window.saveBookingIdDirect = async function(bkId) {
   if (btn) { btn.disabled = true; btn.innerText = '⏳ Compressing & Uploading...'; }
 
   try {
-    const { data: b } = await sb.from('guest_register')
-      .select('id_proof_front_paths, id_proof_back_paths, id_proof_photo_paths')
-      .eq('booking_id', bkId).single();
+    let b = null;
+    let res = await sb.from('guest_register').select('*').eq('booking_id', bkId).limit(1);
+    if (res.data && res.data.length) b = res.data[0];
+    else {
+      res = await sb.from('guest_register').select('*').eq('id', bkId).limit(1);
+      if (res.data && res.data.length) b = res.data[0];
+    }
 
-    const fArr = parseIdPathArray(b?.id_proof_front_paths);
-    const bArr = parseIdPathArray(b?.id_proof_back_paths);
-    const aArr = [...new Set((b?.id_proof_photo_paths || '').split(',').filter(Boolean))];
+    let idMeta = {};
+    if (b && b.notes && typeof b.notes === 'string' && b.notes.includes('[ID_PROOF:')) {
+      try {
+        const match = b.notes.match(/\[ID_PROOF:([\s\S]*?)\]/);
+        if (match) idMeta = JSON.parse(match[1]);
+      } catch(e) {}
+    }
+
+    const fArr = parseIdPathArray(b?.id_proof_front_paths || idMeta.frontPaths);
+    const bArr = parseIdPathArray(b?.id_proof_back_paths || idMeta.backPaths);
+    const aArr = [...new Set((b?.id_proof_photo_paths || idMeta.allPaths || '').split(',').filter(Boolean))];
 
     // Upload front photo
     if (frontFile) {
@@ -2359,8 +2404,9 @@ window.saveBookingIdDirect = async function(bkId) {
       const upRes = await robustUpload(pFront, cFront, 3);
       if (!upRes.success) throw new Error('Front upload failed: ' + (upRes.error || 'Network error'));
       while (fArr.length < guestIdx) fArr.push(null);
-      fArr[guestIdx - 1] = pFront;
-      aArr.push(pFront);
+      const actualPath = upRes.path || pFront;
+      fArr[guestIdx - 1] = actualPath;
+      aArr.push(actualPath);
     }
 
     // Upload back photo if present
@@ -2370,23 +2416,40 @@ window.saveBookingIdDirect = async function(bkId) {
       const upRes = await robustUpload(pBack, cBack, 3);
       if (!upRes.success) throw new Error('Back upload failed: ' + (upRes.error || 'Network error'));
       while (bArr.length < guestIdx) bArr.push(null);
-      bArr[guestIdx - 1] = pBack;
-      aArr.push(pBack);
+      const actualPath = upRes.path || pBack;
+      bArr[guestIdx - 1] = actualPath;
+      aArr.push(actualPath);
     }
 
     const uniqueAll = [...new Set(aArr.filter(Boolean))];
+    const newIdMeta = {
+      type: idType,
+      no: idNo,
+      frontPaths: stringifyIdPathArray(fArr),
+      backPaths: stringifyIdPathArray(bArr),
+      allPaths: uniqueAll.join(',') || null,
+      firstPath: uniqueAll[0] || null
+    };
+
+    let cleanNotes = (b?.notes || '').replace(/\s*\[ID_PROOF:[\s\S]*?\]/g, '').trim();
+    cleanNotes = (cleanNotes ? cleanNotes + '\n' : '') + `[ID_PROOF:${JSON.stringify(newIdMeta)}]`;
+
     const updateObj = {
       id_proof_front_paths: stringifyIdPathArray(fArr),
       id_proof_back_paths: stringifyIdPathArray(bArr),
       id_proof_photo_paths: uniqueAll.join(',') || null,
       id_proof_photo_path: uniqueAll[0] || null,
-      verification_status: 'verified'
+      id_proof_type: idType,
+      id_proof_no: idNo,
+      verification_status: 'verified',
+      notes: cleanNotes
     };
-    if (idType) updateObj.id_proof_type = idType;
-    if (idNo) updateObj.id_proof_no = idNo;
 
-    const { error: upErr } = await sb.from('guest_register').update(updateObj).eq('booking_id', bkId);
-    if (upErr) throw upErr;
+    if (window.safeDbUpdate) {
+      await window.safeDbUpdate('guest_register', updateObj, 'booking_id', bkId);
+    } else {
+      await sb.from('guest_register').update(updateObj).eq('booking_id', bkId);
+    }
 
     document.getElementById('bookingIdUploadOverlay')?.remove();
     if (window.fsn?.success) fsn.success('Uploaded', '✅ ID proof uploaded and attached!');
@@ -2405,21 +2468,56 @@ window.saveBookingIdDirect = async function(bkId) {
 window.deleteBookingIdPhotoDirect = async function(bkId, path) {
   if (!confirm('🗑️ Delete this ID photo permanently?')) return;
   try {
-    await sb.storage.from('id-proofs').remove([path]);
-    const { data: b } = await sb.from('guest_register')
-      .select('id_proof_front_paths, id_proof_back_paths, id_proof_photo_paths')
-      .eq('booking_id', bkId).single();
+    if (!path.startsWith('data:image')) {
+      try { await sb.storage.from('id-proofs').remove([path]); } catch(e) {}
+    }
+    let b = null;
+    let res = await sb.from('guest_register').select('*').eq('booking_id', bkId).limit(1);
+    if (res.data && res.data.length) b = res.data[0];
+    else {
+      res = await sb.from('guest_register').select('*').eq('id', bkId).limit(1);
+      if (res.data && res.data.length) b = res.data[0];
+    }
 
     if (b) {
-      const fArr = parseIdPathArray(b.id_proof_front_paths).map(p => p === path ? null : p);
-      const bArr = parseIdPathArray(b.id_proof_back_paths).map(p => p === path ? null : p);
-      const aArr = (b.id_proof_photo_paths || '').split(',').filter(p => p && p !== path);
-      await sb.from('guest_register').update({
+      let idMeta = {};
+      if (b.notes && typeof b.notes === 'string' && b.notes.includes('[ID_PROOF:')) {
+        try {
+          const match = b.notes.match(/\[ID_PROOF:([\s\S]*?)\]/);
+          if (match) idMeta = JSON.parse(match[1]);
+        } catch(e) {}
+      }
+
+      const fArr = parseIdPathArray(b.id_proof_front_paths || idMeta.frontPaths).map(p => p === path ? null : p);
+      const bArr = parseIdPathArray(b.id_proof_back_paths || idMeta.backPaths).map(p => p === path ? null : p);
+      const aArr = (b.id_proof_photo_paths || idMeta.allPaths || '').split(',').filter(p => p && p !== path);
+
+      const uniqueAll = [...new Set(aArr.filter(Boolean))];
+      const newIdMeta = {
+        type: b.id_proof_type || idMeta.type || null,
+        no: b.id_proof_no || idMeta.no || null,
+        frontPaths: stringifyIdPathArray(fArr),
+        backPaths: stringifyIdPathArray(bArr),
+        allPaths: uniqueAll.join(',') || null,
+        firstPath: uniqueAll[0] || null
+      };
+
+      let cleanNotes = (b.notes || '').replace(/\s*\[ID_PROOF:[\s\S]*?\]/g, '').trim();
+      cleanNotes = (cleanNotes ? cleanNotes + '\n' : '') + `[ID_PROOF:${JSON.stringify(newIdMeta)}]`;
+
+      const updateObj = {
         id_proof_front_paths: stringifyIdPathArray(fArr),
         id_proof_back_paths: stringifyIdPathArray(bArr),
-        id_proof_photo_paths: aArr.join(',') || null,
-        id_proof_photo_path: aArr[0] || null
-      }).eq('booking_id', bkId);
+        id_proof_photo_paths: uniqueAll.join(',') || null,
+        id_proof_photo_path: uniqueAll[0] || null,
+        notes: cleanNotes
+      };
+
+      if (window.safeDbUpdate) {
+        await window.safeDbUpdate('guest_register', updateObj, 'booking_id', bkId);
+      } else {
+        await sb.from('guest_register').update(updateObj).eq('booking_id', bkId);
+      }
     }
 
     if (window.fsn?.success) fsn.success('Deleted', '🗑️ Photo removed');
@@ -4053,14 +4151,29 @@ async function robustUpload(path, blob, maxRetries = 3) {
       });
       if (!error) return { success: true, path };
       lastError = error;
-      // Wait before retry (exponential backoff)
+      // If bucket does not exist, do not spin retries
+      if (error.message?.includes('Bucket not found') || error.error?.includes('Bucket not found') || error.statusCode === '404') {
+        break;
+      }
       if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 800));
     } catch (e) {
       lastError = e;
       if (attempt < maxRetries) await new Promise(r => setTimeout(r, attempt * 800));
     }
   }
-  return { success: false, error: lastError?.message || 'Upload failed after 3 attempts' };
+
+  // Resilient fallback: Convert blob to base64 Data URL so ID is still saved and viewable even if storage bucket is missing!
+  try {
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+    return { success: true, path: dataUrl, isDataUrl: true };
+  } catch(e) {
+    return { success: false, error: lastError?.message || 'Upload failed' };
+  }
 }
 
 async function smartCompress(file, targetSizeKB = 300) {
