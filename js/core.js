@@ -274,10 +274,14 @@ window.isDeveloperUser = function(userId, email, displayName, role) {
   if (r === 'developer') return true;
   const uid = (userId || window.SESSION?.userId || '').toLowerCase();
   const em = (email || window.SESSION?.email || '').toLowerCase();
+  const name = (displayName || window.SESSION?.displayName || '').toLowerCase();
   if (uid === 'c6343844-a307-4668-9b16-1947a0c0f8fa' || uid === 'e3717cbd-da9a-495e-a940-2995021e8ca2') return true;
-  if (em === 'tech@roostandrest.com' || em === 'admin@roostandrest.github.io') return true;
+  if (em === 'praveensinghaws@gmail.com' || em.includes('praveensingh') || em === 'roostandrestlucknow@gmail.com' || em === 'tech@roostandrest.com' || em === 'admin@roostandrest.github.io') return true;
+  if (name.includes('praveen')) return true;
   return false;
 };
+
+window.isPraveenUser = window.isDeveloperUser;
 
 window.isCurrentSessionDev = function() {
   if (!window.SESSION) return false;
@@ -932,13 +936,39 @@ window.UserActivityTracker = {
 // ============ AUTH ============
 async function loadProfile(userId) {
   const { data: { user } } = await sb.auth.getUser();
-  const userEmail = user?.email || '';
+  const userEmail = (user?.email || '').toLowerCase().trim();
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || userEmail.split('@')[0] || 'User';
   const userAvatar = user?.user_metadata?.avatar_url || '';
 
-  const { data: p, error } = await sb.from("profiles")
+  const isMasterAdmin = (userEmail === 'praveensinghaws@gmail.com' || userEmail.includes('praveensingh') || userEmail === 'roostandrestlucknow@gmail.com');
+
+  let { data: p, error } = await sb.from("profiles")
     .select("role, emp_id, investor_id, display_name, is_approved")
     .eq("user_id", userId).single();
+
+  // 👑 MASTER DEVELOPER AUTO-APPROVAL: Master admin is always auto-approved as developer
+  if (isMasterAdmin) {
+    if (!p) {
+      try {
+        await sb.from('profiles').upsert({
+          user_id: userId,
+          role: 'developer',
+          display_name: userName || 'Praveen Singh (Developer)',
+          auth_provider: 'google',
+          avatar_url: userAvatar,
+          is_approved: true
+        });
+      } catch (e) {}
+      p = { role: 'developer', display_name: userName || 'Praveen Singh (Developer)', is_approved: true };
+      error = null;
+    } else if (p.is_approved !== true || (p.role !== 'developer' && p.role !== 'admin' && p.role !== 'owner')) {
+      try {
+        await sb.from('profiles').update({ is_approved: true, role: 'developer' }).eq('user_id', userId);
+      } catch (e) {}
+      p.is_approved = true;
+      p.role = 'developer';
+    }
+  }
 
   if (error || !p) {
     // Check if pending user (Google login first time)
@@ -1107,9 +1137,32 @@ function renderAccessSuspendedScreen(name, email) {
 }
 
 async function handleNewGoogleUser(user) {
-  const email = user.email || '';
+  const email = (user.email || '').toLowerCase().trim();
   const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || 'New User';
   const avatar = user.user_metadata?.avatar_url || '';
+
+  const isMasterAdmin = (email === 'praveensinghaws@gmail.com' || email.includes('praveensingh') || email === 'roostandrestlucknow@gmail.com');
+  if (isMasterAdmin) {
+    try {
+      await sb.from('profiles').upsert({
+        user_id: user.id,
+        role: 'developer',
+        display_name: name || 'Praveen Singh (Developer)',
+        auth_provider: 'google',
+        avatar_url: avatar,
+        is_approved: true
+      });
+      await sb.from('pending_users').upsert({
+        user_id: user.id,
+        email: email,
+        full_name: name,
+        auth_provider: 'google',
+        status: 'Approved'
+      });
+    } catch(e) {}
+    await loadProfile(user.id);
+    return;
+  }
 
   try {
     // Check if already in pending
