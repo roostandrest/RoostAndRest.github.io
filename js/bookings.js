@@ -4536,12 +4536,15 @@ async function saveBooking() {
         overflow = adv - currRemaining;
       }
 
+      const userAuditName = (window.getCurrentUserAuditName && window.getCurrentUserAuditName()) || SESSION?.displayName || SESSION?.role || 'Admin';
+
       // Insert current booking payment (capped at remaining)
       if (payForCurrent > 0) {
         await sb.from('payment_history').insert({
           booking_id: bkId, amount: payForCurrent, payment_mode: advMode || null,
           payment_date: advDate, notes: isOnline ? 'Airbnb Payout' : 'Advance',
           received_by: receivedBy, handover_status: handoverStatus,
+          recorded_by: userAuditName,
           created_by: SESSION.userId,
           paid_at: new Date().toISOString(),
           ...approvalMeta()
@@ -4572,6 +4575,7 @@ async function saveBooking() {
             payment_date: advDate,
             received_by: receivedBy, handover_status: handoverStatus,
             notes: `Auto-adjusted from booking ${bkId}`,
+            recorded_by: userAuditName,
             created_by: SESSION.userId,
             ...approvalMeta()
           });
@@ -4589,6 +4593,7 @@ async function saveBooking() {
           booking_id: bkId, amount: remainingOverflow, payment_mode: advMode || null,
           payment_date: advDate, notes: 'Advance / extra payment',
           received_by: receivedBy, handover_status: handoverStatus,
+          recorded_by: userAuditName,
           created_by: SESSION.userId,
           ...approvalMeta()
         });
@@ -6467,6 +6472,8 @@ async function savePaymentModal(bkId) {
     overflow = amt - currRemaining;
   }
 
+  const userAuditName = (window.getCurrentUserAuditName && window.getCurrentUserAuditName()) || SESSION?.displayName || SESSION?.role || 'Admin';
+
   // Step 1: Insert current booking payment (only up to remaining)
   if (paymentForCurrent > 0) {
     const payPayload = {
@@ -6477,6 +6484,7 @@ async function savePaymentModal(bkId) {
       payment_date: payDate,
       paid_at: new Date().toISOString(),
       notes: userNotes,
+      recorded_by: userAuditName,
       created_by: SESSION.userId,
       ...approvalMeta()
     };
@@ -6544,6 +6552,7 @@ async function savePaymentModal(bkId) {
         paid_at: new Date().toISOString(),
         received_by: receivedBy || "Anwar", handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
         notes: (userNotes ? userNotes + ' | ' : '') + `Auto-adjusted from booking ${bkId}`,
+        recorded_by: userAuditName,
         created_by: SESSION.userId,
         ...approvalMeta()
       };
@@ -6570,6 +6579,7 @@ async function savePaymentModal(bkId) {
       paid_at: new Date().toISOString(),
       notes: (userNotes ? userNotes + ' | ' : '') + 'Advance / extra payment',
       received_by: receivedBy || "Anwar", handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+      recorded_by: userAuditName,
       created_by: SESSION.userId,
       ...approvalMeta()
     };

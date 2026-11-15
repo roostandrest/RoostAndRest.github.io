@@ -134,10 +134,10 @@ body.horilla-dark,
 html { -webkit-text-size-adjust: 100%; }
 
 body {
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif !important;
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
+  font-size: 13.5px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -279,11 +279,6 @@ html, body, #app {
   letter-spacing: 0.8px;
   text-transform: uppercase;
   margin-top: 1px;
-}
-  text-transform: uppercase;
-  width: fit-content;
-  display: inline-block;
-  line-height: 1.3;
 }
 
 .sidebar-close-btn {
@@ -1380,8 +1375,7 @@ html, body, #app {
   .topbar-wa-status-btn,
   .topbar-property-selector,
   .topbar-help-btn,
-  .topbar-icon-btn[aria-label="Help & Guide"],
-  .topbar-avatar-pill {
+  .topbar-icon-btn[aria-label="Help & Guide"] {
     display: none !important;
   }
 
@@ -1459,6 +1453,33 @@ html, body, #app {
   }
   #topbarNotifBtn i {
     font-size: 16px !important;
+  }
+
+  .topbar-avatar-pill {
+    display: inline-flex !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    flex-shrink: 0 !important;
+  }
+  .topbar-avatar-pill .user-avatar-mini {
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    background: var(--primary) !important;
+    color: #FFFFFF !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+  }
+  .topbar-avatar-pill div:not(.user-avatar-mini),
+  .topbar-avatar-pill .avatar-caret {
+    display: none !important;
   }
 
   .topbar-qr-pill-btn {
@@ -8971,24 +8992,24 @@ textarea:focus {
    📱 ROOST & REST NATIVE PWA MENU SCREEN (iOS / AIRBNB LUXE)
    ═══════════════════════════════════════════════════════════ */
 .roost-menu-wrap {
-  max-width: 580px;
+  max-width: 520px;
   margin: 0 auto;
-  padding: 12px 14px 100px;
+  padding: 10px 12px 90px;
 }
 
 /* User Profile Header Pill */
 .roost-profile-card {
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
-  padding: 14px 16px !important;
+  gap: 12px !important;
+  padding: 12px 14px !important;
   background: #ffffff !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 18px !important;
-  margin-bottom: 16px !important;
+  border: 1px solid var(--border, #E2E8F0) !important;
+  border-radius: 14px !important;
+  margin-bottom: 12px !important;
   cursor: pointer !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04) !important;
+  transition: all 0.15s ease !important;
 }
 
 .roost-profile-card:hover {
@@ -8999,21 +9020,22 @@ textarea:focus {
 
 .roost-profile-card:active {
   transform: scale(0.99);
+  background: #F8FAFC !important;
 }
 
 .roost-avatar-circle {
-  width: 46px !important;
-  height: 46px !important;
-  min-width: 46px !important;
+  width: 42px !important;
+  height: 42px !important;
+  min-width: 42px !important;
   border-radius: 50% !important;
-  background: var(--primary) !important;
+  background: linear-gradient(135deg, var(--primary) 0%, #78350F 100%) !important;
   color: #ffffff !important;
-  font-size: 19px !important;
+  font-size: 16px !important;
   font-weight: 800 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  box-shadow: 0 3px 10px var(--primary-glow) !important;
+  box-shadow: 0 2px 6px rgba(180, 83, 9, 0.25) !important;
   flex-shrink: 0 !important;
 }
 
@@ -9022,26 +9044,27 @@ textarea:focus {
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 1px !important;
 }
 
 .roost-profile-name {
-  font-size: 16px !important;
+  font-size: 14.5px !important;
   font-weight: 800 !important;
   color: #0F172A !important;
-  line-height: 1.25 !important;
+  line-height: 1.2 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
 .roost-profile-role {
-  font-size: 12px !important;
+  font-size: 11px !important;
   color: #64748B !important;
   font-weight: 600 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 6px !important;
+  gap: 4px !important;
+  margin-top: 2px !important;
   line-height: 1.2 !important;
 }
 
@@ -9052,8 +9075,8 @@ textarea:focus {
 }
 
 .roost-chevron {
-  font-size: 18px !important;
-  color: #94A3B8 !important;
+  font-size: 14px !important;
+  color: #CBD5E1 !important;
   flex-shrink: 0 !important;
   margin-left: auto !important;
 }
@@ -9062,24 +9085,24 @@ textarea:focus {
 .roost-menu-search-bar {
   display: flex !important;
   align-items: center !important;
-  gap: 10px !important;
-  padding: 10px 14px !important;
+  gap: 8px !important;
+  padding: 8px 12px !important;
   background: #FFFFFF !important;
-  border: 1.5px solid #E2E8F0 !important;
-  border-radius: 14px !important;
-  margin-bottom: 20px !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
-  transition: all 0.2s ease !important;
+  border: 1px solid var(--border, #E2E8F0) !important;
+  border-radius: 12px !important;
+  margin-bottom: 16px !important;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.02) !important;
+  transition: all 0.15s ease !important;
 }
 
 .roost-menu-search-bar:focus-within {
   border-color: var(--primary) !important;
-  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.15) !important;
 }
 
 .roost-search-icon {
-  font-size: 18px !important;
-  color: #64748B !important;
+  font-size: 16px !important;
+  color: #94A3B8 !important;
   flex-shrink: 0 !important;
 }
 
@@ -9090,8 +9113,8 @@ textarea:focus {
   background: transparent !important;
   outline: none !important;
   box-shadow: none !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
   color: #0F172A !important;
   padding: 0 !important;
   height: auto !important;
@@ -9103,11 +9126,11 @@ textarea:focus {
 }
 
 .roost-kbd-pill {
-  padding: 2.5px 8px !important;
+  padding: 2px 6px !important;
   background: #F1F5F9 !important;
   border: 1px solid #CBD5E1 !important;
   border-radius: 6px !important;
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 700 !important;
   color: #475569 !important;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", monospace !important;
@@ -9118,36 +9141,36 @@ textarea:focus {
 
 /* Section Containers */
 .roost-menu-section {
-  margin-bottom: 22px !important;
+  margin-bottom: 16px !important;
 }
 
 .roost-section-header {
-  font-size: 11px !important;
+  font-size: 10px !important;
   font-weight: 800 !important;
   letter-spacing: 0.8px !important;
   color: #64748B !important;
   text-transform: uppercase !important;
-  margin-bottom: 8px !important;
+  margin-bottom: 6px !important;
   padding-left: 6px !important;
 }
 
 .roost-menu-group {
   background: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 16px !important;
+  border: 1px solid var(--border, #E2E8F0) !important;
+  border-radius: 14px !important;
   overflow: hidden !important;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03) !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03) !important;
 }
 
 /* Individual Interactive Menu Row */
 .roost-menu-row {
   display: flex !important;
   align-items: center !important;
-  gap: 14px !important;
-  padding: 13px 14px !important;
+  gap: 12px !important;
+  padding: 11px 14px !important;
   border-bottom: 1px solid #F1F5F9 !important;
   cursor: pointer !important;
-  transition: all 0.15s ease !important;
+  transition: background 0.1s ease !important;
   text-decoration: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
@@ -9161,19 +9184,19 @@ textarea:focus {
 }
 
 .roost-menu-row:active {
-  background: #F1F5F9 !important;
+  background: #F8FAFC !important;
   transform: scale(0.995);
 }
 
 .roost-icon-box {
-  width: 38px !important;
-  height: 38px !important;
-  min-width: 38px !important;
-  border-radius: 10px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  border-radius: 8px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 18px !important;
+  font-size: 1.1rem !important;
   flex-shrink: 0 !important;
   transition: transform 0.15s ease !important;
 }
@@ -9187,31 +9210,31 @@ textarea:focus {
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 2px !important;
+  gap: 1px !important;
 }
 
 .roost-row-title {
-  font-size: 14px !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
   color: #0F172A !important;
-  line-height: 1.25 !important;
+  line-height: 1.2 !important;
   display: flex !important;
   align-items: center !important;
   gap: 6px !important;
 }
 
 .roost-row-sub {
-  font-size: 11.5px !important;
+  font-size: 10.5px !important;
   color: #64748B !important;
   font-weight: 500 !important;
-  line-height: 1.25 !important;
+  line-height: 1.3 !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
 .roost-menu-row .roost-chevron {
-  font-size: 17px !important;
+  font-size: 14px !important;
   color: #CBD5E1 !important;
   flex-shrink: 0 !important;
   margin-left: auto !important;

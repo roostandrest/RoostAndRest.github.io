@@ -2340,6 +2340,9 @@ function renderShell(content, activePage = 'bookings') {
       console.warn('Preload user names warn:', e);
     }
   };
+  if (window.sb) {
+    try { window.preloadUserNames(); } catch(_) {}
+  }
 
   // Global search input handling — manual trigger on Enter or 🔍 click
   window.triggerGlobalSearch = function(customQuery) {

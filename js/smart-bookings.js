@@ -1539,6 +1539,10 @@ window.openBookingDrawer = async function(bookingId) {
   window._currentDrawerBookingId = b.booking_id;
   if (window._sbkState) window._sbkState.drawerBookingId = b.booking_id;
 
+  if ((!window._userNameCache || Object.keys(window._userNameCache).length === 0) && typeof window.preloadUserNames === 'function') {
+    try { await window.preloadUserNames(); } catch(_) {}
+  }
+
   // Fetch individual payments for this booking
   const { data: payments } = await sb.from('payment_history')
     .select('*')
@@ -1823,7 +1827,13 @@ window.openBookingDrawer = async function(bookingId) {
                 <div style="display:flex;flex-direction:column;gap:8px;">
                 ${payments.map(p => {
                   const timeStr = window.formatDateTimeStamp ? window.formatDateTimeStamp(p.paid_at || p.created_at || p.payment_date, { withSeconds: true }) : (p.payment_date || '');
-                  const loggedBy = window._userNameCache?.[p.created_by] || (p.created_by ? 'Staff' : 'System');
+                  const loggedBy = p.recorded_by 
+                    || window._userNameCache?.[p.created_by] 
+                    || (p.created_by && window._userNameCache?.[p.created_by])
+                    || b.booked_by 
+                    || window._userNameCache?.[b.created_by] 
+                    || (b.created_by ? 'Admin' : '') 
+                    || 'Admin';
                   const isOD = (p.received_by || '').includes('OD') || (p.received_by || '').includes('Roost & Rest');
                   return `
                     <div style="background:#F8FAFC;border:1px solid var(--border-light);border-radius:10px;padding:10px 12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
@@ -1839,8 +1849,8 @@ window.openBookingDrawer = async function(bookingId) {
                           <span style="display:inline-flex;align-items:center;gap:3px;" title="Payment Creation / Audit Timestamp">
                             🕒 <strong>${timeStr}</strong>
                           </span>
-                          <span style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;padding:1px 6px;border-radius:4px;font-weight:600;display:inline-flex;align-items:center;gap:3px;" title="User who entered this payment">
-                            ✍️ Logged by: <strong>${escapeHtml(loggedBy)}</strong>
+                          <span style="background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;padding:2px 8px;border-radius:6px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:11px;" title="User who entered this payment">
+                            👤 Logged by: <strong>${escapeHtml(loggedBy)}</strong>
                           </span>
                           ${p.verification_status === 'pending' ? '<span class="badge yellow" style="font-size:9.5px;padding:1px 6px;">🟡 Verification Pending</span>' : ''}
                         </div>
