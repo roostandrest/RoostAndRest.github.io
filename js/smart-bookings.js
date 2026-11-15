@@ -843,7 +843,6 @@ function renderSingleAirbnbResCard(b, paidMap, canM, today) {
   const isStayingAllDay = b.check_in < today && (b.check_out > today || isOpenEnded);
   const isUpcoming = b.check_in > today;
   const isPast = !isOpenEnded && b.check_out < today;
-  const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
   const bSrc = (typeof window.getBookingSource === 'function') ? window.getBookingSource(b) : null;
   const nights = (b.check_in && b.check_out) ? Math.max((typeof calcNights === 'function' ? calcNights(b.check_in, b.check_out) : Math.round((new Date(b.check_out) - new Date(b.check_in)) / 86400000)), 1) : 1;
   const isSameDayStay = !!(b.check_in && b.check_out && b.check_in === b.check_out);
@@ -1228,7 +1227,6 @@ function renderBookingCardsHtml(bookings, paidMap, canM, today) {
         const isArrivalToday = b.check_in === today;
         const isUpcoming = b.check_in > today;
         const isPast = !isOpenEnded && b.check_out < today;
-        const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
         const bSrc = (typeof window.getBookingSource === 'function') ? window.getBookingSource(b) : null;
 
         let statusClass = 'upcoming-border';
@@ -1410,7 +1408,6 @@ function renderBookingTableHtml(bookings, paidMap, canM, today) {
               const isCheckoutToday = !isOpenEnded && b.check_out === today;
               const isArrivalToday = b.check_in === today;
               const isPast = !isOpenEnded && b.check_out < today;
-              const isOnline = b.booking_mode === 'Online-Airbnb' || !!b.airbnb_confirmation_code;
               const bSrc = (typeof window.getBookingSource === 'function') ? window.getBookingSource(b) : null;
               const hasId = !!(b.id_proof_photo_paths || b.id_proof_photo_path);
 

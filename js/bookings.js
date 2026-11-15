@@ -4596,33 +4596,31 @@ async function saveBooking() {
 
       await recalcPaymentStatus(bkId);
 
-    // 🔔 Instant Notification & Harmonic Chime Alert
-    if (window.triggerNotification?.paymentReceived) {
-      const gName = currBk2?.guest_name || currBk?.guest_name || 'Guest';
-      const rName = propLabel(currBk2?.rooms || currBk?.rooms) || '';
-      window.triggerNotification.paymentReceived({
-        amount: paymentForCurrent,
-        mode: mode,
-        guest_name: gName,
-        room_name: rName,
-        received_by: receivedBy || 'Staff',
-        booking_id: bkId,
-        notes: userNotes
-      });
-    }
+      // 🔔 Instant Notification & Harmonic Chime Alert
+      if (window.triggerNotification?.paymentReceived && payForCurrent > 0) {
+        window.triggerNotification.paymentReceived({
+          amount: payForCurrent,
+          mode: advMode || 'UPI',
+          guest_name: gn || 'Guest',
+          room_name: (document.getElementById('roomId')?.selectedOptions[0]?.text || rid),
+          received_by: receivedBy || 'Staff',
+          booking_id: bkId,
+          notes: isOnline ? 'Airbnb Payout' : 'Advance Payment'
+        });
+      }
 
-    // 📋 Audit log for Developer
-    if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
-      window.UserActionAudit.recordAction('payment_add', {
-        bookingId: bkId,
-        guestName: currBk2?.guest_name || currBk?.guest_name || 'Guest',
-        amount: amt,
-        mode: mode,
-        receivedBy: receivedBy,
-        paymentDate: payDate,
-        notes: userNotes
-      });
-    }
+      // 📋 Audit log for Developer
+      if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
+        window.UserActionAudit.recordAction('payment_add', {
+          bookingId: bkId,
+          guestName: gn || 'Guest',
+          amount: adv,
+          mode: advMode || 'UPI',
+          receivedBy: receivedBy || 'Staff',
+          paymentDate: advDate,
+          notes: isOnline ? 'Airbnb Payout' : 'Advance Payment'
+        });
+      }
 
       // Log distribution to console for verification
       if (distributedAdv.length > 0) {
@@ -6454,7 +6452,7 @@ async function savePaymentModal(bkId) {
   window._paymentConfirmedForDupe = false;
 
   const { data: currBk2 } = await sb.from('guest_register')
-    .select('total_amount, guest_name, phone').eq('booking_id', bkId).single();
+    .select('total_amount, guest_name, phone, room_id').eq('booking_id', bkId).single();
   const { data: currPays } = await sb.from('payment_history').select('amount, verification_status').eq('booking_id', bkId).neq('verification_status', 'rejected');
   const currPaid = (currPays || []).reduce((s, p) => s + (p.amount || 0), 0);
   const currTotal = currBk2?.total_amount || currBk?.total_amount || 0;
@@ -6491,33 +6489,31 @@ async function savePaymentModal(bkId) {
     }
     await recalcPaymentStatus(bkId);
 
-    // 🔔 Instant Notification & Harmonic Chime Alert
-    if (window.triggerNotification?.paymentReceived) {
-      const gName = currBk2?.guest_name || currBk?.guest_name || 'Guest';
-      const rName = propLabel(currBk2?.rooms || currBk?.rooms) || '';
-      window.triggerNotification.paymentReceived({
-        amount: paymentForCurrent,
-        mode: mode,
-        guest_name: gName,
-        room_name: rName,
-        received_by: receivedBy || 'Staff',
-        booking_id: bkId,
-        notes: userNotes
-      });
-    }
+      // 🔔 Instant Notification & Harmonic Chime Alert
+      if (window.triggerNotification?.paymentReceived && paymentForCurrent > 0) {
+        window.triggerNotification.paymentReceived({
+          amount: paymentForCurrent,
+          mode: mode || 'UPI',
+          guest_name: currBk2?.guest_name || 'Guest',
+          room_name: currBk2?.room_id || '',
+          received_by: receivedBy || 'Staff',
+          booking_id: bkId,
+          notes: userNotes || 'Payment'
+        });
+      }
 
-    // 📋 Audit log for Developer
-    if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
-      window.UserActionAudit.recordAction('payment_add', {
-        bookingId: bkId,
-        guestName: currBk2?.guest_name || currBk?.guest_name || 'Guest',
-        amount: amt,
-        mode: mode,
-        receivedBy: receivedBy,
-        paymentDate: payDate,
-        notes: userNotes
-      });
-    }
+      // 📋 Audit log for Developer
+      if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
+        window.UserActionAudit.recordAction('payment_add', {
+          bookingId: bkId,
+          guestName: currBk2?.guest_name || 'Guest',
+          amount: amt,
+          mode: mode || 'UPI',
+          receivedBy: receivedBy || 'Staff',
+          paymentDate: payDate,
+          notes: userNotes || 'Payment'
+        });
+      }
   }
 
   // Step 2: Distribute overflow to previous unpaid bookings (oldest first)
