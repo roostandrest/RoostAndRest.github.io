@@ -522,13 +522,69 @@ async function init() {
     swUpdateCheck().catch(e => console.warn('SW check background warning:', e));
     versionNotice();
 
-    const { data: { session } } = await sb.auth.getSession();
-    if (!session) { hideSplash(); renderLogin(); return; }
+    // 1. Initial session check
+    let { data: { session } } = await sb.auth.getSession();
+
+    // 2. If no session yet, but URL has OAuth callback params (#access_token=... or ?code=...)
+    const hasOAuthParams = window.location.hash.includes('access_token=') || 
+                           window.location.search.includes('code=') ||
+                           window.location.hash.includes('error=');
+
+    if (!session && hasOAuthParams) {
+      // Check if OAuth error was returned by provider
+      if (window.location.hash.includes('error=')) {
+        const hashParams = new URLSearchParams(window.location.hash.replace('#', '?'));
+        const errDesc = hashParams.get('error_description') || hashParams.get('error') || 'OAuth error';
+        console.warn('OAuth redirect error:', errDesc);
+        hideSplash();
+        renderLogin();
+        const errEl = document.getElementById('loginErr');
+        if (errEl) errEl.innerHTML = `<div class="error">❌ Google Login Error: ${escapeHtml(errDesc)}</div>`;
+        return;
+      }
+
+      // Wait up to 3 seconds for Supabase-js to finish parsing OAuth tokens / PKCE code exchange
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 100));
+        const res = await sb.auth.getSession();
+        if (res?.data?.session) {
+          session = res.data.session;
+          break;
+        }
+      }
+    }
+
+    if (!session) { 
+      hideSplash(); 
+      renderLogin(); 
+      return; 
+    }
+
     await loadProfile(session.user.id);
   } catch (err) {
     hideSplash();
     showError("Setup incomplete. config.js check karo.", err);
   }
+}
+
+// 🔔 Global Auth State Listener (Instant OAuth Callback & Multi-Tab Sync)
+if (window.sb && window.sb.auth && typeof window.sb.auth.onAuthStateChange === 'function') {
+  window.sb.auth.onAuthStateChange(async (event, session) => {
+    if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED')) {
+      if (!window.SESSION?.userId || window.SESSION.userId !== session.user.id) {
+        if (typeof hideSplash === 'function') hideSplash();
+        await loadProfile(session.user.id);
+      }
+    } else if (event === 'SIGNED_OUT') {
+      window.SESSION = {
+        userId: null, role: null, empId: null, investorId: null,
+        displayName: null, currentPage: 'bookings',
+        bookingFilter: 'All', bookingPropFilter: '', bookingDateFilter: '',
+        bookingDateFrom: '', bookingDateTo: '', bookingSearch: ''
+      };
+      if (typeof renderLogin === 'function') renderLogin();
+    }
+  });
 }
 
 async function swUpdateCheck() {
@@ -940,7 +996,12 @@ async function loadProfile(userId) {
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name || userEmail.split('@')[0] || 'User';
   const userAvatar = user?.user_metadata?.avatar_url || '';
 
-  const isMasterAdmin = (userEmail === 'praveensinghaws@gmail.com' || userEmail.includes('praveensingh') || userEmail === 'roostandrestlucknow@gmail.com');
+  const isMasterAdmin = (
+    userEmail === 'praveensinghaws@gmail.com' ||
+    userEmail.includes('praveensingh') ||
+    userEmail.includes('roostandrest') ||
+    userEmail.includes('anwar')
+  );
 
   let { data: p, error } = await sb.from("profiles")
     .select("role, emp_id, investor_id, display_name, is_approved")
@@ -1141,7 +1202,12 @@ async function handleNewGoogleUser(user) {
   const name = user.user_metadata?.full_name || user.user_metadata?.name || email.split('@')[0] || 'New User';
   const avatar = user.user_metadata?.avatar_url || '';
 
-  const isMasterAdmin = (email === 'praveensinghaws@gmail.com' || email.includes('praveensingh') || email === 'roostandrestlucknow@gmail.com');
+  const isMasterAdmin = (
+    email === 'praveensinghaws@gmail.com' ||
+    email.includes('praveensingh') ||
+    email.includes('roostandrest') ||
+    email.includes('anwar')
+  );
   if (isMasterAdmin) {
     try {
       await sb.from('profiles').upsert({
