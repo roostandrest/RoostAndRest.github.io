@@ -9749,44 +9749,20 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
     try {
       const { data: bks } = await window.sb
         .from('guest_register')
-        .select('*')
+        .select('booking_id, notes, verification_status')
         .or('booking_id.eq.B1794293335062,phone.ilike.%7381025373%,guest_name.ilike.%Susant%');
 
       if (bks && bks.length > 0) {
         for (const bk of bks) {
-          bk.pets = 1;
-          bk.pet_count = 1;
           const currentNotes = bk.notes || '';
-          let updatedNotes = currentNotes.replace(/\s*\[PETS?:\s*\d+\]/gi, '').trim();
-          updatedNotes = updatedNotes ? `${updatedNotes} | [PETS: 1]` : '[PETS: 1]';
-          bk.notes = updatedNotes;
-
-          await window.sb.from('guest_register').update({
-            verification_status: 'verified',
-            verified_at: new Date().toISOString(),
-            notes: updatedNotes
-          }).eq('booking_id', bk.booking_id);
-
-          try {
-            await window.sb.from('guest_register').update({ pets: 1 }).eq('booking_id', bk.booking_id);
-          } catch (_) {}
-
-          await window.sb.from('payment_history').update({
-            verification_status: 'verified'
-          }).eq('booking_id', bk.booking_id);
-
-          const updateMem = (m) => {
-            if (m) {
-              m.pets = 1;
-              m.pet_count = 1;
-              m.notes = updatedNotes;
-              m.verification_status = 'verified';
-            }
-          };
-          if (window._sbkState?.cachedBookings) updateMem(window._sbkState.cachedBookings.find(x => x.booking_id === bk.booking_id));
-          if (window._cachedBookings) updateMem(window._cachedBookings.find(x => x.booking_id === bk.booking_id));
-          if (window._allBookings) updateMem(window._allBookings.find(x => x.booking_id === bk.booking_id));
-          if (window._currentDrawerBooking && window._currentDrawerBooking.booking_id === bk.booking_id) updateMem(window._currentDrawerBooking);
+          if (bk.verification_status !== 'verified' || !currentNotes.includes('[PETS: 1]')) {
+            let updatedNotes = currentNotes.replace(/\s*\[PETS?:\s*\d+\]/gi, '').trim();
+            updatedNotes = updatedNotes ? `${updatedNotes} | [PETS: 1]` : '[PETS: 1]';
+            await window.sb.from('guest_register').update({
+              verification_status: 'verified',
+              notes: updatedNotes
+            }).eq('booking_id', bk.booking_id);
+          }
         }
       }
     } catch (e) {
@@ -9795,7 +9771,5 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
   };
 
   if (window.sb) runHeal();
-  setTimeout(runHeal, 1500);
-  setTimeout(runHeal, 4500);
 })();
 

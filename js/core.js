@@ -1418,17 +1418,23 @@ function renderLogin() {
 }
 
 async function loginWithGoogle() {
-  const redirectUrl = window.location.origin + window.location.pathname;
+  const origin = window.location.origin;
+  const isLocal = origin.includes('localhost') || origin.includes('127.0.0.1');
+  const target = isLocal 
+    ? (origin + '/admin.html') 
+    : 'https://roostandrest.github.io/admin.html';
+
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: redirectUrl
+      redirectTo: target
     }
   });
   if (error) {
     document.getElementById('loginErr').innerHTML = `<div class="error">${error.message}</div>`;
   }
 }
+window.loginWithGoogle = loginWithGoogle;
 
 window.quickFillAnwar = function() {
   const em = document.getElementById('email');

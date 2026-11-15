@@ -1571,7 +1571,7 @@ window.openBookingDrawer = async function(bookingId) {
   const isMasterCreated = bCreator.includes('admin') || bCreator.includes('anwar') || bCreator.includes('owner') || bCreator.includes('developer') || b.booking_id === 'B1794293335062';
   if (b.verification_status === 'pending' && isMasterCreated) {
     b.verification_status = 'verified';
-    sb.from('guest_register').update({ verification_status: 'verified', verified_at: new Date().toISOString() }).eq('booking_id', b.booking_id);
+    sb.from('guest_register').update({ verification_status: 'verified' }).eq('booking_id', b.booking_id);
     sb.from('payment_history').update({ verification_status: 'verified' }).eq('booking_id', b.booking_id);
   }
 
@@ -1583,12 +1583,6 @@ window.openBookingDrawer = async function(bookingId) {
     petCount = 1;
     b.pets = 1;
     b.pet_count = 1;
-    const newNotes = (b.notes || '').includes('[PETS:') ? b.notes : (b.notes ? `${b.notes} | [PETS: 1]` : '[PETS: 1]');
-    b.notes = newNotes;
-    if (window.sb) {
-      window.sb.from('guest_register').update({ notes: newNotes, verification_status: 'verified' }).eq('booking_id', b.booking_id);
-      try { window.sb.from('guest_register').update({ pets: 1 }).eq('booking_id', b.booking_id); } catch (_) {}
-    }
   }
 
   let container = document.getElementById('sbkDrawerContainer');
