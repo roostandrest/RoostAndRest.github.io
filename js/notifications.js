@@ -866,7 +866,7 @@
             try { window.renderSmartManageBookings(true); } catch(err) { console.warn('Realtime refresh error:', err); }
           }
         })
-      .subscribe((s) => console.log('🔔 Bookings channel:', s));
+      .subscribe((s) => { if (s === 'SUBSCRIBED') console.log('🔔 Bookings channel: SUBSCRIBED'); });
 
     // 2. Payments INSERT
     const c2 = sb.channel('rt-payments-' + Date.now())
@@ -904,7 +904,7 @@
             booking_id: p.booking_id
           });
         })
-      .subscribe((s) => console.log('🔔 Payments channel:', s));
+      .subscribe((s) => { if (s === 'SUBSCRIBED') console.log('🔔 Payments channel: SUBSCRIBED'); });
 
     // 3. Tasks INSERT
     const c3 = sb.channel('rt-tasks-' + Date.now())
@@ -923,7 +923,7 @@
             entityType: 'task'
           });
         })
-      .subscribe((s) => console.log('🔔 Tasks channel:', s));
+      .subscribe((s) => { if (s === 'SUBSCRIBED') console.log('🔔 Tasks channel: SUBSCRIBED'); });
 
     // 4. Booking UPDATE (checkin/checkout)
     const c4 = sb.channel('rt-updates-' + Date.now())
@@ -962,7 +962,7 @@
             });
           }
         })
-      .subscribe((s) => console.log('🔔 Updates channel:', s));
+      .subscribe((s) => { if (s === 'SUBSCRIBED') console.log('🔔 Updates channel: SUBSCRIBED'); });
 
     // 5. Expenses INSERT
     const c5 = sb.channel('rt-expenses-' + Date.now())
@@ -985,7 +985,7 @@
             entityType: 'expense'
           });
         })
-      .subscribe((s) => console.log('🔔 Expenses channel:', s));
+      .subscribe((s) => { if (s === 'SUBSCRIBED') console.log('🔔 Expenses channel: SUBSCRIBED'); });
 
     NOTIF.channels = [c1, c2, c3, c4, c5];
     NOTIF.started = true;

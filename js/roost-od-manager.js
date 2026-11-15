@@ -209,25 +209,25 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
     if (client) {
         // 2. Primary cloud persistence: company_advances
         try {
-            let q = client.from('company_advances').select('*').or('payment_source.eq.ROOST-BANK,given_to.eq.ROOST-BANK,payment_source.ilike.%OD%,given_to.ilike.%OD%');
-            if (startDate) q = q.gte('advance_date', startDate);
-            if (endDate) q = q.lte('advance_date', endDate);
-            const { data: caData, error: caErr } = await q.order('advance_date', { ascending: false });
+            let q = client.from('company_advances').select('*');
+            if (startDate) q = q.gte('date', startDate);
+            if (endDate) q = q.lte('date', endDate);
+            const { data: caData, error: caErr } = await q.order('date', { ascending: false });
             if (!caErr && Array.isArray(caData)) {
                 caData.forEach(ca => {
                     // Exclude returns/handovers (which are outflows)
-                    if (ca.given_by === 'ROOST-BANK' || ca.status === 'Returned' || ca.status === 'Handover') return;
+                    if (ca.given_by === 'ROOST-BANK' || ca.status === 'Returned' || ca.status === 'Handover' || ca.type === 'Returned' || ca.type === 'return') return;
                     const uniqueKey = 'ca_' + ca.id;
                     itemsMap.set(uniqueKey, {
                         id: uniqueKey,
                         db_id: ca.id,
                         source_table: 'company_advances',
-                        transaction_date: ca.advance_date,
-                        description: ca.purpose || `Funds added by ${ca.given_by || 'Anwar'} via UPI`,
-                        amount: parseFloat(ca.amount_given || 0),
+                        transaction_date: ca.date || ca.advance_date,
+                        description: ca.notes || ca.purpose || `Funds added by ${ca.recorded_by || ca.given_by || 'Anwar'} via ${ca.payment_mode || 'UPI'}`,
+                        amount: parseFloat(ca.amount || ca.amount_given || 0),
                         transaction_type: 'INFLOW',
-                        payment_mode: 'UPI',
-                        received_from: ca.given_by || 'Anwar',
+                        payment_mode: ca.payment_mode || 'UPI',
+                        received_from: ca.recorded_by || ca.given_by || 'Anwar',
                         reference_note: ca.notes || null,
                         created_at: ca.created_at
                     });
@@ -406,7 +406,7 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             client.from('maintenance_log').select('*').gte('created_at', CHECKPOINT_START).lte('created_at', dayBefore),
             client.from('laundry_payments').select('*').gte('payment_date', CHECKPOINT_START).lte('payment_date', dayBefore),
             client.from('advance_tracker').select('*').gte('date_given', CHECKPOINT_START).lte('date_given', dayBefore),
-            client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover,given_by.ilike.%OD%').gte('advance_date', CHECKPOINT_START).lte('advance_date', dayBefore),
+            client.from('company_advances').select('*').gte('date', CHECKPOINT_START).lte('date', dayBefore),
             getODSecurityRefunds(client, CHECKPOINT_START, dayBefore)
         ]);
 
@@ -431,8 +431,8 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
         (pAdvs || []).filter(a => normalizePaymentSource(a.paid_by) === 'ROOST-BANK').forEach(a => {
             openingOutflow += parseFloat(a.advance_amount || 0);
         });
-        (pReturns || []).forEach(r => {
-            openingOutflow += parseFloat(r.amount_given || 0);
+        (pReturns || []).filter(r => r.type === 'Returned' || r.type === 'return' || r.type === 'Handover' || r.status === 'Returned' || r.status === 'Handover' || (r.notes && r.notes.includes('OD'))).forEach(r => {
+            openingOutflow += parseFloat(r.amount || r.amount_given || 0);
         });
         (pSecRefunds || []).forEach(sr => {
             openingOutflow += parseFloat(sr.amount || 0);
@@ -456,8 +456,8 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
 
     let qAdv = client.from('advance_tracker').select('*, employees(name)');
 
-    let qReturns = client.from('company_advances').select('*').or('given_by.eq.ROOST-BANK,status.eq.Returned,status.eq.Handover,given_by.ilike.%OD%').gte('advance_date', startDate);
-    if (endDate) qReturns = qReturns.lte('advance_date', endDate);
+    let qReturns = client.from('company_advances').select('*').gte('date', startDate);
+    if (endDate) qReturns = qReturns.lte('date', endDate);
 
     const [{ data: exps }, { data: maints }, { data: launds }, { data: allAdvs }, { data: returns }, secRefunds] = await Promise.all([
         qReimb, qMaint, qLaund, qAdv, qReturns, getODSecurityRefunds(client, startDate, endDate)
@@ -545,15 +545,15 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     });
 
     // Funds Returned to Company (-)
-    (returns || []).forEach(r => {
+    (returns || []).filter(r => r.type === 'Returned' || r.type === 'return' || r.type === 'Handover' || r.status === 'Returned' || r.status === 'Handover' || (r.notes && r.notes.includes('OD'))).forEach(r => {
         txns.push({
             id: 'ret_' + r.id,
             db_id: r.id,
             source: 'company_advances',
-            date: r.advance_date,
+            date: r.date || r.advance_date,
             type: 'EXPENSE',
-            desc: `💸 Return to Company: ${r.purpose || 'Funds returned to ' + (r.given_to || 'Company')}`,
-            amount: parseFloat(r.amount_given || 0),
+            desc: `💸 Return to Company: ${r.notes || r.purpose || 'Funds returned to Company'}`,
+            amount: parseFloat(r.amount || r.amount_given || 0),
             isDep: false,
             isReturn: true
         });

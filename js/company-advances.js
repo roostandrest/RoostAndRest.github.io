@@ -34,11 +34,18 @@ window.renderCompanyAdvances = async function() {
 
 // Auto-update spent amounts from linked reimbursements
 async function refreshAdvanceSpending() {
-  const { data: advances } = await sb.from('company_advances').select('id, amount_given').eq('status', 'Active').neq('given_to', 'ROOST-BANK');
-  for (const adv of (advances || [])) {
-    const { data: exps } = await sb.from('reimbursements').select('amount').eq('company_advance_id', adv.id);
-    const spent = (exps || []).reduce((s, e) => s + Number(e.amount || 0), 0);
-    await sb.from('company_advances').update({ amount_spent: spent }).eq('id', adv.id);
+  try {
+    const { data: advances } = await sb.from('company_advances').select('*');
+    for (const adv of (advances || [])) {
+      if (!adv || !adv.id) continue;
+      const { data: exps } = await sb.from('reimbursements').select('amount').eq('company_advance_id', adv.id);
+      const spent = (exps || []).reduce((s, e) => s + Number(e.amount || 0), 0);
+      if (adv.amount_spent !== undefined) {
+        await sb.from('company_advances').update({ amount_spent: spent }).eq('id', adv.id);
+      }
+    }
+  } catch(e) {
+    console.warn('refreshAdvanceSpending safe error:', e);
   }
 }
 
@@ -48,13 +55,11 @@ async function renderCAActive(tabs) {
   
   await refreshAdvanceSpending();
   
-  const { data: advances } = await sb.from('company_advances')
-    .select('*')
-    .eq('status', 'Active')
-    .neq('given_to', 'ROOST-BANK')
-    .order('advance_date', { ascending: false });
+  const { data: rawAdvances } = await sb.from('company_advances').select('*');
+  const advances = (rawAdvances || []).filter(a => a.status !== 'Settled' && a.given_to !== 'ROOST-BANK');
+  advances.sort((a, b) => String(b.advance_date || b.date || '').localeCompare(String(a.advance_date || a.date || '')));
   
-  const totalGiven = (advances || []).reduce((s, a) => s + Number(a.amount_given || 0), 0);
+  const totalGiven = (advances || []).reduce((s, a) => s + Number(a.amount_given || a.amount || 0), 0);
   const totalSpent = (advances || []).reduce((s, a) => s + Number(a.amount_spent || 0), 0);
   const totalBalance = totalGiven - totalSpent;
   
@@ -260,7 +265,9 @@ window.saveNewAdvance = async function() {
 
 // ═══ TAB 3: SPENDING REPORT ═══
 async function renderCASpending(tabs) {
-  const { data: advances } = await sb.from('company_advances').select('*').neq('given_to', 'ROOST-BANK').order('advance_date', { ascending: false });
+  const { data: rawAdvances } = await sb.from('company_advances').select('*');
+  const advances = (rawAdvances || []).filter(a => a.given_to !== 'ROOST-BANK');
+  advances.sort((a, b) => String(b.advance_date || b.date || '').localeCompare(String(a.advance_date || a.date || '')));
   
   // Get all expenses linked to advances
   const advIds = (advances || []).map(a => a.id);
@@ -320,7 +327,9 @@ async function renderCASpending(tabs) {
 
 // ═══ TAB 4: HISTORY ═══
 async function renderCAHistory(tabs) {
-  const { data: advances } = await sb.from('company_advances').select('*').neq('given_to', 'ROOST-BANK').order('advance_date', { ascending: false });
+  const { data: rawAdvances } = await sb.from('company_advances').select('*');
+  const advances = (rawAdvances || []).filter(a => a.given_to !== 'ROOST-BANK');
+  advances.sort((a, b) => String(b.advance_date || b.date || '').localeCompare(String(a.advance_date || a.date || '')));
   
   renderShell(`
     ${tabs}
