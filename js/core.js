@@ -1602,8 +1602,15 @@ function renderShell(content, activePage = 'bookings') {
   // ═══════════════════════════════════════════════════════════
   const UHHS_HUBS = [
     {
+      id: 'dashboard',
+      label: '🏠 Today · Operations',
+      page: 'dashboard',
+      pages: ['dashboard', 'dailyReport'],
+      tabs: []
+    },
+    {
       id: 'bookings',
-      label: '📅 Today · Operations',
+      label: '📅 Bookings / Calendar',
       page: 'bookings',
       pages: ['bookings', 'calendar', 'reports', 'pendingApprovals', 'shifts', 'guest-crm'],
       tabs: [
@@ -1611,13 +1618,6 @@ function renderShell(content, activePage = 'bookings') {
         { id: 'calendar', label: '🗓️ Calendar' },
         { id: 'pendingApprovals', label: '🟡 Approvals' }
       ]
-    },
-    {
-      id: 'dashboard',
-      label: '📊 Executive Dashboard',
-      page: 'dashboard',
-      pages: ['dashboard', 'dailyReport'],
-      tabs: []
     },
     {
       id: 'rooms',
@@ -1699,7 +1699,7 @@ function renderShell(content, activePage = 'bookings') {
 
   // Single Source of Truth for mapping every page/sub-tab to its parent sidebar key
   const PAGE_TO_SIDEBAR_MAP = {
-    today: 'bookings',
+    today: 'dashboard',
     dashboard: 'dashboard',
     dailyReport: 'dashboard',
 
@@ -1757,11 +1757,21 @@ function renderShell(content, activePage = 'bookings') {
   window.PAGE_TO_SIDEBAR_MAP = PAGE_TO_SIDEBAR_MAP;
 
   // Navigation Drawer Menu
-  if (isAdmin || isOwner) {
-    // 👑 OWNER (Mr. Anwar Ahmad) / DEVELOPER / ADMIN — Supreme Full Access to everything
+  if (isPureOwner) {
+    // 👑 OWNER ROLE (Mr. Anwar Ahmad) — Full business access, restricted admin pages
     nav = [
-      ['bookings', 'Today · Operations'],
-      ['dashboard', 'Executive Dashboard'],
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
+      ['rooms', 'Properties'],
+      ['expenses', 'Expenses'],
+      ['analytics', 'Finances'],
+      ['settings', 'Global Settings'],
+    ];
+  } else if (isAdmin || isOwner) {
+    // 👑 OWNER / DEVELOPER / ADMIN — Supreme Full Access to everything
+    nav = [
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
       ['rooms', 'Properties'],
       ['expenses', 'Expenses'],
       ['analytics', 'Finances'],
@@ -1773,8 +1783,8 @@ function renderShell(content, activePage = 'bookings') {
     ];
   } else if (SESSION.role === 'moderator') {
     nav = [
-      ['bookings', 'Today · Operations'],
-      ['dashboard', 'Executive Dashboard'],
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
       ['rooms', 'Properties'],
       ['employees', 'HRMS & Tasks'],
       ['whatsapp-hub', 'WhatsApp Hub'],
@@ -1782,31 +1792,31 @@ function renderShell(content, activePage = 'bookings') {
     ];
   } else if (isCheckinMgr || isCheckin) {
     nav = [
-      ['bookings', 'Today · Operations'],
-      ['dashboard', 'Executive Dashboard'],
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
       ['rooms', 'Properties'],
       ['whatsapp-hub', 'WhatsApp Hub'],
       ['help', 'Help & Guide'],
     ];
   } else if (isBookingStaff) {
     nav = [
-      ['bookings', 'Today · Operations'],
-      ['dashboard', 'Executive Dashboard'],
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
       ['rooms', 'Properties'],
       ['whatsapp-hub', 'WhatsApp Hub'],
       ['help', 'Help & Guide'],
     ];
   } else if (isViewer) {
     nav = [
-      ['bookings', 'Today · Operations'],
-      ['dashboard', 'Executive Dashboard'],
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
       ['rooms', 'Properties'],
       ['help', 'Help & Guide'],
     ];
   } else {
     nav = [
-      ['bookings', 'Today · Operations'],
-      ['dashboard', 'Executive Dashboard'],
+      ['dashboard', 'Today · Operations'],
+      ['bookings', 'Bookings / Calendar'],
       ['rooms', 'Properties'],
       ['expenses', 'Expenses'],
       ['analytics', 'Finances'],
@@ -2031,7 +2041,7 @@ function renderShell(content, activePage = 'bookings') {
       <!-- ─── SIDEBAR ─── -->
       <aside class="sidebar" id="sidebarEl">
         <div class="sidebar-top">
-          <div class="sidebar-brand" onclick="navigate('bookings')" title="ROOST AND REST STAYS">
+          <div class="sidebar-brand" onclick="navigate('dashboard')" title="ROOST AND REST STAYS">
             <div class="brand-logo-wrap">
               <img src="assets/logo.png" onerror="this.onerror=null;this.src='assets/logo.svg';" alt="ROOST AND REST" class="brand-logo" />
             </div>
@@ -2088,7 +2098,7 @@ function renderShell(content, activePage = 'bookings') {
         <header class="app-topbar">
           <div class="topbar-left">
             <button type="button" class="sidebar-toggle-btn" id="hamburgerBtn" aria-label="Toggle Navigation" title="Toggle Navigation"><i class="ti ti-menu-2"></i></button>
-            <div class="topbar-brand-group" onclick="navigate('bookings')" style="cursor:pointer;">
+            <div class="topbar-brand-group" onclick="navigate('dashboard')" style="cursor:pointer;">
               <img src="assets/logo.png" onerror="this.onerror=null;this.src='assets/logo.svg';" alt="Roost & Rest" class="topbar-brand-logo" style="width:34px;height:34px;min-width:34px;max-width:34px;max-height:34px;border-radius:10px;object-fit:cover;flex-shrink:0;" />
               <div class="topbar-brand-titles">
                 <span class="topbar-brand-main">ROOST &amp; REST</span>
@@ -2104,8 +2114,8 @@ function renderShell(content, activePage = 'bookings') {
             ${(() => {
               const topKey = PAGE_TO_SIDEBAR_MAP[activePage] || (activePage === 'reports' ? 'bookings' : activePage);
               return `
-                <a href="javascript:void(0)" onclick="if(window.setBookingTab) window.setBookingTab('today'); navigate('bookings');" class="${(topKey==='bookings'||topKey==='today')?'active':''}"><i class="ti ti-calendar-event"></i> Today (Operations)</a>
-                <a href="javascript:void(0)" onclick="navigate('dashboard')" class="${topKey==='dashboard'?'active':''}"><i class="ti ti-chart-bar"></i> Executive Dashboard</a>
+                <a href="javascript:void(0)" onclick="navigate('dashboard')" class="${topKey==='dashboard'?'active':''}"><i class="ti ti-calendar-event"></i> Today</a>
+                <a href="javascript:void(0)" onclick="navigate('bookings')" class="${topKey==='bookings'?'active':''}"><i class="ti ti-calendar-check"></i> Bookings &amp; Calendar</a>
                 <a href="javascript:void(0)" onclick="navigate('rooms')" class="${topKey==='rooms'?'active':''}"><i class="ti ti-building-community"></i> Properties</a>
                 <a href="javascript:void(0)" onclick="navigate('expenses')" class="${topKey==='expenses'?'active':''}"><i class="ti ti-receipt-2"></i> Expenses</a>
                 <a href="javascript:void(0)" onclick="navigate('analytics')" class="${topKey==='analytics'?'active':''}"><i class="ti ti-wallet"></i> Finances</a>
@@ -6683,10 +6693,10 @@ function renderAppMenu() {
             <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
 
-          <div class="roost-menu-row" onclick="navigate('dashboard')">
+          <div class="roost-menu-row" onclick="navigate('analytics')">
             <div class="roost-icon-box" style="background:#FEF2F2;color:#DC2626;"><i class="ti ti-chart-bar"></i></div>
             <div class="roost-row-content">
-              <div class="roost-row-title">Executive Dashboard &amp; Analytics</div>
+              <div class="roost-row-title">Executive Financial Dashboard</div>
               <div class="roost-row-sub">Dual-channel performance, monthly revenue &amp; bar charts</div>
             </div>
             <i class="ti ti-chevron-right roost-chevron"></i>
@@ -6722,8 +6732,8 @@ function renderAppMenu() {
           <div class="roost-menu-row" onclick="navigate('ca-audit')">
             <div class="roost-icon-box" style="background:#F8FAFC;color:#475569;"><i class="ti ti-briefcase"></i></div>
             <div class="roost-row-content">
-              <div class="roost-row-title">CA Audit Pack &amp; GST</div>
-              <div class="roost-row-sub">Bank Reconciliation (BRS), GST reports &amp; compliance</div>
+              <div class="roost-row-title">CA Audit Pack &amp; Tax Audit</div>
+              <div class="roost-row-sub">Bank Reconciliation (BRS), Section 194-O TDS &amp; compliance</div>
             </div>
             <i class="ti ti-chevron-right roost-chevron"></i>
           </div>
