@@ -2635,8 +2635,14 @@ async function renderSmartAddBooking(prefillOpts) {
               </select>
             </div>
             <div class="form-group">
-              <label style="font-weight:700;" id="smartAdvReceivedByLabel">💰 Received By *</label>
-              <select id="advReceivedBy" style="font-weight:600;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <label style="font-weight:700;margin:0;" id="smartAdvReceivedByLabel">💰 Received By *</label>
+                <div style="display:flex;gap:4px;">
+                  <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
+                  <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
+                </div>
+              </div>
+              <select id="advReceivedBy" style="font-weight:600;" onchange="if(this.value==='__addnew__')quickAddNewPaymentReceiver('advReceivedBy')">
                 <option value="">-- Select Team Member --</option>
               </select>
             </div>
@@ -2780,8 +2786,14 @@ async function renderSmartAddBooking(prefillOpts) {
               </select>
             </div>
             <div class="form-group">
-              <label style="font-weight:700;" id="smartAdvReceivedByLabel">💰 Received By *</label>
-              <select id="advReceivedBy" style="font-weight:600;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <label style="font-weight:700;margin:0;" id="smartAdvReceivedByLabel">💰 Received By *</label>
+                <div style="display:flex;gap:4px;">
+                  <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
+                  <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
+                </div>
+              </div>
+              <select id="advReceivedBy" style="font-weight:600;" onchange="if(this.value==='__addnew__')quickAddNewPaymentReceiver('advReceivedBy')">
                 <option value="">-- Select Team Member --</option>
               </select>
             </div>
@@ -3325,22 +3337,43 @@ window.loadSmartReceivers = async function() {
   const secSel = document.getElementById('secReceivedBy');
   if (!advSel && !secSel) return;
 
+  const data = (typeof loadReceiveByHolders === 'function')
+    ? await loadReceiveByHolders()
+    : { owners: ['Roost and Rest', 'Anwar OD'], manager: [], employees: [] };
+
+  const finalHolders = data.owners || [];
+  const managers = data.manager || [];
+  const receivers = data.employees || [];
+
   let optionsHtml = '<option value="">-- Select Team Member --</option>';
-  if (typeof loadReceiveByHolders === 'function') {
-    const data = await loadReceiveByHolders();
-    const allReceivers = [...(data.owners || []), ...(data.manager || []), ...(data.employees || [])];
-    const unique = [...new Set(allReceivers)];
-    optionsHtml += unique.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join('');
-  } else {
-    optionsHtml += `
-      <option value="Shahenshah">👑 Shahenshah (Owner)</option>
-      <option value="Anwar">👑 Anwar (Owner)</option>
-      <option value="Manager">👔 Manager</option>
-      <option value="Caretaker">🧹 Caretaker</option>
-    `;
+  optionsHtml += '<optgroup label="🏦 Overdraft Account"><option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option></optgroup>';
+  if (finalHolders.length) {
+    optionsHtml += '<optgroup label="🏢 Company / Bank Accounts">';
+    finalHolders.filter(n => n !== 'Anwar OD').forEach(n => optionsHtml += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+    optionsHtml += '</optgroup>';
   }
-  if (advSel) advSel.innerHTML = optionsHtml;
-  if (secSel) secSel.innerHTML = optionsHtml;
+  if (managers.length) {
+    optionsHtml += '<optgroup label="👨‍💼 Managers & Owners">';
+    managers.forEach(n => optionsHtml += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+    optionsHtml += '</optgroup>';
+  }
+  if (receivers.length) {
+    optionsHtml += '<optgroup label="👥 Staff & Team Receivers">';
+    receivers.forEach(n => optionsHtml += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+    optionsHtml += '</optgroup>';
+  }
+  optionsHtml += '<option value="__addnew__">➕ Add New Payment Receiver...</option>';
+
+  if (advSel) {
+    const cur = advSel.value;
+    advSel.innerHTML = optionsHtml;
+    if (cur && cur !== '__addnew__') advSel.value = cur;
+  }
+  if (secSel) {
+    const cur = secSel.value;
+    secSel.innerHTML = optionsHtml;
+    if (cur && cur !== '__addnew__') secSel.value = cur;
+  }
 };
 
 window.setSecurityDepositChoice = function(isYes) {

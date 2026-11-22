@@ -1782,7 +1782,8 @@ function renderShell(content, activePage = 'bookings') {
         { id: 'employees', label: '👥 Staff Roster' },
         { id: 'attendance', label: '📋 Attendance' },
         { id: 'tasks', label: '🧰 Tasks' },
-        { id: 'employee-ledger', label: '📒 Ledgers & Advance' }
+        { id: 'employee-ledger', label: '📒 Ledgers & Advance' },
+        { id: 'my-ledger', label: '💼 Cash & Receiver Ledger' }
       ]
     },
     {

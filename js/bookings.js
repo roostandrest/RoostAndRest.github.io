@@ -3403,7 +3403,13 @@ async function renderAddBooking(prefillOpts) {
       </div>
       <div class="form-grid" id="advReceivedByRow" style="display:${pre.advMode ? 'grid' : 'none'};">
         <div class="form-group">
-          <label id="advReceivedByLabel">💰 Received By *</label>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+            <label id="advReceivedByLabel" style="margin:0;font-weight:700;">💰 Received By *</label>
+            <div style="display:flex;gap:4px;">
+              <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
+              <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
+            </div>
+          </div>
           <select id="advReceivedBy" onchange="onAdvReceivedByChange()">
             <option value="">-- Select --</option>
           </select>
@@ -3412,8 +3418,8 @@ async function renderAddBooking(prefillOpts) {
         </div>
         <div class="form-group">
           <label>&nbsp;</label>
-          <button type="button" onclick="quickAddCashHolder()" 
-                  style="padding:10px;background:#f0f0f0;border:1px dashed #999;border-radius:8px;cursor:pointer;width:100%;font-size:13px;">
+          <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" 
+                  style="padding:10px;background:#EFF6FF;color:#1D4ED8;border:1.5px dashed #3B82F6;border-radius:8px;cursor:pointer;width:100%;font-size:13px;font-weight:700;">
             ➕ Add New Receiver
           </button>
         </div>
@@ -6240,33 +6246,124 @@ window.openDeletedBookingsVaultModal = async function() {
 // ============ PAYMENT MODAL ============
 
 
-// ═══ Cash Book: Payment Received By helpers (strictly Roost and Rest and Anwar OD) ═══
+// ═══ Cash Book: Payment Received By helpers (uses cash_holders + employees) ═══
 async function loadReceiveByHolders() {
-  return {
-    owners: ['Roost and Rest', 'Anwar OD'],
-    manager: [],
-    employees: []
+  if (window._receiveHoldersCache) return window._receiveHoldersCache;
+  
+  const [{ data: holders }, { data: emps }] = await Promise.all([
+    sb.from('cash_holders').select('name, type').eq('is_active', true),
+    sb.from('employees').select('name, role').eq('status', 'Active')
+  ]);
+  
+  const excludeRoles = ['Cleaning Staff', 'Maid', 'Dusting & Bedding'];
+  const staffEmpNames = (emps || [])
+    .filter(e => !excludeRoles.includes(e.role))
+    .map(e => e.name);
+  
+  // Owners & Company Accounts
+  const owners = (holders || []).filter(h => h.type === 'final').map(h => h.name);
+  if (!owners.includes('Anwar OD')) owners.unshift('Anwar OD');
+  if (!owners.includes('Roost and Rest')) owners.unshift('Roost and Rest');
+  if (!owners.some(o => (o || '').toLowerCase() === 'anwar')) owners.push('Anwar');
+  if (!owners.some(o => (o || '').toLowerCase() === 'shahenshah')) owners.push('Shahenshah');
+
+  // Managers
+  const managers = (holders || []).filter(h => h.type === 'manager').map(h => h.name);
+
+  // Receivers & Team from cash_holders
+  const holderReceivers = (holders || []).filter(h => h.type === 'receiver' || !h.type).map(h => h.name);
+
+  // Union of all receivers (employees + cash_holders custom entries)
+  const allReceivers = [...new Set([...staffEmpNames, ...holderReceivers])].filter(n => !owners.includes(n) && !managers.includes(n));
+
+  window._receiveHoldersCache = {
+    owners,
+    manager: managers,
+    employees: allReceivers
   };
+  return window._receiveHoldersCache;
 }
 
-// ═══ Unified Received By Dropdown (Identical to New Booking time) ═══
+// ═══ Unified Received By Dropdown (Identical across Booking & Payment Modals) ═══
 window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, customEl) {
   if (!selectEl) return;
-  const s = String(currentVal || '').toUpperCase();
-  const isCash = (mode === 'Cash');
-  const isAnwar = s.includes('ANWAR') || (isCash && !s.includes('ROOST') && !s.includes('BANK'));
+  const data = await loadReceiveByHolders();
+  const finalHolders = data.owners || [];
+  const managers = data.manager || [];
+  const receivers = data.employees || [];
 
-  selectEl.innerHTML = `
-    <option value="Roost and Rest" ${!isAnwar ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
-    <option value="Anwar OD" ${isAnwar ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
-  `;
-  selectEl.value = isAnwar ? 'Anwar OD' : 'Roost and Rest';
-  if (customEl) customEl.style.display = 'none';
+  let html = '<option value="">-- Select Receiver --</option>';
+
+  const isAnwarOD = (currentVal || '').toUpperCase().includes('ANWAR');
+  html += '<optgroup label="🏦 Overdraft Account">';
+  html += `<option value="Anwar OD" ${isAnwarOD ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>`;
+  html += '</optgroup>';
+
+  if (finalHolders.length) {
+    html += '<optgroup label="🏢 Company / Bank Accounts">';
+    finalHolders.filter(n => n !== 'Anwar OD').forEach(n => {
+      html += `<option value="${n}" ${currentVal === n ? 'selected' : ''}>${n}</option>`;
+    });
+    html += '</optgroup>';
+  }
+  if (managers.length) {
+    html += '<optgroup label="👨‍💼 Managers & Owners">';
+    managers.forEach(n => {
+      html += `<option value="${n}" ${currentVal === n ? 'selected' : ''}>${n}</option>`;
+    });
+    html += '</optgroup>';
+  }
+  if (receivers.length) {
+    html += '<optgroup label="👥 Staff & Team Receivers">';
+    receivers.forEach(n => {
+      html += `<option value="${n}" ${currentVal === n ? 'selected' : ''}>${n}</option>`;
+    });
+    html += '</optgroup>';
+  }
+
+  // Preserve existing value if not in list
+  const allKnown = ['Anwar OD', ...finalHolders, ...managers, ...receivers];
+  if (currentVal && !allKnown.includes(currentVal) && currentVal !== '__custom__' && currentVal !== '__addnew__' && !isAnwarOD) {
+    html += '<optgroup label="Existing / Other">';
+    html += `<option value="${currentVal}" selected>${currentVal}</option>`;
+    html += '</optgroup>';
+  }
+
+  html += '<option value="__addnew__">➕ Add New Payment Receiver...</option>';
+  html += '<option value="__custom__">✏️ Custom Receiver Name...</option>';
+  selectEl.innerHTML = html;
+
+  if (currentVal) {
+    if (isAnwarOD) {
+      selectEl.value = 'Anwar OD';
+      if (customEl) customEl.style.display = 'none';
+    } else {
+      selectEl.value = currentVal;
+      if (selectEl.value !== currentVal) {
+        selectEl.value = '__custom__';
+        if (customEl) { customEl.value = currentVal; customEl.style.display = 'block'; }
+      } else if (customEl) {
+        customEl.style.display = 'none';
+      }
+    }
+  } else if (mode === 'Cash') {
+    selectEl.value = 'Anwar OD';
+    if (customEl) customEl.style.display = 'none';
+  } else if (mode === 'UPI' || mode === 'Bank') {
+    selectEl.value = 'Roost and Rest';
+    if (customEl) customEl.style.display = 'none';
+  } else if (customEl) {
+    customEl.style.display = 'none';
+  }
 };
 
 window.onReceiverDropdownChange = function(selectEl, customInputId) {
   const customEl = document.getElementById(customInputId);
   if (!customEl) return;
+  if (selectEl.value === '__addnew__') {
+    window.quickAddNewPaymentReceiver(selectEl.id);
+    return;
+  }
   if (selectEl.value === '__custom__') {
     customEl.style.display = 'block';
     customEl.value = '';
@@ -6283,6 +6380,7 @@ window.getReceiverValue = function(selectId, customInputId) {
   if (sel.value === '__custom__') {
     return document.getElementById(customInputId)?.value?.trim() || '';
   }
+  if (sel.value === '__addnew__') return '';
   return sel.value || '';
 };
 
@@ -6375,8 +6473,15 @@ function showPaymentModal(bkId) {
         </select>
       </div>
       
-      <div class="form-group"><label>💰 Received By *</label>
-        <select id="payReceivedBy" onchange="if(window.onReceiverDropdownChange) onReceiverDropdownChange(this, 'payReceivedByCustom')" style="width:100%;padding:8px;border-radius:6px;border:1px solid #CBD5E1;">
+      <div class="form-group">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="margin:0;font-weight:700;">💰 Received By *</label>
+          <div style="display:flex;gap:4px;">
+            <button type="button" onclick="quickAddNewPaymentReceiver('payReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
+            <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
+          </div>
+        </div>
+        <select id="payReceivedBy" onchange="if(window.onReceiverDropdownChange) onReceiverDropdownChange(this, 'payReceivedByCustom')" style="width:100%;padding:8px;border-radius:6px;border:1px solid #CBD5E1;font-weight:600;">
           <option value="">-- Select who received --</option>
         </select>
         <input id="payReceivedByCustom" type="text" placeholder="Type name..." style="display:none;margin-top:6px;width:100%;padding:8px;border-radius:6px;border:1px solid #CBD5E1;">
@@ -8336,8 +8441,9 @@ async function autoFixOverflowPayments(silent = false) {
 window.autoFixOverflowPayments = autoFixOverflowPayments;
 
 // ═══════════════════════════════════════════════════════════
-// 💰 ADVANCE "RECEIVED BY" DROPDOWN (Cash Holder Integration)
+// 💰 ADVANCE "RECEIVED BY" & PAYMENT RECEIVER SYSTEM (Cash Holder Integration)
 // ═══════════════════════════════════════════════════════════
+
 window.onAdvanceModeChange = async function() {
   const mode = document.getElementById('advMode')?.value;
   const row = document.getElementById('advReceivedByRow');
@@ -8346,9 +8452,14 @@ window.onAdvanceModeChange = async function() {
   const custom = document.getElementById('advReceivedByCustom');
   
   if (!row || !dropdown) return;
-  if (!mode) { row.style.display = 'none'; return; }
+  
+  if (!mode) { 
+    row.style.display = 'none'; 
+    return; 
+  }
   row.style.display = 'grid';
   
+  // Update label based on mode
   if (label) {
     if (mode === 'Cash') label.innerHTML = '💵 Cash Received By *';
     else if (mode === 'UPI') label.innerHTML = '📱 UPI Received In *';
@@ -8356,35 +8467,165 @@ window.onAdvanceModeChange = async function() {
     else label.innerHTML = '💰 Received By *';
   }
   
-  const isCash = (mode === 'Cash');
-  dropdown.innerHTML = `
-    <option value="Roost and Rest" ${!isCash ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
-    <option value="Anwar OD" ${isCash ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
-  `;
-  dropdown.value = isCash ? 'Anwar OD' : 'Roost and Rest';
+  const data = await loadReceiveByHolders();
+  const finalHolders = data.owners || [];
+  const managers = data.manager || [];
+  const receivers = data.employees || [];
+  const curVal = dropdown.value;
+  
+  let html = '<option value="">-- Select Receiver --</option>';
+  html += '<optgroup label="🏦 Overdraft Account">';
+  html += '<option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>';
+  html += '</optgroup>';
+  
+  if (finalHolders.length) {
+    html += '<optgroup label="🏢 Company / Bank Accounts">';
+    finalHolders.filter(n => n !== 'Anwar OD').forEach(n => html += `<option value="${n}">${n}</option>`);
+    html += '</optgroup>';
+  }
+  if (managers.length) {
+    html += '<optgroup label="👨‍💼 Managers & Owners">';
+    managers.forEach(n => html += `<option value="${n}">${n}</option>`);
+    html += '</optgroup>';
+  }
+  if (receivers.length) {
+    html += '<optgroup label="👥 Staff & Team Receivers">';
+    receivers.forEach(n => html += `<option value="${n}">${n}</option>`);
+    html += '</optgroup>';
+  }
+  
+  html += '<option value="__addnew__">➕ Add New Payment Receiver...</option>';
+  html += '<option value="__custom__">✏️ Custom Receiver Name...</option>';
+  dropdown.innerHTML = html;
+  
+  if (curVal && curVal !== '__addnew__' && curVal !== '__custom__') {
+    dropdown.value = curVal;
+  } else if (mode === 'Cash') {
+    dropdown.value = 'Anwar OD';
+  } else if (mode === 'UPI' || mode === 'Bank' || mode === 'Airbnb Payout') {
+    dropdown.value = 'Roost and Rest';
+  }
+  
   if (custom) { custom.style.display = 'none'; custom.value = ''; }
 };
 
 window.onAdvReceivedByChange = function() {
+  const dropdown = document.getElementById('advReceivedBy');
   const custom = document.getElementById('advReceivedByCustom');
-  if (custom) { custom.style.display = 'none'; custom.value = ''; }
+  if (!dropdown) return;
+  if (dropdown.value === '__addnew__') {
+    window.quickAddNewPaymentReceiver('advReceivedBy');
+    return;
+  }
+  if (dropdown.value === '__custom__') {
+    if (custom) {
+      custom.style.display = 'block';
+      setTimeout(() => custom.focus(), 50);
+    }
+  } else {
+    if (custom) {
+      custom.style.display = 'none';
+      custom.value = '';
+    }
+  }
 };
 
+// Quick add new payment receiver (persists to cash_holders)
+window.quickAddNewPaymentReceiver = async function(targetSelectId) {
+  const name = prompt('➕ Enter New Payment Receiver Name:\n(e.g., Staff Name, Caretaker Name, or Bank/QR Name)');
+  if (!name || !name.trim()) {
+    if (targetSelectId) {
+      const sel = document.getElementById(targetSelectId);
+      if (sel && sel.value === '__addnew__') sel.value = '';
+    }
+    return;
+  }
+  const cleanName = name.trim();
+  
+  const typeChoice = prompt(
+    `Select category for "${cleanName}":\n\n1 = 👥 Staff / Caretaker / Receiver\n2 = 👨‍💼 Manager\n3 = 🏢 Company / Bank / Owner\n\nEnter 1, 2, or 3:`,
+    '1'
+  );
+  
+  let type = 'receiver';
+  let limit = 10000;
+  if (typeChoice === '2') {
+    type = 'manager';
+    limit = 50000;
+  } else if (typeChoice === '3') {
+    type = 'final';
+    limit = 999999;
+  }
+
+  const payload = {
+    name: cleanName,
+    type: type,
+    is_active: true,
+    spending_limit: limit
+  };
+
+  const res = (typeof window.safeDbInsert === 'function')
+    ? await window.safeDbInsert('cash_holders', payload)
+    : await sb.from('cash_holders').insert(payload);
+
+  if (res && res.error) {
+    alert('❌ Error adding receiver: ' + res.error.message);
+    return;
+  }
+
+  // Refresh caches
+  window._receiveHoldersCache = null;
+  window._cashHoldersCache = null;
+
+  if (window.fsn?.success) {
+    fsn.success('Receiver Added', `✅ "${cleanName}" added as payment receiver!`);
+  } else {
+    alert(`✅ "${cleanName}" added as payment receiver!`);
+  }
+
+  if (targetSelectId) {
+    const sel = document.getElementById(targetSelectId);
+    if (targetSelectId === 'advReceivedBy') {
+      if (typeof window.onAdvanceModeChange === 'function') await window.onAdvanceModeChange();
+      if (typeof window.loadSmartReceivers === 'function') await window.loadSmartReceivers();
+    } else if (targetSelectId === 'payReceivedBy') {
+      const mode = document.getElementById('payMode')?.value || 'Cash';
+      await window.populateReceivedByDropdown(sel, mode, cleanName);
+    } else if (targetSelectId === 'editPayReceivedBy') {
+      const mode = document.getElementById('editPayMode')?.value || 'Cash';
+      await window.populateReceivedByDropdown(sel, mode, cleanName);
+    }
+    const updatedSel = document.getElementById(targetSelectId);
+    if (updatedSel) updatedSel.value = cleanName;
+  }
+};
+
+window.quickAddCashHolder = function() {
+  return window.quickAddNewPaymentReceiver('advReceivedBy');
+};
+
+// Get advance received_by value (for save)
 window.getAdvReceivedBy = function() {
   const dropdown = document.getElementById('advReceivedBy');
-  return dropdown?.value || 'Roost and Rest';
+  if (!dropdown) return null;
+  if (dropdown.value === '__custom__') {
+    return document.getElementById('advReceivedByCustom')?.value?.trim() || null;
+  }
+  if (dropdown.value === '__addnew__') return null;
+  return dropdown.value || 'Roost and Rest';
 };
 
 // ═══════════════════════════════════════════════════════════
 // 💰 EDIT PAYMENT — Received By dropdown handler
 // ═══════════════════════════════════════════════════════════
 window.onEditPayModeChange = async function() {
-  const mode = document.getElementById('editPayMode')?.value;
+  const mode = document.getElementById('editPayMode')?.value || 'Cash';
   const dropdown = document.getElementById('editPayReceivedBy');
   const label = document.getElementById('editReceivedByLabel');
   const custom = document.getElementById('editPayReceivedByCustom');
   
   if (!dropdown) return;
+  
   if (label) {
     if (mode === 'Cash') label.innerHTML = '💵 Cash Received By *';
     else if (mode === 'UPI') label.innerHTML = '📱 UPI Received In *';
@@ -8392,21 +8633,256 @@ window.onEditPayModeChange = async function() {
     else label.innerHTML = '💰 Received By *';
   }
   
-  const isCash = (mode === 'Cash');
-  dropdown.innerHTML = `
-    <option value="Roost and Rest" ${!isCash ? 'selected' : ''}>🏦 Roost and Rest (Online / Company A/c)</option>
-    <option value="Anwar OD" ${isCash ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>
-  `;
-  dropdown.value = isCash ? 'Anwar OD' : 'Roost and Rest';
-  if (custom) { custom.style.display = 'none'; custom.value = ''; }
+  const curr = dropdown.value || '';
+  await window.populateReceivedByDropdown(dropdown, mode, curr, custom);
 };
 
 window.onEditReceivedByChange = function() {
+  const dropdown = document.getElementById('editPayReceivedBy');
   const custom = document.getElementById('editPayReceivedByCustom');
-  if (custom) { custom.style.display = 'none'; custom.value = ''; }
+  if (!dropdown) return;
+  if (dropdown.value === '__addnew__') {
+    window.quickAddNewPaymentReceiver('editPayReceivedBy');
+    return;
+  }
+  if (dropdown.value === '__custom__') {
+    if (custom) {
+      custom.style.display = 'block';
+      setTimeout(() => custom.focus(), 50);
+    }
+  } else {
+    if (custom) {
+      custom.style.display = 'none';
+      custom.value = '';
+    }
+  }
 };
 
-console.log('✅ Payment Received-By (Roost and Rest & Anwar OD) module loaded');
+// ═══════════════════════════════════════════════════════════
+// 📊 REAL-TIME PAYMENT RECEIVER & CASH IN HAND TRACKER MODAL
+// ═══════════════════════════════════════════════════════════
+window.openRealTimeReceiverLedgerModal = async function() {
+  const existing = document.getElementById('receiverLedgerModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'receiverLedgerModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;';
+  
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:850px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);padding:24px;position:relative;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #E2E8F0;padding-bottom:16px;margin-bottom:16px;">
+        <div>
+          <h2 style="margin:0;font-size:20px;font-weight:800;color:#0F172A;display:flex;align-items:center;gap:8px;">
+            💰 Real-Time Payment Receivers & Cash Tracker
+          </h2>
+          <div style="font-size:12px;color:#64748B;margin-top:4px;">
+            Live balance of all cash in hand & online payments across team members
+          </div>
+        </div>
+        <button onclick="document.getElementById('receiverLedgerModal')?.remove()" style="background:#F1F5F9;border:none;border-radius:8px;width:32px;height:32px;font-size:16px;font-weight:700;color:#64748B;cursor:pointer;">✕</button>
+      </div>
+
+      <div id="receiverLedgerModalContent">
+        <div style="text-align:center;padding:40px;color:#64748B;">⏳ Loading real-time balances from database...</div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  try {
+    const [{ data: payments }, { data: holders }, { data: handovers }] = await Promise.all([
+      sb.from('payment_history').select('id, amount, payment_mode, received_by, handover_status, payment_date, verification_status').neq('verification_status', 'rejected'),
+      sb.from('cash_holders').select('*').eq('is_active', true),
+      sb.from('cash_handovers').select('*')
+    ]);
+
+    const stats = {};
+    const getOrInit = (name) => {
+      if (!name) name = 'Unassigned';
+      if (!stats[name]) {
+        stats[name] = {
+          name,
+          cashInHand: 0,
+          cashHandedOver: 0,
+          upiOnline: 0,
+          totalCollected: 0,
+          handoversGiven: 0,
+          handoversRecv: 0
+        };
+      }
+      return stats[name];
+    };
+
+    (holders || []).forEach(h => getOrInit(h.name));
+
+    (payments || []).forEach(p => {
+      const rec = (p.received_by || 'Unassigned').trim();
+      const s = getOrInit(rec);
+      const amt = Number(p.amount || 0);
+      s.totalCollected += amt;
+      if (p.payment_mode === 'Cash') {
+        if (p.handover_status === 'in_hand') s.cashInHand += amt;
+        else s.cashHandedOver += amt;
+      } else {
+        s.upiOnline += amt;
+      }
+    });
+
+    (handovers || []).forEach(h => {
+      const amt = Number(h.amount || 0);
+      if (h.from_person && stats[h.from_person]) {
+        stats[h.from_person].handoversGiven += amt;
+        stats[h.from_person].cashInHand = Math.max(0, stats[h.from_person].cashInHand - amt);
+      }
+      if (h.to_person && stats[h.to_person]) {
+        stats[h.to_person].handoversRecv += amt;
+      }
+    });
+
+    const list = Object.values(stats).filter(x => x.totalCollected > 0 || x.cashInHand > 0 || (holders || []).some(h => h.name === x.name))
+      .sort((a, b) => (b.cashInHand * 1000 + b.totalCollected) - (a.cashInHand * 1000 + a.totalCollected));
+
+    const totalCashInHand = list.reduce((sum, x) => sum + x.cashInHand, 0);
+    const totalCollected = list.reduce((sum, x) => sum + x.totalCollected, 0);
+    const totalOnline = list.reduce((sum, x) => sum + x.upiOnline, 0);
+
+    const contentEl = document.getElementById('receiverLedgerModalContent');
+    if (!contentEl) return;
+
+    contentEl.innerHTML = `
+      <!-- KPI Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+        <div style="background:#ECFDF5;border:1px solid #A7F3D0;border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;color:#047857;text-transform:uppercase;">💵 Total Cash in Hand</div>
+          <div style="font-size:22px;font-weight:800;color:#065F46;margin-top:4px;">₹${totalCashInHand.toLocaleString('en-IN')}</div>
+          <div style="font-size:11px;color:#047857;margin-top:2px;">Pending handovers with staff</div>
+        </div>
+        <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;color:#1D4ED8;text-transform:uppercase;">📱 UPI & Online Total</div>
+          <div style="font-size:22px;font-weight:800;color:#1E40AF;margin-top:4px;">₹${totalOnline.toLocaleString('en-IN')}</div>
+          <div style="font-size:11px;color:#1D4ED8;margin-top:2px;">Direct bank / UPI received</div>
+        </div>
+        <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;padding:14px;">
+          <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;">💰 Gross Collected</div>
+          <div style="font-size:22px;font-weight:800;color:#0F172A;margin-top:4px;">₹${totalCollected.toLocaleString('en-IN')}</div>
+          <div style="font-size:11px;color:#64748B;margin-top:2px;">Across all payment modes</div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+        <div style="font-weight:700;font-size:14px;color:#1E293B;">👥 Receiver Breakdown (${list.length} Members)</div>
+        <div style="display:flex;gap:6px;">
+          <button type="button" onclick="quickAddNewPaymentReceiver().then(()=>openRealTimeReceiverLedgerModal())" style="background:#2563EB;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">➕ Add New Receiver</button>
+          <button type="button" onclick="navigate('my-ledger');document.getElementById('receiverLedgerModal')?.remove();" style="background:#F1F5F9;color:#334155;border:1px solid #CBD5E1;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">📜 Full Ledger Page</button>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div style="overflow-x:auto;border:1px solid #E2E8F0;border-radius:10px;">
+        <table style="width:100%;border-collapse:collapse;font-size:12.5px;text-align:left;">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:1.5px solid #E2E8F0;color:#475569;">
+              <th style="padding:10px 12px;">Receiver Name</th>
+              <th style="padding:10px 12px;text-align:right;">💵 Cash in Hand</th>
+              <th style="padding:10px 12px;text-align:right;">📱 UPI / Bank</th>
+              <th style="padding:10px 12px;text-align:right;">🔄 Handed Over</th>
+              <th style="padding:10px 12px;text-align:right;">💰 Total Collected</th>
+              <th style="padding:10px 12px;text-align:center;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(r => {
+              const hasCash = r.cashInHand > 0;
+              return `
+                <tr style="border-bottom:1px solid #F1F5F9;${hasCash ? 'background:#FEFCE8;' : ''}">
+                  <td style="padding:10px 12px;font-weight:700;color:#0F172A;">
+                    ${escapeHtml(r.name)}
+                    ${hasCash ? '<span style="background:#FDE047;color:#854D0E;font-size:10px;font-weight:800;padding:2px 6px;border-radius:10px;margin-left:6px;">HAS CASH</span>' : ''}
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;font-weight:800;color:${hasCash ? '#DC2626' : '#64748B'};">
+                    ₹${r.cashInHand.toLocaleString('en-IN')}
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;font-weight:600;color:#1D4ED8;">
+                    ₹${r.upiOnline.toLocaleString('en-IN')}
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;color:#64748B;">
+                    ₹${(r.cashHandedOver + r.handoversGiven).toLocaleString('en-IN')}
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;font-weight:700;color:#059669;">
+                    ₹${r.totalCollected.toLocaleString('en-IN')}
+                  </td>
+                  <td style="padding:10px 12px;text-align:center;">
+                    ${hasCash ? `<button type="button" onclick="window.quickHandoverPrompt('${r.name}', ${r.cashInHand})" style="background:#059669;color:#fff;border:none;border-radius:4px;padding:4px 8px;font-size:11px;font-weight:700;cursor:pointer;">Take Handover</button>` : '<span style="color:#94A3B8;font-size:11px;">Clear</span>'}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (err) {
+    const contentEl = document.getElementById('receiverLedgerModalContent');
+    if (contentEl) contentEl.innerHTML = `<div class="error" style="color:#DC2626;padding:20px;">Failed to load balances: ${err.message}</div>`;
+  }
+};
+
+window.quickHandoverPrompt = async function(fromPerson, defaultAmt) {
+  const amtStr = prompt(`💵 Handover Cash from "${fromPerson}":\nEnter amount handed over:`, String(defaultAmt || 0));
+  if (!amtStr) return;
+  const amt = parseFloat(amtStr);
+  if (!amt || amt <= 0) { alert('Invalid amount'); return; }
+
+  const toPerson = prompt('Received by (e.g. Anwar, Shahenshah, Admin):', SESSION.userName || 'Anwar');
+  if (!toPerson || !toPerson.trim()) return;
+
+  const notes = prompt('Handover notes (optional):', 'Counter cash handed over');
+
+  const { error } = await sb.from('cash_handovers').insert({
+    from_person: fromPerson,
+    to_person: toPerson.trim(),
+    amount: amt,
+    handover_date: new Date().toISOString().slice(0, 10),
+    notes: notes || null,
+    created_by: SESSION.userId || null
+  });
+
+  if (error) {
+    alert('❌ Error recording handover: ' + error.message);
+    return;
+  }
+
+  // Update in_hand records
+  try {
+    const { data: inHandPays } = await sb.from('payment_history')
+      .select('id, amount')
+      .eq('received_by', fromPerson)
+      .eq('handover_status', 'in_hand')
+      .order('payment_date', { ascending: true });
+
+    let remainingToSettle = amt;
+    for (const p of (inHandPays || [])) {
+      if (remainingToSettle <= 0) break;
+      await sb.from('payment_history').update({ handover_status: 'handed_over' }).eq('id', p.id);
+      remainingToSettle -= Number(p.amount || 0);
+    }
+  } catch(e) { console.warn('Auto handover status update error:', e); }
+
+  if (window.fsn?.success) fsn.success('Handover Saved', `✅ ₹${amt.toLocaleString('en-IN')} handed over from ${fromPerson} to ${toPerson.trim()}`);
+  else alert(`✅ ₹${amt.toLocaleString('en-IN')} handed over from ${fromPerson} to ${toPerson.trim()}`);
+
+  if (document.getElementById('receiverLedgerModal')) {
+    window.openRealTimeReceiverLedgerModal();
+  }
+  if (typeof window.renderMyLedger === 'function') {
+    window.renderMyLedger();
+  }
+};
+
+console.log('✅ Payment Received-By module loaded successfully');
 
 // ═══════════════════════════════════════════════════════════
 // 🌟 RETURNING GUEST AUTO-DETECTION & 1-CLICK AUTO-FILL ENGINE
