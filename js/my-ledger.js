@@ -53,7 +53,7 @@ window.normalizeReceiverName = function(raw) {
 // ═══ Custom Receivers Data Layer (Uses app_settings + localStorage) ═══
 window.getRoostCustomReceivers = async function() {
   if (window._roostCustomReceiversCache) return window._roostCustomReceiversCache;
-  let list = ['Shahenshah'];
+  let list = [];
   try {
     const { data } = await sb.from('app_settings').select('value').eq('key', 'custom_payment_receivers').maybeSingle();
     if (data && data.value) {
@@ -365,7 +365,7 @@ window.renderMyLedger = async function() {
             <span style="font-size:12px; color:#64748b; margin-left:6px;">(Add caretakers, partners or non-employees here — available instantly in booking & payment dropdowns)</span>
           </div>
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <input type="text" id="inlineNewReceiverName" placeholder="Enter Receiver Name (e.g. Shahenshah, Caretaker Ramesh...)" 
+            <input type="text" id="inlineNewReceiverName" placeholder="Enter Receiver Name (e.g. Caretaker Ramesh, Property Manager...)" 
                    style="flex:1; min-width:260px; padding:9px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none;"
                    onkeydown="if(event.key==='Enter') window.saveInlineCustomReceiver()" />
             <button type="button" onclick="window.saveInlineCustomReceiver()" 

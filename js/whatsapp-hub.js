@@ -37,14 +37,14 @@
       'VIL-104': '120363427551867491@g.us', // The Green House -> Roost & Rest Owners Group
       'VIL-106': '120363427551867491@g.us', // Green forest View -> Roost & Rest Owners Group
       'VIL-107': '120363427551867491@g.us', // The Velvet House -> Roost & Rest Owners Group
-      'LUL-101': '120363427551867491@g.us', // The Luxe Haven (1BHK) -> Roost & Rest Owners Group (Anwar & Shahenshah)
+      'LUL-101': '120363427551867491@g.us', // The Luxe Haven (1BHK) -> Roost & Rest Owners Group (Mr. Anwar Ahmad)
       'LUL-402': '120363427551867491@g.us', // Celebrity Garden -> Roost & Rest Owners Group
       'VIL-103': '120363427551867491@g.us', // The Pink House -> Roost & Rest Owners Group
       'VIL-104': '120363427551867491@g.us', // The Green House -> Roost & Rest Owners Group
       'VIL-105': '120363427551867491@g.us', // The Yellow House -> Roost & Rest Owners Group
-      'VIL-106': '120363427551867491@g.us', // Green Forest View -> Roost & Rest Owners Group (Anwar & Shahenshah)
-      'VIL-107': '120363427551867491@g.us', // The Velvet House -> Roost & Rest Owners Group (Anwar & Shahenshah)
-      'VIL-108': '120363427551867491@g.us', // Pink Paradise Villa -> Roost & Rest Owners Group (Anwar & Shahenshah)
+      'VIL-106': '120363427551867491@g.us', // Green Forest View -> Roost & Rest Owners Group (Mr. Anwar Ahmad)
+      'VIL-107': '120363427551867491@g.us', // The Velvet House -> Roost & Rest Owners Group (Mr. Anwar Ahmad)
+      'VIL-108': '120363427551867491@g.us', // Pink Paradise Villa -> Roost & Rest Owners Group (Mr. Anwar Ahmad)
       'VIL-101': '120363412244446528@g.us', // Gomti Grand Villa -> Afzal & Hazi Group
       'VIL-102': '120363412244446528@g.us', // Royal White House -> Afzal & Hazi Group
       'GOM-102': '120363427249232463@g.us', // Black Beauty -> Alam Sahab
@@ -69,8 +69,8 @@
       'The Green House': '120363427551867491@g.us',
       'The Pink House': '120363427551867491@g.us',
       'Yellow House': '120363427551867491@g.us',
-      'Anwar& Shahenshah': '120363427551867491@g.us',
-      'Anwar & Shahenshah': '120363427551867491@g.us',
+      'Anwar': '120363427551867491@g.us',
+      'Mr. Anwar Ahmad': '120363427551867491@g.us',
       'Roost & Rest — Sabir Bhai': '120363430510952329@g.us',
       'Sabir Bhai': '120363430510952329@g.us',
       'Roost & Rest — Afzal & Hazi Group': '120363412244446528@g.us',
@@ -599,7 +599,7 @@
       }
     }
 
-    // Special fallback for Yellow House / Villas / 1BHK Luxe Haven (Anwar & Shahenshah -> Roost & Rest Owners Group)
+    // Special fallback for Yellow House / Villas / 1BHK Luxe Haven (Roost & Rest Owners Group)
     if (!target && (roomId === 'VIL-105' || roomId === 'LUL-101' || roomId === 'LUL-402' || propDisplay.toLowerCase().includes('yellow') || propDisplay.toLowerCase().includes('luxe haven') || propDisplay.toLowerCase().includes('pink paradise') || propDisplay.toLowerCase().includes('velvet') || propDisplay.toLowerCase().includes('green forest') || roomId.startsWith('VIL-'))) {
       target = '120363427551867491@g.us';
     }

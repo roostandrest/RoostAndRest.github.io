@@ -3327,7 +3327,7 @@ window.loadSmartReceivers = async function() {
 
   const data = (typeof loadReceiveByHolders === 'function')
     ? await loadReceiveByHolders()
-    : { company: 'Company / Airbnb', defaultOD: 'Anwar-OD', custom: ['Shahenshah'], employees: [] };
+    : { company: 'Company / Airbnb', defaultOD: 'Anwar-OD', custom: [], employees: [] };
 
   const companyAcc = data.company || 'Company / Airbnb';
   const defaultOD = data.defaultOD || 'Anwar-OD';
@@ -4077,7 +4077,7 @@ window.saveMultiSmartBooking = async function() {
     if (totalAdvance > 0) {
       const bksToProcess = (createdBookings && createdBookings.length > 0) ? createdBookings : roomInserts;
       const payDate = new Date().toISOString().slice(0, 10);
-      const handoverStatus = (advMode === 'Cash' && !['Anwar', 'Shahenshah'].includes(advReceivedBy)) ? 'in_hand' : 'handed_over';
+      const handoverStatus = (advMode === 'Cash' && !['Anwar-OD'].includes(advReceivedBy)) ? 'in_hand' : 'handed_over';
       const meta = typeof approvalMeta === 'function' ? approvalMeta() : {};
 
       for (const cbk of bksToProcess) {

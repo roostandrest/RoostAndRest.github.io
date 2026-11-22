@@ -4394,7 +4394,7 @@ async function saveBooking() {
 
     const advMode = document.getElementById('advMode').value;
     const receivedBy = (window.getAdvReceivedBy && window.getAdvReceivedBy()) || null;
-    const handoverStatus = (advMode === 'Cash' && !['Anwar','Shahenshah'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
+    const handoverStatus = (advMode === 'Cash' && !['Anwar-OD'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
     
     // ✅ VALIDATION: If advance > 0, must select who received
     if (adv > 0 && !receivedBy) {
@@ -4582,6 +4582,7 @@ async function saveBooking() {
       check_in_time: checkInTime, check_out_time: checkOutTime,
       checkout_confirmed: checkoutConfirmed,
       guests: gs, pets: petCount, per_day_rate: perDayRate, total_amount: tot,
+      paid_amount: adv, balance_amount: Math.max(0, tot - adv), advance_paid: adv,
       has_vehicle: hasVehicle, vehicle_name: vehicleName, vehicle_number: vehicleNumber,
       vehicle_photo_path: vehiclePhotoPath,
       payment_status: payStatus, notes: finalNotes || null,
@@ -4788,7 +4789,19 @@ async function saveBooking() {
     }
 
     window._rebookedGuestData = null;
-    renderManageBookings();
+
+    // 🚨 CRITICAL: Invalidate caches and refresh so search and views show the new booking immediately
+    window._allBookings = null;
+    if (window._sbkState) {
+      window._sbkState.cachedBookings = null;
+      window._sbkState.cachedPaidMap = null;
+    }
+    if (typeof window.renderSmartManageBookings === 'function') {
+      await window.renderSmartManageBookings(true);
+    }
+    if (typeof renderManageBookings === 'function') {
+      renderManageBookings();
+    }
     if (window.UHHSODManager && window.UHHSODManager.calculateBalance) window.UHHSODManager.calculateBalance();
     if (typeof window.notifyDataChanged === 'function') window.notifyDataChanged();
 
@@ -6249,7 +6262,7 @@ async function loadReceiveByHolders() {
   const [customList, { data: emps }] = await Promise.all([
     (typeof window.getRoostCustomReceivers === 'function') 
       ? window.getRoostCustomReceivers() 
-      : Promise.resolve(['Shahenshah']),
+      : Promise.resolve([]),
     sb.from('employees').select('name, role').eq('status', 'Active')
   ]);
   
@@ -6680,7 +6693,7 @@ async function savePaymentModal(bkId) {
       booking_id: bkId, amount: paymentForCurrent,
       payment_mode: mode,
       received_by: receivedBy,
-      handover_status: (mode === "Cash" && !["Anwar-OD","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+      handover_status: (mode === "Cash" && !["Anwar-OD"].includes(receivedBy)) ? "in_hand" : "handed_over",
       payment_date: payDate,
       paid_at: new Date().toISOString(),
       notes: finalPayNotes,
@@ -6750,7 +6763,7 @@ async function savePaymentModal(bkId) {
         payment_mode: mode,
         payment_date: payDate,
         paid_at: new Date().toISOString(),
-        received_by: receivedBy || "Anwar", handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+        received_by: receivedBy || "Anwar-OD", handover_status: (mode === "Cash" && !["Anwar-OD"].includes(receivedBy)) ? "in_hand" : "handed_over",
         notes: (userNotes ? userNotes + ' | ' : '') + `Auto-adjusted from booking ${bkId}`,
         recorded_by: userAuditName,
         created_by: SESSION.userId,
@@ -6778,7 +6791,7 @@ async function savePaymentModal(bkId) {
       payment_date: payDate,
       paid_at: new Date().toISOString(),
       notes: (userNotes ? userNotes + ' | ' : '') + 'Advance / extra payment',
-      received_by: receivedBy || "Anwar", handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+      received_by: receivedBy || "Anwar-OD", handover_status: (mode === "Cash" && !["Anwar-OD"].includes(receivedBy)) ? "in_hand" : "handed_over",
       recorded_by: userAuditName,
       created_by: SESSION.userId,
       ...approvalMeta()
@@ -6789,6 +6802,19 @@ async function savePaymentModal(bkId) {
 
   window._isSavingPayment = false;
   document.querySelector('.modal-overlay')?.remove();
+
+  // 🚨 Invalidate caches so payment reflects instantly across smart bookings & search
+  window._allBookings = null;
+  if (window._sbkState) {
+    window._sbkState.cachedBookings = null;
+    window._sbkState.cachedPaidMap = null;
+  }
+  if (typeof window.renderSmartManageBookings === 'function') {
+    await window.renderSmartManageBookings(true);
+  }
+  if (typeof window.openBookingDrawer === 'function' && document.getElementById('sbkDrawerContainer')) {
+    window.openBookingDrawer(bkId);
+  }
 
   // Show distribution summary
   if (distributed.length > 0) {
@@ -6895,7 +6921,7 @@ async function saveEditPayment(payId, bkId) {
     return;
   }
   
-  const handoverStatus = (mode === 'Cash' && !['Anwar','Shahenshah'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
+  const handoverStatus = (mode === 'Cash' && !['Anwar-OD'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
   
   const payPatch = {
     amount: amount,
@@ -6954,8 +6980,15 @@ async function recalcPaymentStatus(bkId) {
   const { data: b } = await sb.from('guest_register').select('total_amount').eq('booking_id', bkId).single();
   const { data: p } = await sb.from('payment_history').select('amount, verification_status').eq('booking_id', bkId).neq('verification_status', 'rejected');
   const paid = (p || []).reduce((s, x) => s + (x.amount || 0), 0);
-  const st = paid >= (b?.total_amount || 0) && b?.total_amount > 0 ? 'Paid' : (paid > 0 ? 'Partial' : 'Unpaid');
-  await sb.from('guest_register').update({ payment_status: st }).eq('booking_id', bkId);
+  const total = b?.total_amount || 0;
+  const due = Math.max(0, total - paid);
+  const st = paid >= total && total > 0 ? 'Paid' : (paid > 0 ? 'Partial' : 'Unpaid');
+  await sb.from('guest_register').update({ 
+    payment_status: st,
+    paid_amount: paid,
+    balance_amount: due,
+    advance_paid: paid
+  }).eq('booking_id', bkId);
 }
 
 function onPeriodChg() {
@@ -8710,7 +8743,7 @@ window.quickHandoverPrompt = async function(fromPerson, defaultAmt) {
   const amt = parseFloat(amtStr);
   if (!amt || amt <= 0) { alert('Invalid amount'); return; }
 
-  const toPerson = prompt('Received by (e.g. Anwar, Shahenshah, Admin):', SESSION.userName || 'Anwar');
+  const toPerson = prompt('Received by (e.g. Anwar-OD, Admin):', 'Anwar-OD');
   if (!toPerson || !toPerson.trim()) return;
 
   const notes = prompt('Handover notes (optional):', 'Counter cash handed over');
