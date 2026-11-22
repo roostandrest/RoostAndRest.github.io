@@ -676,18 +676,22 @@ window.sb = sb;
     const builder = rawFrom(table);
 
     // Auto-sanitizing insert
-    const origInsert = builder.insert.bind(builder);
-    builder.insert = function(payload, opts) {
-      const clean = sanitizePayload(table, payload);
-      return wrapFilterBuilder(origInsert(clean, opts), table);
-    };
+    if (typeof builder.insert === 'function') {
+      const origInsert = builder.insert.bind(builder);
+      builder.insert = function(payload, opts) {
+        const clean = sanitizePayload(table, payload);
+        return wrapFilterBuilder(origInsert(clean, opts), table);
+      };
+    }
 
     // Auto-sanitizing update
-    const origUpdate = builder.update.bind(builder);
-    builder.update = function(payload, opts) {
-      const clean = sanitizePayload(table, payload);
-      return wrapFilterBuilder(origUpdate(clean, opts), table);
-    };
+    if (typeof builder.update === 'function') {
+      const origUpdate = builder.update.bind(builder);
+      builder.update = function(payload, opts) {
+        const clean = sanitizePayload(table, payload);
+        return wrapFilterBuilder(origUpdate(clean, opts), table);
+      };
+    }
 
     // Auto-sanitizing upsert
     if (typeof builder.upsert === 'function') {
@@ -699,56 +703,50 @@ window.sb = sb;
     }
 
     // Auto-sanitizing delete
-    const origDelete = builder.delete.bind(builder);
-    builder.delete = function(opts) {
-      return wrapFilterBuilder(origDelete(opts), table);
-    };
+    if (typeof builder.delete === 'function') {
+      const origDelete = builder.delete.bind(builder);
+      builder.delete = function(opts) {
+        return wrapFilterBuilder(origDelete(opts), table);
+      };
+    }
 
     // Auto-sanitizing select
-    const origSelect = builder.select.bind(builder);
-    builder.select = function(cols, opts) {
-      let cleanCols = cols;
-      if (typeof cleanCols === 'string') {
-        if (table === 'expenses') {
-          cleanCols = cleanCols
-            .replace(/,\s*expense_categories\([^\)]*\)/gi, '')
-            .replace(/expense_categories\([^\)]*\),?\s*/gi, '')
-            .replace(/,\s*rooms\([^\)]*\)/gi, '')
-            .replace(/rooms\([^\)]*\),?\s*/gi, '')
-            .replace(/\bcategory_id\b/g, 'category')
-            .replace(/\bentry_date\b/g, 'expense_date')
-            .replace(/\bnotes\b/g, 'description');
-        } else if (table === 'employees') {
-          cleanCols = cleanCols
-            .replace(/\bsalary\b/g, 'monthly_salary')
-            .replace(/\bis_active\b/g, 'status');
-        } else if (table === 'maintenance_log') {
-          cleanCols = cleanCols
-            .replace(/,\s*rooms\([^\)]*\)/gi, '')
-            .replace(/rooms\([^\)]*\),?\s*/gi, '');
-        } else if (table === 'laundry_records') {
-          cleanCols = cleanCols
-            .replace(/\brecord_date\b/g, 'sent_date')
-            .replace(/\btotal_amount\b/g, 'total_cost');
-        } else if (table === 'company_advances') {
-          cleanCols = cleanCols
-            .replace(/\bdate_given\b/g, 'date')
-            .replace(/\badvance_amount\b/g, 'amount')
-            .replace(/\breason\b/g, 'notes');
+    if (typeof builder.select === 'function') {
+      const origSelect = builder.select.bind(builder);
+      builder.select = function(cols, opts) {
+        let cleanCols = cols;
+        if (typeof cleanCols === 'string') {
+          if (table === 'expenses') {
+            cleanCols = cleanCols
+              .replace(/,\s*expense_categories\([^\)]*\)/gi, '')
+              .replace(/expense_categories\([^\)]*\),?\s*/gi, '')
+              .replace(/,\s*rooms\([^\)]*\)/gi, '')
+              .replace(/rooms\([^\)]*\),?\s*/gi, '')
+              .replace(/\bcategory_id\b/g, 'category')
+              .replace(/\bentry_date\b/g, 'expense_date')
+              .replace(/\bnotes\b/g, 'description');
+          } else if (table === 'employees') {
+            cleanCols = cleanCols
+              .replace(/\bsalary\b/g, 'monthly_salary')
+              .replace(/\bis_active\b/g, 'status');
+          } else if (table === 'maintenance_log') {
+            cleanCols = cleanCols
+              .replace(/,\s*rooms\([^\)]*\)/gi, '')
+              .replace(/rooms\([^\)]*\),?\s*/gi, '');
+          } else if (table === 'laundry_records') {
+            cleanCols = cleanCols
+              .replace(/\brecord_date\b/g, 'sent_date')
+              .replace(/\btotal_amount\b/g, 'total_cost');
+          } else if (table === 'company_advances') {
+            cleanCols = cleanCols
+              .replace(/\bdate_given\b/g, 'date')
+              .replace(/\badvance_amount\b/g, 'amount')
+              .replace(/\breason\b/g, 'notes');
+          }
         }
-      }
-      return wrapFilterBuilder(origSelect(cleanCols, opts), table);
-    };
-
-    // Auto-sanitizing order
-    const origOrder = builder.order.bind(builder);
-    builder.order = function(col, opts) {
-      let cleanCol = col;
-      if (table === 'expenses' && cleanCol === 'entry_date') cleanCol = 'expense_date';
-      if (table === 'laundry_records' && cleanCol === 'record_date') cleanCol = 'sent_date';
-      if (table === 'company_advances' && cleanCol === 'date_given') cleanCol = 'date';
-      return wrapFilterBuilder(origOrder(cleanCol, opts), table);
-    };
+        return wrapFilterBuilder(origSelect(cleanCols, opts), table);
+      };
+    }
 
     return builder;
   };

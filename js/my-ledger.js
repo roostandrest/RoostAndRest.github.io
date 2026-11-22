@@ -11,32 +11,32 @@ window._roostHandoversCache = null;
 
 // ═══ Robust Payment Receiver Resolver ═══
 // Extracts receiver from p.received_by, notes tag, or payment mode
-window.resolvePaymentReceiver = function(p) {
+window.resolvePaymentReceiver = function (p) {
   if (!p) return 'Anwar-OD';
-  
+
   // 1. Direct mode check: Airbnb payouts always belong to Company / Airbnb
   const mode = (p.payment_mode || '').trim();
   const method = (p.payment_method || '').trim();
   const notes = (p.notes || '').trim();
   const bookingId = (p.booking_id || '').trim();
 
-  const isAirbnb = /airbnb/i.test(mode) || 
-                   /airbnb/i.test(method) || 
-                   /airbnb/i.test(notes) || 
-                   (/online/i.test(mode) && /payout/i.test(mode)) ||
-                   /payout/i.test(mode) ||
-                   /auto-synced from gmail/i.test(notes) ||
-                   /^rr-nov-/i.test(bookingId);
+  const isAirbnb = /airbnb/i.test(mode) ||
+    /airbnb/i.test(method) ||
+    /airbnb/i.test(notes) ||
+    (/online/i.test(mode) && /payout/i.test(mode)) ||
+    /payout/i.test(mode) ||
+    /auto-synced from gmail/i.test(notes) ||
+    /^rr-nov-/i.test(bookingId);
 
   if (isAirbnb) {
     return 'Company / Airbnb';
   }
 
   // 2. Check notes for (Received by: ...) or [Received By: ...]
-  const rxMatch = notes.match(/\[Received By:\s*([^\]]+)\]/i) || 
-                  notes.match(/\(Received by:\s*([^\)]+)\)/i) ||
-                  notes.match(/\[Advance Recv:\s*([^\]]+)\]/i) ||
-                  notes.match(/Receiver:\s*([^,\.\)\n]+)/i);
+  const rxMatch = notes.match(/\[Received By:\s*([^\]]+)\]/i) ||
+    notes.match(/\(Received by:\s*([^\)]+)\)/i) ||
+    notes.match(/\[Advance Recv:\s*([^\]]+)\]/i) ||
+    notes.match(/Receiver:\s*([^,\.\)\n]+)/i);
   if (rxMatch && rxMatch[1]) {
     return window.normalizeReceiverName(rxMatch[1]);
   }
@@ -50,7 +50,7 @@ window.resolvePaymentReceiver = function(p) {
   return 'Anwar-OD';
 };
 
-window.normalizeReceiverName = function(raw) {
+window.normalizeReceiverName = function (raw) {
   if (!raw) return 'Anwar-OD';
   const clean = raw.trim();
   if (/^anwar$/i.test(clean)) return 'Anwar-OD'; // User requirement: "anwar nahi rahega, anwar-od rahega"
@@ -60,7 +60,7 @@ window.normalizeReceiverName = function(raw) {
 };
 
 // ═══ Custom Receivers Data Layer (Uses app_settings + localStorage) ═══
-window.getRoostCustomReceivers = async function() {
+window.getRoostCustomReceivers = async function () {
   if (window._roostCustomReceiversCache) return window._roostCustomReceiversCache;
   let list = [];
   try {
@@ -81,7 +81,7 @@ window.getRoostCustomReceivers = async function() {
   return window._roostCustomReceiversCache;
 };
 
-window.persistRoostCustomReceivers = async function(list) {
+window.persistRoostCustomReceivers = async function (list) {
   const cleanList = [...new Set((list || []).map(n => (n || '').trim()).filter(n => n && !/^(anwar|anwar-od|anwar od|company|airbnb)$/i.test(n)))];
   window._roostCustomReceiversCache = cleanList;
   window._receiveHoldersCache = null; // bust dropdown cache
@@ -101,7 +101,7 @@ window.persistRoostCustomReceivers = async function(list) {
 };
 
 // Inline Add Receiver (NO POPUP / NO PROMPT)
-window.saveInlineCustomReceiver = async function() {
+window.saveInlineCustomReceiver = async function () {
   const input = document.getElementById('inlineNewReceiverName');
   if (!input) return;
   const name = (input.value || '').trim();
@@ -128,7 +128,7 @@ window.saveInlineCustomReceiver = async function() {
 };
 
 // ═══ EDIT / MODIFY RECEIVER MODAL ═══
-window.openEditReceiverModal = function(oldName) {
+window.openEditReceiverModal = function (oldName) {
   const existing = document.getElementById('editReceiverModal');
   if (existing) existing.remove();
 
@@ -136,7 +136,7 @@ window.openEditReceiverModal = function(oldName) {
   modal.id = 'editReceiverModal';
   modal.className = 'modal-overlay';
   modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
-  
+
   modal.innerHTML = `
     <div style="background:#fff; border-radius:14px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
       <div style="background:linear-gradient(135deg, #1e293b, #0f172a); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
@@ -174,7 +174,7 @@ window.openEditReceiverModal = function(oldName) {
   setTimeout(() => document.getElementById('editReceiverNewName')?.focus(), 50);
 };
 
-window.saveModifiedReceiver = async function(oldName) {
+window.saveModifiedReceiver = async function (oldName) {
   const input = document.getElementById('editReceiverNewName');
   const updatePast = document.getElementById('editReceiverUpdatePast')?.checked;
   const newName = (input?.value || '').trim();
@@ -250,12 +250,12 @@ window.saveModifiedReceiver = async function(oldName) {
 };
 
 // ═══ DELETE RECEIVER MODAL ═══
-window.openDeleteReceiverModal = async function(name) {
+window.openDeleteReceiverModal = async function (name) {
   let payCount = 0;
   try {
     const { data: pays } = await sb.from('payment_history').select('id, notes, payment_mode');
     payCount = (pays || []).filter(p => window.resolvePaymentReceiver(p).toLowerCase() === name.toLowerCase()).length;
-  } catch (e) {}
+  } catch (e) { }
 
   if (payCount === 0) {
     if (!confirm(`Are you sure you want to delete receiver "${name}"?`)) return;
@@ -273,7 +273,7 @@ window.openDeleteReceiverModal = async function(name) {
   modal.id = 'deleteReceiverModal';
   modal.className = 'modal-overlay';
   modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
-  
+
   modal.innerHTML = `
     <div style="background:#fff; border-radius:14px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
       <div style="background:linear-gradient(135deg, #991b1b, #7f1d1d); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
@@ -320,7 +320,7 @@ window.openDeleteReceiverModal = async function(name) {
   document.body.appendChild(modal);
 };
 
-window.confirmDeleteReceiver = async function(name) {
+window.confirmDeleteReceiver = async function (name) {
   const selectedAction = document.querySelector('input[name="delActionRadio"]:checked')?.value || 'reassign';
 
   if (selectedAction === 'reassign') {
@@ -358,12 +358,12 @@ window.confirmDeleteReceiver = async function(name) {
   window.renderMyLedger();
 };
 
-window.removeInlineCustomReceiver = function(name) {
+window.removeInlineCustomReceiver = function (name) {
   window.openDeleteReceiverModal(name);
 };
 
 // ═══ EDIT PAYMENT RECEIVER & DETAILS MODAL ═══
-window.openEditPaymentReceiverModal = async function(payId) {
+window.openEditPaymentReceiverModal = async function (payId) {
   const existing = document.getElementById('editPaymentModal');
   if (existing) existing.remove();
 
@@ -382,7 +382,7 @@ window.openEditPaymentReceiverModal = async function(payId) {
           const roomStr = g.rooms?.nickname ? `${g.rooms.nickname} (${g.rooms.unit_no})` : (g.room_id || '');
           guestInfo = `${g.guest_name || 'Guest'} · ${roomStr}`;
         }
-      } catch(e) {}
+      } catch (e) { }
     }
 
     const currentReceiver = window.resolvePaymentReceiver(p);
@@ -477,14 +477,14 @@ window.openEditPaymentReceiverModal = async function(payId) {
   }
 };
 
-window.savePaymentReceiverEdit = async function(payId) {
+window.savePaymentReceiverEdit = async function (payId) {
   const newAmount = parseFloat(document.getElementById('editPayAmount')?.value) || 0;
   const newReceiver = document.getElementById('editPayReceiver')?.value || 'Anwar-OD';
   const newMode = document.getElementById('editPayMode')?.value || 'UPI';
   const baseNotes = (document.getElementById('editPayNotes')?.value || '').trim();
 
-  const finalNotes = baseNotes 
-    ? `${baseNotes} (Received by: ${newReceiver})` 
+  const finalNotes = baseNotes
+    ? `${baseNotes} (Received by: ${newReceiver})`
     : `(Received by: ${newReceiver})`;
 
   try {
@@ -525,7 +525,7 @@ window.savePaymentReceiverEdit = async function(payId) {
 };
 
 // ═══ Cash Handovers Data Layer (Uses app_settings + localStorage) ═══
-window.getRoostHandovers = async function() {
+window.getRoostHandovers = async function () {
   if (window._roostHandoversCache) return window._roostHandoversCache;
   let list = [];
   try {
@@ -544,7 +544,7 @@ window.getRoostHandovers = async function() {
   return window._roostHandoversCache;
 };
 
-window.persistRoostHandovers = async function(list) {
+window.persistRoostHandovers = async function (list) {
   window._roostHandoversCache = list || [];
   localStorage.setItem('roost_cash_handovers', JSON.stringify(list || []));
   try {
@@ -560,7 +560,7 @@ window.persistRoostHandovers = async function(list) {
   }
 };
 
-window.saveInlineHandover = async function() {
+window.saveInlineHandover = async function () {
   const fromSel = document.getElementById('hoFromPerson');
   const toSel = document.getElementById('hoToPerson');
   const amtInp = document.getElementById('hoAmount');
@@ -604,7 +604,7 @@ window.saveInlineHandover = async function() {
   window.renderMyLedger();
 };
 
-window.toggleHandoverBox = function() {
+window.toggleHandoverBox = function () {
   const box = document.getElementById('inlineHandoverFormBox');
   if (box) {
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
@@ -693,13 +693,13 @@ window._renderMyLedgerImpl = async function() {
       s.paymentsList.push({ ...p, resolvedReceiver: rec });
 
       const mode = (p.payment_mode || '').trim();
-      const isOnline = rec === 'Company / Airbnb' || 
-                       /airbnb/i.test(mode) || 
-                       /online/i.test(mode) || 
-                       /payout/i.test(mode) || 
-                       mode === 'UPI' || 
-                       mode === 'Bank' || 
-                       mode === 'Bank Transfer';
+      const isOnline = rec === 'Company / Airbnb' ||
+        /airbnb/i.test(mode) ||
+        /online/i.test(mode) ||
+        /payout/i.test(mode) ||
+        mode === 'UPI' ||
+        mode === 'Bank' ||
+        mode === 'Bank Transfer';
 
       if (isOnline) {
         s.upiOnline += amt;
@@ -903,14 +903,14 @@ window._renderMyLedgerImpl = async function() {
               </thead>
               <tbody>
                 ${displayList.map(r => {
-                  let badgeBg = '#f1f5f9';
-                  let badgeColor = '#475569';
-                  if (r.name === 'Company / Airbnb') { badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; }
-                  else if (r.name === 'Anwar-OD') { badgeBg = '#fef3c7'; badgeColor = '#b45309'; }
-                  else if (customReceivers.includes(r.name)) { badgeBg = '#e0f2fe'; badgeColor = '#0369a1'; }
-                  else { badgeBg = '#dcfce7'; badgeColor = '#15803d'; }
+      let badgeBg = '#f1f5f9';
+      let badgeColor = '#475569';
+      if (r.name === 'Company / Airbnb') { badgeBg = '#ede9fe'; badgeColor = '#6d28d9'; }
+      else if (r.name === 'Anwar-OD') { badgeBg = '#fef3c7'; badgeColor = '#b45309'; }
+      else if (customReceivers.includes(r.name)) { badgeBg = '#e0f2fe'; badgeColor = '#0369a1'; }
+      else { badgeBg = '#dcfce7'; badgeColor = '#15803d'; }
 
-                  return `
+      return `
                     <tr style="border-bottom:1px solid #f1f5f9; cursor:pointer;" onclick="window._myLedgerSelectedPerson='${r.name}'; window.renderMyLedger();">
                       <td style="padding:10px 12px; font-weight:700; color:#0f172a;">
                         ${r.name === 'Company / Airbnb' ? '🌐' : r.name === 'Anwar-OD' ? '🏦' : '👤'} ${r.name}
@@ -948,7 +948,7 @@ window._renderMyLedgerImpl = async function() {
                       </td>
                     </tr>
                   `;
-                }).join('')}
+    }).join('')}
               </tbody>
             </table>
           </div>
@@ -977,13 +977,13 @@ window._renderMyLedgerImpl = async function() {
               <tbody>
                 ${displayedPayments.length === 0 ? '<tr><td colspan="7" style="padding:20px; text-align:center; color:#94a3b8;">No payments recorded for this receiver.</td></tr>' : ''}
                 ${displayedPayments.slice(0, 100).map(p => {
-                  const g = p.guest_register;
-                  const guestName = g?.guest_name || 'Guest';
-                  const r = g?.rooms;
-                  const roomStr = r ? (r.nickname ? `${r.nickname} (${r.unit_no || ''})` : (r.unit_no || '')) : (g?.room_id || '');
-                  const isAirbnb = p.resolvedReceiver === 'Company / Airbnb';
+      const g = p.guest_register;
+      const guestName = g?.guest_name || 'Guest';
+      const r = g?.rooms;
+      const roomStr = r ? (r.nickname ? `${r.nickname} (${r.unit_no || ''})` : (r.unit_no || '')) : (g?.room_id || '');
+      const isAirbnb = p.resolvedReceiver === 'Company / Airbnb';
 
-                  return `
+      return `
                     <tr style="border-bottom:1px solid #f1f5f9;">
                       <td style="padding:8px 10px; white-space:nowrap; color:#64748b;">${p.payment_date || '-'}</td>
                       <td style="padding:8px 10px; font-weight:600; color:#0f172a;">
@@ -1012,7 +1012,7 @@ window._renderMyLedgerImpl = async function() {
                       </td>
                     </tr>
                   `;
-                }).join('')}
+    }).join('')}
               </tbody>
             </table>
           </div>
