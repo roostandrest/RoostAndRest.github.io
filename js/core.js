@@ -3192,26 +3192,35 @@ function navigate(page) {
     'financial-sheet': () => (window.renderFinancialSheet || renderFinancialSheet)(),
     'airbnb-sync': () => (window.renderAirbnbSync || renderAirbnbSync)(),
     'ical-sync': () => (window.renderIcalSync || renderIcalSync)(),
-    laundry: () => (window.renderLaundry || renderLaundry)(),
-    dailyReport: () => (window.renderDailyReport || renderDailyReport)(),
+    laundry: () => (window.renderLaundry || (() => {}))(),
+    dailyReport: () => (window.renderDailyReport || (() => {}))(),
     finances: () => navigate('analytics'),
-    claims: () => (window.renderClaims || renderClaims)(),
-    reimbursements: () => (window.renderClaims || renderClaims)(),
-    'property-setup': () => (window.renderPropertySetup || renderPropertySetup)(),
-    'showcase-admin': () => (window.renderShowcaseAdmin || renderShowcaseAdmin)(),
-    'company-advances': () => (window.renderCompanyAdvances || renderCompanyAdvances)(),
+    claims: () => (window.renderClaims || (() => {}))(),
+    reimbursements: () => (window.renderClaims || (() => {}))(),
+    'property-setup': () => (window.renderPropertySetup || (() => {}))(),
+    'showcase-admin': () => (window.renderShowcaseAdmin || (() => {}))(),
+    'company-advances': () => (window.renderCompanyAdvances || (() => {}))(),
     cashbook: () => navigate('claims'),
-    'my-ledger': () => (window.renderMyLedger || renderMyLedger)(),
-    'employee-ledger': () => (window.renderEmployeeLedger || renderEmployeeLedger)(),
-    analytics: () => (window.renderFullDashboardAnalytics || window.renderAnalytics || renderAnalytics)(),
-    'whatsapp-hub': () => (window.renderWhatsAppHub || renderWhatsAppHub)(),
-    settings: () => (window.renderSettings || renderSettings)(),
-    investors: () => (window.renderManageInvestors || renderManageInvestors)(),
-    maintenance: () => (window.renderMaintenanceLog || renderMaintenanceLog)(),
-    'user-mgmt': () => (window.renderUserManagement || renderUserManagement)(),
-    'reviews-followup': () => (window.renderReviewFollowupHub || renderReviewFollowupHub)(),
-    sop: () => (window.renderSOPPage || renderSOPPage)(),
-    help: () => (window.renderHelpAndGuide || renderHelpAndGuide)(),
+    'my-ledger': () => {
+      if (typeof window.renderMyLedger === 'function') return window.renderMyLedger();
+      console.warn('my-ledger module not loaded yet, retrying...');
+      if (typeof window.renderShell === 'function') {
+        window.renderShell('<div class="card" style="text-align:center;padding:40px;"><div class="loading">Loading Cash &amp; Receiver Ledger...</div></div>', 'my-ledger');
+      }
+      setTimeout(() => {
+        if (typeof window.renderMyLedger === 'function') window.renderMyLedger();
+      }, 150);
+    },
+    'employee-ledger': () => (window.renderEmployeeLedger || (() => {}))(),
+    analytics: () => (window.renderFullDashboardAnalytics || window.renderAnalytics || (() => {}))(),
+    'whatsapp-hub': () => (window.renderWhatsAppHub || (() => {}))(),
+    settings: () => (window.renderSettings || (() => {}))(),
+    investors: () => (window.renderManageInvestors || (() => {}))(),
+    maintenance: () => (window.renderMaintenanceLog || (() => {}))(),
+    'user-mgmt': () => (window.renderUserManagement || (() => {}))(),
+    'reviews-followup': () => (window.renderReviewFollowupHub || (() => {}))(),
+    sop: () => (window.renderSOPPage || (() => {}))(),
+    help: () => (window.renderHelpAndGuide || (() => {}))(),
   };
 
   const runner = map[page] || map['bookings'] || map['dashboard'];

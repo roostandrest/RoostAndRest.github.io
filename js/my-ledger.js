@@ -612,7 +612,14 @@ window.toggleHandoverBox = function() {
 };
 
 // ═══ Main Ledger Render ═══
-window.renderMyLedger = async function() {
+async function renderMyLedger() {
+  if (typeof window._renderMyLedgerImpl === 'function') {
+    return window._renderMyLedgerImpl();
+  }
+}
+window.renderMyLedger = renderMyLedger;
+
+window._renderMyLedgerImpl = async function() {
   renderShell('<div class="card"><h1>💼 Cash & Payment Receiver Ledger</h1><div class="loading">Loading real-time transactions & balances...</div></div>', 'my-ledger');
 
   try {
