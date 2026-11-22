@@ -15,9 +15,8 @@ async function renderExpenses() {
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const ml = `${monthNames[now.getMonth()]}-${now.getFullYear()}`;
 
-    // Fetch all 5 expense channels concurrently with safe fallback
+    // Fetch all expense channels concurrently with safe fallback
     const [
-      catsRes,
       expsRes,
       gsRes,
       roomsRes,
@@ -26,7 +25,6 @@ async function renderExpenses() {
       advsRes,
       empsRes
     ] = await Promise.all([
-      sb.from('expense_categories').select('*').order('category_name'),
       sb.from('expenses').select('*').order('expense_date', { ascending: false }),
       sb.from('guest_register').select('booking_id, check_in, total_amount'),
       sb.from('rooms').select('room_id, nickname, unit_no').order('unit_no'),
@@ -36,7 +34,7 @@ async function renderExpenses() {
       sb.from('employees').select('emp_id, name, role, phone, monthly_salary, status').order('name')
     ]);
 
-    const cats = catsRes?.data || [];
+    const cats = [];
     const exps = expsRes?.data || [];
     const gs = gsRes?.data || [];
     const rooms = roomsRes?.data || [];
@@ -295,7 +293,7 @@ async function renderExpenses() {
         </div>
 
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
-          <button onclick="if(window.renderAddReimbursement) window.renderAddReimbursement(); else navigate('expenses');" style="background:#92400E;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+          <button onclick="window.openAddExpenseModal()" style="background:#92400E;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
             <span>➕</span> Add Expense
           </button>
           <button onclick="window.openEmployeeTransportModal()" style="background:#D97706;color:#fff;font-weight:700;font-size:12px;padding:6px 12px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
@@ -1697,6 +1695,152 @@ async function saveExpEntry() {
     window._isSavingExpEntry = false;
   }
 }
+
+// ============ ADD EXPENSE MODAL ============
+window.openAddExpenseModal = async function() {
+  const { data: rooms } = await sb.from('rooms').select('room_id, nickname, unit_no').order('unit_no');
+
+  const categories = [
+    'Maintenance & Repairs',
+    'Supplies & Groceries',
+    'Utilities & Wi-Fi',
+    'Travel / Rapido',
+    'Staff Wages & Advance',
+    'Guest Amenities',
+    'Laundry & Linen',
+    'Food & Refreshments',
+    'Cleaning & Housekeeping',
+    'Marketing & Listing',
+    'General Operations',
+    'Miscellaneous'
+  ];
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  let modal = document.getElementById('addExpenseModalOverlay');
+  if (modal) modal.remove();
+
+  modal = document.createElement('div');
+  modal.id = 'addExpenseModalOverlay';
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);display:flex;align-items:center;justify-content:center;z-index:90000;padding:12px;backdrop-filter:blur(3px);';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+
+  modal.innerHTML = `
+    <div class="modal-box" style="background:#fff;border-radius:16px;width:100%;max-width:540px;padding:24px;box-shadow:0 15px 40px rgba(0,0,0,0.3);position:relative;border:1.5px solid #FED7AA;" onclick="event.stopPropagation()">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1.5px solid #F1F5F9;">
+        <h2 style="margin:0;font-size:18px;font-weight:900;color:#78350F;display:flex;align-items:center;gap:8px;">
+          <span>➕</span> Add New Expense
+        </h2>
+        <button type="button" onclick="document.getElementById('addExpenseModalOverlay').remove()" style="background:#F1F5F9;border:1px solid #CBD5E1;width:30px;height:30px;border-radius:50%;font-weight:800;cursor:pointer;">✕</button>
+      </div>
+
+      <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Date *</label>
+          <input type="date" id="newExpDate" value="${today}" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;font-weight:700;border:1.5px solid #CBD5E1;border-radius:8px;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Category *</label>
+          <select id="newExpCat" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;font-weight:700;border:1.5px solid #CBD5E1;border-radius:8px;">
+            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Amount ₹ *</label>
+          <input type="number" step="0.01" id="newExpAmt" placeholder="0" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:15px;font-weight:800;color:#B45309;border:1.5px solid #CBD5E1;border-radius:8px;" />
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Property / Flat</label>
+          <select id="newExpRoom" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;border:1.5px solid #CBD5E1;border-radius:8px;">
+            <option value="">General / All Properties</option>
+            ${(rooms || []).map(r => `<option value="${r.room_id}" data-name="${escapeHtml(r.nickname || r.unit_no)}">${escapeHtml(propLabel(r))}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Payment Account / Source *</label>
+        <select id="newExpPaidBy" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;font-weight:700;border:1.5px solid #B45309;border-radius:8px;">
+          <option value="Anwar OD" selected>💵 Anwar OD (Offline / Cash Account)</option>
+          <option value="Roost and Rest">🏦 Roost and Rest (Online / Bank Account)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Description / Purpose *</label>
+        <textarea id="newExpDesc" rows="2" placeholder="e.g. Wi-Fi recharge, plumber visit, guest groceries..." style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;border:1.5px solid #CBD5E1;border-radius:8px;"></textarea>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;">
+        <button type="button" onclick="document.getElementById('addExpenseModalOverlay').remove()" style="background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;">
+          Cancel
+        </button>
+        <button type="button" id="btnSaveNewExp" onclick="window.submitNewExpenseRecord()" style="background:#B45309;border:none;color:#fff;padding:9px 22px;border-radius:8px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+          <span>💾 Save Expense</span>
+        </button>
+      </div>
+      <div id="newExpErr" style="margin-top:10px;"></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+window.submitNewExpenseRecord = async function() {
+  const btn = document.getElementById('btnSaveNewExp');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving...'; }
+
+  const date = document.getElementById('newExpDate')?.value;
+  const cat = document.getElementById('newExpCat')?.value;
+  const amt = parseFloat(document.getElementById('newExpAmt')?.value) || 0;
+  const roomEl = document.getElementById('newExpRoom');
+  const roomId = roomEl?.value || null;
+  const propName = roomEl?.options?.[roomEl.selectedIndex]?.getAttribute('data-name') || 'General Operations';
+  const paidBy = document.getElementById('newExpPaidBy')?.value || 'Anwar OD';
+  const desc = document.getElementById('newExpDesc')?.value.trim();
+
+  const errEl = document.getElementById('newExpErr');
+
+  if (!date || !cat || amt <= 0 || !desc) {
+    if (errEl) errEl.innerHTML = '<div style="color:#DC2626;background:#FEE2E2;padding:8px 12px;border-radius:6px;font-size:12.5px;font-weight:700;">Please fill Date, Category, Amount and Description.</div>';
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Expense'; }
+    return;
+  }
+
+  try {
+    const payload = {
+      category: cat,
+      description: desc,
+      amount: amt,
+      expense_date: date,
+      paid_by: paidBy,
+      property_name: propName,
+      status: 'settled',
+      created_by: (window.SESSION && window.SESSION.displayName) || 'Director'
+    };
+    if (roomId) payload.room_id = roomId;
+
+    const { error } = await sb.from('expenses').insert(payload);
+    if (error) throw error;
+
+    document.getElementById('addExpenseModalOverlay')?.remove();
+    if (window.fsn) fsn.success('Success', '✅ Expense added successfully!');
+    else alert('Expense added!');
+
+    renderExpenses();
+    if (window.UHHSODManager && window.UHHSODManager.calculateLiveODBalance) {
+      window.UHHSODManager.calculateLiveODBalance();
+    }
+    if (window.renderClaims) window.renderClaims();
+  } catch (err) {
+    console.error('Failed to insert expense:', err);
+    if (errEl) errEl.innerHTML = `<div style="color:#DC2626;background:#FEE2E2;padding:8px 12px;border-radius:6px;font-size:12.5px;font-weight:700;">${escapeHtml(err.message)}</div>`;
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save Expense'; }
+  }
+};
 
 // ============ EDIT EXPENSE ============
 window.editExpense = async function(id) {

@@ -321,6 +321,7 @@ window.getRecentPages = function(limit) {
 
 // Universal resilient query proxy for missing Supabase tables
 const MISSING_TABLES = new Set([
+  'expense_categories',
   'laundry_payments',
   'reimbursements',
   'advance_tracker',
@@ -1414,13 +1415,13 @@ async function loadProfile(userId) {
         await sb.from('profiles').upsert({
           user_id: userId,
           role: 'developer',
-          display_name: userName || 'Praveen Singh (Developer)',
+          display_name: userName || 'Anwar Ahmad (Manager)',
           auth_provider: 'google',
           avatar_url: userAvatar,
           is_approved: true
         });
       } catch (e) {}
-      p = { role: 'developer', display_name: userName || 'Praveen Singh (Developer)', is_approved: true };
+      p = { role: 'developer', display_name: userName || 'Anwar Ahmad (Manager)', is_approved: true };
       error = null;
     } else if (p.is_approved !== true || (p.role !== 'developer' && p.role !== 'admin' && p.role !== 'owner')) {
       try {
@@ -1613,7 +1614,7 @@ async function handleNewGoogleUser(user) {
       await sb.from('profiles').upsert({
         user_id: user.id,
         role: 'developer',
-        display_name: name || 'Praveen Singh (Developer)',
+        display_name: name || 'Anwar Ahmad (Manager)',
         auth_provider: 'google',
         avatar_url: avatar,
         is_approved: true

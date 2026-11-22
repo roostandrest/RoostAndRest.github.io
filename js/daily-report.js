@@ -586,11 +586,11 @@ window.renderDailyReport = renderDailyReport;
 window.whatsappDailyReport = whatsappDailyReport;
 
 // ══════════════════════════════════════════════════════════════════════
-// 📋 AUTOMATED DAILY WHATSAPP STATUS GENERATOR (Blossom Skyline 101–501)
-// Tailored specifically for the "📑 Booking Data" WhatsApp Group
+// 📋 AUTOMATED DAILY WHATSAPP STATUS GENERATOR (Roost & Rest 18 Stays)
+// Tailored specifically for the "📑 Roost & Rest Booking Data" WhatsApp Group
 // ══════════════════════════════════════════════════════════════════════
 window._blossomStatusSettings = {
-  includeTags: true,
+  includeTags: false,
   vacantLabel: 'Khali',
   includeVillas: false,
   useRedEmoji: true
@@ -612,10 +612,10 @@ async function openBlossomSkylineDailyStatusModal(targetDate) {
   modal.innerHTML = `
     <div class="modal-box" style="max-width:680px;width:94%;padding:26px;border-radius:18px;box-shadow:0 20px 45px rgba(0,0,0,0.25);background:var(--card,#ffffff);">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div style="width:24px;height:24px;border:3px solid #CBD5E1;border-top-color:#EF4444;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+        <div style="width:24px;height:24px;border:3px solid #CBD5E1;border-top-color:#92400E;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
         <div>
           <div style="font-size:15px;font-weight:800;color:var(--text,#0F172A);">Generating WhatsApp Booking Status...</div>
-          <div style="font-size:12px;color:var(--muted,#64748B);margin-top:2px;">Analyzing live bookings, dues & payments for ${repDate}</div>
+          <div style="font-size:12px;color:var(--muted,#64748B);margin-top:2px;">Analyzing live bookings across all 18 Roost homestays for ${repDate}</div>
         </div>
       </div>
     </div>
@@ -625,7 +625,8 @@ async function openBlossomSkylineDailyStatusModal(targetDate) {
     const [
       { data: bks, error: bksErr },
       { data: pays, error: paysErr },
-      { data: flats, error: flatsErr }
+      { data: flats, error: flatsErr },
+      { data: dbRooms }
     ] = await Promise.all([
       sb.from('guest_register')
         .select('*')
@@ -636,7 +637,10 @@ async function openBlossomSkylineDailyStatusModal(targetDate) {
         .select('booking_id, amount')
         .neq('verification_status', 'rejected'),
       sb.from('flats_status')
-        .select('*')
+        .select('*'),
+      sb.from('rooms')
+        .select('room_id, unit_no, nickname, property_name')
+        .order('unit_no')
     ]);
 
     if (bksErr) console.warn('guest_register error:', bksErr);
@@ -651,16 +655,29 @@ async function openBlossomSkylineDailyStatusModal(targetDate) {
       flatStatusMap[f.room_id] = f;
     });
 
-    const units = [
-      { num: '101', roomIds: ['GOM-101'], name: 'RedRose Palace' },
-      { num: '102', roomIds: ['GOM-102'], name: 'Black Beauty' },
-      { num: '201', roomIds: ['GOM-201'], name: 'The Dark Blue' },
-      { num: '202', roomIds: ['GOM-202'], name: 'The Brown' },
-      { num: '301', roomIds: ['GOM-301'], name: 'The Light Green' },
-      { num: '302', roomIds: ['GOM-302'], name: 'The Unique' },
-      { num: '401', roomIds: ['GOM-401'], name: 'The Nawabi Stay' },
-      { num: '402', roomIds: ['Flat 402', 'GOM-402'], name: 'The Tehzeeb Nest' },
-      { num: '501', roomIds: ['GOM-501'], name: 'Starlight Blue PentHouse' }
+    const units = (dbRooms && dbRooms.length > 0) ? dbRooms.map(r => ({
+      num: r.unit_no || r.room_id.replace('RST-', ''),
+      roomIds: [r.room_id, r.unit_no, r.nickname, r.property_name],
+      name: r.nickname || r.property_name || r.room_id
+    })) : [
+      { num: '101', roomIds: ['RST-101', '101'], name: 'Awadh Abode' },
+      { num: '102', roomIds: ['RST-102', '102'], name: 'Green Leaf Corner' },
+      { num: '103', roomIds: ['RST-103', '103'], name: 'Moon Light House' },
+      { num: '104', roomIds: ['RST-104', '104'], name: 'Palladium Loft' },
+      { num: '105', roomIds: ['RST-105', '105'], name: 'Peaceful Nest' },
+      { num: '106', roomIds: ['RST-106', '106'], name: 'The Awadh Retreat' },
+      { num: '107', roomIds: ['RST-107', '107'], name: 'The Comfort Corner' },
+      { num: '108', roomIds: ['RST-108', '108'], name: 'The Cozy Corner' },
+      { num: '109', roomIds: ['RST-109', '109'], name: 'The Eighteenth' },
+      { num: '110', roomIds: ['RST-110', '110'], name: 'Family Fun Heaven' },
+      { num: '111', roomIds: ['RST-111', '111'], name: 'The Grand Alcove' },
+      { num: '112', roomIds: ['RST-112', '112'], name: 'The Luxe Haven' },
+      { num: '113', roomIds: ['RST-113', '113'], name: 'The Monarch Suites' },
+      { num: '114', roomIds: ['RST-114', '114'], name: 'The Nestora' },
+      { num: '115', roomIds: ['RST-115', '115'], name: 'The Nivora Nest' },
+      { num: '116', roomIds: ['RST-116', '116'], name: 'The Rustic Anjuman' },
+      { num: '117', roomIds: ['RST-117', '117'], name: 'The Zenvana' },
+      { num: '118', roomIds: ['RST-118', '118'], name: 'Presidential Suite' }
     ];
 
     window._blossomStatusCache = {
@@ -698,13 +715,10 @@ function computeBlossomUnitDetails() {
   let vacantCount = 0;
 
   units.forEach(u => {
-    // Only bookings that are ACTUALLY ACTIVE on repDate:
-    // 1) Guest check_in is on repDate (whether multi-day stay or day-stay where check_in === check_out === repDate)
-    // 2) OR Guest checked in before repDate AND check_out is strictly after repDate (overnight staying guest)
-    // Guests where check_in < repDate AND check_out <= repDate have ALREADY CHECKED OUT today morning/earlier,
-    // so the flat is VACANT today!
+    // Only bookings that are ACTUALLY ACTIVE on repDate
     const roomBks = bks.filter(b => {
-      if (!u.roomIds.includes(b.room_id)) return false;
+      const matchRoom = (u.roomIds || []).some(rid => rid && (b.room_id === rid || b.room_id === String(rid) || (b.room_id && b.room_id.includes(rid))));
+      if (!matchRoom) return false;
       if (b.check_in === repDate) return true;
       if (b.check_in < repDate && b.check_out > repDate) return true;
       return false;
@@ -721,6 +735,7 @@ function computeBlossomUnitDetails() {
       vacantCount++;
       items.push({
         num: u.num,
+        name: u.name,
         isVacant: true,
         guestName: '',
         total: 0,
@@ -763,6 +778,7 @@ function computeBlossomUnitDetails() {
 
     items.push({
       num: u.num,
+      name: u.name,
       isVacant: false,
       guestName: gName,
       total,
@@ -782,14 +798,12 @@ function generateBlossomStatusText(includeTags, vacantLabel, includeVillas, useR
   const { items } = computeBlossomUnitDetails();
 
   const lines = [];
-  if (includeTags) {
-    lines.push('@Arman Commander @Abraham Khan (Raja) @Mr. Anwar khan ');
-  }
   lines.push('📋 UPDATED BOOKING STATUS\n');
 
   items.forEach(item => {
+    const propTitle = item.name ? ` (${item.name})` : '';
     if (item.isVacant) {
-      lines.push(`${item.num} – ${vacantLabel || 'Khali'}`);
+      lines.push(`${item.num}${propTitle} – ${vacantLabel || 'Khali'}`);
       return;
     }
 
@@ -798,50 +812,13 @@ function generateBlossomStatusText(includeTags, vacantLabel, includeVillas, useR
 
     if (item.pending === 0 && item.total > 0) {
       // 0 pending means fully paid -> marked with ✅
-      lines.push(`${item.num} – ${item.guestName} | ${fmtTotal} / ₹0 ✅`);
+      lines.push(`${item.num}${propTitle} – ${item.guestName} | ${fmtTotal} / ₹0 ✅`);
     } else {
       // Pending money to collect -> marked with 🔴 (Red dot highlights who owes money)
       const redMarker = useRedEmoji ? ' 🔴' : '';
-      lines.push(`${item.num} – ${item.guestName} | ${fmtTotal} / ${fmtPending}${redMarker}`);
+      lines.push(`${item.num}${propTitle} – ${item.guestName} | ${fmtTotal} / ${fmtPending}${redMarker}`);
     }
   });
-
-  if (includeVillas) {
-    lines.push('\n🏡 VILLAS & ESTATES');
-    const villaUnits = [
-      { num: 'VIL-101', name: 'Gomti Grand Villa' },
-      { num: 'VIL-102', name: 'Royal White House' },
-      { num: 'VIL-103', name: 'The Pink House' },
-      { num: 'VIL-104', name: 'The Green House' },
-      { num: 'VIL-105', name: 'The Yellow House' },
-      { num: 'VIL-106', name: 'Green Forest' },
-      { num: 'VIL-107', name: 'The Velvet House' },
-      { num: 'VIL-108', name: 'Pink Paradise' },
-      { num: 'LUL-101', name: 'The Luxe Haven' }
-    ];
-    villaUnits.forEach(v => {
-      const vbk = bks.find(b => {
-        if (b.room_id !== v.num) return false;
-        if (b.check_in === repDate) return true;
-        if (b.check_in < repDate && b.check_out > repDate) return true;
-        return false;
-      });
-      if (!vbk) {
-        lines.push(`${v.num} – ${vacantLabel || 'Khali'}`);
-      } else {
-        const vTot = vbk.total_amount || 0;
-        let vPaid = paidMap[vbk.booking_id] || 0;
-        if (vbk.payment_status === 'Paid' && vPaid < vTot) vPaid = vTot;
-        const vPending = Math.max(0, vTot - vPaid);
-        if (vPending === 0 && vTot > 0) {
-          lines.push(`${v.num} – ${vbk.guest_name} | ₹${vTot.toLocaleString('en-IN')} / ₹0 ✅`);
-        } else {
-          const redMarker = useRedEmoji ? ' 🔴' : '';
-          lines.push(`${v.num} – ${vbk.guest_name} | ₹${vTot.toLocaleString('en-IN')} / ₹${vPending.toLocaleString('en-IN')}${redMarker}`);
-        }
-      }
-    });
-  }
 
   return lines.join('\n');
 }
@@ -860,10 +837,11 @@ function renderBlossomStatusModalUI(repDate) {
 
   // Generate visual cards: RED for pending payments, GREEN for paid, GRAY for Khali
   const visualCardsHtml = items.map(it => {
+    const nameLabel = it.name ? ` (${escapeHtml(it.name)})` : '';
     if (it.isVacant) {
       return `
         <div style="background:#F8FAFC;border:1.5px dashed #CBD5E1;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
-          <div style="font-weight:800;font-size:12.5px;color:#64748B;">Flat ${it.num}</div>
+          <div style="font-weight:800;font-size:12.5px;color:#64748B;">Unit ${it.num}${nameLabel}</div>
           <span style="background:#E2E8F0;color:#475569;font-size:11px;font-weight:800;padding:2px 8px;border-radius:8px;">${s.vacantLabel || 'Khali'}</span>
         </div>
       `;
@@ -874,7 +852,7 @@ function renderBlossomStatusModalUI(repDate) {
         <div style="background:#FEF2F2;border:2px solid #EF4444;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 4px rgba(239,68,68,0.12);">
           <div>
             <div style="font-weight:900;font-size:13px;color:#991B1B;display:flex;align-items:center;gap:6px;">
-              <span>Flat ${it.num} – ${escapeHtml(it.guestName)}</span>
+              <span>Unit ${it.num}${nameLabel} – ${escapeHtml(it.guestName)}</span>
               ${it.isInfluencer ? '<span style="background:#6366F1;color:#fff;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:6px;">Influencer</span>' : ''}
             </div>
             <div style="font-size:11px;color:#B91C1C;font-weight:600;margin-top:1px;">
@@ -894,7 +872,7 @@ function renderBlossomStatusModalUI(repDate) {
         <div style="background:#F0FDF4;border:1.5px solid #22C55E;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">
           <div>
             <div style="font-weight:800;font-size:12.5px;color:#166534;display:flex;align-items:center;gap:6px;">
-              <span>Flat ${it.num} – ${escapeHtml(it.guestName)}</span>
+              <span>Unit ${it.num}${nameLabel} – ${escapeHtml(it.guestName)}</span>
               ${it.isInfluencer ? '<span style="background:#6366F1;color:#fff;font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:6px;">Influencer</span>' : ''}
             </div>
             <div style="font-size:11px;color:#15803D;font-weight:500;margin-top:1px;">
@@ -923,7 +901,7 @@ function renderBlossomStatusModalUI(repDate) {
               WhatsApp Booking Status
             </h2>
             <div style="font-size:11.5px;color:var(--muted,#64748B);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              Blossom Skyline (101–501) • ${dateFormatted}
+              Roost &amp; Rest Stays (All 18 Homestays) • ${dateFormatted}
             </div>
           </div>
         </div>
@@ -964,10 +942,10 @@ function renderBlossomStatusModalUI(repDate) {
         </div>
       </div>
 
-      <!-- 🔴 VISUAL LIST OF FLATS: RED HIGHLIGHT FOR WHO OWES MONEY -->
+      <!-- 🔴 VISUAL LIST OF HOMESTAYS: RED HIGHLIGHT FOR WHO OWES MONEY -->
       <div style="margin-bottom:14px;">
         <div style="font-size:11.5px;font-weight:800;color:var(--text,#334155);text-transform:uppercase;margin-bottom:8px;letter-spacing:0.5px;display:flex;justify-content:space-between;align-items:center;">
-          <span>Flat-by-Flat Payment Status:</span>
+          <span>Homestay Payment Status (18 Units):</span>
           <span style="font-size:11px;color:#DC2626;font-weight:800;">🔴 Red = Paisa Lena Hai</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:8px;">
@@ -982,25 +960,14 @@ function renderBlossomStatusModalUI(repDate) {
           <input type="date" value="${repDate}" onchange="openBlossomSkylineDailyStatusModal(this.value)" style="padding:4px 10px;font-size:12.5px;border-radius:8px;border:1px solid #CBD5E1;background:#fff;font-weight:600;color:var(--text,#0F172A);">
         </div>
         <div style="display:flex;align-items:center;gap:14px;font-size:11.5px;font-weight:600;color:var(--text,#334155);flex-wrap:wrap;">
-          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="checkbox" id="chkBlossomTags" ${s.includeTags ? 'checked' : ''} onchange="window.updateBlossomStatusText()">
-            <span>Owner Tags</span>
-          </label>
           <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;" title="Include 🔴 Red circle emoji on pending lines">
             <input type="checkbox" id="chkBlossomRedEmoji" ${s.useRedEmoji ? 'checked' : ''} onchange="window.updateBlossomStatusText()">
             <span>🔴 Red Marker</span>
           </label>
           <div style="display:inline-flex;align-items:center;gap:4px;">
             <span style="font-size:11px;color:var(--muted,#64748B);">Vacant text:</span>
-            <select id="selBlossomVacant" onchange="window.updateBlossomStatusText()" style="padding:3px 8px;font-size:11.5px;font-weight:700;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:var(--text,#0F172A);">
-              <option value="Khali" ${s.vacantLabel === 'Khali' ? 'selected' : ''}>Khali</option>
-              <option value="Not Booked" ${s.vacantLabel === 'Not Booked' ? 'selected' : ''}>Not Booked</option>
-            </select>
+            <input type="text" id="selBlossomVacant" value="${s.vacantLabel || 'Khali'}" oninput="window.updateBlossomStatusText()" style="padding:3px 8px;font-size:11.5px;font-weight:700;border-radius:6px;border:1px solid #CBD5E1;background:#fff;color:var(--text,#0F172A);width:80px;">
           </div>
-          <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="checkbox" id="chkBlossomVillas" ${s.includeVillas ? 'checked' : ''} onchange="window.updateBlossomStatusText()">
-            <span>+ Villas</span>
-          </label>
         </div>
       </div>
 

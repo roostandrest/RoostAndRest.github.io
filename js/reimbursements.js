@@ -18,7 +18,7 @@ window.renderReimbursements = async function() {
   const statusFilter = window._reimbStatus || 'All';
   
   const [{ data: reimbs }, { data: rooms }] = await Promise.all([
-    sb.from('reimbursements').select('*').gte('expense_date', monthStart).lte('expense_date', monthEnd).order('expense_date', { ascending: false }),
+    sb.from('expenses').select('*').gte('expense_date', monthStart).lte('expense_date', monthEnd).order('expense_date', { ascending: false }),
     sb.from('rooms').select('room_id, nickname, unit_no').order('unit_no')
   ]);
   
@@ -307,21 +307,19 @@ window.saveReimbursement = async function() {
     const currentUser = SESSION.displayName || 'System Admin';
     const initialStatus = 'Pending';
 
-    const { data: newR, error } = await sb.from('reimbursements').insert({
-      payment_source: paymentSource,
-      expense_date: date,
+    const expPayload = {
       category: cat,
-      description: desc,
+      description: desc + (notes ? ` (${notes})` : ''),
       amount: amt,
-      paid_by: currentUser,
-      claim_from: 'Owner',
-      from_property: fromProp,
-      to_property: toProp,
-      receipt_photo: photoUrl,
-      notes,
-      status: initialStatus,
-      created_by: SESSION.empId || null
-    }).select().single();
+      expense_date: date,
+      paid_by: paymentSource,
+      property_name: fromProp || 'General Business',
+      status: 'settled',
+      created_by: currentUser
+    };
+    if (photoUrl) expPayload.receipt_url = photoUrl;
+
+    const { data: newR, error } = await sb.from('expenses').insert(expPayload).select().single();
 
     if (error) {
       document.getElementById('rErr').innerHTML = '<div class="error">' + error.message + '</div>';
@@ -330,25 +328,14 @@ window.saveReimbursement = async function() {
       return;
     }
 
-    // Auto-record transaction in account_transactions for ROOST-BANK spends (safe failsafe)
-    if (paymentSource === 'ROOST-BANK') {
-      try {
-        await sb.from('account_transactions').insert({
-          account_type: 'UHHS_OD',
-          transaction_type: 'EXPENSE',
-          amount: amt,
-          txn_date: date,
-          description: `Expense: ${desc} (${cat})`,
-          created_by: SESSION.displayName || 'System Admin'
-        });
-      } catch (e) {
-        console.warn('account_transactions view insert skipped/unsupported:', e);
-      }
-    }
-
     window._reimbPhotoBlob = null;
     fsn.success('Success', '✅ Expense saved!');
     if (window.notifyDataChanged) window.notifyDataChanged();
+    if (window.renderExpenses) window.renderExpenses();
+    if (window.UHHSODManager && window.UHHSODManager.calculateLiveODBalance) {
+      window.UHHSODManager.calculateLiveODBalance();
+    }
+    if (window.renderClaims) window.renderClaims();
     renderReimbursements();
   } catch (err) {
     if (window.fsn) fsn.error('Error', err.message);

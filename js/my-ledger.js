@@ -9,6 +9,13 @@ window._myLedgerSelectedPerson = window._myLedgerSelectedPerson || 'ALL';
 window._roostCustomReceiversCache = null;
 window._roostHandoversCache = null;
 
+// Expose renderMyLedger at script initialization to guarantee router never encounters undefined
+window.renderMyLedger = async function() {
+  if (typeof window._renderMyLedgerImpl === 'function') {
+    return window._renderMyLedgerImpl();
+  }
+};
+
 // ═══ Robust Payment Receiver Resolver ═══
 // Extracts receiver from p.received_by, notes tag, or payment mode
 window.resolvePaymentReceiver = function (p) {
