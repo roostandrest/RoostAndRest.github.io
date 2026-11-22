@@ -434,6 +434,11 @@ window.openEditPaymentReceiverModal = async function(payId) {
                   ${staffNames.map(n => `<option value="${n}" ${currentReceiver === n ? 'selected' : ''}>🧑‍💼 ${n}</option>`).join('')}
                 </optgroup>
               ` : ''}
+              ${(!['Company / Airbnb', 'Anwar-OD'].includes(currentReceiver) && !customReceivers.includes(currentReceiver) && !staffNames.includes(currentReceiver)) ? `
+                <optgroup label="👤 Current Receiver">
+                  <option value="${currentReceiver}" selected>👤 ${currentReceiver}</option>
+                </optgroup>
+              ` : ''}
             </select>
           </div>
 
@@ -921,17 +926,17 @@ window.renderMyLedger = async function() {
                         ₹${r.totalCollected.toLocaleString('en-IN')}
                       </td>
                       <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
-                        ${customReceivers.includes(r.name) ? `
+                        ${(r.name === 'Company / Airbnb' || r.name === 'Anwar-OD') ? `
+                          <span style="color:#64748b; font-size:11px; font-weight:600;">System Account</span>
+                        ` : activeEmployees.includes(r.name) ? `
+                          <span style="color:#64748b; font-size:11px;">Staff Roster</span>
+                        ` : `
                           <button type="button" onclick="event.stopPropagation(); window.openEditReceiverModal('${r.name}')" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;" title="Edit receiver">
                             ✏️ Edit
                           </button>
                           <button type="button" onclick="event.stopPropagation(); window.openDeleteReceiverModal('${r.name}')" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; margin-left:4px;" title="Delete receiver">
                             🗑️ Delete
                           </button>
-                        ` : activeEmployees.includes(r.name) ? `
-                          <span style="color:#64748b; font-size:11px;">Staff Roster</span>
-                        ` : `
-                          <span style="color:#64748b; font-size:11px;">System Account</span>
                         `}
                       </td>
                     </tr>

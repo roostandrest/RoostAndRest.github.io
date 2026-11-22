@@ -6850,61 +6850,83 @@ async function addPaymentWithDate(bkId) { showPaymentModal(bkId); }
 
 async function editPayment(payId, bkId) {
   const { data: pay } = await sb.from('payment_history').select('*').eq('id', payId).single();
-  if (!pay) { fsn.error('Error', 'Not found'); return; }
+  if (!pay) { fsn.error('Error', 'Payment not found'); return; }
+  
+  const existingReceiver = window.resolvePaymentReceiver ? window.resolvePaymentReceiver(pay) : 'Anwar-OD';
+  const cleanNotes = (pay.notes || '')
+    .replace(/\s*\([^\)]*Received by:[^\)]*\)/gi, '')
+    .replace(/\s*\[[^\]]*Received By:[^\]]*\]/gi, '')
+    .trim();
+
   const modal = document.createElement('div');
   modal.className = 'modal-overlay';
+  modal.id = 'editPaymentModalBox';
   modal.onclick = e => { if (e.target === modal) modal.remove(); };
   modal.innerHTML = `
-    <div class="modal-box">
+    <div class="modal-box" style="max-width:440px; border-radius:16px; padding:24px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
       <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
-      <h2>✏️ Edit Payment</h2>
-      <div class="form-group"><label>Amount ₹</label><input id="editPayAmt" type="number" value="${pay.amount}" /></div>
-      <div class="form-group"><label>Mode</label>
-        <select id="editPayMode" onchange="onEditPayModeChange()">
+      <h2 style="margin:0 0 16px; font-size:18px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+        <span>✏️</span> Edit Payment
+      </h2>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Amount ₹ *</label>
+        <input id="editPayAmt" type="number" step="0.01" value="${pay.amount || 0}" 
+               style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:16px; font-weight:800; color:#0f172a; box-sizing:border-box;" />
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Payment Mode *</label>
+        <select id="editPayMode" onchange="window.onEditPayModeChange()"
+                style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; font-weight:600; box-sizing:border-box;">
           <option value="Cash" ${pay.payment_mode === 'Cash' ? 'selected' : ''}>Cash</option>
           <option value="UPI" ${pay.payment_mode === 'UPI' ? 'selected' : ''}>UPI</option>
-          <option value="Bank" ${pay.payment_mode === 'Bank' ? 'selected' : ''}>Bank</option>
-          <option value="Airbnb Payout" ${pay.payment_mode === 'Airbnb Payout' ? 'selected' : ''}>Airbnb Payout</option>
+          <option value="Bank" ${pay.payment_mode === 'Bank' || pay.payment_mode === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+          <option value="Airbnb Payout" ${pay.payment_mode === 'Airbnb Payout' || pay.payment_mode === 'Online-Airbnb' ? 'selected' : ''}>Airbnb Payout</option>
         </select>
       </div>
-      <div class="form-group">
-        <label id="editReceivedByLabel">💰 Received By *</label>
-        <select id="editPayReceivedBy" onchange="onEditReceivedByChange()">
-          <option value="">-- Select --</option>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label id="editReceivedByLabel" style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">
+          ${pay.payment_mode === 'Cash' ? '💵 Cash Received By *' : (pay.payment_mode === 'UPI' ? '📱 UPI Received In *' : '💰 Received By *')}
+        </label>
+        <select id="editPayReceivedBy" onchange="onEditReceivedByChange()"
+                style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; font-weight:600; box-sizing:border-box;">
+          <option value="">Loading accounts...</option>
         </select>
-        <input id="editPayReceivedByCustom" type="text" placeholder="Enter new name..." 
-               style="display:none;margin-top:6px;" />
-        <button type="button" onclick="quickAddCashHolder().then(()=>onEditPayModeChange())" 
-                style="margin-top:6px;padding:8px;background:#f0f0f0;border:1px dashed #999;border-radius:8px;cursor:pointer;width:100%;font-size:12px;">
-          ➕ Add New Receiver
+        <input id="editPayReceivedByCustom" type="text" placeholder="Type new receiver name..." 
+               style="display:none; margin-top:6px; width:100%; padding:8px 12px; border:1.5px solid #f59e0b; border-radius:8px; font-size:13px; box-sizing:border-box;" />
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Payment Date</label>
+        <input id="editPayDate" type="date" value="${pay.payment_date || (pay.created_at ? pay.created_at.slice(0, 10) : '')}" 
+               style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box;" />
+      </div>
+      <div class="form-group" style="margin-bottom:18px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; margin-bottom:4px; display:block;">Notes</label>
+        <input id="editPayNotes" value="${cleanNotes}" placeholder="Optional payment notes..."
+               style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box;" />
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="this.closest('.modal-overlay').remove()" 
+                style="padding:9px 16px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; border-radius:8px; font-weight:600; font-size:13px; cursor:pointer;">
+          Cancel
+        </button>
+        <button type="button" id="btnUpdatePaySave" onclick="saveEditPayment(${payId},'${bkId}')" 
+                style="padding:9px 20px; background:#b45309; color:#fff; border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
+          💾 Update Payment
         </button>
       </div>
-      <div class="form-group"><label>Date</label><input id="editPayDate" type="date" value="${pay.payment_date || ''}" /></div>
-      <div class="form-group"><label>Notes</label><input id="editPayNotes" value="${pay.notes || ''}" /></div>
-      <button onclick="saveEditPayment(${payId},'${bkId}')" style="width:100%;margin-top:10px;">💾 Update</button>
     </div>`;
   document.body.appendChild(modal);
-  // Pre-populate received_by dropdown
+
+  // Initialize dropdown with existing receiver
   setTimeout(async () => {
-    await window.onEditPayModeChange();
-    const dropdown = document.getElementById('editPayReceivedBy');
-    if (dropdown && pay.received_by) {
-      // Check if value exists in dropdown
-      const exists = Array.from(dropdown.options).some(o => o.value === pay.received_by);
-      if (exists) {
-        dropdown.value = pay.received_by;
-      } else {
-        // Not in list — use custom
-        dropdown.value = '__custom__';
-        const custom = document.getElementById('editPayReceivedByCustom');
-        if (custom) { custom.style.display = 'block'; custom.value = pay.received_by; }
-      }
-    }
-  }, 100);
+    await window.onEditPayModeChange(existingReceiver);
+  }, 50);
 }
 
 async function saveEditPayment(payId, bkId) {
-  // Get received_by (dropdown or custom)
+  const saveBtn = document.getElementById('btnUpdatePaySave');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+
   const dropdown = document.getElementById('editPayReceivedBy');
   let receivedBy = dropdown?.value || '';
   if (receivedBy === '__custom__') {
@@ -6912,16 +6934,37 @@ async function saveEditPayment(payId, bkId) {
   }
   
   const amount = parseFloat(document.getElementById('editPayAmt')?.value) || 0;
-  const mode = document.getElementById('editPayMode')?.value;
+  const mode = document.getElementById('editPayMode')?.value || 'UPI';
+  const payDate = document.getElementById('editPayDate')?.value || null;
   
-  // Validation
-  if (amount > 0 && !receivedBy) {
+  if (amount <= 0) {
+    alert('⚠️ Please enter a valid payment amount!');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Update Payment'; }
+    document.getElementById('editPayAmt')?.focus();
+    return;
+  }
+
+  if (!receivedBy) {
     alert('⚠️ Please select who received the payment!');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Update Payment'; }
     document.getElementById('editPayReceivedBy')?.focus();
     return;
   }
-  
-  const handoverStatus = (mode === 'Cash' && !['Anwar-OD'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
+
+  // If a new custom receiver was entered, auto-persist to custom receivers list
+  if (receivedBy && !/^(company|airbnb|anwar|anwar-od|anwar od)$/i.test(receivedBy)) {
+    try {
+      if (typeof window.getRoostCustomReceivers === 'function' && typeof window.persistRoostCustomReceivers === 'function') {
+        const currentList = await window.getRoostCustomReceivers();
+        if (!currentList.includes(receivedBy)) {
+          currentList.push(receivedBy);
+          await window.persistRoostCustomReceivers(currentList);
+        }
+      }
+    } catch (e) {
+      console.warn('Auto-persist custom receiver error:', e);
+    }
+  }
   
   let rawNotes = (document.getElementById('editPayNotes')?.value || '').trim();
   rawNotes = rawNotes.replace(/\s*\([^\)]*Received by:[^\)]*\)/gi, '').replace(/\s*\[[^\]]*Received By:[^\]]*\]/gi, '').trim();
@@ -6930,10 +6973,8 @@ async function saveEditPayment(payId, bkId) {
   const payPatch = {
     amount: amount,
     payment_mode: mode,
-    payment_date: document.getElementById('editPayDate')?.value || null,
-    notes: finalNotes,
-    received_by: receivedBy || null,
-    handover_status: handoverStatus
+    payment_date: payDate,
+    notes: finalNotes
   };
 
   const { error: updErr } = (typeof window.safeDbUpdate === 'function')
@@ -6943,11 +6984,17 @@ async function saveEditPayment(payId, bkId) {
   if (updErr) {
     console.error('Error updating payment:', updErr);
     alert('Failed to update payment: ' + updErr.message);
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Update Payment'; }
     return;
   }
 
+  // Recalculate booking payment status (paid_amount, balance_amount, payment_status)
   await recalcPaymentStatus(bkId);
+  document.getElementById('editPaymentModalBox')?.remove();
   document.querySelector('.modal-overlay')?.remove();
+
+  // Invalidate caches & notify all listeners
+  window._allBookings = null;
   if (window._sbkState) {
     if (window._sbkState.cachedPaidMap) delete window._sbkState.cachedPaidMap[bkId];
     window._sbkState.cachedBookings = null;
@@ -6958,12 +7005,17 @@ async function saveEditPayment(payId, bkId) {
   if (typeof window.notifyDataChanged === 'function') {
     window.notifyDataChanged();
   }
+  if (typeof window.renderMyLedger === 'function') {
+    window.renderMyLedger();
+  }
   if (typeof window.openBookingDrawer === 'function' && (window._currentDrawerBookingId === bkId || document.getElementById('sbkDrawerContainer'))) {
     await window.openBookingDrawer(bkId);
-  } else if (document.getElementById('editBkErr')) {
-    editBooking(bkId);
   } else if (typeof renderManageBookings === 'function') {
     renderManageBookings();
+  }
+
+  if (window.fsn && window.fsn.success) {
+    window.fsn.success('Payment Updated', `₹${amount.toLocaleString('en-IN')} updated (${receivedBy})`);
   }
 }
 
@@ -8564,7 +8616,7 @@ window.getAdvReceivedBy = function() {
 // ═══════════════════════════════════════════════════════════
 // 💰 EDIT PAYMENT — Received By dropdown handler
 // ═══════════════════════════════════════════════════════════
-window.onEditPayModeChange = async function() {
+window.onEditPayModeChange = async function(initialReceiver) {
   const mode = document.getElementById('editPayMode')?.value || 'Cash';
   const dropdown = document.getElementById('editPayReceivedBy');
   const label = document.getElementById('editReceivedByLabel');
@@ -8575,12 +8627,18 @@ window.onEditPayModeChange = async function() {
   if (label) {
     if (mode === 'Cash') label.innerHTML = '💵 Cash Received By *';
     else if (mode === 'UPI') label.innerHTML = '📱 UPI Received In *';
-    else if (mode === 'Bank') label.innerHTML = '🏦 Bank Account *';
+    else if (mode === 'Bank' || mode === 'Bank Transfer') label.innerHTML = '🏦 Bank Account *';
+    else if (mode === 'Airbnb Payout' || mode === 'Online-Airbnb') label.innerHTML = '🌐 Channel Account *';
     else label.innerHTML = '💰 Received By *';
   }
   
-  const curr = dropdown.value || '';
-  await window.populateReceivedByDropdown(dropdown, mode, curr, custom);
+  let curr = initialReceiver;
+  if (!curr) {
+    curr = dropdown.value === '__custom__' ? (custom?.value?.trim() || '') : (dropdown.value || '');
+  }
+  if (window.populateReceivedByDropdown) {
+    await window.populateReceivedByDropdown(dropdown, mode, curr, custom);
+  }
 };
 
 window.onEditReceivedByChange = function() {
