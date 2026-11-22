@@ -3069,7 +3069,7 @@ ${propertiesList}
               📱 Guest Mobile Number:
             </label>
             <div style="display:flex;gap:8px;align-items:center;">
-              <input type="tel" id="crbInputPhone" value="${escapeHtml(initPhone)}" placeholder="e.g. 9044276377" 
+              <input type="tel" id="crbInputPhone" value="${escapeHtml(initPhone)}" placeholder="e.g. 9807486555" 
                 style="flex:1;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;color:#0F172A;background:#fff;outline:none;" 
                 oninput="window._debouncedFetchCombinedReceiptBookings && window._debouncedFetchCombinedReceiptBookings()"
                 onkeydown="if(event.key==='Enter') window._fetchCombinedReceiptBookings && window._fetchCombinedReceiptBookings();" />
@@ -3080,8 +3080,8 @@ ${propertiesList}
             <!-- Quick Guest Shortcut Chips -->
             <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center;">
               <span style="font-size:11px;color:#78350F;font-weight:700;">Quick Chip:</span>
-              <button type="button" style="background:#FEF3C7;border:1px solid #FDE68A;color:#92400E;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800;cursor:pointer;" onclick="document.getElementById('crbInputPhone').value='9044276377';window._fetchCombinedReceiptBookings();">
-                9044276377 (Awadh Abode)
+              <button type="button" style="background:#FEF3C7;border:1.5px solid #FDE68A;color:#92400E;border-radius:999px;padding:3px 12px;font-size:11.5px;font-weight:800;cursor:pointer;" onclick="document.getElementById('crbInputPhone').value='9807486555';window._fetchCombinedReceiptBookings();">
+                📱 9807486555 (Mr. Anwar Ahmad / Roost Stays)
               </button>
             </div>
           </div>

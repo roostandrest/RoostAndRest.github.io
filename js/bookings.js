@@ -2010,7 +2010,7 @@ async function openGuestStatementModal(prefillGuestName, prefillPhone) {
           Guest Name or Phone Number:
         </label>
         <div style="position:relative;">
-          <input type="text" id="gsmGuestInput" placeholder="e.g. Rohit Singh or 9415973110..."
+          <input type="text" id="gsmGuestInput" placeholder="e.g. Anwar Ahmad or 9807486555..."
             value="${prefillPhone || prefillGuestName || ''}"
             style="width:100%;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:600;"
             onkeydown="if(event.key==='Enter') window._gsmSubmit();">
@@ -9843,7 +9843,7 @@ window.openCustomPaymentQRModal = async function(prefill = {}) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           <div>
             <label style="display:block;font-size:10.5px;font-weight:700;color:#64748B;margin-bottom:2px;">Guest Name (Optional)</label>
-            <input type="text" id="cpqrGuestName" value="${escapeHtml(initGuest)}" placeholder="e.g. Rohit" style="width:100%;padding:7px 8px;border:1.5px solid #CBD5E1;border-radius:7px;font-size:12px;font-weight:600;color:#0F172A;background:#FFFFFF;box-sizing:border-box;" />
+            <input type="text" id="cpqrGuestName" value="${escapeHtml(initGuest)}" placeholder="e.g. Anwar Ahmad" style="width:100%;padding:7px 8px;border:1.5px solid #CBD5E1;border-radius:7px;font-size:12px;font-weight:600;color:#0F172A;background:#FFFFFF;box-sizing:border-box;" />
           </div>
           <div>
             <label style="display:block;font-size:10.5px;font-weight:700;color:#64748B;margin-bottom:2px;">WhatsApp (Optional)</label>
