@@ -2635,15 +2635,9 @@ async function renderSmartAddBooking(prefillOpts) {
               </select>
             </div>
             <div class="form-group">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <label style="font-weight:700;margin:0;" id="smartAdvReceivedByLabel">💰 Received By *</label>
-                <div style="display:flex;gap:4px;">
-                  <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
-                  <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
-                </div>
-              </div>
-              <select id="advReceivedBy" style="font-weight:600;" onchange="if(this.value==='__addnew__')quickAddNewPaymentReceiver('advReceivedBy')">
-                <option value="">-- Select Team Member --</option>
+              <label style="font-weight:700;margin-bottom:4px;" id="smartAdvReceivedByLabel">💰 Received By *</label>
+              <select id="advReceivedBy" style="font-weight:600;">
+                <option value="">-- Select Receiver --</option>
               </select>
             </div>
           </div>
@@ -2786,15 +2780,9 @@ async function renderSmartAddBooking(prefillOpts) {
               </select>
             </div>
             <div class="form-group">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <label style="font-weight:700;margin:0;" id="smartAdvReceivedByLabel">💰 Received By *</label>
-                <div style="display:flex;gap:4px;">
-                  <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
-                  <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 6px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
-                </div>
-              </div>
-              <select id="advReceivedBy" style="font-weight:600;" onchange="if(this.value==='__addnew__')quickAddNewPaymentReceiver('advReceivedBy')">
-                <option value="">-- Select Team Member --</option>
+              <label style="font-weight:700;margin-bottom:4px;" id="smartAdvReceivedByLabel">💰 Received By *</label>
+              <select id="advReceivedBy" style="font-weight:600;">
+                <option value="">-- Select Receiver --</option>
               </select>
             </div>
           </div>
@@ -3339,40 +3327,51 @@ window.loadSmartReceivers = async function() {
 
   const data = (typeof loadReceiveByHolders === 'function')
     ? await loadReceiveByHolders()
-    : { owners: ['Roost and Rest', 'Anwar OD'], manager: [], employees: [] };
+    : { company: 'Company / Airbnb', defaultOD: 'Anwar-OD', custom: ['Shahenshah'], employees: [] };
 
-  const finalHolders = data.owners || [];
-  const managers = data.manager || [];
-  const receivers = data.employees || [];
+  const companyAcc = data.company || 'Company / Airbnb';
+  const defaultOD = data.defaultOD || 'Anwar-OD';
+  const customReceivers = data.custom || [];
+  const staffReceivers = data.employees || [];
 
-  let optionsHtml = '<option value="">-- Select Team Member --</option>';
-  optionsHtml += '<optgroup label="🏦 Overdraft Account"><option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option></optgroup>';
-  if (finalHolders.length) {
-    optionsHtml += '<optgroup label="🏢 Company / Bank Accounts">';
-    finalHolders.filter(n => n !== 'Anwar OD').forEach(n => optionsHtml += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+  let optionsHtml = '';
+  optionsHtml += '<optgroup label="🌐 Online / Airbnb Channel">';
+  optionsHtml += `<option value="${companyAcc}">🌐 ${companyAcc} (Online Airbnb Payouts)</option>`;
+  optionsHtml += '</optgroup>';
+
+  optionsHtml += '<optgroup label="🏦 Default Account">';
+  optionsHtml += `<option value="${defaultOD}">🏦 ${defaultOD} (Default Cash / UPI)</option>`;
+  optionsHtml += '</optgroup>';
+
+  if (customReceivers.length > 0) {
+    optionsHtml += '<optgroup label="👥 Other Receivers (Caretakers / Partners)">';
+    customReceivers.forEach(n => {
+      optionsHtml += `<option value="${escapeHtml(n)}">👤 ${escapeHtml(n)}</option>`;
+    });
     optionsHtml += '</optgroup>';
   }
-  if (managers.length) {
-    optionsHtml += '<optgroup label="👨‍💼 Managers & Owners">';
-    managers.forEach(n => optionsHtml += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
+
+  if (staffReceivers.length > 0) {
+    optionsHtml += '<optgroup label="🧑‍💼 Staff Members">';
+    staffReceivers.forEach(n => {
+      if (!customReceivers.includes(n)) {
+        optionsHtml += `<option value="${escapeHtml(n)}">🧑‍💼 ${escapeHtml(n)}</option>`;
+      }
+    });
     optionsHtml += '</optgroup>';
   }
-  if (receivers.length) {
-    optionsHtml += '<optgroup label="👥 Staff & Team Receivers">';
-    receivers.forEach(n => optionsHtml += `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`);
-    optionsHtml += '</optgroup>';
-  }
-  optionsHtml += '<option value="__addnew__">➕ Add New Payment Receiver...</option>';
 
   if (advSel) {
     const cur = advSel.value;
     advSel.innerHTML = optionsHtml;
-    if (cur && cur !== '__addnew__') advSel.value = cur;
+    if (cur) advSel.value = cur;
+    else advSel.value = defaultOD;
   }
   if (secSel) {
     const cur = secSel.value;
     secSel.innerHTML = optionsHtml;
-    if (cur && cur !== '__addnew__') secSel.value = cur;
+    if (cur) secSel.value = cur;
+    else secSel.value = defaultOD;
   }
 };
 

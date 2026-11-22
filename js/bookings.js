@@ -3402,26 +3402,16 @@ async function renderAddBooking(prefillOpts) {
         </div>
       </div>
       <div class="form-grid" id="advReceivedByRow" style="display:${pre.advMode ? 'grid' : 'none'};">
-        <div class="form-group">
+        <div class="form-group" style="grid-column: 1 / -1;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
             <label id="advReceivedByLabel" style="margin:0;font-weight:700;">💰 Received By *</label>
-            <div style="display:flex;gap:4px;">
-              <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
-              <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
-            </div>
+            <a href="#my-ledger" onclick="if(window.navigateTo) window.navigateTo('my-ledger')" style="font-size:11px;color:#b45309;font-weight:700;text-decoration:none;">💼 Manage Receivers</a>
           </div>
-          <select id="advReceivedBy" onchange="onAdvReceivedByChange()">
-            <option value="">-- Select --</option>
+          <select id="advReceivedBy" onchange="window.onAdvReceivedByChange()">
+            <option value="">-- Select Receiver --</option>
           </select>
-          <input id="advReceivedByCustom" type="text" placeholder="Enter new name..." 
-                 style="display:none;margin-top:6px;" />
-        </div>
-        <div class="form-group">
-          <label>&nbsp;</label>
-          <button type="button" onclick="quickAddNewPaymentReceiver('advReceivedBy')" 
-                  style="padding:10px;background:#EFF6FF;color:#1D4ED8;border:1.5px dashed #3B82F6;border-radius:8px;cursor:pointer;width:100%;font-size:13px;font-weight:700;">
-            ➕ Add New Receiver
-          </button>
+          <input id="advReceivedByCustom" type="text" placeholder="Type new receiver name..." 
+                 style="display:none;margin-top:6px;width:100%;padding:8px;border-radius:6px;border:1px solid #cbd5e1;" />
         </div>
       </div>
       <div class="form-group"><label>Advance Date</label>
@@ -4659,15 +4649,21 @@ async function saveBooking() {
 
       // Insert current booking payment (capped at remaining)
       if (payForCurrent > 0) {
-        await sb.from('payment_history').insert({
+        const advNotes = isOnline 
+          ? 'Airbnb Payout (Received by: Company / Airbnb)' 
+          : `Advance (Received by: ${receivedBy || 'Anwar-OD'})`;
+        const payPayload = {
           booking_id: bkId, amount: payForCurrent, payment_mode: advMode || null,
-          payment_date: advDate, notes: isOnline ? 'Airbnb Payout' : 'Advance',
-          received_by: receivedBy, handover_status: handoverStatus,
+          payment_date: advDate, notes: advNotes,
+          received_by: isOnline ? 'Company / Airbnb' : (receivedBy || 'Anwar-OD'), 
+          handover_status: handoverStatus,
           recorded_by: userAuditName,
           created_by: SESSION.userId,
           paid_at: new Date().toISOString(),
           ...approvalMeta()
-        });
+        };
+        if (window.safeDbInsert) await window.safeDbInsert('payment_history', payPayload);
+        else await sb.from('payment_history').insert(payPayload);
       }
 
       // Distribute overflow to same guest's other unpaid bookings (oldest first)
@@ -6250,36 +6246,24 @@ window.openDeletedBookingsVaultModal = async function() {
 async function loadReceiveByHolders() {
   if (window._receiveHoldersCache) return window._receiveHoldersCache;
   
-  const [{ data: holders }, { data: emps }] = await Promise.all([
-    sb.from('cash_holders').select('name, type').eq('is_active', true),
+  const [customList, { data: emps }] = await Promise.all([
+    (typeof window.getRoostCustomReceivers === 'function') 
+      ? window.getRoostCustomReceivers() 
+      : Promise.resolve(['Shahenshah']),
     sb.from('employees').select('name, role').eq('status', 'Active')
   ]);
   
   const excludeRoles = ['Cleaning Staff', 'Maid', 'Dusting & Bedding'];
   const staffEmpNames = (emps || [])
     .filter(e => !excludeRoles.includes(e.role))
-    .map(e => e.name);
-  
-  // Owners & Company Accounts
-  const owners = (holders || []).filter(h => h.type === 'final').map(h => h.name);
-  if (!owners.includes('Anwar OD')) owners.unshift('Anwar OD');
-  if (!owners.includes('Roost and Rest')) owners.unshift('Roost and Rest');
-  if (!owners.some(o => (o || '').toLowerCase() === 'anwar')) owners.push('Anwar');
-  if (!owners.some(o => (o || '').toLowerCase() === 'shahenshah')) owners.push('Shahenshah');
-
-  // Managers
-  const managers = (holders || []).filter(h => h.type === 'manager').map(h => h.name);
-
-  // Receivers & Team from cash_holders
-  const holderReceivers = (holders || []).filter(h => h.type === 'receiver' || !h.type).map(h => h.name);
-
-  // Union of all receivers (employees + cash_holders custom entries)
-  const allReceivers = [...new Set([...staffEmpNames, ...holderReceivers])].filter(n => !owners.includes(n) && !managers.includes(n));
+    .map(e => (e.name || '').trim())
+    .filter(n => n && !/^(anwar|anwar-od|anwar od|company|airbnb)$/i.test(n));
 
   window._receiveHoldersCache = {
-    owners,
-    manager: managers,
-    employees: allReceivers
+    company: 'Company / Airbnb',
+    defaultOD: 'Anwar-OD',
+    custom: (customList || []).filter(n => n && !/^(anwar|anwar-od|anwar od|company|airbnb)$/i.test(n)),
+    employees: staffEmpNames
   };
   return window._receiveHoldersCache;
 }
@@ -6288,89 +6272,84 @@ async function loadReceiveByHolders() {
 window.populateReceivedByDropdown = async function(selectEl, mode, currentVal, customEl) {
   if (!selectEl) return;
   const data = await loadReceiveByHolders();
-  const finalHolders = data.owners || [];
-  const managers = data.manager || [];
-  const receivers = data.employees || [];
+  const companyAcc = data.company || 'Company / Airbnb';
+  const defaultOD = data.defaultOD || 'Anwar-OD';
+  const customReceivers = data.custom || [];
+  const staffReceivers = data.employees || [];
 
-  let html = '<option value="">-- Select Receiver --</option>';
+  let html = '';
 
-  const isAnwarOD = (currentVal || '').toUpperCase().includes('ANWAR');
-  html += '<optgroup label="🏦 Overdraft Account">';
-  html += `<option value="Anwar OD" ${isAnwarOD ? 'selected' : ''}>💵 Anwar OD (Offline / Cash A/c)</option>`;
+  // Group 1: Online / Airbnb (Always first per user instruction)
+  html += '<optgroup label="🌐 Online / Airbnb Channel">';
+  html += `<option value="${companyAcc}">🌐 ${companyAcc} (Online Airbnb Payouts)</option>`;
   html += '</optgroup>';
 
-  if (finalHolders.length) {
-    html += '<optgroup label="🏢 Company / Bank Accounts">';
-    finalHolders.filter(n => n !== 'Anwar OD').forEach(n => {
-      html += `<option value="${n}" ${currentVal === n ? 'selected' : ''}>${n}</option>`;
-    });
-    html += '</optgroup>';
-  }
-  if (managers.length) {
-    html += '<optgroup label="👨‍💼 Managers & Owners">';
-    managers.forEach(n => {
-      html += `<option value="${n}" ${currentVal === n ? 'selected' : ''}>${n}</option>`;
-    });
-    html += '</optgroup>';
-  }
-  if (receivers.length) {
-    html += '<optgroup label="👥 Staff & Team Receivers">';
-    receivers.forEach(n => {
-      html += `<option value="${n}" ${currentVal === n ? 'selected' : ''}>${n}</option>`;
+  // Group 2: Default Offline Account (Anwar-OD)
+  html += '<optgroup label="🏦 Default Account">';
+  html += `<option value="${defaultOD}">🏦 ${defaultOD} (Default Cash / UPI)</option>`;
+  html += '</optgroup>';
+
+  // Group 3: Custom Receivers (Caretakers / Non-Employees)
+  if (customReceivers.length > 0) {
+    html += '<optgroup label="👥 Other Receivers (Caretakers / Partners)">';
+    customReceivers.forEach(n => {
+      html += `<option value="${n}">👤 ${n}</option>`;
     });
     html += '</optgroup>';
   }
 
-  // Preserve existing value if not in list
-  const allKnown = ['Anwar OD', ...finalHolders, ...managers, ...receivers];
-  if (currentVal && !allKnown.includes(currentVal) && currentVal !== '__custom__' && currentVal !== '__addnew__' && !isAnwarOD) {
-    html += '<optgroup label="Existing / Other">';
-    html += `<option value="${currentVal}" selected>${currentVal}</option>`;
+  // Group 4: Staff Members
+  if (staffReceivers.length > 0) {
+    html += '<optgroup label="🧑‍💼 Staff Members">';
+    staffReceivers.forEach(n => {
+      if (!customReceivers.includes(n)) {
+        html += `<option value="${n}">🧑‍💼 ${n}</option>`;
+      }
+    });
     html += '</optgroup>';
   }
 
-  html += '<option value="__addnew__">➕ Add New Payment Receiver...</option>';
-  html += '<option value="__custom__">✏️ Custom Receiver Name...</option>';
+  html += '<option value="__custom__">✏️ Type Other Receiver Name...</option>';
   selectEl.innerHTML = html;
 
-  if (currentVal) {
-    if (isAnwarOD) {
-      selectEl.value = 'Anwar OD';
-      if (customEl) customEl.style.display = 'none';
-    } else {
-      selectEl.value = currentVal;
-      if (selectEl.value !== currentVal) {
-        selectEl.value = '__custom__';
-        if (customEl) { customEl.value = currentVal; customEl.style.display = 'block'; }
-      } else if (customEl) {
-        customEl.style.display = 'none';
-      }
+  // Auto-selection:
+  // - Online Airbnb -> Company / Airbnb
+  // - Direct / Offline / Default -> Anwar-OD
+  let target = defaultOD;
+  if (mode === 'Online-Airbnb' || mode === 'Airbnb' || mode === 'Airbnb Payout') {
+    target = companyAcc;
+  } else if (currentVal) {
+    const norm = window.normalizeReceiverName ? window.normalizeReceiverName(currentVal) : currentVal;
+    if (/^anwar$/i.test(norm) || /^anwar[\s_-]?od$/i.test(norm)) target = defaultOD;
+    else if (/^(company|roost and rest|airbnb)$/i.test(norm)) target = companyAcc;
+    else target = norm;
+  }
+
+  const optionExists = Array.from(selectEl.options).some(o => o.value === target);
+  if (optionExists) {
+    selectEl.value = target;
+    if (customEl) { customEl.style.display = 'none'; customEl.value = ''; }
+  } else if (target && target !== '__custom__') {
+    selectEl.value = '__custom__';
+    if (customEl) {
+      customEl.style.display = 'block';
+      customEl.value = target;
     }
-  } else if (mode === 'Cash') {
-    selectEl.value = 'Anwar OD';
-    if (customEl) customEl.style.display = 'none';
-  } else if (mode === 'UPI' || mode === 'Bank') {
-    selectEl.value = 'Roost and Rest';
-    if (customEl) customEl.style.display = 'none';
-  } else if (customEl) {
-    customEl.style.display = 'none';
+  } else {
+    selectEl.value = defaultOD;
+    if (customEl) { customEl.style.display = 'none'; customEl.value = ''; }
   }
 };
 
 window.onReceiverDropdownChange = function(selectEl, customInputId) {
-  const customEl = document.getElementById(customInputId);
-  if (!customEl) return;
-  if (selectEl.value === '__addnew__') {
-    window.quickAddNewPaymentReceiver(selectEl.id);
-    return;
-  }
+  const custom = document.getElementById(customInputId);
+  if (!selectEl || !custom) return;
   if (selectEl.value === '__custom__') {
-    customEl.style.display = 'block';
-    customEl.value = '';
-    customEl.focus();
+    custom.style.display = 'block';
+    setTimeout(() => custom.focus(), 50);
   } else {
-    customEl.style.display = 'none';
-    customEl.value = '';
+    custom.style.display = 'none';
+    custom.value = '';
   }
 };
 
@@ -6476,15 +6455,12 @@ function showPaymentModal(bkId) {
       <div class="form-group">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
           <label style="margin:0;font-weight:700;">💰 Received By *</label>
-          <div style="display:flex;gap:4px;">
-            <button type="button" onclick="quickAddNewPaymentReceiver('payReceivedBy')" style="background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;">➕ Add</button>
-            <button type="button" onclick="openRealTimeReceiverLedgerModal()" style="background:#ECFDF5;color:#047857;border:1px solid #A7F3D0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;cursor:pointer;" title="Check Live Cash in Hand">📊 Balances</button>
-          </div>
+          <a href="#my-ledger" onclick="if(window.navigateTo) window.navigateTo('my-ledger')" style="font-size:11px;color:#b45309;font-weight:700;text-decoration:none;">💼 Manage Receivers</a>
         </div>
         <select id="payReceivedBy" onchange="if(window.onReceiverDropdownChange) onReceiverDropdownChange(this, 'payReceivedByCustom')" style="width:100%;padding:8px;border-radius:6px;border:1px solid #CBD5E1;font-weight:600;">
           <option value="">-- Select who received --</option>
         </select>
-        <input id="payReceivedByCustom" type="text" placeholder="Type name..." style="display:none;margin-top:6px;width:100%;padding:8px;border-radius:6px;border:1px solid #CBD5E1;">
+        <input id="payReceivedByCustom" type="text" placeholder="Type custom receiver name..." style="display:none;margin-top:6px;width:100%;padding:8px;border-radius:6px;border:1px solid #CBD5E1;">
       </div>
       
       <div class="form-group"><label>Date</label><input id="payDate" type="date" value="${new Date().toISOString().slice(0, 10)}" /></div>
@@ -6527,8 +6503,11 @@ async function savePaymentModal(bkId) {
   }
 
   const mode = document.getElementById('payMode')?.value;
-  if (mode === "Airbnb Payout") receivedBy = "Anwar";
-  if (!receivedBy || receivedBy.trim() === "") receivedBy = "Anwar";
+  if (mode === "Airbnb Payout" || mode === "Online-Airbnb") {
+    receivedBy = "Company / Airbnb";
+  } else if (!receivedBy || /^anwar$/i.test(receivedBy) || /^anwar[\s_-]?od$/i.test(receivedBy)) {
+    receivedBy = "Anwar-OD";
+  }
   const payDate = document.getElementById('payDate')?.value;
   const userNotes = document.getElementById('payNotes')?.value?.trim() || null;
 
@@ -6694,14 +6673,17 @@ async function savePaymentModal(bkId) {
 
   // Step 1: Insert current booking payment (only up to remaining)
   if (paymentForCurrent > 0) {
+    const finalPayNotes = userNotes 
+      ? `${userNotes} (Received by: ${receivedBy})` 
+      : `(Received by: ${receivedBy})`;
     const payPayload = {
       booking_id: bkId, amount: paymentForCurrent,
       payment_mode: mode,
       received_by: receivedBy,
-      handover_status: (mode === "Cash" && !["Anwar","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
+      handover_status: (mode === "Cash" && !["Anwar-OD","Shahenshah"].includes(receivedBy)) ? "in_hand" : "handed_over",
       payment_date: payDate,
       paid_at: new Date().toISOString(),
-      notes: userNotes,
+      notes: finalPayNotes,
       recorded_by: userAuditName,
       created_by: SESSION.userId,
       ...approvalMeta()
@@ -8467,56 +8449,14 @@ window.onAdvanceModeChange = async function() {
     else label.innerHTML = '💰 Received By *';
   }
   
-  const data = await loadReceiveByHolders();
-  const finalHolders = data.owners || [];
-  const managers = data.manager || [];
-  const receivers = data.employees || [];
   const curVal = dropdown.value;
-  
-  let html = '<option value="">-- Select Receiver --</option>';
-  html += '<optgroup label="🏦 Overdraft Account">';
-  html += '<option value="Anwar OD">💵 Anwar OD (Offline / Cash A/c)</option>';
-  html += '</optgroup>';
-  
-  if (finalHolders.length) {
-    html += '<optgroup label="🏢 Company / Bank Accounts">';
-    finalHolders.filter(n => n !== 'Anwar OD').forEach(n => html += `<option value="${n}">${n}</option>`);
-    html += '</optgroup>';
-  }
-  if (managers.length) {
-    html += '<optgroup label="👨‍💼 Managers & Owners">';
-    managers.forEach(n => html += `<option value="${n}">${n}</option>`);
-    html += '</optgroup>';
-  }
-  if (receivers.length) {
-    html += '<optgroup label="👥 Staff & Team Receivers">';
-    receivers.forEach(n => html += `<option value="${n}">${n}</option>`);
-    html += '</optgroup>';
-  }
-  
-  html += '<option value="__addnew__">➕ Add New Payment Receiver...</option>';
-  html += '<option value="__custom__">✏️ Custom Receiver Name...</option>';
-  dropdown.innerHTML = html;
-  
-  if (curVal && curVal !== '__addnew__' && curVal !== '__custom__') {
-    dropdown.value = curVal;
-  } else if (mode === 'Cash') {
-    dropdown.value = 'Anwar OD';
-  } else if (mode === 'UPI' || mode === 'Bank' || mode === 'Airbnb Payout') {
-    dropdown.value = 'Roost and Rest';
-  }
-  
-  if (custom) { custom.style.display = 'none'; custom.value = ''; }
+  await window.populateReceivedByDropdown(dropdown, mode, curVal, custom);
 };
 
 window.onAdvReceivedByChange = function() {
   const dropdown = document.getElementById('advReceivedBy');
   const custom = document.getElementById('advReceivedByCustom');
   if (!dropdown) return;
-  if (dropdown.value === '__addnew__') {
-    window.quickAddNewPaymentReceiver('advReceivedBy');
-    return;
-  }
   if (dropdown.value === '__custom__') {
     if (custom) {
       custom.style.display = 'block';
@@ -8530,89 +8470,27 @@ window.onAdvReceivedByChange = function() {
   }
 };
 
-// Quick add new payment receiver (persists to cash_holders)
+// Safe helper to add custom receiver to app_settings & localStorage
 window.quickAddNewPaymentReceiver = async function(targetSelectId) {
-  const name = prompt('➕ Enter New Payment Receiver Name:\n(e.g., Staff Name, Caretaker Name, or Bank/QR Name)');
-  if (!name || !name.trim()) {
-    if (targetSelectId) {
-      const sel = document.getElementById(targetSelectId);
-      if (sel && sel.value === '__addnew__') sel.value = '';
-    }
+  if (window.navigateTo) {
+    window.navigateTo('my-ledger');
     return;
-  }
-  const cleanName = name.trim();
-  
-  const typeChoice = prompt(
-    `Select category for "${cleanName}":\n\n1 = 👥 Staff / Caretaker / Receiver\n2 = 👨‍💼 Manager\n3 = 🏢 Company / Bank / Owner\n\nEnter 1, 2, or 3:`,
-    '1'
-  );
-  
-  let type = 'receiver';
-  let limit = 10000;
-  if (typeChoice === '2') {
-    type = 'manager';
-    limit = 50000;
-  } else if (typeChoice === '3') {
-    type = 'final';
-    limit = 999999;
-  }
-
-  const payload = {
-    name: cleanName,
-    type: type,
-    is_active: true,
-    spending_limit: limit
-  };
-
-  const res = (typeof window.safeDbInsert === 'function')
-    ? await window.safeDbInsert('cash_holders', payload)
-    : await sb.from('cash_holders').insert(payload);
-
-  if (res && res.error) {
-    alert('❌ Error adding receiver: ' + res.error.message);
-    return;
-  }
-
-  // Refresh caches
-  window._receiveHoldersCache = null;
-  window._cashHoldersCache = null;
-
-  if (window.fsn?.success) {
-    fsn.success('Receiver Added', `✅ "${cleanName}" added as payment receiver!`);
-  } else {
-    alert(`✅ "${cleanName}" added as payment receiver!`);
-  }
-
-  if (targetSelectId) {
-    const sel = document.getElementById(targetSelectId);
-    if (targetSelectId === 'advReceivedBy') {
-      if (typeof window.onAdvanceModeChange === 'function') await window.onAdvanceModeChange();
-      if (typeof window.loadSmartReceivers === 'function') await window.loadSmartReceivers();
-    } else if (targetSelectId === 'payReceivedBy') {
-      const mode = document.getElementById('payMode')?.value || 'Cash';
-      await window.populateReceivedByDropdown(sel, mode, cleanName);
-    } else if (targetSelectId === 'editPayReceivedBy') {
-      const mode = document.getElementById('editPayMode')?.value || 'Cash';
-      await window.populateReceivedByDropdown(sel, mode, cleanName);
-    }
-    const updatedSel = document.getElementById(targetSelectId);
-    if (updatedSel) updatedSel.value = cleanName;
   }
 };
 
 window.quickAddCashHolder = function() {
-  return window.quickAddNewPaymentReceiver('advReceivedBy');
+  if (window.navigateTo) window.navigateTo('my-ledger');
 };
 
 // Get advance received_by value (for save)
 window.getAdvReceivedBy = function() {
   const dropdown = document.getElementById('advReceivedBy');
-  if (!dropdown) return null;
+  const custom = document.getElementById('advReceivedByCustom');
+  if (!dropdown) return 'Anwar-OD';
   if (dropdown.value === '__custom__') {
-    return document.getElementById('advReceivedByCustom')?.value?.trim() || null;
+    return (custom?.value || '').trim() || 'Anwar-OD';
   }
-  if (dropdown.value === '__addnew__') return null;
-  return dropdown.value || 'Roost and Rest';
+  return dropdown.value || 'Anwar-OD';
 };
 
 // ═══════════════════════════════════════════════════════════
@@ -8641,10 +8519,6 @@ window.onEditReceivedByChange = function() {
   const dropdown = document.getElementById('editPayReceivedBy');
   const custom = document.getElementById('editPayReceivedByCustom');
   if (!dropdown) return;
-  if (dropdown.value === '__addnew__') {
-    window.quickAddNewPaymentReceiver('editPayReceivedBy');
-    return;
-  }
   if (dropdown.value === '__custom__') {
     if (custom) {
       custom.style.display = 'block';
