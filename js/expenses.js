@@ -21,30 +21,28 @@ async function renderExpenses() {
       expsRes,
       gsRes,
       roomsRes,
-      reimbsRes,
       maintRes,
-      laundryPaysRes,
+      laundryRecordsRes,
       advsRes,
       empsRes
     ] = await Promise.all([
       sb.from('expense_categories').select('*').order('category_name'),
-      sb.from('expenses').select('*, expense_categories(category_name), rooms(nickname,unit_no)').order('entry_date', { ascending: false }),
+      sb.from('expenses').select('*').order('expense_date', { ascending: false }),
       sb.from('guest_register').select('booking_id, check_in, total_amount'),
       sb.from('rooms').select('room_id, nickname, unit_no').order('unit_no'),
-      sb.from('reimbursements').select('*').order('expense_date', { ascending: false }),
       sb.from('maintenance_log').select('*').gt('cost', 0).order('created_at', { ascending: false }),
-      sb.from('laundry_payments').select('*, laundry_records(vendor_name, room_id)').order('payment_date', { ascending: false }),
-      sb.from('advance_tracker').select('*, employees(name, role)').order('date_given', { ascending: false }),
-      sb.from('employees').select('emp_id, name, role, phone, salary').order('name')
+      sb.from('laundry_records').select('*').order('created_at', { ascending: false }),
+      sb.from('company_advances').select('*').order('date', { ascending: false }),
+      sb.from('employees').select('emp_id, name, role, phone, monthly_salary, status').order('name')
     ]);
 
     const cats = catsRes?.data || [];
     const exps = expsRes?.data || [];
     const gs = gsRes?.data || [];
     const rooms = roomsRes?.data || [];
-    const reimbs = reimbsRes?.data || [];
+    const reimbs = [];
     const maint = maintRes?.data || [];
-    const laundryPays = laundryPaysRes?.data || [];
+    const laundryPays = laundryRecordsRes?.data || [];
     const advs = advsRes?.data || [];
     const emps = empsRes?.data || [];
 
@@ -63,30 +61,37 @@ async function renderExpenses() {
 
   // Build Master Unified Expenses Collection
   const masterList = [];
+  const roomMap = new Map((rooms || []).map(r => [r.room_id, r]));
 
   // 1. General Expenses & Wi-Fi
   (exps || []).forEach(e => {
-    const isWifi = (e.expense_categories?.category_name || '').toLowerCase().includes('wi-fi') || (e.notes || '').toLowerCase().includes('wifi');
+    const catName = e.category || e.expense_categories?.category_name || 'General Operations';
+    const noteText = e.description || e.notes || '';
+    const expDate = e.expense_date || e.entry_date || (e.created_at || '').slice(0, 10);
+    const isWifi = catName.toLowerCase().includes('wi-fi') || catName.toLowerCase().includes('broadband') || noteText.toLowerCase().includes('wifi');
+    const rObj = roomMap.get(e.room_id);
+    const rLabel = rObj ? propLabel(rObj) : (e.property_name || e.room_id || 'General Business');
+
     masterList.push({
       uniqId: 'exp_' + e.id,
       id: e.id,
       channel: isWifi ? 'maintenance' : 'general',
       channelLabel: isWifi ? '📶 Wi-Fi / Broadband' : '🧾 General Expense',
       channelBadge: isWifi ? 'badge-info' : 'badge-neutral',
-      title: e.notes || e.expense_categories?.category_name || 'Expense',
-      category: e.expense_categories?.category_name || 'General',
+      title: noteText || catName || 'Expense',
+      category: catName,
       amount: Number(e.amount || 0),
-      date: e.entry_date || (e.created_at || '').slice(0, 10),
-      month: e.month || (e.entry_date ? `${monthNames[parseInt(e.entry_date.slice(5,7),10)-1]}-${e.entry_date.slice(0,4)}` : ml),
-      monthYm: (e.entry_date || '').slice(0, 7) || cm,
+      date: expDate,
+      month: e.month || (expDate ? `${monthNames[parseInt(expDate.slice(5,7),10)-1]}-${expDate.slice(0,4)}` : ml),
+      monthYm: (expDate || '').slice(0, 7) || cm,
       roomId: e.room_id || null,
-      roomLabel: propLabel(e.rooms) || e.room_id || 'General Business',
+      roomLabel: rLabel,
       staffName: e.paid_to || '-',
       empId: null,
-      paidBy: normSource(e.payment_source || e.paid_by),
+      paidBy: normSource(e.paid_by || e.payment_source || e.payment_mode),
       isSalaryDeductible: false,
       deductionStatus: 'Company Operational',
-      notes: e.notes || '',
+      notes: noteText,
       raw: e
     });
   });
@@ -718,15 +723,18 @@ window.saveStaffAdvance = async function(e) {
       return;
     }
 
-    const { error } = await sb.from('advance_tracker').insert({
+    const empSelect = document.getElementById('advEmpId');
+    const empName = empSelect?.options?.[empSelect.selectedIndex]?.text?.split('(')[0]?.trim() || '';
+
+    const { error } = await sb.from('company_advances').insert({
       emp_id: empId,
-      date_given: date,
-      advance_amount: amount,
-      repaid_amount: 0,
-      reason: reason,
+      emp_name: empName,
+      amount: amount,
+      type: 'Advance',
+      date: date,
       payment_mode: mode,
-      paid_by: paidBy,
-      is_deducted: false
+      notes: reason,
+      recorded_by: (typeof SESSION !== 'undefined' && SESSION?.displayName) ? SESSION.displayName : 'Admin'
     });
 
     if (error) throw error;
@@ -846,13 +854,13 @@ window.saveLaundryQuick = async function(e) {
       return;
     }
 
-    const { error } = await sb.from('laundry_payments').insert({
-      amount: amount,
-      payment_date: date,
-      payment_mode: mode,
-      notes: `[Vendor: ${vendor}] ${notes}`,
-      payment_source: paidBy,
-      claim_status: 'unclaimed'
+    const { error } = await sb.from('laundry_records').insert({
+      vendor_name: vendor,
+      total_cost: amount,
+      sent_date: date,
+      payment_status: 'Paid',
+      notes: notes ? `[Paid by: ${paidBy} • Mode: ${mode}] ${notes}` : `Paid by: ${paidBy} • Mode: ${mode}`,
+      created_by: (typeof SESSION !== 'undefined' && SESSION?.userId) ? SESSION.userId : null
     });
 
     if (error) throw error;
@@ -1590,21 +1598,23 @@ async function saveExpEntry() {
   }
 
   try {
+    const catEl = document.getElementById('exCategory');
+    const catText = catEl?.options?.[catEl.selectedIndex]?.text || cid || 'General Operations';
+
     // 🚨 DUPLICATE EXPENSE CHECK
     let dupeQuery = sb.from('expenses')
-      .select('id, amount, month, category_id, entry_date, notes')
-      .eq('category_id', cid)
-      .eq('amount', amt)
-      .eq('month', mo);
+      .select('id, amount, category, expense_date, description')
+      .eq('category', catText)
+      .eq('amount', amt);
     if (roomId) dupeQuery = dupeQuery.eq('room_id', roomId);
-    if (date) dupeQuery = dupeQuery.eq('entry_date', date);
+    if (date) dupeQuery = dupeQuery.eq('expense_date', date);
 
     const { data: existingDupes } = await dupeQuery.limit(1);
     if (existingDupes && existingDupes.length > 0) {
       const ok = confirm(
         `⚠️ DUPLICATE EXPENSE WARNING!\n\n` +
         `Amount: ₹${amt.toLocaleString('en-IN')}\n` +
-        `Month: ${mo}\n` +
+        `Category: ${catText}\n` +
         (date ? `Date: ${date}\n` : '') +
         `Is category ke liye same amount (₹${amt.toLocaleString('en-IN')}) ka expense already saved hai.\n\n` +
         `Kya aap sach me duplicate expense add karna chahte hain?`
@@ -1617,15 +1627,15 @@ async function saveExpEntry() {
     }
     
     const { data: newExp, error } = await sb.from('expenses').insert({
-      category_id: cid,
+      category: catText,
       room_id: roomId,
-      month: mo,
       amount: amt,
       paid_by: paidBy,
       payment_mode: payMode,
-      entry_date: date,
-      notes: notes,
-      created_by: SESSION.userId
+      expense_date: date,
+      description: notes || '',
+      created_by: (typeof SESSION !== 'undefined' && SESSION?.userId) ? SESSION.userId : null,
+      status: 'approved'
     });
 
     if (error) {
@@ -1759,13 +1769,15 @@ async function updateExpense(id) {
     return;
   }
 
+  const catEl = document.getElementById('exCat');
+  const catText = catEl?.options?.[catEl.selectedIndex]?.text || cid || 'General Operations';
+
   const { error } = await sb.from('expenses').update({
-    category_id: cid,
+    category: catText,
     room_id: roomId,
-    month: mo,
     amount: amt,
-    entry_date: date,
-    notes: notes
+    expense_date: date,
+    description: notes || ''
   }).eq('id', id);
 
   if (error) {
@@ -3040,36 +3052,17 @@ window.saveWifiRecharge = async function(e) {
       return;
     }
 
-    // Ensure category exists
-    let { data: cat } = await sb.from('expense_categories')
-      .select('category_id')
-      .ilike('category_name', '%Wi-Fi%')
-      .limit(1)
-      .maybeSingle();
-
-    if (!cat) {
-      const { data: newCat } = await sb.from('expense_categories')
-        .insert({ category_name: 'Wi-Fi & Internet' })
-        .select()
-        .single();
-      cat = newCat;
-    }
-
-    const m = dateVal.slice(0, 7);
-    const [y, mm] = m.split('-');
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const ml = `${monthNames[parseInt(mm, 10) - 1]}-${y}`;
-
     const note = `[WiFi ${actionType}: ${isp} • Acct: ${accountNo || '-'} • Next Due: ${nextDue || '-'}]`;
 
     const { error } = await sb.from('expenses').insert({
-      category_id: cat?.category_id || null,
+      category: 'Wi-Fi & Broadband',
       room_id: roomId,
       amount: amount,
-      entry_date: dateVal,
-      month: ml,
+      expense_date: dateVal,
       paid_by: paySource,
-      notes: note
+      payment_mode: (paySource && String(paySource).includes('OD')) ? 'Bank Transfer' : 'Online / UPI',
+      description: note,
+      status: 'approved'
     });
 
     if (error) throw error;
@@ -3196,35 +3189,16 @@ window.saveEmpTransport = async function(e) {
       return;
     }
 
-    // Ensure category exists
-    let { data: cat } = await sb.from('expense_categories')
-      .select('category_id')
-      .ilike('category_name', '%Travel%')
-      .limit(1)
-      .maybeSingle();
-
-    if (!cat) {
-      const { data: newCat } = await sb.from('expense_categories')
-        .insert({ category_id: 'CAT-TRAVEL', category_name: 'Travel & Transport' })
-        .select()
-        .single();
-      cat = newCat;
-    }
-
-    const m = dateVal.slice(0, 7);
-    const [y, mm] = m.split('-');
-    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const ml = `${monthNames[parseInt(mm, 10) - 1]}-${y}`;
-
     const note = `[Staff Travel: ${empName} • ${rides} ${travelMode} Rides • Purpose: ${purpose} • Paid by Company - Non-deductible]`;
 
     const { error } = await sb.from('expenses').insert({
-      category_id: cat?.category_id || null,
+      category: 'Travel & Transport',
       amount: amount,
-      entry_date: dateVal,
-      month: ml,
+      expense_date: dateVal,
       paid_by: paySource,
-      notes: note
+      payment_mode: (paySource && String(paySource).includes('OD')) ? 'Bank Transfer' : 'Cash',
+      description: note,
+      status: 'approved'
     });
 
     if (error) throw error;

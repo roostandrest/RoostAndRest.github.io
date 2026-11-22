@@ -380,6 +380,380 @@ if (window.supabase && typeof window.supabase.createClient === 'function') {
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.sb = sb;
 
+// ============ ROOST LIVE DATABASE SCHEMA RESILIENCE & SHIELD ENGINE ============
+(function() {
+  if (!window.sb) return;
+
+  const ROOST_LIVE_SCHEMAS = {
+    expenses: new Set(['id', 'category', 'amount', 'room_id', 'property_name', 'expense_date', 'description', 'paid_by', 'payment_mode', 'receipt_url', 'status', 'created_by', 'created_at']),
+    employees: new Set(['id', 'emp_id', 'name', 'phone', 'role', 'status', 'property_role', 'monthly_salary', 'per_day_wage', 'joined_date', 'assigned_properties', 'emergency_contact', 'notes', 'created_at']),
+    payment_history: new Set(['id', 'booking_id', 'amount', 'payment_date', 'payment_mode', 'payment_method', 'payment_type', 'reference_no', 'notes', 'recorded_by', 'created_at', 'verification_status']),
+    guest_register: new Set(['id', 'booking_id', 'guest_name', 'guest_phone', 'guest_email', 'room_id', 'property_name', 'check_in', 'check_out', 'num_guests', 'source', 'status', 'total_amount', 'paid_amount', 'balance_amount', 'payout_amount', 'advance_paid', 'security_deposit', 'payment_method', 'payment_status', 'booked_by', 'created_by', 'notes', 'special_requests', 'airbnb_reservation_code', 'is_direct', 'show_to_investor', 'created_at', 'updated_at', 'phone', 'check_in_time', 'check_out_time', 'booking_mode', 'is_cancelled', 'verification_status', 'has_vehicle', 'vehicle_name', 'vehicle_number', 'client_rating', 'guests', 'per_day_rate', 'airbnb_confirmation_code', 'airbnb_booking_date', 'is_review_booking', 'security_deposit_received_by', 'security_deposit_received_date', 'security_deposit_refund_date', 'security_deposit_refund_amount', 'security_deposit_refund_mode', 'security_deposit_refunded_by', 'security_deposit_deducted_amount', 'payment_mode', 'synced_from_ical']),
+    rooms: new Set(['room_id', 'unit_no', 'property_name', 'nickname', 'unit_type', 'rent_per_night', 'max_guests', 'building_name', 'address', 'floor', 'checkin_manager_emp_id', 'caretaker_emp_id', 'checkin_manager', 'caretaker_name', 'caretaker_phone', 'map_link', 'directions', 'landmarks', 'floor_info', 'wifi_ssid', 'wifi_password', 'lock_type', 'key_number', 'mode', 'bookable', 'notes', 'cover_image', 'airbnb_ical_url', 'whatsapp_group_link', 'whatsapp_group_name', 'created_at', 'updated_at']),
+    company_advances: new Set(['id', 'emp_id', 'emp_name', 'amount', 'type', 'date', 'payment_mode', 'notes', 'recorded_by', 'created_at']),
+    attendance_log: new Set(['id', 'emp_id', 'name', 'att_date', 'status', 'in_time', 'out_time', 'notes', 'recorded_by', 'created_at']),
+    employee_tasks: new Set(['id', 'title', 'description', 'room_id', 'property_name', 'assigned_to', 'assigned_to_name', 'priority', 'status', 'due_date', 'created_by', 'created_at', 'completed_at']),
+    laundry_records: new Set(['id', 'vendor_name', 'sent_date', 'received_date', 'total_items', 'total_cost', 'payment_status', 'notes', 'created_by', 'created_at']),
+    maintenance_log: new Set(['id', 'room_id', 'property_name', 'issue', 'priority', 'status', 'cost', 'reported_by', 'created_at', 'resolved_at']),
+    flats_status: new Set(['room_id', 'status', 'cleaning_status', 'assigned_cleaner', 'cleaner_emp_id', 'last_cleaned_at', 'notes', 'updated_at']),
+    app_settings: new Set(['id', 'key', 'value', 'updated_at']),
+    profiles: new Set(['id', 'user_id', 'display_name', 'role', 'emp_id', 'investor_id', 'is_approved', 'auth_provider', 'avatar_url', 'last_seen', 'created_at', 'updated_at']),
+    user_activity_logs: new Set(['id', 'user_id', 'display_name', 'role', 'log_date', 'login_count', 'active_seconds', 'first_login_at', 'last_active_at', 'updated_at']),
+    whatsapp_templates: new Set(['id', 'template_name', 'display_name', 'body_text', 'auto_send', 'created_at']),
+    notifications: new Set(['id', 'user_id', 'type', 'icon', 'title', 'message', 'page', 'data', 'is_read', 'created_at']),
+    pending_users: new Set(['id', 'user_id', 'email', 'name', 'avatar_url', 'status', 'auth_provider', 'requested_at'])
+  };
+
+  const VIRTUAL_SEEDS = {
+    expense_categories: [
+      { id: 1, category_id: 'CAT-WIFI', category_name: 'Wi-Fi & Broadband', default_monthly_amount: 1500 },
+      { id: 2, category_id: 'CAT-CLEAN', category_name: 'Housekeeping & Supplies', default_monthly_amount: 3000 },
+      { id: 3, category_id: 'CAT-LAUND', category_name: 'Linen & Laundry', default_monthly_amount: 4000 },
+      { id: 4, category_id: 'CAT-POWER', category_name: 'Electricity & Utilities', default_monthly_amount: 8000 },
+      { id: 5, category_id: 'CAT-MAINT', category_name: 'Repairs & Maintenance', default_monthly_amount: 2500 },
+      { id: 6, category_id: 'CAT-STAFF', category_name: 'Staff Salary & Advance', default_monthly_amount: 20000 },
+      { id: 7, category_id: 'CAT-TRAV', category_name: 'Travel & Transport', default_monthly_amount: 2000 },
+      { id: 8, category_id: 'CAT-GROC', category_name: 'Groceries & Welcome Kit', default_monthly_amount: 1500 },
+      { id: 9, category_id: 'CAT-RENT', category_name: 'Property Rent & Lease', default_monthly_amount: 35000 },
+      { id: 10, category_id: 'CAT-MISC', category_name: 'Miscellaneous Operations', default_monthly_amount: 1000 }
+    ],
+    laundry_vendors: [
+      { id: 1, vendor_name: 'Apex Dry Cleaners & Steamers', phone: '9876543210', active: true },
+      { id: 2, vendor_name: 'Royal Homestay Linen Care', phone: '9876543211', active: true }
+    ],
+    laundry_items: [
+      { id: 1, item_name: 'Double Bedsheet', default_rate: 35, active: true },
+      { id: 2, item_name: 'Single Bedsheet', default_rate: 25, active: true },
+      { id: 3, item_name: 'Duvet / Quilt Cover', default_rate: 45, active: true },
+      { id: 4, item_name: 'Pillow Cover', default_rate: 10, active: true },
+      { id: 5, item_name: 'Bath Towel', default_rate: 20, active: true },
+      { id: 6, item_name: 'Hand Towel', default_rate: 10, active: true },
+      { id: 7, item_name: 'Bath Mat', default_rate: 15, active: true }
+    ],
+    cash_holders: [
+      { id: 1, name: 'Anwar-OD', type: 'bank', is_active: true },
+      { id: 2, name: 'Company / Airbnb', type: 'online', is_active: true }
+    ]
+  };
+
+  function sanitizePayload(table, payload) {
+    if (!payload || typeof payload !== 'object') return payload;
+    const allowed = ROOST_LIVE_SCHEMAS[table];
+    if (!allowed) return payload;
+
+    const cleanOne = (item) => {
+      const row = { ...item };
+      if (table === 'expenses') {
+        const catMap = {
+          'CAT-WIFI': 'Wi-Fi & Broadband',
+          'CAT-CLEAN': 'Housekeeping & Supplies',
+          'CAT-LAUND': 'Linen & Laundry',
+          'CAT-POWER': 'Electricity & Utilities',
+          'CAT-MAINT': 'Repairs & Maintenance',
+          'CAT-STAFF': 'Staff Salary & Advance',
+          'CAT-TRAV': 'Travel & Transport',
+          'CAT-GROC': 'Groceries & Welcome Kit',
+          'CAT-RENT': 'Property Rent & Lease',
+          'CAT-MISC': 'Miscellaneous Operations',
+          '1': 'Wi-Fi & Broadband',
+          '2': 'Housekeeping & Supplies',
+          '3': 'Linen & Laundry',
+          '4': 'Electricity & Utilities',
+          '5': 'Repairs & Maintenance',
+          '6': 'Staff Salary & Advance',
+          '7': 'Travel & Transport',
+          '8': 'Groceries & Welcome Kit',
+          '9': 'Property Rent & Lease',
+          '10': 'Miscellaneous Operations'
+        };
+        const rawCat = row.category || row.category_name || row.category_id;
+        row.category = catMap[rawCat] || rawCat || 'General Operations';
+        if (!row.expense_date) row.expense_date = row.entry_date || row.date || new Date().toISOString().slice(0, 10);
+        if (!row.description) row.description = row.notes || row.purpose || '';
+        if (!row.status) row.status = 'approved';
+        if (!row.paid_by) row.paid_by = row.payment_source || 'Company / Airbnb';
+        if (!row.payment_mode) row.payment_mode = (row.paid_by && (String(row.paid_by).includes('OD') || String(row.paid_by).includes('BANK'))) ? 'Bank Transfer' : 'Cash';
+      } else if (table === 'employees') {
+        if (row.address && !String(row.notes || '').includes('Address:')) {
+          row.notes = row.notes ? `${row.notes} | Address: ${row.address}` : `Address: ${row.address}`;
+        }
+        if (row.salary && !row.monthly_salary) {
+          row.monthly_salary = Number(row.salary) || 0;
+        }
+        if (row.is_active !== undefined && !row.status) {
+          row.status = row.is_active ? 'Active' : 'Inactive';
+        }
+      } else if (table === 'payment_history') {
+        if (row.received_by && !String(row.notes || '').includes('Received by:')) {
+          row.notes = row.notes ? `${row.notes} (Received by: ${row.received_by})` : `(Received by: ${row.received_by})`;
+        }
+      } else if (table === 'company_advances') {
+        if (row.advance_amount && !row.amount) row.amount = row.advance_amount;
+        if (row.date_given && !row.date) row.date = row.date_given;
+        if (row.reason && !row.notes) row.notes = row.reason;
+      } else if (table === 'laundry_records') {
+        if (row.total_amount && !row.total_cost) row.total_cost = row.total_amount;
+        if (row.record_date && !row.sent_date) row.sent_date = row.record_date;
+      }
+      const clean = {};
+      for (const k in row) {
+        if (allowed.has(k)) clean[k] = row[k];
+      }
+      return clean;
+    };
+
+    return Array.isArray(payload) ? payload.map(cleanOne) : cleanOne(payload);
+  }
+
+  function getVirtualData(table) {
+    try {
+      const local = localStorage.getItem('roost_vt_' + table);
+      if (local) return JSON.parse(local);
+    } catch (e) {}
+    return VIRTUAL_SEEDS[table] ? [...VIRTUAL_SEEDS[table]] : [];
+  }
+
+  function setVirtualData(table, items) {
+    try {
+      localStorage.setItem('roost_vt_' + table, JSON.stringify(items));
+    } catch (e) {}
+    try {
+      window.sb.from('app_settings').upsert({
+        key: 'roost_vt_' + table,
+        value: JSON.stringify(items),
+        updated_at: new Date().toISOString()
+      }).then(() => {}).catch(() => {});
+    } catch (e) {}
+  }
+
+  class VirtualTableBuilder {
+    constructor(table) {
+      this.table = table;
+      this.filters = [];
+      this.sortCol = null;
+      this.sortAsc = true;
+      this.limitNum = null;
+      this.isSingle = false;
+      this.isMaybeSingle = false;
+      this.action = 'select';
+      this.payload = null;
+    }
+    select(cols) {
+      if (this.action !== 'insert' && this.action !== 'update' && this.action !== 'upsert') {
+        this.action = 'select';
+      }
+      return this;
+    }
+    insert(payload) { this.action = 'insert'; this.payload = payload; return this; }
+    update(payload) { this.action = 'update'; this.payload = payload; return this; }
+    upsert(payload) { this.action = 'upsert'; this.payload = payload; return this; }
+    delete() { this.action = 'delete'; return this; }
+    eq(col, val) { this.filters.push(item => item[col] == val); return this; }
+    neq(col, val) { this.filters.push(item => item[col] != val); return this; }
+    in(col, vals) { this.filters.push(item => (vals || []).includes(item[col])); return this; }
+    ilike(col, pattern) {
+      const rx = new RegExp(String(pattern || '').replace(/%/g, '.*'), 'i');
+      this.filters.push(item => rx.test(String(item[col] || '')));
+      return this;
+    }
+    gt(col, val) { this.filters.push(item => Number(item[col]) > Number(val)); return this; }
+    gte(col, val) { this.filters.push(item => Number(item[col]) >= Number(val)); return this; }
+    lt(col, val) { this.filters.push(item => Number(item[col]) < Number(val)); return this; }
+    lte(col, val) { this.filters.push(item => Number(item[col]) <= Number(val)); return this; }
+    order(col, opts = {}) { this.sortCol = col; this.sortAsc = opts.ascending !== false; return this; }
+    limit(n) { this.limitNum = n; return this; }
+    single() { this.isSingle = true; return this; }
+    maybeSingle() { this.isMaybeSingle = true; return this; }
+
+    async then(resolve, reject) {
+      let items = getVirtualData(this.table);
+
+      if (this.action === 'insert' || this.action === 'upsert') {
+        const toAdd = Array.isArray(this.payload) ? this.payload : [this.payload];
+        toAdd.forEach((row, idx) => {
+          if (!row.id) row.id = Date.now() + idx;
+          items.push(row);
+        });
+        setVirtualData(this.table, items);
+        const resData = (this.isSingle || this.isMaybeSingle) ? (Array.isArray(this.payload) ? this.payload[0] : this.payload) : this.payload;
+        return resolve({ data: resData, error: null });
+      }
+
+      if (this.action === 'update') {
+        items = items.map(it => {
+          const match = this.filters.every(fn => fn(it));
+          return match ? { ...it, ...this.payload } : it;
+        });
+        setVirtualData(this.table, items);
+        const resData = (this.isSingle || this.isMaybeSingle) ? (Array.isArray(this.payload) ? this.payload[0] : this.payload) : this.payload;
+        return resolve({ data: resData, error: null });
+      }
+
+      if (this.action === 'delete') {
+        items = items.filter(it => !this.filters.every(fn => fn(it)));
+        setVirtualData(this.table, items);
+        return resolve({ data: null, error: null });
+      }
+
+      // Action: select
+      let result = items.filter(it => this.filters.every(fn => fn(it)));
+      if (this.sortCol) {
+        result.sort((a, b) => this.sortAsc 
+          ? (a[this.sortCol] > b[this.sortCol] ? 1 : -1)
+          : (a[this.sortCol] < b[this.sortCol] ? 1 : -1));
+      }
+      if (this.limitNum) result = result.slice(0, this.limitNum);
+
+      if (this.isSingle) {
+        resolve({ data: result[0] || null, error: result.length === 0 ? { message: 'Row not found' } : null });
+      } else if (this.isMaybeSingle) {
+        resolve({ data: result[0] || null, error: null });
+      } else {
+        resolve({ data: result, error: null });
+      }
+    }
+  }
+
+  const COLUMN_REMAP = {
+    expenses: {
+      entry_date: 'expense_date',
+      date: 'expense_date',
+      notes: 'description',
+      category_id: 'category',
+      category_name: 'category'
+    },
+    laundry_records: {
+      record_date: 'sent_date',
+      total_amount: 'total_cost'
+    },
+    employees: {
+      salary: 'monthly_salary',
+      is_active: 'status',
+      address: 'notes'
+    },
+    company_advances: {
+      date_given: 'date',
+      advance_amount: 'amount',
+      reason: 'notes'
+    },
+    payment_history: {
+      received_by: 'notes'
+    }
+  };
+
+  function wrapFilterBuilder(fb, table) {
+    if (!fb || typeof fb !== 'object') return fb;
+    const tableMap = COLUMN_REMAP[table] || {};
+    const mapCol = (col) => (typeof col === 'string' && tableMap[col]) ? tableMap[col] : col;
+
+    const methodsToWrap = [
+      'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
+      'like', 'ilike', 'is', 'in', 'contains', 'containedBy',
+      'order'
+    ];
+
+    methodsToWrap.forEach(name => {
+      if (typeof fb[name] === 'function') {
+        const orig = fb[name].bind(fb);
+        fb[name] = function(col, ...args) {
+          const mapped = mapCol(col);
+          const next = orig(mapped, ...args);
+          return wrapFilterBuilder(next, table);
+        };
+      }
+    });
+
+    return fb;
+  }
+
+  const rawFrom = window.sb.from.bind(window.sb);
+
+  window.sb.from = function(table) {
+    if (!ROOST_LIVE_SCHEMAS[table]) {
+      return new VirtualTableBuilder(table);
+    }
+
+    const builder = rawFrom(table);
+
+    // Auto-sanitizing insert
+    const origInsert = builder.insert.bind(builder);
+    builder.insert = function(payload, opts) {
+      const clean = sanitizePayload(table, payload);
+      return wrapFilterBuilder(origInsert(clean, opts), table);
+    };
+
+    // Auto-sanitizing update
+    const origUpdate = builder.update.bind(builder);
+    builder.update = function(payload, opts) {
+      const clean = sanitizePayload(table, payload);
+      return wrapFilterBuilder(origUpdate(clean, opts), table);
+    };
+
+    // Auto-sanitizing upsert
+    if (typeof builder.upsert === 'function') {
+      const origUpsert = builder.upsert.bind(builder);
+      builder.upsert = function(payload, opts) {
+        const clean = sanitizePayload(table, payload);
+        return wrapFilterBuilder(origUpsert(clean, opts), table);
+      };
+    }
+
+    // Auto-sanitizing delete
+    const origDelete = builder.delete.bind(builder);
+    builder.delete = function(opts) {
+      return wrapFilterBuilder(origDelete(opts), table);
+    };
+
+    // Auto-sanitizing select
+    const origSelect = builder.select.bind(builder);
+    builder.select = function(cols, opts) {
+      let cleanCols = cols;
+      if (typeof cleanCols === 'string') {
+        if (table === 'expenses') {
+          cleanCols = cleanCols
+            .replace(/,\s*expense_categories\([^\)]*\)/gi, '')
+            .replace(/expense_categories\([^\)]*\),?\s*/gi, '')
+            .replace(/,\s*rooms\([^\)]*\)/gi, '')
+            .replace(/rooms\([^\)]*\),?\s*/gi, '')
+            .replace(/\bcategory_id\b/g, 'category')
+            .replace(/\bentry_date\b/g, 'expense_date')
+            .replace(/\bnotes\b/g, 'description');
+        } else if (table === 'employees') {
+          cleanCols = cleanCols
+            .replace(/\bsalary\b/g, 'monthly_salary')
+            .replace(/\bis_active\b/g, 'status');
+        } else if (table === 'maintenance_log') {
+          cleanCols = cleanCols
+            .replace(/,\s*rooms\([^\)]*\)/gi, '')
+            .replace(/rooms\([^\)]*\),?\s*/gi, '');
+        } else if (table === 'laundry_records') {
+          cleanCols = cleanCols
+            .replace(/\brecord_date\b/g, 'sent_date')
+            .replace(/\btotal_amount\b/g, 'total_cost');
+        } else if (table === 'company_advances') {
+          cleanCols = cleanCols
+            .replace(/\bdate_given\b/g, 'date')
+            .replace(/\badvance_amount\b/g, 'amount')
+            .replace(/\breason\b/g, 'notes');
+        }
+      }
+      return wrapFilterBuilder(origSelect(cleanCols, opts), table);
+    };
+
+    // Auto-sanitizing order
+    const origOrder = builder.order.bind(builder);
+    builder.order = function(col, opts) {
+      let cleanCol = col;
+      if (table === 'expenses' && cleanCol === 'entry_date') cleanCol = 'expense_date';
+      if (table === 'laundry_records' && cleanCol === 'record_date') cleanCol = 'sent_date';
+      if (table === 'company_advances' && cleanCol === 'date_given') cleanCol = 'date';
+      return wrapFilterBuilder(origOrder(cleanCol, opts), table);
+    };
+
+    return builder;
+  };
+})();
+
 // ============ SCHEMA-RESILIENT DATABASE AUTO-HEALING HELPERS ============
 // Automatically catches and auto-heals any missing column / schema cache errors
 window.safeDbInsert = async function(table, payload) {
