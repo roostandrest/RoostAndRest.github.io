@@ -118,13 +118,370 @@ window.saveInlineCustomReceiver = async function() {
   window.renderMyLedger();
 };
 
-// Inline Remove Receiver (NO POPUP)
-window.removeInlineCustomReceiver = async function(name) {
-  if (!confirm(`Remove "${name}" from custom receivers?`)) return;
+// ═══ EDIT / MODIFY RECEIVER MODAL ═══
+window.openEditReceiverModal = function(oldName) {
+  const existing = document.getElementById('editReceiverModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'editReceiverModal';
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
+  
+  modal.innerHTML = `
+    <div style="background:#fff; border-radius:14px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+      <div style="background:linear-gradient(135deg, #1e293b, #0f172a); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>✏️</span> Modify / Edit Receiver
+        </h3>
+        <button onclick="document.getElementById('editReceiverModal').remove()" style="background:none; border:none; color:#cbd5e1; font-size:20px; cursor:pointer; line-height:1;">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:6px;">Receiver Name *</label>
+        <input type="text" id="editReceiverNewName" value="${oldName}" placeholder="Enter Receiver Name..." 
+               style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:14px; font-weight:600; outline:none; box-sizing:border-box;" />
+
+        <div style="margin-top:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px;">
+          <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12.5px; color:#334155;">
+            <input type="checkbox" id="editReceiverUpdatePast" checked style="margin-top:2px;" />
+            <span><strong>Sync Past Records:</strong> Automatically rename past booking payment records & cash handovers from <em>"${oldName}"</em> to the new name.</span>
+          </label>
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="document.getElementById('editReceiverModal').remove()" 
+                  style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">
+            Cancel
+          </button>
+          <button type="button" onclick="window.saveModifiedReceiver('${oldName}')" 
+                  style="background:#b45309; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">
+            💾 Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('editReceiverNewName')?.focus(), 50);
+};
+
+window.saveModifiedReceiver = async function(oldName) {
+  const input = document.getElementById('editReceiverNewName');
+  const updatePast = document.getElementById('editReceiverUpdatePast')?.checked;
+  const newName = (input?.value || '').trim();
+
+  if (!newName) {
+    alert('Please enter a valid receiver name.');
+    input?.focus();
+    return;
+  }
+
+  const normNew = window.normalizeReceiverName(newName);
+  if (/^(anwar-od|company \/ airbnb)$/i.test(normNew)) {
+    alert(`"${normNew}" is a reserved primary account name.`);
+    return;
+  }
+
+  const current = await window.getRoostCustomReceivers();
+  const idx = current.findIndex(x => x.toLowerCase() === oldName.toLowerCase());
+  if (idx !== -1) {
+    current[idx] = normNew;
+  } else {
+    current.push(normNew);
+  }
+
+  // Persist updated list
+  await window.persistRoostCustomReceivers(current);
+
+  // If updatePast is checked, update past payments & handovers in DB
+  if (updatePast && oldName.toLowerCase() !== normNew.toLowerCase()) {
+    try {
+      const { data: pays } = await sb.from('payment_history').select('id, notes, received_by');
+      const toUpdate = (pays || []).filter(p => {
+        const r = window.resolvePaymentReceiver(p);
+        return r.toLowerCase() === oldName.toLowerCase() || (p.received_by && p.received_by.toLowerCase() === oldName.toLowerCase());
+      });
+
+      for (const p of toUpdate) {
+        let newNotes = p.notes || '';
+        newNotes = newNotes.replace(new RegExp(`\\(Received by:\\s*${oldName}\\)`, 'gi'), `(Received by: ${normNew})`);
+        newNotes = newNotes.replace(new RegExp(`\\[Received By:\\s*${oldName}\\]`, 'gi'), `[Received By: ${normNew}]`);
+        if (!newNotes.includes(normNew)) {
+          newNotes = newNotes ? `${newNotes} (Received by: ${normNew})` : `(Received by: ${normNew})`;
+        }
+        await sb.from('payment_history').update({
+          received_by: normNew,
+          notes: newNotes
+        }).eq('id', p.id);
+      }
+
+      const handovers = await window.getRoostHandovers();
+      let hoUpdated = false;
+      handovers.forEach(h => {
+        if (h.from_person && h.from_person.toLowerCase() === oldName.toLowerCase()) {
+          h.from_person = normNew;
+          hoUpdated = true;
+        }
+        if (h.to_person && h.to_person.toLowerCase() === oldName.toLowerCase()) {
+          h.to_person = normNew;
+          hoUpdated = true;
+        }
+      });
+      if (hoUpdated) {
+        await window.persistRoostHandovers(handovers);
+      }
+    } catch (err) {
+      console.warn('Error updating past records for modified receiver:', err);
+    }
+  }
+
+  document.getElementById('editReceiverModal')?.remove();
+  window._roostCustomReceiversCache = null;
+  window._receiveHoldersCache = null;
+  window.renderMyLedger();
+};
+
+// ═══ DELETE RECEIVER MODAL ═══
+window.openDeleteReceiverModal = async function(name) {
+  let payCount = 0;
+  try {
+    const { data: pays } = await sb.from('payment_history').select('id, notes, received_by');
+    payCount = (pays || []).filter(p => window.resolvePaymentReceiver(p).toLowerCase() === name.toLowerCase()).length;
+  } catch (e) {}
+
+  if (payCount === 0) {
+    if (!confirm(`Are you sure you want to delete receiver "${name}"?`)) return;
+    const current = await window.getRoostCustomReceivers();
+    const updated = current.filter(x => x.toLowerCase() !== name.toLowerCase());
+    await window.persistRoostCustomReceivers(updated);
+    window.renderMyLedger();
+    return;
+  }
+
+  const existing = document.getElementById('deleteReceiverModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'deleteReceiverModal';
+  modal.className = 'modal-overlay';
+  modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
+  
+  modal.innerHTML = `
+    <div style="background:#fff; border-radius:14px; max-width:440px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+      <div style="background:linear-gradient(135deg, #991b1b, #7f1d1d); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+        <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;">
+          <span>🗑️</span> Delete Receiver: ${name}
+        </h3>
+        <button onclick="document.getElementById('deleteReceiverModal').remove()" style="background:none; border:none; color:#fca5a5; font-size:20px; cursor:pointer; line-height:1;">✕</button>
+      </div>
+      <div style="padding:20px;">
+        <p style="margin:0 0 14px; color:#334155; font-size:13.5px; line-height:1.5;">
+          Receiver <strong>"${name}"</strong> has <strong>${payCount}</strong> past payment(s) recorded in the database.
+        </p>
+
+        <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:18px;">
+          <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background:#f8fafc;">
+            <input type="radio" name="delActionRadio" value="reassign" checked style="margin-top:3px;" />
+            <div style="font-size:12.5px; color:#1e293b;">
+              <strong>Reassign to Anwar-OD (Recommended)</strong>
+              <div style="color:#64748b; font-size:11.5px; margin-top:2px;">Transfers all ${payCount} past payment(s) to Anwar-OD so accounting stays balanced.</div>
+            </div>
+          </label>
+          <label style="display:flex; align-items:flex-start; gap:10px; padding:10px 12px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background:#f8fafc;">
+            <input type="radio" name="delActionRadio" value="keep" style="margin-top:3px;" />
+            <div style="font-size:12.5px; color:#1e293b;">
+              <strong>Keep Past Payments (Archive)</strong>
+              <div style="color:#64748b; font-size:11.5px; margin-top:2px;">Preserves historical payments under "${name}", but removes it from future booking dropdowns.</div>
+            </div>
+          </label>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+          <button type="button" onclick="document.getElementById('deleteReceiverModal').remove()" 
+                  style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">
+            Cancel
+          </button>
+          <button type="button" onclick="window.confirmDeleteReceiver('${name}')" 
+                  style="background:#dc2626; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">
+            🗑️ Confirm Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+window.confirmDeleteReceiver = async function(name) {
+  const selectedAction = document.querySelector('input[name="delActionRadio"]:checked')?.value || 'reassign';
+
+  if (selectedAction === 'reassign') {
+    try {
+      const { data: pays } = await sb.from('payment_history').select('id, notes, received_by');
+      const toUpdate = (pays || []).filter(p => {
+        const r = window.resolvePaymentReceiver(p);
+        return r.toLowerCase() === name.toLowerCase() || (p.received_by && p.received_by.toLowerCase() === name.toLowerCase());
+      });
+
+      for (const p of toUpdate) {
+        let newNotes = p.notes || '';
+        newNotes = newNotes.replace(new RegExp(`\\(Received by:\\s*${name}\\)`, 'gi'), '(Received by: Anwar-OD)');
+        newNotes = newNotes.replace(new RegExp(`\\[Received By:\\s*${name}\\]`, 'gi'), '[Received By: Anwar-OD]');
+        if (!newNotes.includes('Anwar-OD')) {
+          newNotes = newNotes ? `${newNotes} (Received by: Anwar-OD)` : '(Received by: Anwar-OD)';
+        }
+        await sb.from('payment_history').update({
+          received_by: 'Anwar-OD',
+          notes: newNotes
+        }).eq('id', p.id);
+      }
+    } catch (e) {
+      console.warn('Reassign payments error:', e);
+    }
+  }
+
+  // Remove from custom receivers list
   const current = await window.getRoostCustomReceivers();
   const updated = current.filter(x => x.toLowerCase() !== name.toLowerCase());
   await window.persistRoostCustomReceivers(updated);
+
+  document.getElementById('deleteReceiverModal')?.remove();
+  window._roostCustomReceiversCache = null;
+  window._receiveHoldersCache = null;
   window.renderMyLedger();
+};
+
+window.removeInlineCustomReceiver = function(name) {
+  window.openDeleteReceiverModal(name);
+};
+
+// ═══ EDIT PAYMENT RECEIVER & DETAILS MODAL ═══
+window.openEditPaymentReceiverModal = async function(payId) {
+  const existing = document.getElementById('editPaymentModal');
+  if (existing) existing.remove();
+
+  try {
+    const { data: p } = await sb.from('payment_history').select('*').eq('id', payId).single();
+    if (!p) {
+      alert('Payment record not found.');
+      return;
+    }
+
+    let guestInfo = '';
+    if (p.booking_id) {
+      try {
+        const { data: g } = await sb.from('guest_register').select('guest_name, room_id, rooms(nickname, unit_no)').eq('booking_id', p.booking_id).maybeSingle();
+        if (g) {
+          const roomStr = g.rooms?.nickname ? `${g.rooms.nickname} (${g.rooms.unit_no})` : (g.room_id || '');
+          guestInfo = `${g.guest_name || 'Guest'} · ${roomStr}`;
+        }
+      } catch(e) {}
+    }
+
+    const currentReceiver = window.resolvePaymentReceiver(p);
+    const customReceivers = await window.getRoostCustomReceivers();
+    const { data: emps } = await sb.from('employees').select('name').eq('status', 'Active');
+    const staffNames = (emps || []).map(e => (e.name || '').trim()).filter(n => n && !/^(anwar|anwar-od|company|airbnb)$/i.test(n));
+
+    const modal = document.createElement('div');
+    modal.id = 'editPaymentModal';
+    modal.className = 'modal-overlay';
+    modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); z-index:999999; display:flex; align-items:center; justify-content:center; padding:16px;';
+
+    modal.innerHTML = `
+      <div style="background:#fff; border-radius:14px; max-width:480px; width:100%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+        <div style="background:linear-gradient(135deg, #1e293b, #0f172a); padding:16px 20px; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+          <h3 style="margin:0; font-size:16px; font-weight:800; display:flex; align-items:center; gap:8px;">
+            <span>💳</span> Modify Payment Receiver &amp; Mode
+          </h3>
+          <button onclick="document.getElementById('editPaymentModal').remove()" style="background:none; border:none; color:#cbd5e1; font-size:20px; cursor:pointer; line-height:1;">✕</button>
+        </div>
+        <div style="padding:20px;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; font-size:12.5px; color:#475569;">
+            <div><strong>Booking:</strong> ${p.booking_id || 'N/A'} ${guestInfo ? `(${guestInfo})` : ''}</div>
+            <div style="margin-top:4px;"><strong>Date:</strong> ${p.payment_date || '-'} · <strong>Amount:</strong> <span style="font-weight:800; color:#0f172a;">₹${Number(p.amount || 0).toLocaleString('en-IN')}</span></div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Payment Receiver *</label>
+            <select id="editPayReceiver" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; font-weight:600;">
+              <optgroup label="🌐 Online / Company">
+                <option value="Company / Airbnb" ${currentReceiver === 'Company / Airbnb' ? 'selected' : ''}>🌐 Company / Airbnb</option>
+              </optgroup>
+              <optgroup label="🏦 Default Account">
+                <option value="Anwar-OD" ${currentReceiver === 'Anwar-OD' ? 'selected' : ''}>🏦 Anwar-OD (Default Account)</option>
+              </optgroup>
+              ${customReceivers.length > 0 ? `
+                <optgroup label="👥 Custom Receivers / Caretakers">
+                  ${customReceivers.map(n => `<option value="${n}" ${currentReceiver === n ? 'selected' : ''}>👤 ${n}</option>`).join('')}
+                </optgroup>
+              ` : ''}
+              ${staffNames.length > 0 ? `
+                <optgroup label="🧑‍💼 Staff Members">
+                  ${staffNames.map(n => `<option value="${n}" ${currentReceiver === n ? 'selected' : ''}>🧑‍💼 ${n}</option>`).join('')}
+                </optgroup>
+              ` : ''}
+            </select>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Payment Mode</label>
+            <select id="editPayMode" style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; font-weight:600;">
+              <option value="UPI" ${p.payment_mode === 'UPI' ? 'selected' : ''}>UPI</option>
+              <option value="Cash" ${p.payment_mode === 'Cash' ? 'selected' : ''}>Cash</option>
+              <option value="Bank Transfer" ${p.payment_mode === 'Bank Transfer' ? 'selected' : ''}>Bank Transfer</option>
+              <option value="Online-Airbnb" ${p.payment_mode === 'Online-Airbnb' ? 'selected' : ''}>Online-Airbnb</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:18px;">
+            <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Notes / Reference</label>
+            <input type="text" id="editPayNotes" value="${(p.notes || '').replace(/\s*\([^\)]*Received by:[^\)]*\)/gi, '').replace(/\s*\[[^\]]*Received By:[^\]]*\]/gi, '').trim()}" placeholder="Optional notes..." 
+                   style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box;" />
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button type="button" onclick="document.getElementById('editPaymentModal').remove()" 
+                    style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:8px 16px; border-radius:8px; font-weight:600; cursor:pointer;">
+              Cancel
+            </button>
+            <button type="button" onclick="window.savePaymentReceiverEdit(${p.id})" 
+                    style="background:#b45309; color:#fff; border:none; padding:8px 20px; border-radius:8px; font-weight:700; cursor:pointer;">
+              💾 Save Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  } catch (err) {
+    alert('Error loading payment details: ' + err.message);
+  }
+};
+
+window.savePaymentReceiverEdit = async function(payId) {
+  const newReceiver = document.getElementById('editPayReceiver')?.value || 'Anwar-OD';
+  const newMode = document.getElementById('editPayMode')?.value || 'UPI';
+  const baseNotes = (document.getElementById('editPayNotes')?.value || '').trim();
+
+  const finalNotes = baseNotes 
+    ? `${baseNotes} (Received by: ${newReceiver})` 
+    : `(Received by: ${newReceiver})`;
+
+  try {
+    const { error } = await sb.from('payment_history').update({
+      received_by: newReceiver,
+      payment_mode: newMode,
+      notes: finalNotes
+    }).eq('id', payId);
+
+    if (error) throw error;
+
+    document.getElementById('editPaymentModal')?.remove();
+    window.renderMyLedger();
+  } catch (err) {
+    alert('Failed to update payment: ' + err.message);
+  }
 };
 
 // ═══ Cash Handovers Data Layer (Uses app_settings + localStorage) ═══
@@ -389,9 +746,14 @@ window.renderMyLedger = async function() {
             <span style="font-size:12px; font-weight:700; color:#475569;">Active Custom Receivers:</span>
             ${customReceivers.length === 0 ? '<span style="font-size:12px; color:#94a3b8;">None added yet. Default is Anwar-OD.</span>' : ''}
             ${customReceivers.map(name => `
-              <span style="display:inline-flex; align-items:center; gap:6px; background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700;">
-                👤 ${name}
-                <button type="button" onclick="window.removeInlineCustomReceiver('${name}')" title="Delete receiver" style="background:none; border:none; color:#b45309; cursor:pointer; font-size:14px; line-height:1; padding:0;">✕</button>
+              <span style="display:inline-flex; align-items:center; gap:8px; background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:700;">
+                <span>👤 ${name}</span>
+                <button type="button" onclick="window.openEditReceiverModal('${name}')" title="Modify / Edit receiver name" style="background:#fff; border:1px solid #fcd34d; color:#b45309; padding:2px 8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:700;">
+                  ✏️ Edit
+                </button>
+                <button type="button" onclick="window.openDeleteReceiverModal('${name}')" title="Delete receiver" style="background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; padding:2px 8px; border-radius:6px; font-size:11px; cursor:pointer; font-weight:700;">
+                  🗑️ Delete
+                </button>
               </span>
             `).join('')}
           </div>
@@ -489,6 +851,7 @@ window.renderMyLedger = async function() {
                   <th style="padding:10px 12px; font-weight:700; color:#3b82f6; text-align:right;">UPI & Online</th>
                   <th style="padding:10px 12px; font-weight:700; color:#10b981; text-align:right;">Handed Over</th>
                   <th style="padding:10px 12px; font-weight:700; color:#0f172a; text-align:right;">Total Collected</th>
+                  <th style="padding:10px 12px; font-weight:700; color:#475569; text-align:center;">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -522,6 +885,20 @@ window.renderMyLedger = async function() {
                       <td style="padding:10px 12px; text-align:right; font-weight:800; color:#0f172a;">
                         ₹${r.totalCollected.toLocaleString('en-IN')}
                       </td>
+                      <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
+                        ${customReceivers.includes(r.name) ? `
+                          <button type="button" onclick="event.stopPropagation(); window.openEditReceiverModal('${r.name}')" style="background:#fef3c7; color:#92400e; border:1px solid #fde68a; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;" title="Edit receiver">
+                            ✏️ Edit
+                          </button>
+                          <button type="button" onclick="event.stopPropagation(); window.openDeleteReceiverModal('${r.name}')" style="background:#fee2e2; color:#b91c1c; border:1px solid #fca5a5; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; margin-left:4px;" title="Delete receiver">
+                            🗑️ Delete
+                          </button>
+                        ` : activeEmployees.includes(r.name) ? `
+                          <span style="color:#64748b; font-size:11px;">Staff Roster</span>
+                        ` : `
+                          <span style="color:#64748b; font-size:11px;">System Account</span>
+                        `}
+                      </td>
                     </tr>
                   `;
                 }).join('')}
@@ -547,10 +924,11 @@ window.renderMyLedger = async function() {
                   <th style="padding:8px 10px; color:#475569;">Received By</th>
                   <th style="padding:8px 10px; color:#475569;">Notes</th>
                   <th style="padding:8px 10px; color:#475569; text-align:right;">Amount</th>
+                  <th style="padding:8px 10px; color:#475569; text-align:center;">Action</th>
                 </tr>
               </thead>
               <tbody>
-                ${displayedPayments.length === 0 ? '<tr><td colspan="6" style="padding:20px; text-align:center; color:#94a3b8;">No payments recorded for this receiver.</td></tr>' : ''}
+                ${displayedPayments.length === 0 ? '<tr><td colspan="7" style="padding:20px; text-align:center; color:#94a3b8;">No payments recorded for this receiver.</td></tr>' : ''}
                 ${displayedPayments.slice(0, 100).map(p => {
                   const g = p.guest_register;
                   const guestName = g?.guest_name || 'Guest';
@@ -577,6 +955,13 @@ window.renderMyLedger = async function() {
                       </td>
                       <td style="padding:8px 10px; text-align:right; font-weight:800; color:#0f172a;">
                         ₹${Number(p.amount || 0).toLocaleString('en-IN')}
+                      </td>
+                      <td style="padding:8px 10px; text-align:center; white-space:nowrap;">
+                        <button type="button" onclick="window.openEditPaymentReceiverModal(${p.id})" 
+                                style="background:#f8fafc; border:1px solid #cbd5e1; color:#0f172a; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;"
+                                title="Change payment receiver, mode or notes">
+                          ✏️ Edit
+                        </button>
                       </td>
                     </tr>
                   `;
