@@ -499,6 +499,13 @@ window.sb = sb;
       for (const k in row) {
         if (allowed.has(k)) clean[k] = row[k];
       }
+      if (table === 'expenses') {
+        delete clean.category_id;
+        delete clean.month;
+        delete clean.entry_date;
+        delete clean.notes;
+        delete clean.payment_source;
+      }
       return clean;
     };
 
@@ -656,6 +663,27 @@ window.sb = sb;
       if (typeof fb[name] === 'function') {
         const orig = fb[name].bind(fb);
         fb[name] = function(col, ...args) {
+          if (table === 'expenses' && col === 'month') {
+            const val = String(args[0] || '').trim();
+            let y, m;
+            if (val.includes('-')) {
+              const parts = val.split('-');
+              if (parts[0].length === 4) { y = parts[0]; m = parts[1]; }
+              else {
+                const mIdx = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'].indexOf(parts[0].toUpperCase());
+                if (mIdx >= 0) { m = String(mIdx + 1).padStart(2, '0'); y = parts[1]; }
+              }
+            }
+            if (y && m) {
+              const lastDay = new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate();
+              const sDate = y + '-' + m + '-01';
+              const eDate = y + '-' + m + '-' + String(lastDay).padStart(2, '0');
+              if (name === 'eq') {
+                return wrapFilterBuilder(fb.gte('expense_date', sDate).lte('expense_date', eDate), table);
+              }
+            }
+            return fb;
+          }
           const mapped = mapCol(col);
           const next = orig(mapped, ...args);
           return wrapFilterBuilder(next, table);
@@ -2647,6 +2675,11 @@ function renderShell(content, activePage = 'bookings') {
               <span class="topbar-wa-status-text">📋 WA Status</span>
             </button>
 
+            <!-- Combined / Multi-Booking Receipt Button -->
+            <button type=button class=topbar-combined-receipt-btn onclick="window.openCombinedReceiptByDateModal ? window.openCombinedReceiptByDateModal() : (window.BOOKING_RECEIPT_ENGINE && window.BOOKING_RECEIPT_ENGINE.openCombinedReceiptByDateModal())" title="Combined Multi-Property Receipt by Mobile / Dates" style="background:#FFF7ED;border:1.5px solid #FDBA74;color:#C2410C;padding:7px 12px;border-radius:10px;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+              <span style="font-size:14px;">🧾</span> <span class="topbar-combined-receipt-text">Combined Receipt</span>
+            </button>
+
             <!-- Primary Action Button: HomeyHuts Style Coral Red + New Booking -->
             <button type="button" class="topbar-new-booking-btn" onclick="if(window.renderAddBooking) renderAddBooking();" title="Create New Reservation">
               <span class="topbar-new-booking-icon"><i class="ti ti-plus"></i></span> <span class="topbar-new-booking-text">New Booking</span>
@@ -2789,8 +2822,25 @@ function renderShell(content, activePage = 'bookings') {
     return { raw: str, digits, core10, formatted };
   };
 
-  window.matchPhoneSearch = function(query, targetPhone) {
-    if (!query || !targetPhone) return false;
+  window.matchPhoneSearch = function(query, targetPhone, altPhone) {
+    if (!query) return false;
+    if (typeof targetPhone === 'string' && (targetPhone.includes(',') || targetPhone.includes('/') || targetPhone.includes('[ALT_PHONE:'))) {
+      const parts = targetPhone.replace(/\[ALT_PHONE:\s*([^\]]+)\]/gi, ',,').split(/[,/\s;]+/);
+      for (const p of parts) {
+        if (p && window.matchPhoneSearch(query, p)) return true;
+      }
+    }
+    if (altPhone) {
+      if (typeof altPhone === 'string' && (altPhone.includes(',') || altPhone.includes('/') || altPhone.includes('[ALT_PHONE:'))) {
+        const parts = altPhone.replace(/\[ALT_PHONE:\s*([^\]]+)\]/gi, ',,').split(/[,/\s;]+/);
+        for (const p of parts) {
+          if (p && window.matchPhoneSearch(query, p)) return true;
+        }
+      } else if (window.matchPhoneSearch(query, altPhone)) {
+        return true;
+      }
+    }
+    if (!targetPhone) return false;
     const qStr = String(query).trim().toLowerCase();
     const tStr = String(targetPhone).trim().toLowerCase();
     if (tStr.includes(qStr) || qStr.includes(tStr)) return true;

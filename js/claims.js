@@ -485,10 +485,10 @@ async function loadClaimsData() {
 
   try {
     const [{ data: eData }, { data: mData }, { data: lData }, { data: aData }, { data: empData }] = await Promise.all([
-      sb.from('reimbursements').select('*').order('expense_date', { ascending: false }),
+      sb.from('expenses').select('*').order('expense_date', { ascending: false }),
       sb.from('maintenance_log').select('*').gt('cost', 0).order('created_at', { ascending: false }),
-      sb.from('laundry_payments').select('*, laundry_records(vendor_name)').order('payment_date', { ascending: false }),
-      sb.from('advance_tracker').select('*, employees(name)').order('date_given', { ascending: false }),
+      sb.from('laundry_records').select('*').order('created_at', { ascending: false }),
+      sb.from('company_advances').select('*').order('date', { ascending: false }),
       sb.from('employees').select('emp_id, name').order('name')
     ]);
 

@@ -2586,9 +2586,8 @@ async function saveMonthlyExpenses() {
         // Update existing
         await sb.from('expenses').update({
           amount,
-    payment_source: expSource,
-          category_id: catId || null,
-          month: d.monthLabel,
+          paid_by: expSource,
+          category: name || 'General Operations',
           room_id: d.selRoom
         }).eq('id', existingId);
         saved++;
