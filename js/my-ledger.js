@@ -223,19 +223,30 @@ window.renderMyLedger = async function() {
       customReceivers,
       handovers,
       { data: employees },
-      { data: payments },
-      { data: expenses }
+      { data: payments, error: payErr },
+      { data: expenses },
+      { data: guests }
     ] = await Promise.all([
       window.getRoostCustomReceivers(),
       window.getRoostHandovers(),
       sb.from('employees').select('name, role').eq('status', 'Active'),
       sb.from('payment_history')
-        .select('id, amount, payment_date, payment_mode, payment_method, notes, recorded_by, verification_status, booking_id, guest_register(guest_name, room_id, property_name)')
+        .select('id, amount, payment_date, payment_mode, payment_method, notes, recorded_by, verification_status, booking_id, created_at')
         .neq('verification_status', 'rejected')
         .order('payment_date', { ascending: false })
         .limit(1000),
-      sb.from('expenses').select('amount, paid_by, payment_mode, expense_date, description').order('expense_date', { ascending: false }).limit(500)
+      sb.from('expenses').select('amount, paid_by, payment_mode, expense_date, description').order('expense_date', { ascending: false }).limit(500),
+      sb.from('guest_register').select('booking_id, guest_name, room_id, property_name, rooms(nickname, unit_no)')
     ]);
+
+    if (payErr) {
+      console.warn('[my-ledger] Error fetching payments:', payErr);
+    }
+
+    const guestMap = {};
+    (guests || []).forEach(g => {
+      if (g.booking_id) guestMap[g.booking_id] = g;
+    });
 
     const activeEmployees = (employees || [])
       .map(e => (e.name || '').trim())
@@ -270,6 +281,7 @@ window.renderMyLedger = async function() {
 
     // Process all payments
     (payments || []).forEach(p => {
+      p.guest_register = guestMap[p.booking_id] || null;
       const rec = window.resolvePaymentReceiver(p);
       const s = initReceiver(rec, rec === 'Company / Airbnb' ? 'Online Channel' : rec === 'Anwar-OD' ? 'Default Account' : 'Receiver');
       const amt = Number(p.amount || 0);
@@ -540,15 +552,17 @@ window.renderMyLedger = async function() {
               <tbody>
                 ${displayedPayments.length === 0 ? '<tr><td colspan="6" style="padding:20px; text-align:center; color:#94a3b8;">No payments recorded for this receiver.</td></tr>' : ''}
                 ${displayedPayments.slice(0, 100).map(p => {
-                  const guestName = p.guest_register?.guest_name || 'Guest';
-                  const room = p.guest_register?.room_id || '';
+                  const g = p.guest_register;
+                  const guestName = g?.guest_name || 'Guest';
+                  const r = g?.rooms;
+                  const roomStr = r ? (r.nickname ? `${r.nickname} (${r.unit_no || ''})` : (r.unit_no || '')) : (g?.room_id || '');
                   const isAirbnb = p.resolvedReceiver === 'Company / Airbnb';
 
                   return `
                     <tr style="border-bottom:1px solid #f1f5f9;">
                       <td style="padding:8px 10px; white-space:nowrap; color:#64748b;">${p.payment_date || '-'}</td>
                       <td style="padding:8px 10px; font-weight:600; color:#0f172a;">
-                        ${guestName} ${room ? `<span style="color:#64748b; font-size:11px;">(${room})</span>` : ''}
+                        ${guestName} ${roomStr ? `<span style="color:#64748b; font-size:11px;">(${roomStr})</span>` : ''}
                       </td>
                       <td style="padding:8px 10px;">
                         <span style="background:${isAirbnb ? '#fee2e2' : '#f1f5f9'}; color:${isAirbnb ? '#991b1b' : '#334155'}; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:700;">

@@ -1408,7 +1408,7 @@
       try {
         if (window.sb) {
           const { data: pays } = await window.sb.from('payment_history')
-            .select('id, booking_id, amount, payment_mode, received_by, created_by, payment_date, paid_at, notes, guest_register(guest_name, room_id)')
+            .select('id, booking_id, amount, payment_mode, received_by, created_by, payment_date, paid_at, notes')
             .eq('payment_date', targetDate)
             .order('paid_at', { ascending: false });
 
@@ -1627,7 +1627,7 @@
       try {
         if (window.sb) {
           const { data: pays } = await window.sb.from('payment_history')
-            .select('id, booking_id, amount, payment_mode, received_by, created_by, payment_date, paid_at, notes, guest_register(guest_name, room_id)')
+            .select('id, booking_id, amount, payment_mode, received_by, created_by, payment_date, paid_at, notes')
             .gte('payment_date', `${monthStr}-01`)
             .lte('payment_date', `${monthStr}-31`)
             .order('payment_date', { ascending: false });

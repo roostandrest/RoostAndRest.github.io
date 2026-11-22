@@ -7579,10 +7579,25 @@ window.renderPendingApprovals = async function() {
       .eq('verification_status', 'pending')
       .order('booking_id', { ascending: false }),
     sb.from('payment_history')
-      .select('*, guest:guest_register(guest_name, room_id, rooms(unit_no, nickname))')
+      .select('*')
       .eq('verification_status', 'pending')
       .order('id', { ascending: false })
   ]);
+
+  // Batch-resolve guest details for pending payments
+  if (Array.isArray(payResult.data) && payResult.data.length > 0) {
+    const payBkids = [...new Set(payResult.data.map(p => p.booking_id).filter(Boolean))];
+    if (payBkids.length > 0) {
+      try {
+        const { data: gData } = await sb.from('guest_register')
+          .select('booking_id, guest_name, room_id, rooms(unit_no, nickname)')
+          .in('booking_id', payBkids);
+        const gMap = {};
+        (gData || []).forEach(g => { gMap[g.booking_id] = g; });
+        payResult.data.forEach(p => { p.guest = gMap[p.booking_id] || null; });
+      } catch (ge) {}
+    }
+  }
 
   // Auto-approve master bookings (Admin / Owner / Anwar)
   const bkList = [];

@@ -246,10 +246,26 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
             if (endDate) qPay = qPay.lte('payment_date', endDate);
             const { data: payData, error: payErr } = await qPay.order('payment_date', { ascending: false });
             if (!payErr && Array.isArray(payData)) {
-                // Direct & offline guest payments strictly route to Anwar OD (Airbnb payouts go to company account)
+                // Direct & offline guest payments strictly route to Anwar OD ONLY IF received by Anwar-OD
                 const offlinePays = payData.filter(p => {
                     const m = (p.payment_mode || '').toLowerCase();
-                    return !m.includes('airbnb');
+                    if (m.includes('airbnb')) return false;
+                    const rec = window.resolvePaymentReceiver ? window.resolvePaymentReceiver(p) : null;
+                    if (rec) {
+                        return rec === 'Anwar-OD';
+                    }
+                    const notes = (p.notes || '').trim();
+                    const rxMatch = notes.match(/\[Received By:\s*([^\]]+)\]/i) || 
+                                    notes.match(/\(Received by:\s*([^\)]+)\)/i) ||
+                                    notes.match(/\[Advance Recv:\s*([^\]]+)\]/i) ||
+                                    notes.match(/Receiver:\s*([^,\.\)\n]+)/i);
+                    if (rxMatch && rxMatch[1]) {
+                        return /^anwar/i.test(rxMatch[1].trim());
+                    }
+                    if (p.received_by && p.received_by.trim() && p.received_by !== 'Unassigned') {
+                        return /^anwar/i.test(p.received_by.trim());
+                    }
+                    return true;
                 });
 
                 // Batch fetch guest & room info for these booking IDs
@@ -335,6 +351,35 @@ async function getAllODDeposits(supabaseClient, startDate = '2026-09-17', endDat
             });
         } catch (e) {
             console.warn('ROOST-BANK security deposit auto-sync read error:', e.message);
+        }
+
+        // 2d. Cash Handovers safely deposited to Anwar-OD
+        try {
+            const handovers = window.getRoostHandovers ? await window.getRoostHandovers() : [];
+            (handovers || []).forEach(h => {
+                const toP = (h.to_person || '').trim();
+                if (/^anwar/i.test(toP)) {
+                    const hDate = h.handover_date || (h.created_at ? h.created_at.slice(0, 10) : '');
+                    if (startDate && hDate && hDate < startDate) return;
+                    if (endDate && hDate && hDate > endDate) return;
+                    const uniqueKey = 'ho_' + (h.id || hDate);
+                    itemsMap.set(uniqueKey, {
+                        id: uniqueKey,
+                        db_id: h.id,
+                        source_table: 'cash_handovers',
+                        transaction_date: hDate,
+                        description: `🤝 Cash Handover: From ${h.from_person || 'Staff'} ${h.notes ? ' - ' + h.notes : ''}`,
+                        amount: parseFloat(h.amount || 0),
+                        transaction_type: 'INFLOW',
+                        payment_mode: 'Cash',
+                        received_from: h.from_person || 'Staff',
+                        reference_note: h.notes || null,
+                        created_at: h.created_at || hDate
+                    });
+                }
+            });
+        } catch (e) {
+            console.warn('Handovers read error in Anwar OD:', e.message);
         }
 
         // 3. Historical account_transactions prior to 2026-09-17
@@ -1264,10 +1309,21 @@ window.cbEditODDeposit = async function(id) {
     if (String(id).startsWith('pay_')) {
         const payId = parseInt(id.replace('pay_', ''));
         const { data: p } = await client.from('payment_history')
-            .select('*, guest_register(guest_name, phone, room_id, rooms(nickname, unit_no))')
+            .select('id, booking_id, amount, payment_date, payment_mode, notes, created_at, created_by, paid_at')
             .eq('id', payId)
             .single();
         if (p) {
+            let guestInfo = null;
+            if (p.booking_id) {
+                try {
+                    const { data: g } = await client.from('guest_register')
+                        .select('guest_name, phone, room_id, rooms(nickname, unit_no)')
+                        .eq('booking_id', p.booking_id)
+                        .maybeSingle();
+                    guestInfo = g;
+                } catch (ge) {}
+            }
+            p.guest_register = guestInfo;
             const timeStr = window.formatDateTimeStamp ? window.formatDateTimeStamp(p.paid_at || p.created_at || p.payment_date, { withSeconds: true }) : (p.payment_date || '');
             const loggedBy = window._userNameCache?.[p.created_by] || (p.created_by ? 'Staff' : 'System');
             const guestName = p.guest_register?.guest_name || 'Guest';
