@@ -399,7 +399,13 @@ window.openEditPaymentReceiverModal = async function(payId) {
         <div style="padding:20px;">
           <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px; margin-bottom:14px; font-size:12.5px; color:#475569;">
             <div><strong>Booking:</strong> ${p.booking_id || 'N/A'} ${guestInfo ? `(${guestInfo})` : ''}</div>
-            <div style="margin-top:4px;"><strong>Date:</strong> ${p.payment_date || '-'} · <strong>Amount:</strong> <span style="font-weight:800; color:#0f172a;">₹${Number(p.amount || 0).toLocaleString('en-IN')}</span></div>
+            <div style="margin-top:4px;"><strong>Date:</strong> ${p.payment_date || '-'}</div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:700; color:#334155; display:block; margin-bottom:4px;">Amount ₹ *</label>
+            <input type="number" id="editPayAmount" value="${p.amount || 0}" step="0.01" 
+                   style="width:100%; padding:9px 12px; border:1.5px solid #cbd5e1; border-radius:8px; font-size:14px; font-weight:700; color:#0f172a; box-sizing:border-box;" />
           </div>
 
           <div style="margin-bottom:12px;">
@@ -460,6 +466,7 @@ window.openEditPaymentReceiverModal = async function(payId) {
 };
 
 window.savePaymentReceiverEdit = async function(payId) {
+  const newAmount = parseFloat(document.getElementById('editPayAmount')?.value) || 0;
   const newReceiver = document.getElementById('editPayReceiver')?.value || 'Anwar-OD';
   const newMode = document.getElementById('editPayMode')?.value || 'UPI';
   const baseNotes = (document.getElementById('editPayNotes')?.value || '').trim();
@@ -469,13 +476,31 @@ window.savePaymentReceiverEdit = async function(payId) {
     : `(Received by: ${newReceiver})`;
 
   try {
+    const { data: oldP } = await sb.from('payment_history').select('booking_id').eq('id', payId).single();
+
     const { error } = await sb.from('payment_history').update({
+      amount: newAmount,
       received_by: newReceiver,
       payment_mode: newMode,
       notes: finalNotes
     }).eq('id', payId);
 
     if (error) throw error;
+
+    // Recalculate booking status & sync paid_amount, advance_paid in guest_register
+    if (oldP?.booking_id) {
+      if (typeof window.recalcPaymentStatus === 'function') {
+        await window.recalcPaymentStatus(oldP.booking_id);
+      }
+      if (window._sbkState) {
+        if (window._sbkState.cachedPaidMap) delete window._sbkState.cachedPaidMap[oldP.booking_id];
+        window._sbkState.cachedBookings = null;
+      }
+    }
+
+    if (typeof window.notifyDataChanged === 'function') {
+      window.notifyDataChanged();
+    }
 
     document.getElementById('editPaymentModal')?.remove();
     window.renderMyLedger();

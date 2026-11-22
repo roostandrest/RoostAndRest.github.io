@@ -6923,20 +6923,40 @@ async function saveEditPayment(payId, bkId) {
   
   const handoverStatus = (mode === 'Cash' && !['Anwar-OD'].includes(receivedBy)) ? 'in_hand' : 'handed_over';
   
+  let rawNotes = (document.getElementById('editPayNotes')?.value || '').trim();
+  rawNotes = rawNotes.replace(/\s*\([^\)]*Received by:[^\)]*\)/gi, '').replace(/\s*\[[^\]]*Received By:[^\]]*\]/gi, '').trim();
+  const finalNotes = rawNotes ? `${rawNotes} (Received by: ${receivedBy})` : `(Received by: ${receivedBy})`;
+
   const payPatch = {
     amount: amount,
     payment_mode: mode,
     payment_date: document.getElementById('editPayDate')?.value || null,
-    notes: document.getElementById('editPayNotes')?.value?.trim() || null,
+    notes: finalNotes,
     received_by: receivedBy || null,
     handover_status: handoverStatus
   };
-  Object.assign(payPatch, approvalUpdateMeta());
-  await sb.from('payment_history').update(payPatch).eq('id', payId);
+
+  const { error: updErr } = (typeof window.safeDbUpdate === 'function')
+    ? await window.safeDbUpdate('payment_history', payPatch, 'id', payId)
+    : await sb.from('payment_history').update(payPatch).eq('id', payId);
+
+  if (updErr) {
+    console.error('Error updating payment:', updErr);
+    alert('Failed to update payment: ' + updErr.message);
+    return;
+  }
+
   await recalcPaymentStatus(bkId);
   document.querySelector('.modal-overlay')?.remove();
-  if (window._sbkState && window._sbkState.cachedPaidMap) {
-    delete window._sbkState.cachedPaidMap[bkId];
+  if (window._sbkState) {
+    if (window._sbkState.cachedPaidMap) delete window._sbkState.cachedPaidMap[bkId];
+    window._sbkState.cachedBookings = null;
+  }
+  if (window.UHHSODManager && window.UHHSODManager.calculateBalance) {
+    window.UHHSODManager.calculateBalance();
+  }
+  if (typeof window.notifyDataChanged === 'function') {
+    window.notifyDataChanged();
   }
   if (typeof window.openBookingDrawer === 'function' && (window._currentDrawerBookingId === bkId || document.getElementById('sbkDrawerContainer'))) {
     await window.openBookingDrawer(bkId);
