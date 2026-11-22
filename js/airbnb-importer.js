@@ -5,10 +5,10 @@
 // ═══════════════════════════════════════════════════════════
 
 window.AIRBNB_IMPORTER = {
-  PROXY_URL: 'https://vxxmigdzimnrbbmkjzoa.supabase.co/functions/v1/ical-proxy?url=',
+  PROXY_URL: 'https://corsproxy.io/?',
   FALLBACK_PROXIES: [
     'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?'
+    'https://api.codetabs.com/v1/proxy?quest='
   ],
 
   // Extract listing ID from URL or string

@@ -6,7 +6,6 @@ window.ICAL_SYNC = {
   // Multiple CORS proxies for fallback (if one fails, try next)
   // Own Supabase Edge Function (primary) + public proxies (fallback)
   CORS_PROXIES: [
-    'https://vxxmigdzimnrbbmkjzoa.supabase.co/functions/v1/ical-proxy?url=',
     'https://corsproxy.io/?',
     'https://api.codetabs.com/v1/proxy?quest=',
     'https://api.allorigins.win/raw?url='

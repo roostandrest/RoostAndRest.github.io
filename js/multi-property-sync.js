@@ -22,7 +22,6 @@
 
     // Same proxies as ical-sync.js (with fallback)
     CORS_PROXIES: [
-      'https://vxxmigdzimnrbbmkjzoa.supabase.co/functions/v1/ical-proxy?url=',
       'https://corsproxy.io/?',
       'https://api.codetabs.com/v1/proxy?quest=',
       'https://api.allorigins.win/raw?url='
