@@ -3048,11 +3048,11 @@ ${propertiesList}
 
         <!-- Header -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1.5px solid #F1F5F9;padding-right:40px;">
-          <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg, #0F172A 0%, #1E293B 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 10px rgba(15,23,42,0.25);flex-shrink:0;">
+          <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg, #78350F 0%, #B45309 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 10px rgba(180,83,9,0.25);flex-shrink:0;">
             📑
           </div>
           <div style="min-width:0;flex:1;">
-            <h3 style="margin:0;font-size:17.5px;font-weight:900;color:#0F172A;line-height:1.25;">
+            <h3 style="margin:0;font-size:17.5px;font-weight:900;color:#78350F;line-height:1.25;">
               Combined Booking Receipt (Phone + Dates)
             </h3>
             <div style="font-size:12px;color:#64748B;margin-top:2px;">
@@ -3062,10 +3062,10 @@ ${propertiesList}
         </div>
 
         <!-- Input Form Section -->
-        <div style="background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+        <div style="background:#FFFBEB;border:1.5px solid #FED7AA;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
           <!-- Phone Row -->
           <div style="margin-bottom:12px;">
-            <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
+            <label style="display:block;font-size:11.5px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
               📱 Guest Mobile Number:
             </label>
             <div style="display:flex;gap:8px;align-items:center;">
@@ -3073,15 +3073,15 @@ ${propertiesList}
                 style="flex:1;padding:9px 12px;border:1.5px solid #CBD5E1;border-radius:8px;font-size:14px;font-weight:700;color:#0F172A;background:#fff;outline:none;" 
                 oninput="window._debouncedFetchCombinedReceiptBookings && window._debouncedFetchCombinedReceiptBookings()"
                 onkeydown="if(event.key==='Enter') window._fetchCombinedReceiptBookings && window._fetchCombinedReceiptBookings();" />
-              <button type="button" class="btn-sm" onclick="window._fetchCombinedReceiptBookings && window._fetchCombinedReceiptBookings()" style="background:#0F172A;color:#fff;font-weight:800;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;white-space:nowrap;font-size:12.5px;display:inline-flex;align-items:center;gap:4px;">
+              <button type="button" class="btn-sm" onclick="window._fetchCombinedReceiptBookings && window._fetchCombinedReceiptBookings()" style="background:#B45309;color:#fff;font-weight:800;padding:9px 16px;border-radius:8px;border:none;cursor:pointer;white-space:nowrap;font-size:12.5px;display:inline-flex;align-items:center;gap:4px;">
                 <span>🔍</span> <span>Fetch Bookings</span>
               </button>
             </div>
             <!-- Quick Guest Shortcut Chips -->
             <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center;">
-              <span style="font-size:11px;color:#64748B;font-weight:700;">Quick Chip:</span>
-              <button type="button" style="background:#EEF2FF;border:1px solid #C7D2FE;color:#4F46E5;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800;cursor:pointer;" onclick="document.getElementById('crbInputPhone').value='9044276377';window._fetchCombinedReceiptBookings();">
-                9044276377 (Heritage Garden)
+              <span style="font-size:11px;color:#78350F;font-weight:700;">Quick Chip:</span>
+              <button type="button" style="background:#FEF3C7;border:1px solid #FDE68A;color:#92400E;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:800;cursor:pointer;" onclick="document.getElementById('crbInputPhone').value='9044276377';window._fetchCombinedReceiptBookings();">
+                9044276377 (Awadh Abode)
               </button>
             </div>
           </div>
@@ -3089,7 +3089,7 @@ ${propertiesList}
           <!-- Date Range Row (From Date - To Date) -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
             <div>
-              <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
+              <label style="display:block;font-size:11.5px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
                 📅 From Date (Check-in start):
               </label>
               <input type="date" id="crbInputFrom" value="${escapeHtml(prefillFrom)}" 
@@ -3097,7 +3097,7 @@ ${propertiesList}
                 onchange="window._filterAndRenderCombinedPreview && window._filterAndRenderCombinedPreview()" />
             </div>
             <div>
-              <label style="display:block;font-size:11.5px;font-weight:800;color:#334155;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
+              <label style="display:block;font-size:11.5px;font-weight:800;color:#92400E;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;">
                 📅 To Date (Check-out limit):
               </label>
               <input type="date" id="crbInputTo" value="${escapeHtml(prefillTo)}" 
@@ -3122,14 +3122,14 @@ ${propertiesList}
 
         <!-- Footer / Action Bar -->
         <div style="margin-top:14px;padding-top:12px;border-top:1.5px solid #F1F5F9;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-          <div id="crbSelectionSummary" style="font-size:12.5px;font-weight:800;color:#0F172A;">
+          <div id="crbSelectionSummary" style="font-size:12.5px;font-weight:800;color:#78350F;">
             0 Homestays Selected
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
             <button type="button" class="btn-sm" onclick="this.closest('.modal-overlay').remove()" style="background:#F1F5F9;color:#475569;border:1px solid #CBD5E1;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;">
               Cancel
             </button>
-            <button type="button" id="crbBtnGenerate" onclick="window._executeGenerateCombinedReceipt()" disabled style="background:#0F172A;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(15,23,42,0.25);opacity:0.6;">
+            <button type="button" id="crbBtnGenerate" onclick="window._executeGenerateCombinedReceipt()" disabled style="background:#B45309;color:#fff;border:none;padding:9px 18px;border-radius:8px;font-weight:900;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(180,83,9,0.25);opacity:0.6;">
               <span>📑 Generate Combined Receipt Ek Sath →</span>
             </button>
           </div>

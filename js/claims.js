@@ -765,13 +765,17 @@ function renderClaimsTable() {
               </td>
               <td style="padding:10px;text-align:center;white-space:nowrap;">
                 ${item.status !== 'claimed' ? `
-                  <button onclick="updateSingleClaim('${item.uniqKey}', 'claimed')" class="btn-sm" style="background:#F59E0B;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Mark as Claimed">📤 Claim</button>
+                  <button onclick="updateSingleClaim('${item.uniqKey}', 'claimed')" class="btn-sm" style="background:#F59E0B;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Mark as Claimed">Claim</button>
                 ` : ''}
                 ${item.status !== 'received' ? `
-                  <button onclick="updateSingleClaim('${item.uniqKey}', 'received')" class="btn-sm" style="background:#10B981;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Mark as Settled (Received)">✅ Settle</button>
+                  <button onclick="updateSingleClaim('${item.uniqKey}', 'received')" class="btn-sm" style="background:#10B981;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Mark as Settled (Received)">Settle</button>
                 ` : ''}
                 ${item.status !== 'unclaimed' ? `
-                  <button onclick="updateSingleClaim('${item.uniqKey}', 'unclaimed')" class="btn-sm" style="background:#64748B;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;" title="Revert to Pending">↩️</button>
+                  <button onclick="updateSingleClaim('${item.uniqKey}', 'unclaimed')" class="btn-sm" style="background:#64748B;color:#fff;padding:3px 8px;font-size:10px;border:none;border-radius:4px;cursor:pointer;margin-right:4px;" title="Revert to Pending">↩️</button>
+                ` : ''}
+                ${item.module === 'reimbursements' ? `
+                  <button onclick="window.editExpense(${item.id})" class="btn-sm" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;padding:3px 7px;font-size:10px;border-radius:4px;cursor:pointer;margin-right:4px;" title="Edit Expense">✏️</button>
+                  <button onclick="window.delExpense(${item.id})" class="btn-sm" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;padding:3px 7px;font-size:10px;border-radius:4px;cursor:pointer;" title="Delete Expense">🗑️</button>
                 ` : ''}
               </td>
             </tr>
@@ -820,21 +824,9 @@ async function updateItemClaimStatus(item, targetStatus, today = new Date().toIS
   const nowIso = new Date().toISOString();
 
   if (item.module === 'reimbursements') {
-    const dbStatus = targetStatus === 'received' ? 'Received' : targetStatus === 'claimed' ? 'Claimed' : 'Pending';
+    const dbStatus = targetStatus === 'received' ? 'settled' : targetStatus === 'claimed' ? 'claimed' : 'pending';
     const payload = { status: dbStatus };
-    if (targetStatus === 'claimed') {
-      payload.claimed_date = today;
-      payload.claimed_at = nowIso;
-    } else if (targetStatus === 'received') {
-      payload.received_date = today;
-      payload.received_at = nowIso;
-    } else {
-      payload.claimed_date = null;
-      payload.received_date = null;
-      payload.claimed_at = null;
-      payload.received_at = null;
-    }
-    const { error } = await sb.from('reimbursements').update(payload).eq('id', item.id);
+    const { error } = await sb.from('expenses').update(payload).eq('id', item.id);
     if (error) throw error;
     return true;
   }
@@ -853,19 +845,7 @@ async function updateItemClaimStatus(item, targetStatus, today = new Date().toIS
   if (item.module === 'laundry') {
     const dbStatus = targetStatus === 'unclaimed' ? 'not_claimed' : targetStatus;
     const payload = { claim_status: dbStatus };
-    if (targetStatus === 'claimed') {
-      payload.claim_date = today;
-      payload.claimed_at = nowIso;
-    } else if (targetStatus === 'received') {
-      payload.claim_received_date = today;
-      payload.received_at = nowIso;
-    } else {
-      payload.claim_date = null;
-      payload.claim_received_date = null;
-      payload.claimed_at = null;
-      payload.received_at = null;
-    }
-    const { error } = await sb.from('laundry_payments').update(payload).eq('id', item.id);
+    const { error } = await sb.from('laundry_records').update(payload).eq('id', item.id);
     if (error) throw error;
     return true;
   }
@@ -874,24 +854,20 @@ async function updateItemClaimStatus(item, targetStatus, today = new Date().toIS
     const oldNotes = (item.raw?.notes || '').replace(/\[CLAIM:\s*\w+\]/g, '').trim();
     if (targetStatus === 'received') {
       const newNotes = oldNotes ? `${oldNotes} [CLAIM: received]` : '[CLAIM: received]';
-      const { error } = await sb.from('advance_tracker').update({
-        is_deducted: true,
-        repaid_amount: Number(item.amount || 0),
-        repaid_date: today,
+      const { error } = await sb.from('company_advances').update({
+        status: 'Settled',
         notes: newNotes
       }).eq('id', item.id);
       if (error) throw error;
     } else if (targetStatus === 'claimed') {
       const newNotes = oldNotes ? `${oldNotes} [CLAIM: claimed]` : '[CLAIM: claimed]';
-      const { error } = await sb.from('advance_tracker').update({
+      const { error } = await sb.from('company_advances').update({
         notes: newNotes
       }).eq('id', item.id);
       if (error) throw error;
     } else {
-      const { error } = await sb.from('advance_tracker').update({
-        is_deducted: false,
-        repaid_amount: 0,
-        repaid_date: null,
+      const { error } = await sb.from('company_advances').update({
+        status: 'Active',
         notes: oldNotes || null
       }).eq('id', item.id);
       if (error) throw error;

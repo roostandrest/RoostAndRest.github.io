@@ -511,11 +511,12 @@ function applyExpenseFilters() {
               <th>Account (Source)</th>
               <th>Amount</th>
               <th>Salary Deductible?</th>
+              <th style="text-align:center;">Action</th>
             </tr>
           </thead>
           <tbody>
             ${list.length === 0
-              ? '<tr><td colspan="8" class="sub" style="text-align:center;padding:20px;">No expenses match the selected filters</td></tr>'
+              ? '<tr><td colspan="9" class="sub" style="text-align:center;padding:20px;">No expenses match the selected filters</td></tr>'
               : list.map(item => `
                 <tr>
                   <td style="font-size:12px;white-space:nowrap;">${item.date || '-'}</td>
@@ -544,6 +545,14 @@ function applyExpenseFilters() {
                       : `<span style="color:#059669;font-size:11px;font-weight:600;white-space:nowrap;">🛡️ No (Company Paid)</span>`
                     }
                   </td>
+                  <td style="white-space:nowrap;text-align:center;">
+                    ${item.channel === 'general' || item.channel === 'staff_spend' || item.channel === 'direct_expense' || (item.raw && item.raw.category && item.raw.expense_date !== undefined) ? `
+                      <button type="button" class="btn-sm" onclick="window.editExpense(${item.id})" style="background:#FFFBEB;color:#B45309;border:1px solid #FDE68A;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;margin-right:4px;">✏️ Edit</button>
+                      <button type="button" class="btn-sm danger" onclick="window.delExpense(${item.id})" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;">🗑️ Delete</button>
+                    ` : `
+                      <button type="button" class="btn-sm danger" onclick="window.delExpenseRecord('${item.channel}', ${item.id})" style="background:#FEF2F2;color:#DC2626;border:1px solid #FECACA;padding:4px 9px;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;">🗑️ Delete</button>
+                    `}
+                  </td>
                 </tr>
               `).join('')
             }
@@ -553,7 +562,7 @@ function applyExpenseFilters() {
               <tr style="font-weight:800;background:#F8FAFC;">
                 <td colspan="6" style="text-align:right;">Total Filtered Outflow:</td>
                 <td style="color:#DC2626;font-size:15px;">₹${total.toLocaleString('en-IN')}</td>
-                <td></td>
+                <td colspan="2"></td>
               </tr>
             </tfoot>` : ''
           }
@@ -1690,127 +1699,202 @@ async function saveExpEntry() {
 }
 
 // ============ EDIT EXPENSE ============
-async function editExpense(id) {
-  const [{ data: exp }, { data: cats }, { data: rooms }] = await Promise.all([
-    sb.from('expenses').select('*').eq('id', id).single(),
-    sb.from('expense_categories').select('*').order('category_name'),
-    sb.from('rooms').select('room_id, unit_no, nickname').order('unit_no')
-  ]);
+window.editExpense = async function(id) {
+  if (window.showLoadingSkeleton) window.showLoadingSkeleton('card');
 
-  if (!exp) { fsn.error('Error', 'Expense not found'); return; }
+  try {
+    const [{ data: exp, error }, { data: rooms }] = await Promise.all([
+      sb.from('expenses').select('*').eq('id', id).single(),
+      sb.from('rooms').select('room_id, unit_no, nickname, property_name').order('unit_no')
+    ]);
 
-  renderShell(`
-    <div class="card">
-      <h1>✏️ Edit Expense</h1>
-      <button class="secondary btn-sm" onclick="renderExpenses()">← Back</button>
-    </div>
-    <div class="card">
-      <div class="form-group">
-        <label>Category *</label>
-        <select id="exCat">
-          <option value="">Select</option>
-          ${(cats || []).map(c =>
-            `<option value="${c.category_id}"
-              ${c.category_id === exp.category_id ? 'selected' : ''}>
-              ${c.category_name}
-            </option>`
-          ).join('')}
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Property</label>
-        <select id="exRoom">
-          <option value="">General / All</option>
-          ${(rooms || []).map(r =>
-            `<option value="${r.room_id}"
-              ${r.room_id === exp.room_id ? 'selected' : ''}>
-              ${propLabel(r)}
-            </option>`
-          ).join('')}
-        </select>
-      </div>
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Month *</label>
-          <input id="exMo" value="${exp.month || ''}" />
-        </div>
-        <div class="form-group">
-          <label>Amount ₹ *</label>
-          <input id="exAmt" type="number" value="${exp.amount || 0}" />
+    if (error || !exp) {
+      if (window.fsn) fsn.error('Error', 'Expense record not found: ' + (error?.message || ''));
+      else alert('Expense not found');
+      return;
+    }
+
+    const categories = [
+      'Maintenance & Repairs',
+      'Supplies & Groceries',
+      'Utilities & Wi-Fi',
+      'Travel / Rapido',
+      'Staff Wages & Advance',
+      'Guest Amenities',
+      'Laundry & Linen',
+      'Food & Refreshments',
+      'Cleaning & Housekeeping',
+      'Marketing & Listing',
+      'General Operations',
+      'Miscellaneous'
+    ];
+
+    const currentCat = exp.category || 'General Operations';
+    const isCustomCat = !categories.includes(currentCat);
+
+    renderShell(`
+      <div class="card" style="margin-bottom:12px;padding:14px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <h1 style="margin:0;font-size:18px;font-weight:900;color:#0F172A;display:flex;align-items:center;gap:6px;">
+            <span>✏️</span> Edit Expense #${id}
+          </h1>
+          <button class="secondary btn-sm" onclick="renderExpenses()" style="background:#F1F5F9;border:1px solid #CBD5E1;color:#334155;font-weight:700;padding:6px 14px;border-radius:8px;cursor:pointer;">
+            ← Back to Expenses
+          </button>
         </div>
       </div>
-      <div class="form-group">
-        <label>Date</label>
-        <input id="exDate" type="date" value="${exp.entry_date || ''}" />
-      </div>
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea id="exNotes">${exp.notes || ''}</textarea>
-      </div>
-      <button onclick="updateExpense(${id})" style="width:100%;margin-top:10px;">
-        💾 Update Expense
-      </button>
-      <div id="exErr"></div>
-    </div>
-  `, 'expenses');
-}
 
-async function updateExpense(id) {
-  const cid    = document.getElementById('exCat').value;
-  const mo     = document.getElementById('exMo').value.trim();
-  const amt    = parseFloat(document.getElementById('exAmt').value) || 0;
-  const roomId = document.getElementById('exRoom').value || null;
-  const date   = document.getElementById('exDate').value || null;
-  const notes  = document.getElementById('exNotes').value.trim() || null;
+      <div class="card" style="max-width:680px;margin:0 auto;padding:20px;border-radius:14px;border:1.5px solid #FED7AA;background:#ffffff;box-shadow:0 8px 24px rgba(180,83,9,0.08);">
+        <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Category *</label>
+            <select id="editExCat" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;font-weight:700;border:1.5px solid #CBD5E1;border-radius:8px;">
+              ${categories.map(c => `<option value="${c}" ${c === currentCat ? 'selected' : ''}>${c}</option>`).join('')}
+              ${isCustomCat ? `<option value="${escapeHtml(currentCat)}" selected>${escapeHtml(currentCat)}</option>` : ''}
+            </select>
+          </div>
 
-  if (!cid || !mo || amt <= 0) {
-    document.getElementById('exErr').innerHTML =
-      '<div class="error">Category, month & amount required</div>';
+          <div class="form-group">
+            <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Property / Flat</label>
+            <select id="editExRoom" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;border:1.5px solid #CBD5E1;border-radius:8px;">
+              <option value="">General / All Properties</option>
+              ${(rooms || []).map(r => `<option value="${r.room_id}" ${r.room_id === exp.room_id ? 'selected' : ''}>${escapeHtml(propLabel(r))}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div class="form-group">
+            <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Expense Amount ₹ *</label>
+            <input id="editExAmt" type="number" step="0.01" value="${exp.amount || 0}" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:15px;font-weight:800;color:#B45309;border:1.5px solid #CBD5E1;border-radius:8px;" />
+          </div>
+
+          <div class="form-group">
+            <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Expense Date *</label>
+            <input id="editExDate" type="date" value="${exp.expense_date || (exp.created_at || '').slice(0, 10)}" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;font-weight:700;border:1.5px solid #CBD5E1;border-radius:8px;" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px;">
+          <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Payment Account / Source *</label>
+          <select id="editExPaidBy" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;font-weight:700;border:1.5px solid #B45309;border-radius:8px;">
+            <option value="Anwar OD" ${/anwar|od|cash/i.test(exp.paid_by || '') ? 'selected' : ''}>💵 Anwar OD (Offline / Overdraft Account)</option>
+            <option value="Roost and Rest" ${!/anwar|od|cash/i.test(exp.paid_by || '') ? 'selected' : ''}>🏦 Roost and Rest (Online Company Bank A/c)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label style="display:block;font-size:12px;font-weight:800;color:#334155;margin-bottom:4px;">Description / Purpose / Bill Details</label>
+          <textarea id="editExNotes" rows="3" style="width:100%;box-sizing:border-box;padding:9px 10px;font-size:13px;border:1.5px solid #CBD5E1;border-radius:8px;">${escapeHtml(exp.description || exp.notes || '')}</textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="secondary" onclick="renderExpenses()" style="background:#F1F5F9;border:1px solid #CBD5E1;color:#475569;padding:9px 18px;border-radius:8px;font-weight:700;cursor:pointer;">
+            Cancel
+          </button>
+          <button type="button" onclick="window.delExpense(${id})" style="background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;padding:9px 16px;border-radius:8px;font-weight:800;cursor:pointer;">
+            🗑️ Delete Expense
+          </button>
+          <button type="button" onclick="window.updateExpense(${id})" style="background:#B45309;border:none;color:#fff;padding:9px 22px;border-radius:8px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            💾 Save Changes
+          </button>
+        </div>
+        <div id="editExErr" style="margin-top:10px;"></div>
+      </div>
+    `, 'expenses');
+  } catch (err) {
+    console.error('Error opening edit expense:', err);
+    alert('Failed to load expense: ' + err.message);
+  }
+};
+
+window.updateExpense = async function(id) {
+  const cat = document.getElementById('editExCat')?.value;
+  const amt = parseFloat(document.getElementById('editExAmt')?.value) || 0;
+  const roomId = document.getElementById('editExRoom')?.value || null;
+  const date = document.getElementById('editExDate')?.value || null;
+  const paidBy = document.getElementById('editExPaidBy')?.value || 'Anwar OD';
+  const notes = document.getElementById('editExNotes')?.value.trim() || '';
+
+  const errEl = document.getElementById('editExErr');
+
+  if (!cat || amt <= 0 || !date) {
+    if (errEl) errEl.innerHTML = '<div style="color:#DC2626;background:#FEE2E2;padding:8px 12px;border-radius:6px;font-size:12.5px;font-weight:700;">Please fill category, date and valid amount.</div>';
     return;
   }
 
-  const catEl = document.getElementById('exCat');
-  const catText = catEl?.options?.[catEl.selectedIndex]?.text || cid || 'General Operations';
+  try {
+    const payload = {
+      category: cat,
+      amount: amt,
+      expense_date: date,
+      paid_by: paidBy,
+      description: notes
+    };
+    if (roomId) payload.room_id = roomId;
 
-  const { error } = await sb.from('expenses').update({
-    category: catText,
-    room_id: roomId,
-    amount: amt,
-    expense_date: date,
-    description: notes || ''
-  }).eq('id', id);
+    const { error } = await sb.from('expenses').update(payload).eq('id', id);
+    if (error) throw error;
 
-  if (error) {
-    document.getElementById('exErr').innerHTML =
-      `<div class="error">${error.message}</div>`;
-    return;
+    if (window.fsn) fsn.success('Success', '✅ Expense updated successfully!');
+    else alert('Expense updated!');
+
+    renderExpenses();
+    if (window.UHHSODManager && window.UHHSODManager.calculateLiveODBalance) {
+      window.UHHSODManager.calculateLiveODBalance();
+    }
+    if (window.renderClaims) window.renderClaims();
+  } catch (err) {
+    console.error('Failed to update expense:', err);
+    if (errEl) errEl.innerHTML = `<div style="color:#DC2626;background:#FEE2E2;padding:8px 12px;border-radius:6px;font-size:12.5px;font-weight:700;">${escapeHtml(err.message)}</div>`;
   }
-
-  fsn.success('Success', '✅ Expense updated!');
-  renderExpenses();
-}
+};
 
 // ============ DELETE EXPENSE ============
-async function delExpense(id) {
-  if (!confirm('Delete this expense?')) return;
-  const { data: exp } = await sb.from('expenses').select('amount, notes, expense_categories(category_name), rooms(nickname)').eq('id', id).single();
-  const { error } = await sb.from('expenses').delete().eq('id', id);
-  if (error) { fsn.error('Error', '❌ ' + error.message); return; }
+window.delExpense = async function(id) {
+  if (!confirm('Are you sure you want to permanently delete this expense record?')) return;
 
-  // 📋 Audit log for Developer
-  if (window.UserActionAudit && typeof window.UserActionAudit.recordAction === 'function') {
-    window.UserActionAudit.recordAction('expense_delete', {
-      expenseId: id,
-      amount: exp?.amount,
-      categoryName: exp?.expense_categories?.category_name,
-      roomName: exp?.rooms?.nickname,
-      notes: exp?.notes
-    });
+  try {
+    const { error } = await sb.from('expenses').delete().eq('id', id);
+    if (error) throw error;
+
+    if (window.fsn) fsn.success('Success', '🗑️ Expense deleted!');
+    else alert('Expense deleted');
+
+    renderExpenses();
+    if (window.UHHSODManager && window.UHHSODManager.calculateLiveODBalance) {
+      window.UHHSODManager.calculateLiveODBalance();
+    }
+    if (window.renderClaims) window.renderClaims();
+  } catch (err) {
+    console.error('Failed to delete expense:', err);
+    if (window.fsn) fsn.error('Error', err.message);
+    else alert('Error: ' + err.message);
   }
+};
 
-  fsn.success('Success', '✅ Deleted');
-  renderExpenses();
-}
+window.delExpenseRecord = async function(channel, id) {
+  if (!confirm('Delete this record?')) return;
+  try {
+    let tbl = 'expenses';
+    if (channel === 'maintenance') tbl = 'maintenance_log';
+    else if (channel === 'laundry') tbl = 'laundry_records';
+    else if (channel === 'advance') tbl = 'company_advances';
+
+    const { error } = await sb.from(tbl).delete().eq('id', id);
+    if (error) throw error;
+
+    if (window.fsn) fsn.success('Success', '🗑️ Record deleted!');
+    renderExpenses();
+    if (window.UHHSODManager && window.UHHSODManager.calculateLiveODBalance) {
+      window.UHHSODManager.calculateLiveODBalance();
+    }
+    if (window.renderClaims) window.renderClaims();
+  } catch (err) {
+    if (window.fsn) fsn.error('Error', err.message);
+    else alert('Error: ' + err.message);
+  }
+};
 
 // ============ PROPERTY REPORT ============
 async function renderPropertyReport(roomId, range = 'Month') {

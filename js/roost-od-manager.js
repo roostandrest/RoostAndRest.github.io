@@ -447,10 +447,10 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
             { data: pReturns },
             pSecRefunds
         ] = await Promise.all([
-            client.from('reimbursements').select('*').gte('expense_date', CHECKPOINT_START).lte('expense_date', dayBefore),
+            client.from('expenses').select('*').gte('expense_date', CHECKPOINT_START).lte('expense_date', dayBefore),
             client.from('maintenance_log').select('*').gte('created_at', CHECKPOINT_START).lte('created_at', dayBefore),
-            client.from('laundry_payments').select('*').gte('payment_date', CHECKPOINT_START).lte('payment_date', dayBefore),
-            client.from('advance_tracker').select('*').gte('date_given', CHECKPOINT_START).lte('date_given', dayBefore),
+            client.from('laundry_records').select('*').gte('record_date', CHECKPOINT_START).lte('record_date', dayBefore),
+            client.from('company_advances').select('*').gte('date', CHECKPOINT_START).lte('date', dayBefore),
             client.from('company_advances').select('*').gte('date', CHECKPOINT_START).lte('date', dayBefore),
             getODSecurityRefunds(client, CHECKPOINT_START, dayBefore)
         ]);
@@ -470,11 +470,11 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
         (pMaints || []).filter(m => normalizePaymentSource(m.payment_source || m.paid_by) === 'ROOST-BANK').forEach(m => {
             openingOutflow += parseFloat(m.cost || 0);
         });
-        (pLaunds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode) === 'ROOST-BANK').forEach(l => {
-            openingOutflow += parseFloat(l.amount || 0);
+        (pLaunds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode || l.paid_by) === 'ROOST-BANK').forEach(l => {
+            openingOutflow += parseFloat(l.total_amount || l.amount || 0);
         });
         (pAdvs || []).filter(a => normalizePaymentSource(a.paid_by) === 'ROOST-BANK').forEach(a => {
-            openingOutflow += parseFloat(a.advance_amount || 0);
+            openingOutflow += parseFloat(a.amount_given || a.amount || 0);
         });
         (pReturns || []).filter(r => r.type === 'Returned' || r.type === 'return' || r.type === 'Handover' || r.status === 'Returned' || r.status === 'Handover' || (r.notes && r.notes.includes('OD'))).forEach(r => {
             openingOutflow += parseFloat(r.amount || r.amount_given || 0);
@@ -490,22 +490,23 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     const deposits = await getAllODDeposits(client, startDate, endDate);
 
     // 2. Outflows (Parallel queries in period)
-    let qReimb = client.from('reimbursements').select('*').gte('expense_date', startDate);
-    if (endDate) qReimb = qReimb.lte('expense_date', endDate);
+    let qExp = client.from('expenses').select('*').gte('expense_date', startDate);
+    if (endDate) qExp = qExp.lte('expense_date', endDate);
 
     let qMaint = client.from('maintenance_log').select('*').gte('created_at', startDate);
     if (endDate) qMaint = qMaint.lte('created_at', endDate);
 
-    let qLaund = client.from('laundry_payments').select('*').gte('payment_date', startDate);
-    if (endDate) qLaund = qLaund.lte('payment_date', endDate);
+    let qLaund = client.from('laundry_records').select('*').gte('record_date', startDate);
+    if (endDate) qLaund = qLaund.lte('record_date', endDate);
 
-    let qAdv = client.from('advance_tracker').select('*, employees(name)');
+    let qAdv = client.from('company_advances').select('*').gte('date', startDate);
+    if (endDate) qAdv = qAdv.lte('date', endDate);
 
     let qReturns = client.from('company_advances').select('*').gte('date', startDate);
     if (endDate) qReturns = qReturns.lte('date', endDate);
 
     const [{ data: exps }, { data: maints }, { data: launds }, { data: allAdvs }, { data: returns }, secRefunds] = await Promise.all([
-        qReimb, qMaint, qLaund, qAdv, qReturns, getODSecurityRefunds(client, startDate, endDate)
+        qExp, qMaint, qLaund, qAdv, qReturns, getODSecurityRefunds(client, startDate, endDate)
     ]);
 
     const txns = [];
@@ -535,8 +536,8 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     (exps || []).filter(e => normalizePaymentSource(e.payment_source || e.paid_by) === 'ROOST-BANK').forEach(e => {
         txns.push({
             id: e.id,
-            source: 'reimbursements',
-            date: e.expense_date,
+            source: 'expenses',
+            date: e.expense_date || (e.created_at || '').slice(0, 10),
             type: 'EXPENSE',
             desc: `Daily Expense: ${e.category || ''} - ${e.description || ''}`,
             amount: parseFloat(e.amount || 0),
@@ -558,33 +559,32 @@ async function getLedgerData(supabaseClient, customStartDate, customEndDate) {
     });
 
     // Laundry (-)
-    (launds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode) === 'ROOST-BANK').forEach(l => {
+    (launds || []).filter(l => normalizePaymentSource(l.payment_source || l.payment_mode || l.paid_by) === 'ROOST-BANK').forEach(l => {
         txns.push({
             id: l.id,
-            source: 'laundry_payments',
-            date: l.payment_date,
+            source: 'laundry_records',
+            date: l.record_date || (l.created_at || '').slice(0, 10),
             type: 'EXPENSE',
-            desc: `Laundry: ${l.notes || ''}`,
-            amount: parseFloat(l.amount || 0),
+            desc: `Laundry: ${l.notes || l.vendor_name || ''}`,
+            amount: parseFloat(l.total_amount || l.amount || 0),
             isDep: false
         });
     });
 
     // Staff Advances (-)
     (allAdvs || []).filter(a => {
-        const aDate = a.date_given || '';
-        if (aDate < startDate) return false;
-        if (endDate && aDate > endDate) return false;
+        const isReturn = a.type === 'Returned' || a.type === 'return' || a.type === 'Handover' || a.status === 'Returned' || a.status === 'Handover' || (a.notes && a.notes.includes('OD'));
+        if (isReturn) return false;
         return normalizePaymentSource(a.paid_by) === 'ROOST-BANK';
     }).forEach(a => {
-        const realName = a.employees?.name || 'Staff';
+        const realName = a.given_to || a.recipient_name || 'Staff';
         txns.push({
             id: a.id,
-            source: 'advance_tracker',
-            date: a.date_given,
+            source: 'company_advances',
+            date: a.date || a.advance_date,
             type: 'EXPENSE',
-            desc: `Staff Advance (${realName}): ${a.reason || 'Advance'}`,
-            amount: parseFloat(a.advance_amount || 0),
+            desc: `Staff Advance (${realName}): ${a.notes || a.purpose || 'Advance'}`,
+            amount: parseFloat(a.amount_given || a.amount || 0),
             isDep: false
         });
     });
