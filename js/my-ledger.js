@@ -18,8 +18,17 @@ window.resolvePaymentReceiver = function(p) {
   const mode = (p.payment_mode || '').trim();
   const method = (p.payment_method || '').trim();
   const notes = (p.notes || '').trim();
+  const bookingId = (p.booking_id || '').trim();
 
-  if (mode === 'Online-Airbnb' || method === 'Airbnb-Payout' || /airbnb/i.test(notes) || /auto-synced from gmail/i.test(notes)) {
+  const isAirbnb = /airbnb/i.test(mode) || 
+                   /airbnb/i.test(method) || 
+                   /airbnb/i.test(notes) || 
+                   (/online/i.test(mode) && /payout/i.test(mode)) ||
+                   /payout/i.test(mode) ||
+                   /auto-synced from gmail/i.test(notes) ||
+                   /^rr-nov-/i.test(bookingId);
+
+  if (isAirbnb) {
     return 'Company / Airbnb';
   }
 
@@ -196,10 +205,10 @@ window.saveModifiedReceiver = async function(oldName) {
   // If updatePast is checked, update past payments & handovers in DB
   if (updatePast && oldName.toLowerCase() !== normNew.toLowerCase()) {
     try {
-      const { data: pays } = await sb.from('payment_history').select('id, notes, received_by');
+      const { data: pays } = await sb.from('payment_history').select('id, notes, payment_mode');
       const toUpdate = (pays || []).filter(p => {
         const r = window.resolvePaymentReceiver(p);
-        return r.toLowerCase() === oldName.toLowerCase() || (p.received_by && p.received_by.toLowerCase() === oldName.toLowerCase());
+        return r.toLowerCase() === oldName.toLowerCase();
       });
 
       for (const p of toUpdate) {
@@ -210,7 +219,6 @@ window.saveModifiedReceiver = async function(oldName) {
           newNotes = newNotes ? `${newNotes} (Received by: ${normNew})` : `(Received by: ${normNew})`;
         }
         await sb.from('payment_history').update({
-          received_by: normNew,
           notes: newNotes
         }).eq('id', p.id);
       }
@@ -245,7 +253,7 @@ window.saveModifiedReceiver = async function(oldName) {
 window.openDeleteReceiverModal = async function(name) {
   let payCount = 0;
   try {
-    const { data: pays } = await sb.from('payment_history').select('id, notes, received_by');
+    const { data: pays } = await sb.from('payment_history').select('id, notes, payment_mode');
     payCount = (pays || []).filter(p => window.resolvePaymentReceiver(p).toLowerCase() === name.toLowerCase()).length;
   } catch (e) {}
 
@@ -317,10 +325,10 @@ window.confirmDeleteReceiver = async function(name) {
 
   if (selectedAction === 'reassign') {
     try {
-      const { data: pays } = await sb.from('payment_history').select('id, notes, received_by');
+      const { data: pays } = await sb.from('payment_history').select('id, notes, payment_mode');
       const toUpdate = (pays || []).filter(p => {
         const r = window.resolvePaymentReceiver(p);
-        return r.toLowerCase() === name.toLowerCase() || (p.received_by && p.received_by.toLowerCase() === name.toLowerCase());
+        return r.toLowerCase() === name.toLowerCase();
       });
 
       for (const p of toUpdate) {
@@ -331,7 +339,6 @@ window.confirmDeleteReceiver = async function(name) {
           newNotes = newNotes ? `${newNotes} (Received by: Anwar-OD)` : '(Received by: Anwar-OD)';
         }
         await sb.from('payment_history').update({
-          received_by: 'Anwar-OD',
           notes: newNotes
         }).eq('id', p.id);
       }
@@ -478,12 +485,15 @@ window.savePaymentReceiverEdit = async function(payId) {
   try {
     const { data: oldP } = await sb.from('payment_history').select('booking_id').eq('id', payId).single();
 
-    const { error } = await sb.from('payment_history').update({
+    const payPatch = {
       amount: newAmount,
-      received_by: newReceiver,
       payment_mode: newMode,
       notes: finalNotes
-    }).eq('id', payId);
+    };
+
+    const { error } = (typeof window.safeDbUpdate === 'function')
+      ? await window.safeDbUpdate('payment_history', payPatch, 'id', payId)
+      : await sb.from('payment_history').update(payPatch).eq('id', payId);
 
     if (error) throw error;
 
@@ -671,19 +681,19 @@ window.renderMyLedger = async function() {
       s.paymentsList.push({ ...p, resolvedReceiver: rec });
 
       const mode = (p.payment_mode || '').trim();
-      const isOnline = mode === 'Online-Airbnb' || mode === 'Airbnb Payout' || rec === 'Company / Airbnb';
+      const isOnline = rec === 'Company / Airbnb' || 
+                       /airbnb/i.test(mode) || 
+                       /online/i.test(mode) || 
+                       /payout/i.test(mode) || 
+                       mode === 'UPI' || 
+                       mode === 'Bank' || 
+                       mode === 'Bank Transfer';
 
-      if (isOnline || mode === 'UPI' || mode === 'Bank' || mode === 'Bank Transfer') {
+      if (isOnline) {
         s.upiOnline += amt;
       } else {
         // Cash payment
-        if (rec === 'Anwar-OD') {
-          // Company OD is master depository — cash is deposited/accounted
-          s.cashHandedOver += amt;
-        } else {
-          // Team member holds cash in hand until handed over
-          s.cashInHand += amt;
-        }
+        s.cashInHand += amt;
       }
     });
 
