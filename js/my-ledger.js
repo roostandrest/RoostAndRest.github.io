@@ -611,10 +611,22 @@ window.saveInlineHandover = async function () {
   window.renderMyLedger();
 };
 
-window.toggleHandoverBox = function () {
+window.toggleHandoverBox = function (fromPerson, amount) {
   const box = document.getElementById('inlineHandoverFormBox');
   if (box) {
-    box.style.display = box.style.display === 'none' ? 'block' : 'none';
+    const isOpening = box.style.display === 'none';
+    box.style.display = isOpening ? 'block' : 'none';
+    if (isOpening) {
+      if (fromPerson) {
+        const fromSel = document.getElementById('hoFromPerson');
+        if (fromSel) fromSel.value = fromPerson;
+      }
+      if (amount) {
+        const amtInp = document.getElementById('hoAmount');
+        if (amtInp) amtInp.value = amount;
+      }
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 };
 
@@ -763,15 +775,144 @@ window._renderMyLedgerImpl = async function() {
       resolvedReceiver: window.resolvePaymentReceiver(p)
     })).filter(p => selectedPerson === 'ALL' || p.resolvedReceiver === selectedPerson);
 
+    // Selected person stats for dedicated KPI card
+    const selStat = allReceiversList.find(x => x.name === selectedPerson) || {
+      name: selectedPerson,
+      category: 'Receiver',
+      cashInHand: 0,
+      upiOnline: 0,
+      cashHandedOver: 0,
+      totalCollected: 0
+    };
+    const pctOfTotal = totalGrossCollectedAll > 0 ? ((selStat.totalCollected / totalGrossCollectedAll) * 100).toFixed(1) : '0.0';
+
     let html = `
+      <style>
+        .ledger-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+        .receiver-kpi-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 12px;
+        }
+        .ledger-kpi-card {
+          background: #fff;
+          padding: 14px 16px;
+          border-radius: 10px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .ledger-kpi-val {
+          font-size: clamp(18px, 3.8vw, 24px);
+          font-weight: 900;
+          color: #0f172a;
+          margin-top: 4px;
+          word-break: break-word;
+        }
+        .ledger-kpi-label {
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .ledger-table-wrap {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          border-radius: 8px;
+        }
+        .ledger-table-wrap table th,
+        .ledger-table-wrap table td {
+          white-space: nowrap;
+        }
+
+        /* Responsive Mobile Layouts */
+        @media (max-width: 640px) {
+          .ledger-header-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+          }
+          .ledger-header-actions {
+            display: flex !important;
+            gap: 8px !important;
+            width: 100% !important;
+          }
+          .ledger-header-actions button {
+            flex: 1 !important;
+            text-align: center !important;
+            padding: 9px 10px !important;
+          }
+          .ledger-kpi-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+          .receiver-kpi-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+          .ledger-kpi-card {
+            padding: 10px 12px !important;
+          }
+          .ledger-kpi-val {
+            font-size: 17px !important;
+          }
+          .ledger-kpi-label {
+            font-size: 9.5px !important;
+            line-height: 1.2 !important;
+          }
+          .receiver-focus-card {
+            padding: 14px 12px !important;
+          }
+          .receiver-focus-header {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 10px !important;
+          }
+          .receiver-focus-actions {
+            display: flex !important;
+            gap: 8px !important;
+            width: 100% !important;
+          }
+          .receiver-focus-actions button {
+            flex: 1 !important;
+            justify-content: center !important;
+            padding: 8px 10px !important;
+          }
+          .ledger-filter-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 8px !important;
+          }
+          .ledger-filter-select {
+            width: 100% !important;
+          }
+          .custom-receiver-input-wrap {
+            flex-direction: column !important;
+            align-items: stretch !important;
+          }
+          .custom-receiver-input-wrap input {
+            min-width: 0 !important;
+            width: 100% !important;
+          }
+          .custom-receiver-input-wrap button {
+            width: 100% !important;
+            padding: 10px !important;
+          }
+        }
+      </style>
+
       <div style="padding:10px 0;">
         <!-- Header & Action Bar -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+        <div class="ledger-header-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
           <div>
             <h1 style="margin:0; font-size:22px; font-weight:800; color:#0f172a;">💼 Cash & Payment Receiver Ledger</h1>
             <p style="margin:4px 0 0; color:#64748b; font-size:13px;">Real-time tracking of money collected across Airbnb, Anwar-OD, caretakers & staff</p>
           </div>
-          <div style="display:flex; gap:8px;">
+          <div class="ledger-header-actions" style="display:flex; gap:8px;">
             <button type="button" onclick="window.toggleHandoverBox()" style="background:#047857; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer;">
               🤝 Record Handover
             </button>
@@ -787,9 +928,9 @@ window._renderMyLedgerImpl = async function() {
             <strong style="color:#0f172a; font-size:14px;">➕ Manage Payment Receivers</strong>
             <span style="font-size:12px; color:#64748b; margin-left:6px;">(Add caretakers, partners or non-employees here — available instantly in booking & payment dropdowns)</span>
           </div>
-          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="custom-receiver-input-wrap" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
             <input type="text" id="inlineNewReceiverName" placeholder="Enter Receiver Name (e.g. Caretaker Ramesh, Property Manager...)" 
-                   style="flex:1; min-width:260px; padding:9px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none;"
+                   style="flex:1; min-width:240px; padding:9px 14px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; outline:none;"
                    onkeydown="if(event.key==='Enter') window.saveInlineCustomReceiver()" />
             <button type="button" onclick="window.saveInlineCustomReceiver()" 
                     style="padding:9px 18px; background:#b45309; color:#fff; border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;">
@@ -844,8 +985,8 @@ window._renderMyLedgerImpl = async function() {
               <input type="date" id="hoDate" value="${new Date().toISOString().slice(0, 10)}" style="width:100%; padding:8px 10px; border:1px solid #86efac; border-radius:6px;" />
             </div>
           </div>
-          <div style="display:flex; gap:10px; margin-top:10px; align-items:center;">
-            <input type="text" id="hoNotes" placeholder="Optional notes (e.g. Cleared 22 Nov collections)" style="flex:1; padding:8px 10px; border:1px solid #86efac; border-radius:6px;" />
+          <div style="display:flex; gap:10px; margin-top:10px; align-items:center; flex-wrap:wrap;">
+            <input type="text" id="hoNotes" placeholder="Optional notes (e.g. Cleared 22 Nov collections)" style="flex:1; min-width:180px; padding:8px 10px; border:1px solid #86efac; border-radius:6px;" />
             <button type="button" onclick="window.saveInlineHandover()" style="background:#166534; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:700; cursor:pointer;">
               ✅ Confirm Handover
             </button>
@@ -855,47 +996,134 @@ window._renderMyLedgerImpl = async function() {
           </div>
         </div>
 
-        <!-- 3. KPI Summary Cards -->
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px;">
-          <div class="card" style="border-left:4px solid #ef4444; background:#fff; padding:14px; border-radius:8px;">
-            <div style="font-size:11px; font-weight:800; color:#ef4444; text-transform:uppercase; letter-spacing:0.5px;">💵 Total Cash In Hand (Team)</div>
-            <div style="font-size:24px; font-weight:900; color:#0f172a; margin-top:4px;">₹${totalCashInHandAll.toLocaleString('en-IN')}</div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">Currently held by on-ground team</div>
+        <!-- 3. KPI Summary Section (DYNAMIC: Shows Dedicated Receiver Focus Card When Filtered, or System Overview When ALL) -->
+        ${selectedPerson !== 'ALL' ? `
+          <!-- DEDICATED SELECTED RECEIVER FOCUS KPI HERO CARD -->
+          <div class="card receiver-focus-card" style="margin-bottom:16px; background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#fff; border-radius:14px; padding:18px 20px; box-shadow:0 4px 16px rgba(15,23,42,0.15); border:1px solid #334155;">
+            <div class="receiver-focus-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                  <span style="font-size:22px;">${selStat.name === 'Company / Airbnb' ? '🌐' : selStat.name === 'Anwar-OD' ? '🏦' : '👤'}</span>
+                  <h2 style="margin:0; font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.2px;">${selStat.name}</h2>
+                  <span style="background:rgba(255,255,255,0.15); color:#f8fafc; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase;">
+                    ${selStat.category}
+                  </span>
+                  <span style="background:#b45309; color:#fef3c7; font-size:11px; font-weight:800; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
+                    🔍 Receiver Filter Active
+                  </span>
+                </div>
+                <div style="font-size:12px; color:#94a3b8; margin-top:4px;">
+                  Real-time collection audit, in-hand cash status & payout tracking for <strong>${selStat.name}</strong>
+                </div>
+              </div>
+              <div class="receiver-focus-actions" style="display:flex; gap:8px; align-items:center;">
+                <button type="button" onclick="window._myLedgerSelectedPerson='ALL'; window.renderMyLedger();" 
+                        style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                  <span>✕</span> Show All Receivers
+                </button>
+                ${selStat.cashInHand > 0 ? `
+                  <button type="button" onclick="window.toggleHandoverBox('${selStat.name}', ${selStat.cashInHand})" 
+                          style="background:#059669; color:#fff; border:none; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                    🤝 Handover ₹${selStat.cashInHand.toLocaleString('en-IN')}
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- Receiver Sub-KPI Grid -->
+            <div class="receiver-kpi-grid">
+              <!-- Primary Metric: Total Collected -->
+              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #f59e0b;">
+                <div class="ledger-kpi-label" style="color:#fbbf24;">💰 Total Amount Collected</div>
+                <div class="ledger-kpi-val" style="color:#fff;">
+                  ₹${selStat.totalCollected.toLocaleString('en-IN')}
+                </div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                  ${pctOfTotal}% of total receipts (₹${totalGrossCollectedAll.toLocaleString('en-IN')})
+                </div>
+              </div>
+
+              <!-- Cash In Hand -->
+              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid ${selStat.cashInHand > 0 ? '#ef4444' : '#10b981'};">
+                <div class="ledger-kpi-label" style="color:${selStat.cashInHand > 0 ? '#f87171' : '#34d399'};">💵 Cash In Hand</div>
+                <div class="ledger-kpi-val" style="color:${selStat.cashInHand > 0 ? '#fca5a5' : '#fff'};">
+                  ₹${selStat.cashInHand.toLocaleString('en-IN')}
+                </div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                  ${selStat.cashInHand > 0 ? '⚠️ Pending Handover' : '✅ No Cash Pending'}
+                </div>
+              </div>
+
+              <!-- UPI & Online -->
+              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #38bdf8;">
+                <div class="ledger-kpi-label" style="color:#38bdf8;">📱 UPI & Online Direct</div>
+                <div class="ledger-kpi-val" style="color:#fff;">
+                  ₹${selStat.upiOnline.toLocaleString('en-IN')}
+                </div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                  Direct digital receipts
+                </div>
+              </div>
+
+              <!-- Cash Handed Over -->
+              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #a78bfa;">
+                <div class="ledger-kpi-label" style="color:#c084fc;">🤝 Cash Handed Over</div>
+                <div class="ledger-kpi-val" style="color:#fff;">
+                  ₹${selStat.cashHandedOver.toLocaleString('en-IN')}
+                </div>
+                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                  ${displayedPayments.length} booking receipts tracked
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="card" style="border-left:4px solid #3b82f6; background:#fff; padding:14px; border-radius:8px;">
-            <div style="font-size:11px; font-weight:800; color:#3b82f6; text-transform:uppercase; letter-spacing:0.5px;">📱 UPI & Online Total</div>
-            <div style="font-size:24px; font-weight:900; color:#0f172a; margin-top:4px;">₹${totalUPIAll.toLocaleString('en-IN')}</div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">Airbnb payouts & direct UPI receipts</div>
+        ` : `
+          <!-- ALL RECEIVERS OVERVIEW KPI CARDS -->
+          <div class="ledger-kpi-grid">
+            <div class="ledger-kpi-card" style="border-left:4px solid #ef4444;">
+              <div class="ledger-kpi-label" style="color:#ef4444;">💵 Total Cash In Hand (Team)</div>
+              <div class="ledger-kpi-val">₹${totalCashInHandAll.toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">Currently held across team</div>
+            </div>
+            <div class="ledger-kpi-card" style="border-left:4px solid #3b82f6;">
+              <div class="ledger-kpi-label" style="color:#3b82f6;">📱 UPI & Online Total</div>
+              <div class="ledger-kpi-val">₹${totalUPIAll.toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">Airbnb payouts & direct UPI receipts</div>
+            </div>
+            <div class="ledger-kpi-card" style="border-left:4px solid #10b981;">
+              <div class="ledger-kpi-label" style="color:#10b981;">🤝 Cash Handed Over / Accounted</div>
+              <div class="ledger-kpi-val">₹${totalHandedOverAll.toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">Safely deposited to Anwar-OD</div>
+            </div>
+            <div class="ledger-kpi-card" style="border-left:4px solid #b45309;">
+              <div class="ledger-kpi-label" style="color:#b45309;">💰 Gross Revenue Collected</div>
+              <div class="ledger-kpi-val">₹${totalGrossCollectedAll.toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">Total booking receipts tracked</div>
+            </div>
           </div>
-          <div class="card" style="border-left:4px solid #10b981; background:#fff; padding:14px; border-radius:8px;">
-            <div style="font-size:11px; font-weight:800; color:#10b981; text-transform:uppercase; letter-spacing:0.5px;">🤝 Cash Handed Over / Accounted</div>
-            <div style="font-size:24px; font-weight:900; color:#0f172a; margin-top:4px;">₹${totalHandedOverAll.toLocaleString('en-IN')}</div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">Safely deposited to Anwar-OD</div>
-          </div>
-          <div class="card" style="border-left:4px solid #b45309; background:#fff; padding:14px; border-radius:8px;">
-            <div style="font-size:11px; font-weight:800; color:#b45309; text-transform:uppercase; letter-spacing:0.5px;">💰 Gross Revenue Collected</div>
-            <div style="font-size:24px; font-weight:900; color:#0f172a; margin-top:4px;">₹${totalGrossCollectedAll.toLocaleString('en-IN')}</div>
-            <div style="font-size:11px; color:#64748b; margin-top:2px;">Total booking receipts tracked</div>
-          </div>
-        </div>
+        `}
 
         <!-- 4. Receiver Balances Table -->
-        <div class="card" style="background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; border:1px solid #e2e8f0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-            <strong style="color:#0f172a; font-size:15px;">👥 Live Balances by Receiver ("Kiske Paas Kitna Hai")</strong>
+        <div class="card" style="background:#fff; border-radius:12px; padding:16px; margin-bottom:16px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div class="ledger-filter-row" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+            <div>
+              <strong style="color:#0f172a; font-size:15px;">👥 Live Balances by Receiver ("Kiske Paas Kitna Hai")</strong>
+              <div style="font-size:12px; color:#64748b; margin-top:2px;">Click any row to filter by that receiver and view their individual KPI & payments</div>
+            </div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:12px; font-weight:600; color:#64748b;">Filter View:</span>
-              <select onchange="window._myLedgerSelectedPerson=this.value; window.renderMyLedger();" style="padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; font-weight:700; font-size:13px;">
-                <option value="ALL" ${selectedPerson === 'ALL' ? 'selected' : ''}>👥 All Receivers (Overview)</option>
-                <option value="Company / Airbnb" ${selectedPerson === 'Company / Airbnb' ? 'selected' : ''}>🌐 Company / Airbnb</option>
-                <option value="Anwar-OD" ${selectedPerson === 'Anwar-OD' ? 'selected' : ''}>🏦 Anwar-OD</option>
-                ${customReceivers.map(r => `<option value="${r}" ${selectedPerson === r ? 'selected' : ''}>👤 ${r}</option>`).join('')}
-                ${activeEmployees.map(e => `<option value="${e}" ${selectedPerson === e ? 'selected' : ''}>🧑‍💼 ${e}</option>`).join('')}
+              <span style="font-size:12px; font-weight:700; color:#64748b;">Filter View:</span>
+              <select class="ledger-filter-select" onchange="window._myLedgerSelectedPerson=this.value; window.renderMyLedger();" 
+                      style="padding:8px 12px; border-radius:8px; border:${selectedPerson !== 'ALL' ? '2px solid #b45309' : '1px solid #cbd5e1'}; background:${selectedPerson !== 'ALL' ? '#fffbeb' : '#fff'}; font-weight:700; font-size:13px; outline:none; cursor:pointer;">
+                <option value="ALL" ${selectedPerson === 'ALL' ? 'selected' : ''}>👥 All Receivers (Overview) — ₹${totalGrossCollectedAll.toLocaleString('en-IN')}</option>
+                <option value="Company / Airbnb" ${selectedPerson === 'Company / Airbnb' ? 'selected' : ''}>🌐 Company / Airbnb (₹${(stats['Company / Airbnb']?.totalCollected || 0).toLocaleString('en-IN')})</option>
+                <option value="Anwar-OD" ${selectedPerson === 'Anwar-OD' ? 'selected' : ''}>🏦 Anwar-OD (₹${(stats['Anwar-OD']?.totalCollected || 0).toLocaleString('en-IN')})</option>
+                ${customReceivers.map(r => `<option value="${r}" ${selectedPerson === r ? 'selected' : ''}>👤 ${r} (₹${(stats[r]?.totalCollected || 0).toLocaleString('en-IN')})</option>`).join('')}
+                ${activeEmployees.map(e => `<option value="${e}" ${selectedPerson === e ? 'selected' : ''}>🧑‍💼 ${e} (₹${(stats[e]?.totalCollected || 0).toLocaleString('en-IN')})</option>`).join('')}
               </select>
             </div>
           </div>
 
-          <div style="overflow-x:auto;">
+          <div class="ledger-table-wrap">
             <table style="width:100%; border-collapse:collapse; font-size:13px;">
               <thead>
                 <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:left;">
@@ -917,10 +1145,17 @@ window._renderMyLedgerImpl = async function() {
       else if (customReceivers.includes(r.name)) { badgeBg = '#e0f2fe'; badgeColor = '#0369a1'; }
       else { badgeBg = '#dcfce7'; badgeColor = '#15803d'; }
 
+      const isRowSelected = selectedPerson === r.name;
+      const rowBg = isRowSelected ? '#eff6ff' : 'transparent';
+      const rowBorderLeft = isRowSelected ? '4px solid #2563eb' : '4px solid transparent';
+
       return `
-                    <tr style="border-bottom:1px solid #f1f5f9; cursor:pointer;" onclick="window._myLedgerSelectedPerson='${r.name}'; window.renderMyLedger();">
+                    <tr style="border-bottom:1px solid #f1f5f9; background:${rowBg}; border-left:${rowBorderLeft}; cursor:pointer;" 
+                        onclick="window._myLedgerSelectedPerson='${r.name}'; window.renderMyLedger();"
+                        title="Click to view KPI & bookings for ${r.name}">
                       <td style="padding:10px 12px; font-weight:700; color:#0f172a;">
                         ${r.name === 'Company / Airbnb' ? '🌐' : r.name === 'Anwar-OD' ? '🏦' : '👤'} ${r.name}
+                        ${isRowSelected ? '<span style="background:#2563eb; color:#fff; font-size:10px; font-weight:800; padding:2px 6px; border-radius:10px; margin-left:6px;">Active</span>' : ''}
                       </td>
                       <td style="padding:10px 12px;">
                         <span style="background:${badgeBg}; color:${badgeColor}; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:700;">
@@ -962,13 +1197,21 @@ window._renderMyLedgerImpl = async function() {
         </div>
 
         <!-- 5. Recent Booking Payments Log -->
-        <div class="card" style="background:#fff; border-radius:12px; padding:16px; border:1px solid #e2e8f0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <strong style="color:#0f172a; font-size:15px;">📋 Recent Booking Payments Log (${displayedPayments.length} Transactions)</strong>
-            ${selectedPerson !== 'ALL' ? `<button onclick="window._myLedgerSelectedPerson='ALL'; window.renderMyLedger();" style="background:#f1f5f9; border:none; padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;">Show All</button>` : ''}
+        <div class="card" style="background:#fff; border-radius:12px; padding:16px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+            <div>
+              <strong style="color:#0f172a; font-size:15px;">📋 Recent Booking Payments Log (${displayedPayments.length} Transactions${selectedPerson !== 'ALL' ? ` · ${selectedPerson}` : ''})</strong>
+              <div style="font-size:12px; color:#64748b; margin-top:2px;">Audit trail of payments received and credited to accounts</div>
+            </div>
+            ${selectedPerson !== 'ALL' ? `
+              <button onclick="window._myLedgerSelectedPerson='ALL'; window.renderMyLedger();" 
+                      style="background:#0f172a; color:#fff; border:none; padding:6px 12px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer;">
+                ✕ Clear Filter (Show All)
+              </button>
+            ` : ''}
           </div>
 
-          <div style="overflow-x:auto;">
+          <div class="ledger-table-wrap">
             <table style="width:100%; border-collapse:collapse; font-size:12px;">
               <thead>
                 <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:left;">
@@ -982,7 +1225,7 @@ window._renderMyLedgerImpl = async function() {
                 </tr>
               </thead>
               <tbody>
-                ${displayedPayments.length === 0 ? '<tr><td colspan="7" style="padding:20px; text-align:center; color:#94a3b8;">No payments recorded for this receiver.</td></tr>' : ''}
+                ${displayedPayments.length === 0 ? '<tr><td colspan="7" style="padding:24px; text-align:center; color:#94a3b8; font-size:13px;">No payments recorded for this receiver.</td></tr>' : ''}
                 ${displayedPayments.slice(0, 100).map(p => {
       const g = p.guest_register;
       const guestName = g?.guest_name || 'Guest';
