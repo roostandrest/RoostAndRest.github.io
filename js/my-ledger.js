@@ -682,7 +682,8 @@ window._renderMyLedgerImpl = async function() {
       if (!stats[norm]) {
         stats[norm] = {
           name: norm,
-          category: category || (norm === 'Company / Airbnb' ? 'Online' : norm === 'Anwar-OD' ? 'Default OD' : 'Receiver'),
+          category: category || (norm === 'Company / Airbnb' ? 'Online Channel' : norm === 'Anwar-OD' ? 'Default Account' : 'Receiver'),
+          cashCollected: 0,
           cashInHand: 0,
           cashHandedOver: 0,
           upiOnline: 0,
@@ -690,6 +691,7 @@ window._renderMyLedgerImpl = async function() {
           handoversGiven: 0,
           handoversRecv: 0,
           expensesPaid: 0,
+          netPending: 0, // Money in possession (Cash + UPI) that must be deposited to Anwar-OD
           paymentsList: []
         };
       }
@@ -723,8 +725,7 @@ window._renderMyLedgerImpl = async function() {
       if (isOnline) {
         s.upiOnline += amt;
       } else {
-        // Cash payment
-        s.cashInHand += amt;
+        s.cashCollected += amt;
       }
     });
 
@@ -735,7 +736,6 @@ window._renderMyLedgerImpl = async function() {
         const sFrom = initReceiver(h.from_person);
         sFrom.handoversGiven += amt;
         sFrom.cashHandedOver += amt;
-        sFrom.cashInHand = Math.max(0, sFrom.cashInHand - amt);
       }
       if (h.to_person) {
         const sTo = initReceiver(h.to_person);
@@ -743,30 +743,44 @@ window._renderMyLedgerImpl = async function() {
       }
     });
 
-    // Process cash expenses
+    // Process expenses paid by staff
     (expenses || []).forEach(e => {
       const amt = Number(e.amount || 0);
-      if (e.paid_by && e.payment_mode === 'Cash') {
+      if (e.paid_by) {
         const sPaid = initReceiver(e.paid_by);
         sPaid.expensesPaid += amt;
-        sPaid.cashInHand = Math.max(0, sPaid.cashInHand - amt);
       }
+    });
+
+    // Calculate netPending for each receiver:
+    // For Company / Airbnb and Anwar-OD: netPending is 0 (direct company / owner accounts)
+    // For every other receiver (caretakers, staff):
+    // netPending = Math.max(0, s.totalCollected - s.cashHandedOver - s.expensesPaid)
+    // This tracks ALL money (Cash OR UPI) in that person's possession until handed over to Anwar-OD!
+    Object.values(stats).forEach(s => {
+      if (s.name === 'Company / Airbnb' || s.name === 'Anwar-OD') {
+        s.netPending = 0;
+      } else {
+        s.netPending = Math.max(0, s.totalCollected - s.cashHandedOver - s.expensesPaid);
+      }
+      s.cashInHand = s.netPending; // Maintain backwards compatibility
     });
 
     const allReceiversList = Object.values(stats);
 
     // Calculate totals across whole system
-    const totalCashInHandAll = allReceiversList
+    // Total money held across team (all receivers except Company/Airbnb & Anwar-OD)
+    const totalHeldByTeamAll = allReceiversList
       .filter(x => x.name !== 'Company / Airbnb' && x.name !== 'Anwar-OD')
-      .reduce((sum, x) => sum + x.cashInHand, 0);
+      .reduce((sum, x) => sum + x.netPending, 0);
 
-    const totalUPIAll = allReceiversList.reduce((sum, x) => sum + x.upiOnline, 0);
+    const totalDirectCompanyAll = (stats['Company / Airbnb']?.totalCollected || 0) + (stats['Anwar-OD']?.totalCollected || 0);
     const totalHandedOverAll = allReceiversList.reduce((sum, x) => sum + x.cashHandedOver, 0);
     const totalGrossCollectedAll = allReceiversList.reduce((sum, x) => sum + x.totalCollected, 0);
 
     const selectedPerson = window._myLedgerSelectedPerson || 'ALL';
     const displayList = selectedPerson === 'ALL'
-      ? allReceiversList.filter(x => x.totalCollected > 0 || x.cashInHand > 0 || customReceivers.includes(x.name) || x.name === 'Company / Airbnb' || x.name === 'Anwar-OD')
+      ? allReceiversList.filter(x => x.totalCollected > 0 || x.netPending > 0 || customReceivers.includes(x.name) || x.name === 'Company / Airbnb' || x.name === 'Anwar-OD')
       : allReceiversList.filter(x => x.name === selectedPerson);
 
     // Filter payments for bottom table
@@ -962,18 +976,18 @@ window._renderMyLedgerImpl = async function() {
           </div>
           <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
             <div>
-              <label style="font-size:11px; font-weight:700; color:#166534; display:block; margin-bottom:4px;">Cash Handed Over By *</label>
+              <label style="font-size:11px; font-weight:700; color:#166534; display:block; margin-bottom:4px;">Handover / Transfer From *</label>
               <select id="hoFromPerson" style="width:100%; padding:8px 10px; border:1px solid #86efac; border-radius:6px; font-weight:600;">
                 <option value="">-- Select Person --</option>
                 ${allReceiversList.filter(x => x.name !== 'Company / Airbnb' && x.name !== 'Anwar-OD').map(x => `
-                  <option value="${x.name}">${x.name} (Held: ₹${x.cashInHand.toLocaleString('en-IN')})</option>
+                  <option value="${x.name}">${x.name} (Held: ₹${x.netPending.toLocaleString('en-IN')})</option>
                 `).join('')}
               </select>
             </div>
             <div>
               <label style="font-size:11px; font-weight:700; color:#166534; display:block; margin-bottom:4px;">Deposited To *</label>
               <select id="hoToPerson" style="width:100%; padding:8px 10px; border:1px solid #86efac; border-radius:6px; font-weight:600;">
-                <option value="Anwar-OD">Anwar-OD (Primary Cash Account)</option>
+                <option value="Anwar-OD">Anwar-OD (Primary Account / Depository)</option>
               </select>
             </div>
             <div>
@@ -986,7 +1000,7 @@ window._renderMyLedgerImpl = async function() {
             </div>
           </div>
           <div style="display:flex; gap:10px; margin-top:10px; align-items:center; flex-wrap:wrap;">
-            <input type="text" id="hoNotes" placeholder="Optional notes (e.g. Cleared 22 Nov collections)" style="flex:1; min-width:180px; padding:8px 10px; border:1px solid #86efac; border-radius:6px;" />
+            <input type="text" id="hoNotes" placeholder="Optional notes (e.g. Cleared Cash & UPI collections to Anwar-OD)" style="flex:1; min-width:180px; padding:8px 10px; border:1px solid #86efac; border-radius:6px;" />
             <button type="button" onclick="window.saveInlineHandover()" style="background:#166534; color:#fff; border:none; padding:8px 18px; border-radius:6px; font-weight:700; cursor:pointer;">
               ✅ Confirm Handover
             </button>
@@ -1013,7 +1027,7 @@ window._renderMyLedgerImpl = async function() {
                   </span>
                 </div>
                 <div style="font-size:12px; color:#94a3b8; margin-top:4px;">
-                  Real-time collection audit, in-hand cash status & payout tracking for <strong>${selStat.name}</strong>
+                  Real-time collection audit, in-hand balance & handover tracking for <strong>${selStat.name}</strong>
                 </div>
               </div>
               <div class="receiver-focus-actions" style="display:flex; gap:8px; align-items:center;">
@@ -1021,10 +1035,10 @@ window._renderMyLedgerImpl = async function() {
                         style="background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
                   <span>✕</span> Show All Receivers
                 </button>
-                ${selStat.cashInHand > 0 ? `
-                  <button type="button" onclick="window.toggleHandoverBox('${selStat.name}', ${selStat.cashInHand})" 
+                ${selStat.netPending > 0 ? `
+                  <button type="button" onclick="window.toggleHandoverBox('${selStat.name}', ${selStat.netPending})" 
                           style="background:#059669; color:#fff; border:none; padding:7px 14px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                    🤝 Handover ₹${selStat.cashInHand.toLocaleString('en-IN')}
+                    🤝 Handover ₹${selStat.netPending.toLocaleString('en-IN')}
                   </button>
                 ` : ''}
               </div>
@@ -1032,66 +1046,111 @@ window._renderMyLedgerImpl = async function() {
 
             <!-- Receiver Sub-KPI Grid -->
             <div class="receiver-kpi-grid">
-              <!-- Primary Metric: Total Collected -->
-              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #f59e0b;">
-                <div class="ledger-kpi-label" style="color:#fbbf24;">💰 Total Amount Collected</div>
-                <div class="ledger-kpi-val" style="color:#fff;">
-                  ₹${selStat.totalCollected.toLocaleString('en-IN')}
+              ${(selStat.name !== 'Company / Airbnb' && selStat.name !== 'Anwar-OD') ? `
+                <!-- Metric 1: Net Balance Held (Cash + UPI) -->
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid ${selStat.netPending > 0 ? '#ef4444' : '#10b981'};">
+                  <div class="ledger-kpi-label" style="color:${selStat.netPending > 0 ? '#f87171' : '#34d399'};">⚡ Net Balance Held ("Kiske Paas Hai")</div>
+                  <div class="ledger-kpi-val" style="color:${selStat.netPending > 0 ? '#fca5a5' : '#fff'};">
+                    ₹${selStat.netPending.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    ${selStat.netPending > 0 ? '⚠️ Cash & UPI pending transfer to Anwar-OD' : '✅ All collections safely handed over'}
+                  </div>
                 </div>
-                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
-                  ${pctOfTotal}% of total receipts (₹${totalGrossCollectedAll.toLocaleString('en-IN')})
-                </div>
-              </div>
 
-              <!-- Cash In Hand -->
-              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid ${selStat.cashInHand > 0 ? '#ef4444' : '#10b981'};">
-                <div class="ledger-kpi-label" style="color:${selStat.cashInHand > 0 ? '#f87171' : '#34d399'};">💵 Cash In Hand</div>
-                <div class="ledger-kpi-val" style="color:${selStat.cashInHand > 0 ? '#fca5a5' : '#fff'};">
-                  ₹${selStat.cashInHand.toLocaleString('en-IN')}
+                <!-- Metric 2: Total Collected -->
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #f59e0b;">
+                  <div class="ledger-kpi-label" style="color:#fbbf24;">💰 Total Amount Collected</div>
+                  <div class="ledger-kpi-val" style="color:#fff;">
+                    ₹${selStat.totalCollected.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    ${displayedPayments.length} booking receipts tracked (${pctOfTotal}%)
+                  </div>
                 </div>
-                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
-                  ${selStat.cashInHand > 0 ? '⚠️ Pending Handover' : '✅ No Cash Pending'}
-                </div>
-              </div>
 
-              <!-- UPI & Online -->
-              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #38bdf8;">
-                <div class="ledger-kpi-label" style="color:#38bdf8;">📱 UPI & Online Direct</div>
-                <div class="ledger-kpi-val" style="color:#fff;">
-                  ₹${selStat.upiOnline.toLocaleString('en-IN')}
+                <!-- Metric 3: Cash vs UPI Breakdown -->
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #38bdf8;">
+                  <div class="ledger-kpi-label" style="color:#38bdf8;">💵 Cash & 📱 UPI Breakdown</div>
+                  <div class="ledger-kpi-val" style="color:#fff; font-size:18px;">
+                    💵 ₹${selStat.cashCollected.toLocaleString('en-IN')} · 📱 ₹${selStat.upiOnline.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    Cash in hand + Personal scanner/UPI
+                  </div>
                 </div>
-                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
-                  Direct digital receipts
-                </div>
-              </div>
 
-              <!-- Cash Handed Over -->
-              <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #a78bfa;">
-                <div class="ledger-kpi-label" style="color:#c084fc;">🤝 Cash Handed Over</div>
-                <div class="ledger-kpi-val" style="color:#fff;">
-                  ₹${selStat.cashHandedOver.toLocaleString('en-IN')}
+                <!-- Metric 4: Cash Handed Over -->
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #a78bfa;">
+                  <div class="ledger-kpi-label" style="color:#c084fc;">🤝 Handed Over to Anwar-OD</div>
+                  <div class="ledger-kpi-val" style="color:#fff;">
+                    ₹${selStat.cashHandedOver.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    Deposited & verified in Anwar-OD
+                  </div>
                 </div>
-                <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
-                  ${displayedPayments.length} booking receipts tracked
+              ` : `
+                <!-- For Company / Airbnb or Anwar-OD (Official Depository Accounts) -->
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #f59e0b;">
+                  <div class="ledger-kpi-label" style="color:#fbbf24;">💰 Total Deposited / Collected</div>
+                  <div class="ledger-kpi-val" style="color:#fff;">
+                    ₹${selStat.totalCollected.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    ${pctOfTotal}% of gross company collections
+                  </div>
                 </div>
-              </div>
+
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #38bdf8;">
+                  <div class="ledger-kpi-label" style="color:#38bdf8;">📱 Digital & Payouts</div>
+                  <div class="ledger-kpi-val" style="color:#fff;">
+                    ₹${selStat.upiOnline.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    Official bank & gateway credits
+                  </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #10b981;">
+                  <div class="ledger-kpi-label" style="color:#34d399;">🤝 Handovers Received</div>
+                  <div class="ledger-kpi-val" style="color:#fff;">
+                    ₹${selStat.handoversRecv.toLocaleString('en-IN')}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    Transferred from on-ground team
+                  </div>
+                </div>
+
+                <div style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 14px; border-left:4px solid #a78bfa;">
+                  <div class="ledger-kpi-label" style="color:#c084fc;">📋 Total Transactions</div>
+                  <div class="ledger-kpi-val" style="color:#fff;">
+                    ${displayedPayments.length}
+                  </div>
+                  <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">
+                    Booking receipts recorded
+                  </div>
+                </div>
+              `}
             </div>
           </div>
         ` : `
           <!-- ALL RECEIVERS OVERVIEW KPI CARDS -->
           <div class="ledger-kpi-grid">
-            <div class="ledger-kpi-card" style="border-left:4px solid #ef4444;">
-              <div class="ledger-kpi-label" style="color:#ef4444;">💵 Total Cash In Hand (Team)</div>
-              <div class="ledger-kpi-val">₹${totalCashInHandAll.toLocaleString('en-IN')}</div>
-              <div style="font-size:11px; color:#64748b; margin-top:2px;">Currently held across team</div>
+            <div class="ledger-kpi-card" style="border-left:4px solid ${totalHeldByTeamAll > 0 ? '#ef4444' : '#10b981'};">
+              <div class="ledger-kpi-label" style="color:${totalHeldByTeamAll > 0 ? '#ef4444' : '#059669'};">👥 Total Money with Team ("Kiske Paas Kitna Hai")</div>
+              <div class="ledger-kpi-val" style="color:${totalHeldByTeamAll > 0 ? '#dc2626' : '#0f172a'};">₹${totalHeldByTeamAll.toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">
+                ${totalHeldByTeamAll > 0 ? '⚠️ Cash & UPI pending transfer to Anwar-OD' : '✅ All team collections deposited'}
+              </div>
             </div>
             <div class="ledger-kpi-card" style="border-left:4px solid #3b82f6;">
-              <div class="ledger-kpi-label" style="color:#3b82f6;">📱 UPI & Online Total</div>
-              <div class="ledger-kpi-val">₹${totalUPIAll.toLocaleString('en-IN')}</div>
-              <div style="font-size:11px; color:#64748b; margin-top:2px;">Airbnb payouts & direct UPI receipts</div>
+              <div class="ledger-kpi-label" style="color:#3b82f6;">📱 Direct Company & Anwar-OD</div>
+              <div class="ledger-kpi-val">₹${totalDirectCompanyAll.toLocaleString('en-IN')}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">Airbnb payouts & direct Anwar-OD credits</div>
             </div>
             <div class="ledger-kpi-card" style="border-left:4px solid #10b981;">
-              <div class="ledger-kpi-label" style="color:#10b981;">🤝 Cash Handed Over / Accounted</div>
+              <div class="ledger-kpi-label" style="color:#10b981;">🤝 Handed Over to Anwar-OD</div>
               <div class="ledger-kpi-val">₹${totalHandedOverAll.toLocaleString('en-IN')}</div>
               <div style="font-size:11px; color:#64748b; margin-top:2px;">Safely deposited to Anwar-OD</div>
             </div>
@@ -1117,8 +1176,16 @@ window._renderMyLedgerImpl = async function() {
                 <option value="ALL" ${selectedPerson === 'ALL' ? 'selected' : ''}>👥 All Receivers (Overview) — ₹${totalGrossCollectedAll.toLocaleString('en-IN')}</option>
                 <option value="Company / Airbnb" ${selectedPerson === 'Company / Airbnb' ? 'selected' : ''}>🌐 Company / Airbnb (₹${(stats['Company / Airbnb']?.totalCollected || 0).toLocaleString('en-IN')})</option>
                 <option value="Anwar-OD" ${selectedPerson === 'Anwar-OD' ? 'selected' : ''}>🏦 Anwar-OD (₹${(stats['Anwar-OD']?.totalCollected || 0).toLocaleString('en-IN')})</option>
-                ${customReceivers.map(r => `<option value="${r}" ${selectedPerson === r ? 'selected' : ''}>👤 ${r} (₹${(stats[r]?.totalCollected || 0).toLocaleString('en-IN')})</option>`).join('')}
-                ${activeEmployees.map(e => `<option value="${e}" ${selectedPerson === e ? 'selected' : ''}>🧑‍💼 ${e} (₹${(stats[e]?.totalCollected || 0).toLocaleString('en-IN')})</option>`).join('')}
+                ${customReceivers.map(r => {
+                  const st = stats[r];
+                  const heldTag = st && st.netPending > 0 ? ` · 🔴 Held: ₹${st.netPending.toLocaleString('en-IN')}` : '';
+                  return `<option value="${r}" ${selectedPerson === r ? 'selected' : ''}>👤 ${r} (₹${(st?.totalCollected || 0).toLocaleString('en-IN')}${heldTag})</option>`;
+                }).join('')}
+                ${activeEmployees.map(e => {
+                  const st = stats[e];
+                  const heldTag = st && st.netPending > 0 ? ` · 🔴 Held: ₹${st.netPending.toLocaleString('en-IN')}` : '';
+                  return `<option value="${e}" ${selectedPerson === e ? 'selected' : ''}>🧑‍💼 ${e} (₹${(st?.totalCollected || 0).toLocaleString('en-IN')}${heldTag})</option>`;
+                }).join('')}
               </select>
             </div>
           </div>
@@ -1129,7 +1196,8 @@ window._renderMyLedgerImpl = async function() {
                 <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; text-align:left;">
                   <th style="padding:10px 12px; font-weight:700; color:#475569;">Receiver / Account</th>
                   <th style="padding:10px 12px; font-weight:700; color:#475569;">Account Type</th>
-                  <th style="padding:10px 12px; font-weight:700; color:#ef4444; text-align:right;">Cash In Hand</th>
+                  <th style="padding:10px 12px; font-weight:800; color:#ef4444; text-align:right;">⚡ Net Held ("Kiske Paas Hai")</th>
+                  <th style="padding:10px 12px; font-weight:700; color:#475569; text-align:right;">Cash Coll.</th>
                   <th style="padding:10px 12px; font-weight:700; color:#3b82f6; text-align:right;">UPI & Online</th>
                   <th style="padding:10px 12px; font-weight:700; color:#10b981; text-align:right;">Handed Over</th>
                   <th style="padding:10px 12px; font-weight:700; color:#0f172a; text-align:right;">Total Collected</th>
@@ -1148,6 +1216,7 @@ window._renderMyLedgerImpl = async function() {
       const isRowSelected = selectedPerson === r.name;
       const rowBg = isRowSelected ? '#eff6ff' : 'transparent';
       const rowBorderLeft = isRowSelected ? '4px solid #2563eb' : '4px solid transparent';
+      const isOwnerAcc = r.name === 'Company / Airbnb' || r.name === 'Anwar-OD';
 
       return `
                     <tr style="border-bottom:1px solid #f1f5f9; background:${rowBg}; border-left:${rowBorderLeft}; cursor:pointer;" 
@@ -1162,8 +1231,21 @@ window._renderMyLedgerImpl = async function() {
                           ${r.category}
                         </span>
                       </td>
-                      <td style="padding:10px 12px; text-align:right; font-weight:800; color:${r.cashInHand > 0 ? '#dc2626' : '#64748b'};">
-                        ₹${r.cashInHand.toLocaleString('en-IN')}
+                      <td style="padding:10px 12px; text-align:right; font-weight:800;">
+                        ${isOwnerAcc ? `
+                          <span style="color:#64748b; font-size:11.5px; font-weight:600;">₹0 (Direct Account)</span>
+                        ` : r.netPending > 0 ? `
+                          <span style="background:#fee2e2; color:#b91c1c; padding:3px 9px; border-radius:12px; font-weight:800; font-size:12px;">
+                            ₹${r.netPending.toLocaleString('en-IN')} 🔴
+                          </span>
+                        ` : `
+                          <span style="background:#dcfce7; color:#15803d; padding:3px 9px; border-radius:12px; font-weight:700; font-size:11px;">
+                            ₹0 ✅ Settled
+                          </span>
+                        `}
+                      </td>
+                      <td style="padding:10px 12px; text-align:right; font-weight:700; color:#475569;">
+                        ₹${(r.cashCollected || 0).toLocaleString('en-IN')}
                       </td>
                       <td style="padding:10px 12px; text-align:right; font-weight:700; color:#2563eb;">
                         ₹${r.upiOnline.toLocaleString('en-IN')}
@@ -1175,8 +1257,14 @@ window._renderMyLedgerImpl = async function() {
                         ₹${r.totalCollected.toLocaleString('en-IN')}
                       </td>
                       <td style="padding:10px 12px; text-align:center; white-space:nowrap;">
-                        ${(r.name === 'Company / Airbnb' || r.name === 'Anwar-OD') ? `
-                          <span style="color:#64748b; font-size:11px; font-weight:600;">System Account</span>
+                        ${isOwnerAcc ? `
+                          <span style="color:#64748b; font-size:11px; font-weight:600;">Official Depository</span>
+                        ` : r.netPending > 0 ? `
+                          <button type="button" onclick="event.stopPropagation(); window.toggleHandoverBox('${r.name}', ${r.netPending})" 
+                                  style="background:#059669; color:#fff; border:none; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer;"
+                                  title="Transfer ${r.name}'s balance to Anwar-OD">
+                            🤝 Handover
+                          </button>
                         ` : activeEmployees.includes(r.name) ? `
                           <span style="color:#64748b; font-size:11px;">Staff Roster</span>
                         ` : `
